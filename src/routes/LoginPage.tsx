@@ -48,7 +48,7 @@ export function LoginPage() {
     );
   }
 
-  if (session) {
+  if (session?.user) {
     return <Navigate to="/" />;
   }
 
