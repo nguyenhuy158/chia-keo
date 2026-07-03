@@ -11,6 +11,7 @@ import {
   Landmark,
   Link,
   LogOut,
+  Pencil,
   Plus,
   QrCode,
   ReceiptText,
@@ -188,6 +189,16 @@ function getParticipantName(game: Game | undefined, participantId: string) {
   return game?.participants.find((participant) => participant.id === participantId)?.name || "Không rõ";
 }
 
+function createExpenseForm(expense: Expense): ExpenseForm {
+  return {
+    title: expense.title,
+    amount: formatMoney(expense.amount),
+    categoryId: normalizeExpenseCategoryId(expense.categoryId),
+    payerId: expense.payerId,
+    splitParticipantIds: expense.splitParticipantIds,
+  };
+}
+
 function getParticipantAvatarSeed(participant: Participant) {
   return participant.avatarSeed || createAvatarSeed(participant.name);
 }
@@ -230,6 +241,7 @@ function App() {
   const [selectedGameId, setSelectedGameId] = useState(() => loadGames()[0]?.id || "");
   const [participantForm, setParticipantForm] = useState<ParticipantForm>(emptyParticipantForm);
   const [expenseForm, setExpenseForm] = useState<ExpenseForm>(emptyExpenseForm);
+  const [editingExpenseId, setEditingExpenseId] = useState("");
   const [activeWorkspaceTab, setActiveWorkspaceTab] = useState<WorkspaceTabId>(DEFAULT_WORKSPACE_TAB);
   const [copiedShare, setCopiedShare] = useState(false);
   const [remoteSharedGame, setRemoteSharedGame] = useState<Game | null>(null);
@@ -433,6 +445,7 @@ function App() {
     setSelectedGameId(game.id);
     setNewGameName("");
     setExpenseForm(emptyExpenseForm);
+    setEditingExpenseId("");
     setActiveWorkspaceTab(DEFAULT_WORKSPACE_TAB);
     showSuccessToast("Đã tạo cuộc chơi", game.name);
     if (sessionToken) {
@@ -453,6 +466,8 @@ function App() {
 
     setSelectedGameId(gameId);
     setCopiedShare(false);
+    setEditingExpenseId("");
+    setExpenseForm(emptyExpenseForm);
     if (nextGame) showInfoToast("Đã chọn cuộc chơi", nextGame.name);
   }
 
@@ -561,26 +576,59 @@ function App() {
       return;
     }
 
+    const existingExpense = selectedGame.expenses.find((expense) => expense.id === editingExpenseId);
     const expense: Expense = {
-      id: createId("expense"),
+      id: existingExpense?.id || createId("expense"),
       title: expenseForm.title.trim() || "Khoản chi",
       amount,
       categoryId,
       payerId,
       splitParticipantIds,
-      createdAt: new Date().toISOString(),
+      createdAt: existingExpense?.createdAt || new Date().toISOString(),
     };
 
     updateSelectedGame((game) => ({
       ...game,
-      expenses: [expense, ...game.expenses],
+      expenses: existingExpense
+        ? game.expenses.map((item) => (item.id === existingExpense.id ? expense : item))
+        : [expense, ...game.expenses],
     }));
     setExpenseForm({
       ...emptyExpenseForm,
       payerId,
       splitParticipantIds,
     });
-    showSuccessToast("Đã thêm khoản chi", `${expense.title} - ${formatMoney(expense.amount)}`);
+    setEditingExpenseId("");
+    showSuccessToast(
+      existingExpense ? "Đã cập nhật khoản chi" : "Đã thêm khoản chi",
+      `${expense.title} - ${formatMoney(expense.amount)}`,
+    );
+  }
+
+  function handleEditExpense(expenseId: string) {
+    const expense = selectedGame?.expenses.find((item) => item.id === expenseId);
+    if (!expense) {
+      showErrorToast("Không tìm thấy khoản chi");
+      return;
+    }
+
+    setEditingExpenseId(expense.id);
+    setExpenseForm(createExpenseForm(expense));
+    setActiveWorkspaceTab("expenses");
+    showInfoToast("Đang sửa khoản chi", expense.title);
+    window.setTimeout(() => {
+      const expenseTitleInput = Array.from(
+        document.querySelectorAll<HTMLInputElement>("[data-expense-title-input]"),
+      ).find((input) => input.offsetParent !== null);
+
+      expenseTitleInput?.focus();
+    }, 0);
+  }
+
+  function handleCancelEditExpense() {
+    setEditingExpenseId("");
+    setExpenseForm(emptyExpenseForm);
+    showInfoToast("Đã hủy sửa khoản chi");
   }
 
   function handleRemoveExpense(expenseId: string) {
@@ -590,6 +638,10 @@ function App() {
       ...game,
       expenses: game.expenses.filter((expense) => expense.id !== expenseId),
     }));
+    if (editingExpenseId === expenseId) {
+      setEditingExpenseId("");
+      setExpenseForm(emptyExpenseForm);
+    }
     showInfoToast("Đã xóa khoản chi", expenseTitle);
   }
 
@@ -807,6 +859,9 @@ function App() {
         onToggleSplit={handleToggleSplit}
         onSubmit={handleAddExpense}
         onRemove={handleRemoveExpense}
+        onEdit={handleEditExpense}
+        onCancelEdit={handleCancelEditExpense}
+        editingExpenseId={editingExpenseId}
       />
     );
   }
@@ -825,6 +880,9 @@ function App() {
           onToggleSplit={handleToggleSplit}
           onSubmit={handleAddExpense}
           onRemove={handleRemoveExpense}
+          onEdit={handleEditExpense}
+          onCancelEdit={handleCancelEditExpense}
+          editingExpenseId={editingExpenseId}
         />
       );
     }
@@ -1301,6 +1359,9 @@ function MobileExpensePane({
   onToggleSplit,
   onSubmit,
   onRemove,
+  onEdit,
+  onCancelEdit,
+  editingExpenseId,
 }: {
   game: Game;
   form: ExpenseForm;
@@ -1308,11 +1369,15 @@ function MobileExpensePane({
   onToggleSplit: (participantId: string) => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
   onRemove: (expenseId: string) => void;
+  onEdit: (expenseId: string) => void;
+  onCancelEdit: () => void;
+  editingExpenseId: string;
 }) {
   const payerId = form.payerId || game.participants[0]?.id || "";
   const visibleExpenses = game.expenses.slice(0, MOBILE_VISIBLE_EXPENSE_LIMIT);
   const hiddenExpenseCount = Math.max(0, game.expenses.length - visibleExpenses.length);
   const visibleSuggestions = EXPENSE_SUGGESTIONS.slice(0, MOBILE_VISIBLE_SUGGESTION_LIMIT);
+  const isEditing = Boolean(editingExpenseId);
 
   function handleApplySuggestion(suggestion: ExpenseSuggestion) {
     const allParticipantIds = game.participants.map((participant) => participant.id);
@@ -1437,14 +1502,25 @@ function MobileExpensePane({
             })}
           </div>
         </div>
-        <button
-          type="submit"
-          disabled={game.participants.length === 0}
-          className="col-span-2 inline-flex h-9 items-center justify-center gap-2 rounded-md bg-blue-700 px-3 text-sm font-semibold text-white transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:bg-stone-300"
-        >
-          <Plus size={15} />
-          Thêm khoản chi
-        </button>
+        <div className="col-span-2 flex gap-2">
+          <button
+            type="submit"
+            disabled={game.participants.length === 0}
+            className="inline-flex h-9 flex-1 items-center justify-center gap-2 rounded-md bg-blue-700 px-3 text-sm font-semibold text-white transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:bg-stone-300"
+          >
+            {isEditing ? <Check size={15} /> : <Plus size={15} />}
+            {isEditing ? "Cập nhật khoản chi" : "Thêm khoản chi"}
+          </button>
+          {isEditing && (
+            <button
+              type="button"
+              onClick={onCancelEdit}
+              className="inline-flex h-9 items-center justify-center rounded-md border border-stone-300 bg-white px-3 text-xs font-semibold text-stone-700 transition hover:bg-stone-50"
+            >
+              Hủy
+            </button>
+          )}
+        </div>
       </form>
 
       <div className="min-h-0 space-y-1.5">
@@ -1460,6 +1536,14 @@ function MobileExpensePane({
                 <p className="truncate text-[0.68rem] text-stone-500">{payer?.name || "Không rõ"} trả</p>
               </div>
               <span className="shrink-0 text-xs font-semibold text-stone-950">{formatMoney(expense.amount)}</span>
+              <button
+                type="button"
+                onClick={() => onEdit(expense.id)}
+                className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-blue-700 transition hover:bg-blue-50"
+                aria-label={`Sửa ${expense.title}`}
+              >
+                <Pencil size={13} />
+              </button>
               <button
                 type="button"
                 onClick={() => onRemove(expense.id)}
@@ -1861,6 +1945,9 @@ function ExpensePanel({
   onToggleSplit,
   onSubmit,
   onRemove,
+  onEdit,
+  onCancelEdit,
+  editingExpenseId,
 }: {
   game: Game;
   form: ExpenseForm;
@@ -1868,8 +1955,12 @@ function ExpensePanel({
   onToggleSplit: (participantId: string) => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
   onRemove: (expenseId: string) => void;
+  onEdit: (expenseId: string) => void;
+  onCancelEdit: () => void;
+  editingExpenseId: string;
 }) {
   const payerId = form.payerId || game.participants[0]?.id || "";
+  const isEditing = Boolean(editingExpenseId);
 
   function handleApplySuggestion(suggestion: ExpenseSuggestion) {
     const allParticipantIds = game.participants.map((participant) => participant.id);
@@ -1999,14 +2090,25 @@ function ExpensePanel({
           </div>
         </div>
         <div className="md:col-span-2">
-          <button
-            type="submit"
-            disabled={game.participants.length === 0}
-            className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-md bg-blue-700 px-4 text-sm font-semibold text-white transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:bg-stone-300 sm:h-10 sm:w-auto"
-          >
-            <Plus size={17} />
-            Thêm khoản chi
-          </button>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <button
+              type="submit"
+              disabled={game.participants.length === 0}
+              className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-md bg-blue-700 px-4 text-sm font-semibold text-white transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:bg-stone-300 sm:h-10 sm:w-auto"
+            >
+              {isEditing ? <Check size={17} /> : <Plus size={17} />}
+              {isEditing ? "Cập nhật khoản chi" : "Thêm khoản chi"}
+            </button>
+            {isEditing && (
+              <button
+                type="button"
+                onClick={onCancelEdit}
+                className="inline-flex h-11 w-full items-center justify-center rounded-md border border-stone-300 bg-white px-4 text-sm font-semibold text-stone-700 transition hover:bg-stone-50 sm:h-10 sm:w-auto"
+              >
+                Hủy sửa
+              </button>
+            )}
+          </div>
         </div>
       </form>
 
@@ -2031,6 +2133,14 @@ function ExpensePanel({
                 </div>
                 <div className="flex shrink-0 flex-col items-end gap-2 sm:flex-row sm:items-center">
                   <span className="text-sm font-semibold text-stone-950">{formatMoney(expense.amount)}</span>
+                  <button
+                    type="button"
+                    onClick={() => onEdit(expense.id)}
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-md text-blue-700 transition hover:bg-blue-50"
+                    aria-label={`Sửa ${expense.title}`}
+                  >
+                    <Pencil size={16} />
+                  </button>
                   <button
                     type="button"
                     onClick={() => onRemove(expense.id)}
