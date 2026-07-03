@@ -54,6 +54,11 @@ pnpm dev                         # vite, port 5173, proxy /api -> 8787
 # Test + typecheck
 pnpm test
 pnpm check
+
+# E2E smoke (can pnpm dev:api dang chay; can Chromium cua Playwright)
+# npx playwright install chromium   # neu chua co browser
+# PLAYWRIGHT_CHROMIUM_PATH=/duong/dan/chromium  # hoac dung browser co san
+pnpm e2e
 ```
 
 Co the chi chay `pnpm dev:api` va mo `http://127.0.0.1:8787` de dung ban build production.
@@ -181,8 +186,7 @@ Worker:
 9. ~~Them test cho logic split va settlement.~~ Xong (`pnpm test`).
 10. ~~Cau hinh deploy.~~ Xong: mot Worker serve FE + API, GitHub Actions deploy.
 
-Viec tiep theo (ngoai roadmap cu): rate limit + Turnstile, sua/xoa ten cuoc choi tren UI,
-edit khoan chi tren UI (API da co `PATCH /api/expenses/:id`), E2E test bang Playwright.
+Viec tiep theo (ngoai roadmap cu): Cloudflare Turnstile cho form login/public link.
 
 ## App Pages Functions cu (backup)
 
