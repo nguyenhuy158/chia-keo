@@ -16,7 +16,7 @@ export function AppLayout() {
     );
   }
 
-  if (!session) {
+  if (!session?.user) {
     return <Navigate to="/login" />;
   }
 
