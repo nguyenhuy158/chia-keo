@@ -1,7 +1,5 @@
 import { eq, inArray, sql } from "drizzle-orm";
 import { Hono } from "hono";
-import type { Context } from "hono";
-import { z } from "zod";
 import type { ApiGame } from "../../../shared/api-types";
 import {
   expenseInputSchema,
@@ -10,39 +8,14 @@ import {
   shareLinkInputSchema,
 } from "../../../shared/schemas";
 import { allocateAmount } from "../../../shared/split";
-import { createAuth } from "../auth";
 import * as schema from "../db/schema";
-import type { Env } from "../env";
-import { createDb, loadGameDetail, loadOwnedGame, type Db } from "../lib/game-data";
+import { loadGameDetail, loadOwnedGame, type Db } from "../lib/game-data";
+import { invalidInput, notFound, readJson } from "../lib/http";
 import { createGameCode, createId, createShareToken, nowIso } from "../lib/ids";
-
-type AuthedEnv = {
-  Bindings: Env;
-  Variables: {
-    userId: string;
-    db: Db;
-  };
-};
+import { requireUser, type AuthedEnv } from "../lib/require-user";
 
 const participantUpdateSchema = participantInputSchema.partial();
 const expenseUpdateSchema = expenseInputSchema.partial();
-
-async function readJson<Schema extends z.ZodType>(
-  c: Context,
-  schema: Schema,
-): Promise<z.output<Schema> | null> {
-  const body = await c.req.json().catch(() => null);
-  const result = schema.safeParse(body);
-  return result.success ? result.data : null;
-}
-
-function invalidInput(c: Context) {
-  return c.json({ error: "invalid_input" }, 400);
-}
-
-function notFound(c: Context) {
-  return c.json({ error: "not_found" }, 404);
-}
 
 async function loadGameParticipantIds(db: Db, gameId: string) {
   const rows = await db
@@ -137,17 +110,7 @@ async function loadOwnedExpense(db: Db, expenseId: string, userId: string) {
 
 export const gamesRouter = new Hono<AuthedEnv>();
 
-gamesRouter.use("*", async (c, next) => {
-  const auth = createAuth(c.env);
-  const session = await auth.api.getSession({ headers: c.req.raw.headers });
-  if (!session) {
-    return c.json({ error: "unauthorized" }, 401);
-  }
-
-  c.set("userId", session.user.id);
-  c.set("db", createDb(c.env.DB));
-  await next();
-});
+gamesRouter.use("*", requireUser);
 
 gamesRouter.get("/games", async (c) => {
   const db = c.get("db");

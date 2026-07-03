@@ -1,4 +1,5 @@
 import type {
+  ApiAiSuggestionResponse,
   ApiError,
   ApiGame,
   ApiGameDetail,
@@ -69,5 +70,11 @@ export const api = {
   },
   share: {
     view: (token: string) => request<ApiShareView>(`/api/share/${token}`),
+  },
+  ai: {
+    suggestExpense: (gameId: string, text: string) =>
+      post<ApiAiSuggestionResponse>("/api/ai/expense", { gameId, text }),
+    scanReceipt: (gameId: string, image: { mimeType: string; data: string }) =>
+      post<ApiAiSuggestionResponse>("/api/ai/receipt", { gameId, image }),
   },
 };

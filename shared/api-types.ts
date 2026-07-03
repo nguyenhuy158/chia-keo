@@ -1,4 +1,9 @@
+import type { ResolvedAiExpense } from "./ai";
 import type { BalanceRow, SettlementRow } from "./split";
+
+export type ApiAiSuggestionResponse = {
+  suggestion: ResolvedAiExpense;
+};
 
 export type ApiUser = {
   id: string;

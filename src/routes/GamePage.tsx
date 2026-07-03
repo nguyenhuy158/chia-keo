@@ -137,6 +137,7 @@ export function GamePage() {
             onRemove={(participantId) => removeParticipant.mutate(participantId)}
           />
           <ExpensePanel
+            gameId={game.id}
             participants={game.participants}
             expenses={game.expenses}
             pending={addExpense.isPending}

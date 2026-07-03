@@ -87,6 +87,18 @@ export function useRemoveExpense() {
   return useGameDetailMutation((expenseId: string) => api.expenses.remove(expenseId));
 }
 
+export function useAiSuggestExpense(gameId: string) {
+  return useMutation({
+    mutationFn: (text: string) => api.ai.suggestExpense(gameId, text),
+  });
+}
+
+export function useAiScanReceipt(gameId: string) {
+  return useMutation({
+    mutationFn: (image: { mimeType: string; data: string }) => api.ai.scanReceipt(gameId, image),
+  });
+}
+
 export function useRotateShareLink(gameId: string) {
   return useGameDetailMutation<void>(() => api.shareLinks.rotate(gameId));
 }
