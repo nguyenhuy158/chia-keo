@@ -205,7 +205,7 @@ export function ExpensePanel({
   return (
     <section className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm">
       <div className="mb-4 flex items-center gap-2">
-        <Banknote size={18} className="text-blue-700" />
+        <Banknote size={18} className="text-amber-500" />
         <h3 className="text-lg font-semibold text-stone-950">Khoan chi</h3>
       </div>
 
@@ -256,7 +256,7 @@ export function ExpensePanel({
             />
           </label>
         </div>
-        {aiError && <p className="mt-2 text-xs text-red-600">{aiError}</p>}
+        {aiError && <p className="mt-2 text-xs text-rose-600">{aiError}</p>}
         <p className="mt-2 text-xs text-violet-700">
           AI dien san form ben duoi, kiem tra lai truoc khi them.
         </p>
@@ -295,7 +295,7 @@ export function ExpensePanel({
                   onClick={() => toggleSplit(participant.id)}
                   className={`h-9 rounded-md border px-3 text-sm font-medium transition ${
                     checked
-                      ? "border-emerald-600 bg-emerald-50 text-emerald-800"
+                      ? "border-violet-600 bg-violet-50 text-violet-800"
                       : "border-stone-300 bg-white text-stone-600 hover:bg-stone-50"
                   }`}
                 >
@@ -305,7 +305,7 @@ export function ExpensePanel({
             })}
           </div>
           {form.formState.errors.splitParticipantIds && (
-            <p className="mt-1 text-xs text-red-600">
+            <p className="mt-1 text-xs text-rose-600">
               {form.formState.errors.splitParticipantIds.message}
             </p>
           )}
@@ -314,7 +314,7 @@ export function ExpensePanel({
           <button
             type="submit"
             disabled={participants.length === 0 || pending}
-            className="inline-flex h-10 items-center gap-2 rounded-md bg-blue-700 px-4 text-sm font-semibold text-white transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:bg-stone-300"
+            className="inline-flex h-10 items-center gap-2 rounded-md bg-violet-600 px-4 text-sm font-semibold text-white transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:bg-stone-300"
           >
             {editingExpenseId ? <Check size={17} /> : <Plus size={17} />}
             {editingExpenseId ? "Luu khoan chi" : "Them khoan chi"}
@@ -339,7 +339,7 @@ export function ExpensePanel({
             <div
               key={expense.id}
               className={`rounded-md border p-3 ${
-                isEditing ? "border-blue-500 bg-blue-50" : "border-stone-200"
+                isEditing ? "border-violet-500 bg-violet-50" : "border-stone-200"
               }`}
             >
               <div className="flex items-start justify-between gap-3">
@@ -350,13 +350,13 @@ export function ExpensePanel({
                   </p>
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
-                  <span className="text-sm font-semibold text-stone-950">
+                  <span className="text-sm font-semibold text-stone-950 tabular">
                     {formatMoney(expense.amount)}
                   </span>
                   <button
                     type="button"
                     onClick={() => (isEditing ? cancelEditExpense() : startEditExpense(expense))}
-                    className="inline-flex h-8 w-8 items-center justify-center rounded-md text-blue-700 transition hover:bg-blue-50"
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-md text-violet-700 transition hover:bg-violet-50"
                     aria-label={`Sua ${expense.title}`}
                   >
                     <Pencil size={16} />
@@ -364,7 +364,7 @@ export function ExpensePanel({
                   <button
                     type="button"
                     onClick={() => onRemove(expense.id)}
-                    className="inline-flex h-8 w-8 items-center justify-center rounded-md text-red-600 transition hover:bg-red-50"
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-md text-rose-600 transition hover:bg-rose-50"
                     aria-label={`Xoa ${expense.title}`}
                   >
                     <Trash2 size={16} />

@@ -26,7 +26,7 @@ export function GameDashboard({
     <aside className="space-y-5">
       {showHeader && (
         <section className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm">
-          <p className="text-sm font-medium text-emerald-700">{code}</p>
+          <p className="text-sm font-medium text-violet-600">{code}</p>
           <h1 className="mt-1 text-2xl font-semibold text-stone-950">{name}</h1>
         </section>
       )}
@@ -85,7 +85,7 @@ export function GameDashboard({
                       <p className="text-sm font-semibold text-stone-950">
                         {from.name} tra {to.name}
                       </p>
-                      <p className="mt-1 text-sm font-bold text-emerald-700">
+                      <p className="mt-1 text-sm font-bold text-violet-700 tabular">
                         {formatMoney(settlement.amount)}
                       </p>
                     </div>

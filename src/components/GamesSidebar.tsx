@@ -37,20 +37,20 @@ export function GamesSidebar() {
           <input
             id="game-name"
             {...form.register("name")}
-            className="h-10 min-w-0 flex-1 rounded-md border border-stone-300 px-3 text-sm outline-none transition focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
+            className="h-10 min-w-0 flex-1 rounded-md border border-stone-300 px-3 text-sm outline-none transition focus:border-violet-600 focus:ring-2 focus:ring-violet-100"
             placeholder="Da Nang 2026"
           />
           <button
             type="submit"
             disabled={createGame.isPending}
-            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-emerald-700 text-white transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:bg-stone-300"
+            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-violet-600 text-white transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:bg-stone-300"
             aria-label="Tao cuoc choi"
           >
             <Plus size={18} />
           </button>
         </div>
         {form.formState.errors.name && (
-          <p className="mt-1 text-xs text-red-600">{form.formState.errors.name.message}</p>
+          <p className="mt-1 text-xs text-rose-600">{form.formState.errors.name.message}</p>
         )}
       </form>
 
@@ -69,7 +69,7 @@ export function GamesSidebar() {
                 to="/games/$gameId"
                 params={{ gameId: game.id }}
                 className="block w-full rounded-md border border-stone-200 bg-white px-3 py-3 text-left transition hover:bg-stone-50"
-                activeProps={{ className: "border-emerald-600 bg-emerald-50" }}
+                activeProps={{ className: "border-violet-600 bg-violet-50" }}
               >
                 <span className="block text-sm font-semibold text-stone-950">{game.name}</span>
                 <span className="mt-1 block text-xs text-stone-500">

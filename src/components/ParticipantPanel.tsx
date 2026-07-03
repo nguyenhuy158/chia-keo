@@ -43,7 +43,7 @@ export function ParticipantPanel({ participants, pending, onAdd, onRemove }: Par
   return (
     <section className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm">
       <div className="mb-4 flex items-center gap-2">
-        <Users size={18} className="text-emerald-700" />
+        <Users size={18} className="text-violet-600" />
         <h3 className="text-lg font-semibold text-stone-950">Nguoi tham gia</h3>
       </div>
 
@@ -64,7 +64,7 @@ export function ParticipantPanel({ participants, pending, onAdd, onRemove }: Par
           <button
             type="submit"
             disabled={pending}
-            className="inline-flex h-10 items-center gap-2 rounded-md bg-emerald-700 px-4 text-sm font-semibold text-white transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:bg-stone-300"
+            className="inline-flex h-10 items-center gap-2 rounded-md bg-violet-600 px-4 text-sm font-semibold text-white transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:bg-stone-300"
           >
             <Plus size={17} />
             Them nguoi
@@ -87,7 +87,7 @@ export function ParticipantPanel({ participants, pending, onAdd, onRemove }: Par
               <button
                 type="button"
                 onClick={() => onRemove(participant.id)}
-                className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-red-600 transition hover:bg-red-50"
+                className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-rose-600 transition hover:bg-rose-50"
                 aria-label={`Xoa ${participant.name}`}
               >
                 <Trash2 size={16} />

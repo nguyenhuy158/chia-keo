@@ -32,7 +32,9 @@ export function AppLayout() {
       <header className="border-b border-stone-200 bg-white">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4">
           <div>
-            <h1 className="text-xl font-semibold text-stone-950">Chia keo</h1>
+            <h1 className="bg-gradient-to-r from-violet-600 to-fuchsia-600 bg-clip-text text-xl font-extrabold text-transparent">
+              Chia keo
+            </h1>
             <p className="text-sm text-stone-600">Tinh tien nhom va sinh QR nhan tien.</p>
           </div>
           <div className="flex items-center gap-3">

@@ -85,7 +85,7 @@ export function GamePage() {
     <>
       <div className="mb-5 flex flex-col gap-3 rounded-lg border border-stone-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
-          <p className="text-sm font-medium text-emerald-700">{game.code}</p>
+          <p className="text-sm font-medium text-violet-600">{game.code}</p>
           {nameDraft !== null ? (
             <div className="mt-1 flex items-center gap-2">
               <input
@@ -102,7 +102,7 @@ export function GamePage() {
                 type="button"
                 onClick={handleRenameGame}
                 disabled={renameGame.isPending}
-                className="inline-flex h-9 w-9 items-center justify-center rounded-md bg-emerald-700 text-white transition hover:bg-emerald-800"
+                className="inline-flex h-9 w-9 items-center justify-center rounded-md bg-violet-600 text-white transition hover:bg-violet-700"
                 aria-label="Luu ten cuoc choi"
               >
                 <Check size={16} />
@@ -149,7 +149,7 @@ export function GamePage() {
                 className="inline-flex h-10 items-center justify-center gap-2 rounded-md border border-stone-300 bg-white px-3 text-sm font-medium text-stone-700 transition hover:bg-stone-50"
                 title={shareLink.enabled ? "Tat link share" : "Bat link share"}
               >
-                <Power size={16} className={shareLink.enabled ? "text-emerald-700" : "text-red-600"} />
+                <Power size={16} className={shareLink.enabled ? "text-emerald-600" : "text-rose-600"} />
                 {shareLink.enabled ? "Tat link" : "Bat link"}
               </button>
               <button
@@ -178,7 +178,7 @@ export function GamePage() {
             type="button"
             onClick={handleDeleteGame}
             disabled={deleteGame.isPending}
-            className="inline-flex h-10 items-center justify-center gap-2 rounded-md border border-red-200 bg-white px-3 text-sm font-medium text-red-600 transition hover:bg-red-50"
+            className="inline-flex h-10 items-center justify-center gap-2 rounded-md border border-rose-200 bg-white px-3 text-sm font-medium text-rose-600 transition hover:bg-rose-50"
           >
             <Trash2 size={16} />
             Xoa
