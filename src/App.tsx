@@ -3,7 +3,6 @@ import {
   Check,
   ChevronDown,
   Copy,
-  Heart,
   Link,
   LogOut,
   Plus,
@@ -426,7 +425,7 @@ function App() {
   return (
     <PageShell>
       <header className="border-b border-stone-200 bg-white">
-        <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+        <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
           <div className="min-w-0">
             <h1 className="text-xl font-semibold text-stone-950">Chia kèo</h1>
             <p className="text-sm text-stone-600">Tính tiền nhóm và sinh QR nhận tiền.</p>
@@ -445,8 +444,8 @@ function App() {
         </div>
       </header>
 
-      <main className="mx-auto grid w-full max-w-7xl gap-4 px-3 py-4 sm:px-5 sm:py-5 lg:grid-cols-[320px_minmax(0,1fr)]">
-        <aside className="space-y-4">
+      <main className="mx-auto grid w-full max-w-6xl gap-5 px-4 py-5 md:grid-cols-[260px_minmax(0,1fr)] xl:grid-cols-[280px_minmax(0,1fr)]">
+        <aside className="space-y-4 md:sticky md:top-5 md:self-start">
           <form onSubmit={handleCreateGame} className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm">
             <label className="text-sm font-medium text-stone-700" htmlFor="game-name">
               Tạo cuộc chơi
@@ -475,7 +474,7 @@ function App() {
               Cuộc chơi
             </div>
             {games.length > 0 ? (
-              <div className="flex snap-x gap-2 overflow-x-auto pb-1 lg:block lg:space-y-2 lg:overflow-visible lg:pb-0">
+              <div className="flex snap-x gap-2 overflow-x-auto pb-1 md:block md:space-y-2 md:overflow-visible md:pb-0">
                 {games.map((game) => (
                   <button
                     key={game.id}
@@ -484,7 +483,7 @@ function App() {
                       setSelectedGameId(game.id);
                       setCopiedShare(false);
                     }}
-                    className={`w-56 shrink-0 snap-start rounded-md border px-3 py-3 text-left transition lg:w-full ${
+                    className={`w-56 shrink-0 snap-start rounded-md border px-3 py-3 text-left transition md:w-full ${
                       selectedGame?.id === game.id
                         ? "border-emerald-600 bg-emerald-50"
                         : "border-stone-200 bg-white hover:bg-stone-50"
@@ -521,7 +520,7 @@ function App() {
                 </button>
               </div>
 
-              <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
+              <div className="grid gap-5 2xl:grid-cols-[minmax(0,1fr)_340px]">
                 <div className="space-y-5">
                   <ParticipantPanel
                     game={selectedGame}
@@ -788,14 +787,14 @@ function ExpensePanel({
 
       <div className="mb-4">
         <p className="mb-2 text-sm font-medium text-stone-700">Gợi ý nhanh</p>
-        <div className="flex snap-x gap-2 overflow-x-auto pb-1">
+        <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
           {EXPENSE_SUGGESTIONS.map((suggestion) => (
             <button
               key={`${suggestion.categoryId}-${suggestion.title}`}
               type="button"
               onClick={() => handleApplySuggestion(suggestion)}
               disabled={game.participants.length === 0}
-              className="min-w-32 shrink-0 snap-start rounded-md border border-stone-200 bg-stone-50 px-3 py-2 text-left transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-50"
+              className="min-w-0 rounded-md border border-stone-200 bg-stone-50 px-3 py-2 text-left transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-50"
             >
               <span className="block truncate text-sm font-semibold text-stone-950">{suggestion.title}</span>
               <span className="mt-1 block text-xs text-stone-500">
@@ -1043,14 +1042,14 @@ function CategorySummaryCard({ summaries }: { summaries: ExpenseCategorySummary[
 
 function PatternSummaryCard({ game, totalExpense }: { game: Game; totalExpense: number }) {
   return (
-    <section className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm">
+    <section className="overflow-hidden rounded-lg border border-stone-200 bg-white shadow-sm">
       <div className="pastel-summary-pattern" aria-hidden="true" />
-      <div className="mt-5 flex items-center justify-between gap-3">
-        <div className="inline-flex h-14 min-w-0 items-center gap-3 rounded-2xl border border-stone-200 bg-white px-4 shadow-sm">
-          <Heart size={24} className="shrink-0 text-stone-950" />
-          <span className="truncate text-xl font-semibold text-stone-950">{formatMoney(totalExpense)}</span>
+      <div className="p-4">
+        <p className="text-xs font-semibold uppercase text-stone-500">Tổng đã chi</p>
+        <div className="mt-2 flex items-end justify-between gap-3">
+          <span className="min-w-0 truncate text-2xl font-semibold text-stone-950">{formatMoney(totalExpense)}</span>
+          <span className="shrink-0 text-sm font-medium text-stone-500">{getGameAgeLabel(game.createdAt)}</span>
         </div>
-        <span className="shrink-0 text-base font-medium text-stone-500">{getGameAgeLabel(game.createdAt)}</span>
       </div>
     </section>
   );
