@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { parseGames } from "../../core/domain/schema";
-import type { Game } from "../../core/domain/types";
+import { normalizeExpenseCategoryId } from "../../core/domain/expense-categories";
+import type { ExpenseTemplate, Game } from "../../core/domain/types";
 import type { LocalLoginResult } from "../../core/ports/session-repository";
 
 const STORAGE_KEY = "chia-keo-games";
@@ -8,6 +9,7 @@ const SESSION_KEY = "chia-keo-session";
 const SESSION_TOKEN_KEY = "chia-keo-session-token";
 const USERS_KEY = "chia-keo-users";
 const PROFILE_NAMES_KEY = "chia-keo-profile-names";
+const EXPENSE_TEMPLATES_KEY = "chia-keo-expense-templates";
 
 const LocalUserSchema = z.object({
   username: z.string(),
@@ -163,4 +165,41 @@ export function saveProfileName(username: string, displayName: string) {
     ...loadProfileNames(),
     [normalizeUsername(username)]: cleanName,
   });
+}
+
+export function loadExpenseTemplates(): ExpenseTemplate[] {
+  const raw = localStorage.getItem(EXPENSE_TEMPLATES_KEY);
+  if (!raw) return [];
+
+  try {
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+
+    return parsed.flatMap((item) => {
+      if (!item || typeof item !== "object") return [];
+
+      const template = item as Partial<ExpenseTemplate>;
+      const title = typeof template.title === "string" ? template.title.trim() : "";
+      const amount = Number(template.amount);
+      const id = typeof template.id === "string" ? template.id.trim() : "";
+      const createdAt = typeof template.createdAt === "string" ? template.createdAt : new Date().toISOString();
+      if (!id || !title || !Number.isFinite(amount) || amount <= 0) return [];
+
+      return [
+        {
+          id,
+          title,
+          amount: Math.round(amount),
+          categoryId: normalizeExpenseCategoryId(template.categoryId),
+          createdAt,
+        },
+      ];
+    });
+  } catch {
+    return [];
+  }
+}
+
+export function saveExpenseTemplates(templates: ExpenseTemplate[]) {
+  localStorage.setItem(EXPENSE_TEMPLATES_KEY, JSON.stringify(templates));
 }

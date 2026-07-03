@@ -1,5 +1,7 @@
 import { parseGame, parseGames } from "../../core/domain/schema";
-import type { Game } from "../../core/domain/types";
+import { parseAiExpenseDraft } from "../../core/application/ai-expense";
+import type { AiExpenseDraft } from "../../core/application/ai-expense";
+import type { Game, Participant, SharePermission } from "../../core/domain/types";
 
 export type ApiSession = {
   token: string;
@@ -72,12 +74,12 @@ export async function saveRemoteGame(token: string, game: Game) {
   return parseGame(data.game) || game;
 }
 
-export async function createShareSnapshot(token: string, game: Game) {
-  const data = await requestJson<{ shareToken: string; url: string }>(
+export async function createShareSnapshot(token: string, game: Game, permission: SharePermission = "view") {
+  const data = await requestJson<{ shareToken: string; url: string; permission: SharePermission }>(
     "/api/share",
     {
       method: "POST",
-      body: JSON.stringify({ game }),
+      body: JSON.stringify({ game, permission }),
     },
     token,
   );
@@ -86,7 +88,74 @@ export async function createShareSnapshot(token: string, game: Game) {
 }
 
 export async function fetchShareSnapshot(shareToken: string) {
-  const data = await requestJson<{ game: unknown }>(`/api/share/${encodeURIComponent(shareToken)}`);
+  const data = await requestJson<{ game: unknown; permission?: SharePermission }>(
+    `/api/share/${encodeURIComponent(shareToken)}`,
+  );
 
-  return parseGame(data.game);
+  const game = parseGame(data.game);
+
+  return game
+    ? {
+        game,
+        permission: data.permission === "edit" ? "edit" : "view",
+      }
+    : null;
+}
+
+export async function saveShareSnapshot(shareToken: string, game: Game) {
+  const data = await requestJson<{ game: unknown; permission?: SharePermission }>(
+    `/api/share/${encodeURIComponent(shareToken)}`,
+    {
+      method: "PUT",
+      body: JSON.stringify({ game }),
+    },
+  );
+  const savedGame = parseGame(data.game);
+
+  return savedGame
+    ? {
+        game: savedGame,
+        permission: data.permission === "edit" ? "edit" : "view",
+      }
+    : null;
+}
+
+export async function suggestExpenseWithAi(
+  token: string,
+  payload: {
+    text: string;
+    participants: Participant[];
+  },
+): Promise<AiExpenseDraft> {
+  const data = await requestJson<{ expense: unknown }>(
+    "/api/ai/expense",
+    {
+      method: "POST",
+      body: JSON.stringify(payload),
+    },
+    token,
+  );
+
+  return parseAiExpenseDraft(data.expense);
+}
+
+export async function scanReceiptWithAi(
+  token: string,
+  payload: {
+    image: {
+      mimeType: string;
+      data: string;
+    };
+  },
+): Promise<AiExpenseDraft> {
+  const data = await requestJson<{ expense: unknown }>(
+    "/api/ai/receipt",
+    {
+      method: "POST",
+      body: JSON.stringify(payload),
+    },
+    token,
+  );
+
+  return parseAiExpenseDraft(data.expense);
 }

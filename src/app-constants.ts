@@ -18,6 +18,7 @@ export type ParticipantForm = Pick<Participant, "name" | "avatarSeed">;
 export type ExpenseForm = {
   title: string;
   amount: string;
+  createdAt: string;
   categoryId: ExpenseCategoryId;
   payerId: string;
   splitParticipantIds: string[];
@@ -51,12 +52,15 @@ export const emptyPaymentProfile: PaymentProfile = {
 export const emptyExpenseForm: ExpenseForm = {
   title: "",
   amount: "",
+  createdAt: "",
   categoryId: DEFAULT_EXPENSE_CATEGORY_ID,
   payerId: "",
   splitParticipantIds: [],
 };
 
 export const MILLISECONDS_PER_DAY = 86_400_000;
+export const MILLISECONDS_PER_MINUTE = 60_000;
+export const DATETIME_LOCAL_INPUT_LENGTH = 16;
 export const DAYS_PER_MONTH = 30;
 export const AMOUNT_PLACEHOLDER_VALUE = 500_000;
 export const SAVE_TOAST_DELAY_MS = 450;

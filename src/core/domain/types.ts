@@ -28,6 +28,14 @@ export type Expense = {
   createdAt: string;
 };
 
+export type ExpenseTemplate = {
+  id: string;
+  title: string;
+  amount: number;
+  categoryId: ExpenseCategoryId;
+  createdAt: string;
+};
+
 export type Receipt = {
   id: string;
   participantId: string;
@@ -58,4 +66,11 @@ export type Settlement = {
   from: Participant;
   to: Participant;
   amount: number;
+};
+
+export type SharePermission = "view" | "edit";
+
+export type ShareSnapshot = {
+  game: Game;
+  permission: SharePermission;
 };

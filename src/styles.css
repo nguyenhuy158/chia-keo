@@ -1,21 +1,21 @@
 @import "tailwindcss";
 
 :root {
-  --tone-magenta: #dc5fba;
-  --tone-magenta-dark: #b83f92;
-  --tone-rose: #e9a0b8;
-  --tone-blush: #f4b9bb;
-  --tone-cream: #fee8b7;
-  --tone-cream-soft: #fff7df;
-  --tone-page: #fbf5f8;
-  --tone-surface: #fffdfd;
-  --tone-surface-muted: #fff7fb;
-  --tone-border: #edd7e0;
-  --tone-border-strong: #df8db3;
-  --tone-ink: #3a2430;
-  --tone-muted: #7d6270;
-  --tone-danger: #b83272;
-  --tone-shadow: 0 14px 34px rgb(58 36 48 / 7%);
+  --tone-magenta: #2563eb;
+  --tone-magenta-dark: #1d4ed8;
+  --tone-rose: #059669;
+  --tone-blush: #f59e0b;
+  --tone-cream: #fef3c7;
+  --tone-cream-soft: #eff6ff;
+  --tone-page: #f3f4f6;
+  --tone-surface: #ffffff;
+  --tone-surface-muted: #f8fafc;
+  --tone-border: #e5e7eb;
+  --tone-border-strong: #3b82f6;
+  --tone-ink: #111827;
+  --tone-muted: #6b7280;
+  --tone-danger: #dc2626;
+  --tone-shadow: 0 8px 22px rgb(15 23 42 / 6%);
 
   color: var(--tone-ink);
   background: var(--tone-page);
@@ -53,9 +53,7 @@ body {
     env(safe-area-inset-right)
     env(safe-area-inset-bottom)
     env(safe-area-inset-left);
-  background:
-    radial-gradient(circle at top left, rgb(220 95 186 / 8%), transparent 28rem),
-    linear-gradient(180deg, #fffafb 0%, var(--tone-page) 100%);
+  background: linear-gradient(180deg, #ffffff 0%, var(--tone-page) 100%);
   color: var(--tone-ink);
   overflow: hidden;
   overscroll-behavior-x: none;
@@ -110,15 +108,15 @@ body {
   position: relative;
   z-index: 40;
   box-shadow:
-    0 -12px 30px rgb(58 36 48 / 8%),
-    0 -2px 8px rgb(58 36 48 / 6%);
+    0 -10px 28px rgb(15 23 42 / 8%),
+    0 -2px 8px rgb(15 23 42 / 5%);
 }
 
 .workspace-fab {
   background: var(--tone-magenta);
   box-shadow:
-    0 16px 28px rgb(184 63 146 / 22%),
-    0 4px 10px rgb(58 36 48 / 12%);
+    0 14px 24px rgb(37 99 235 / 22%),
+    0 4px 10px rgb(15 23 42 / 12%);
 }
 
 .workspace-fab:active {
@@ -216,8 +214,8 @@ textarea {
   border: 1px solid var(--tone-border);
   background: var(--tone-surface);
   box-shadow:
-    0 18px 45px rgb(58 36 48 / 12%),
-    0 4px 12px rgb(58 36 48 / 8%);
+    0 18px 45px rgb(15 23 42 / 12%),
+    0 4px 12px rgb(15 23 42 / 8%);
 }
 
 .select-viewport {
@@ -273,8 +271,8 @@ textarea {
   border: 1px solid var(--tone-border);
   background: var(--tone-surface);
   box-shadow:
-    0 18px 45px rgb(58 36 48 / 12%),
-    0 4px 12px rgb(58 36 48 / 8%);
+    0 18px 45px rgb(15 23 42 / 12%),
+    0 4px 12px rgb(15 23 42 / 8%);
 }
 
 .searchable-select-search-wrap {
@@ -407,105 +405,4 @@ textarea {
 ::selection {
   background: var(--tone-cream);
   color: var(--tone-ink);
-}
-
-.bg-stone-100 {
-  background-color: var(--tone-page) !important;
-}
-
-.bg-stone-50 {
-  background-color: var(--tone-surface-muted) !important;
-}
-
-.bg-white {
-  background-color: var(--tone-surface) !important;
-}
-
-.bg-stone-950,
-.bg-emerald-700,
-.bg-blue-700 {
-  background-color: var(--tone-magenta) !important;
-}
-
-.hover\:bg-stone-800:hover,
-.hover\:bg-emerald-800:hover,
-.hover\:bg-blue-800:hover {
-  background-color: var(--tone-magenta-dark) !important;
-}
-
-.hover\:bg-stone-50:hover {
-  background-color: var(--tone-surface-muted) !important;
-}
-
-.hover\:bg-white:hover {
-  background-color: var(--tone-surface) !important;
-}
-
-.hover\:bg-red-50:hover {
-  background-color: rgb(248 184 184 / 45%) !important;
-}
-
-.bg-emerald-50,
-.bg-blue-50 {
-  background-color: var(--tone-cream-soft) !important;
-}
-
-.bg-red-50 {
-  background-color: rgb(248 184 184 / 38%) !important;
-}
-
-.bg-stone-200,
-.disabled\:bg-stone-300:disabled {
-  background-color: var(--tone-border) !important;
-}
-
-.border-stone-200,
-.border-stone-300 {
-  border-color: var(--tone-border) !important;
-}
-
-.border-emerald-600,
-.border-blue-600 {
-  border-color: var(--tone-border-strong) !important;
-}
-
-.border-dashed {
-  border-color: var(--tone-border-strong) !important;
-}
-
-.text-stone-950,
-.text-stone-900,
-.text-stone-800 {
-  color: var(--tone-ink) !important;
-}
-
-.text-stone-700,
-.text-stone-600,
-.text-stone-500,
-.text-stone-400 {
-  color: var(--tone-muted) !important;
-}
-
-.text-emerald-800,
-.text-emerald-700,
-.text-blue-700,
-.text-blue-600 {
-  color: var(--tone-magenta-dark) !important;
-}
-
-.text-red-700,
-.text-red-600 {
-  color: var(--tone-danger) !important;
-}
-
-.shadow-sm {
-  box-shadow: var(--tone-shadow) !important;
-}
-
-.focus\:border-emerald-600:focus {
-  border-color: var(--tone-border-strong) !important;
-}
-
-.focus\:ring-emerald-100:focus {
-  --tw-ring-color: rgb(220 95 186 / 14%) !important;
 }

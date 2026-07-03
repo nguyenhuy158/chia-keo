@@ -8,6 +8,7 @@ import {
   Copy,
   CreditCard,
   Equal,
+  FileDown,
   Landmark,
   Link,
   LogOut,
@@ -15,9 +16,13 @@ import {
   Plus,
   QrCode,
   ReceiptText,
+  RotateCcw,
+  Save,
+  Sparkles,
   Settings,
   Tags,
   Trash2,
+  Upload,
   UserRoundCheck,
   Users,
   WalletCards,
@@ -39,7 +44,10 @@ import {
   fetchShareSnapshot,
   loginOrCreateRemoteUser,
   logoutRemoteUser,
+  saveShareSnapshot,
   saveRemoteGame,
+  scanReceiptWithAi,
+  suggestExpenseWithAi,
 } from "./adapters/browser/remote-api";
 import {
   VIETQR_BANK_OPTIONS,
@@ -49,6 +57,8 @@ import {
   resolveVietQrBankId,
 } from "./adapters/browser/vietqr";
 import { decodeShareGame, encodeShareGame } from "./core/application/share-game";
+import { createGameReportText } from "./core/application/report";
+import type { AiExpenseDraft } from "./core/application/ai-expense";
 import {
   EXPENSE_CATEGORIES,
   getExpenseCategoryLabel,
@@ -57,13 +67,25 @@ import {
 import { formatMoney, formatMoneyInput, parseMoney } from "./core/domain/money";
 import { toParticipantTitleCase } from "./core/domain/participant-name";
 import { calculateBalances, calculateReceiptTotals, getRemainingPayable } from "./core/domain/split";
-import type { Expense, ExpenseCategoryId, Game, Participant, PaymentProfile, Receipt } from "./core/domain/types";
+import { calculateGameStatistics } from "./core/domain/statistics";
+import type {
+  Expense,
+  ExpenseCategoryId,
+  ExpenseTemplate,
+  Game,
+  Participant,
+  PaymentProfile,
+  Receipt,
+  SharePermission,
+} from "./core/domain/types";
 import {
   clearSession,
+  loadExpenseTemplates,
   loadGames,
   loadProfileName,
   loadSession,
   loadSessionToken,
+  saveExpenseTemplates,
   saveGames,
   saveProfileName,
   saveSession,
@@ -72,12 +94,14 @@ import {
   AMOUNT_PLACEHOLDER_VALUE,
   CREATE_REMOTE_GAME_TOAST_ID,
   DAYS_PER_MONTH,
+  DATETIME_LOCAL_INPUT_LENGTH,
   DEFAULT_TOAST_DURATION_MS,
   DEFAULT_WORKSPACE_TAB,
   EXPENSE_CATEGORY_ICONS,
   EXPENSE_SUGGESTIONS,
   GOOGLE_AUTH_URL,
   MILLISECONDS_PER_DAY,
+  MILLISECONDS_PER_MINUTE,
   MOBILE_VISIBLE_BALANCE_LIMIT,
   MOBILE_VISIBLE_EXPENSE_LIMIT,
   MOBILE_VISIBLE_PARTICIPANT_LIMIT,
@@ -96,6 +120,7 @@ import {
   type ParticipantForm,
   type WorkspaceTabId,
 } from "./app-constants";
+import { APP_TEXT } from "./app-messages";
 
 type ExpenseCategorySummary = {
   categoryId: ExpenseCategoryId;
@@ -111,7 +136,27 @@ type SelectOption = {
 
 type GameUpdateOptions = {
   onSaved?: () => void;
+  historyLabel?: string;
+  skipHistory?: boolean;
 };
+
+type GameHistoryEntry = {
+  id: string;
+  gameId: string;
+  label: string;
+  createdAt: string;
+  previousGame: Game;
+};
+
+const MAX_GAME_HISTORY_ENTRIES = 20;
+const REPORT_FILE_EXTENSION = ".txt";
+const REPORT_MIME_TYPE = "text/plain;charset=utf-8";
+const RECEIPT_IMAGE_ACCEPT = "image/png,image/jpeg,image/webp";
+
+const SHARE_PERMISSION_OPTIONS: SelectOption[] = [
+  { value: "view", label: "Chỉ xem" },
+  { value: "edit", label: "Cho nhập chi" },
+];
 
 function showSuccessToast(message: string, description?: string) {
   toast.success(message, { description, duration: DEFAULT_TOAST_DURATION_MS });
@@ -154,13 +199,50 @@ function createGame(name: string): Game {
 
 function getGameAgeLabel(createdAt: string) {
   const createdTime = Date.parse(createdAt);
-  if (Number.isNaN(createdTime)) return "Mới tạo";
+  if (Number.isNaN(createdTime)) return APP_TEXT.fallback.newGameAge;
 
   const elapsedDays = Math.max(0, Math.floor((Date.now() - createdTime) / MILLISECONDS_PER_DAY));
-  if (elapsedDays === 0) return "Hôm nay";
-  if (elapsedDays < DAYS_PER_MONTH) return `${elapsedDays} ngày`;
+  if (elapsedDays === 0) return APP_TEXT.fallback.today;
+  if (elapsedDays < DAYS_PER_MONTH) return APP_TEXT.fallback.dayAge(elapsedDays);
 
-  return `${Math.floor(elapsedDays / DAYS_PER_MONTH)} tháng`;
+  return APP_TEXT.fallback.monthAge(Math.floor(elapsedDays / DAYS_PER_MONTH));
+}
+
+function toDateTimeLocalInputValue(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+
+  return new Date(date.getTime() - date.getTimezoneOffset() * MILLISECONDS_PER_MINUTE)
+    .toISOString()
+    .slice(0, DATETIME_LOCAL_INPUT_LENGTH);
+}
+
+function createDateTimeLocalInputValue() {
+  return toDateTimeLocalInputValue(new Date().toISOString());
+}
+
+function parseDateTimeLocalInputValue(value: string) {
+  const date = new Date(value);
+
+  return Number.isNaN(date.getTime()) ? "" : date.toISOString();
+}
+
+function formatExpenseDateTime(createdAt: string) {
+  const date = new Date(createdAt);
+  if (Number.isNaN(date.getTime())) return APP_TEXT.fallback.unknown;
+
+  return date.toLocaleString("vi-VN", {
+    dateStyle: "short",
+    timeStyle: "short",
+  });
+}
+
+function createNewExpenseForm(patch: Partial<ExpenseForm> = {}): ExpenseForm {
+  return {
+    ...emptyExpenseForm,
+    createdAt: createDateTimeLocalInputValue(),
+    ...patch,
+  };
 }
 
 function summarizeExpenseCategories(expenses: Expense[]): ExpenseCategorySummary[] {
@@ -186,13 +268,14 @@ function summarizeExpenseCategories(expenses: Expense[]): ExpenseCategorySummary
 }
 
 function getParticipantName(game: Game | undefined, participantId: string) {
-  return game?.participants.find((participant) => participant.id === participantId)?.name || "Không rõ";
+  return game?.participants.find((participant) => participant.id === participantId)?.name || APP_TEXT.fallback.unknown;
 }
 
 function createExpenseForm(expense: Expense): ExpenseForm {
   return {
     title: expense.title,
     amount: formatMoney(expense.amount),
+    createdAt: toDateTimeLocalInputValue(expense.createdAt),
     categoryId: normalizeExpenseCategoryId(expense.categoryId),
     payerId: expense.payerId,
     splitParticipantIds: expense.splitParticipantIds,
@@ -205,6 +288,66 @@ function getParticipantAvatarSeed(participant: Participant) {
 
 function getExpenseCategoryIcon(categoryId?: string) {
   return EXPENSE_CATEGORY_ICONS[normalizeExpenseCategoryId(categoryId)];
+}
+
+function normalizeSearchText(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+}
+
+function findParticipantByName(participants: Participant[], name: string) {
+  const normalizedName = normalizeSearchText(name);
+  if (!normalizedName) return null;
+
+  return (
+    participants.find((participant) => normalizeSearchText(participant.name) === normalizedName) ||
+    participants.find((participant) => normalizeSearchText(participant.name).includes(normalizedName)) ||
+    null
+  );
+}
+
+function readFileAsBase64(file: File) {
+  return new Promise<{ mimeType: string; data: string }>((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      const result = String(reader.result || "");
+      const [, data = ""] = result.split(",");
+
+      resolve({ mimeType: file.type, data });
+    };
+    reader.onerror = () => reject(new Error(APP_TEXT.error.fileReadFailed));
+    reader.readAsDataURL(file);
+  });
+}
+
+function buildShareDataUrl(origin: string, game: Game, permission: SharePermission) {
+  const params = new URLSearchParams({ data: encodeShareGame(game) });
+  if (permission === "edit") params.set("mode", permission);
+
+  return `${origin}/share/${game.shareToken}?${params.toString()}`;
+}
+
+function createReportFileName(game: Game) {
+  const slug = normalizeSearchText(game.name)
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+
+  return `${slug || "chia-keo"}${REPORT_FILE_EXTENSION}`;
+}
+
+function downloadTextFile(fileName: string, content: string) {
+  const blob = new Blob([content], { type: REPORT_MIME_TYPE });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+
+  anchor.href = url;
+  anchor.download = fileName;
+  anchor.click();
+  URL.revokeObjectURL(url);
 }
 
 function ExpenseCategoryIcon({
@@ -240,12 +383,19 @@ function App() {
   const [newGameName, setNewGameName] = useState("");
   const [selectedGameId, setSelectedGameId] = useState(() => loadGames()[0]?.id || "");
   const [participantForm, setParticipantForm] = useState<ParticipantForm>(emptyParticipantForm);
-  const [expenseForm, setExpenseForm] = useState<ExpenseForm>(emptyExpenseForm);
+  const [expenseForm, setExpenseForm] = useState<ExpenseForm>(() => createNewExpenseForm());
   const [editingExpenseId, setEditingExpenseId] = useState("");
   const [activeWorkspaceTab, setActiveWorkspaceTab] = useState<WorkspaceTabId>(DEFAULT_WORKSPACE_TAB);
   const [copiedShare, setCopiedShare] = useState(false);
+  const [sharePermission, setSharePermission] = useState<SharePermission>("view");
   const [remoteSharedGame, setRemoteSharedGame] = useState<Game | null>(null);
+  const [remoteSharePermission, setRemoteSharePermission] = useState<SharePermission>("view");
   const [isLoadingShare, setIsLoadingShare] = useState(false);
+  const [expenseTemplates, setExpenseTemplates] = useState<ExpenseTemplate[]>(() => loadExpenseTemplates());
+  const [aiExpenseText, setAiExpenseText] = useState("");
+  const [isAiExpenseLoading, setIsAiExpenseLoading] = useState(false);
+  const [isAiReceiptLoading, setIsAiReceiptLoading] = useState(false);
+  const [gameHistory, setGameHistory] = useState<GameHistoryEntry[]>([]);
   const { shareToken = "" } = useParams();
   const [searchParams] = useSearchParams();
 
@@ -255,6 +405,9 @@ function App() {
     games.find((game) => game.shareToken === shareToken) ||
     games[0];
   const accountDisplayName = profileDisplayName || session;
+  const selectedGameHistory = selectedGame
+    ? gameHistory.filter((entry) => entry.gameId === selectedGame.id)
+    : [];
 
   useEffect(() => {
     if (!sessionToken || isShareMode) return;
@@ -270,9 +423,9 @@ function App() {
         setGames(remoteGames);
         saveGames(remoteGames);
         setSelectedGameId((current) => current || remoteGames[0]?.id || "");
-        toast.success("Đã đồng bộ dữ liệu", {
+        toast.success(APP_TEXT.toast.syncGamesSuccess, {
           id: REMOTE_SYNC_TOAST_ID,
-          description: `${remoteGames.length} cuộc chơi đã được tải.`,
+          description: APP_TEXT.toast.syncGamesDescription(remoteGames.length),
           duration: 1600,
         });
       })
@@ -298,23 +451,26 @@ function App() {
     const decodedGame = shareData ? decodeShareGame(shareData) : null;
     if (decodedGame) {
       setRemoteSharedGame(decodedGame);
+      setRemoteSharePermission(searchParams.get("mode") === "edit" ? "edit" : "view");
       setIsLoadingShare(false);
       return;
     }
 
     let ignore = false;
     setIsLoadingShare(true);
+    setRemoteSharePermission("view");
     fetchShareSnapshot(shareToken)
-      .then((game) => {
+      .then((snapshot) => {
         if (!ignore) {
-          setRemoteSharedGame(game);
-          if (game) showSuccessToast("Đã tải link chia sẻ");
+          setRemoteSharedGame(snapshot?.game || null);
+          setRemoteSharePermission(snapshot?.permission || "view");
+          if (snapshot?.game) showSuccessToast(APP_TEXT.toast.shareLoaded);
         }
       })
       .catch(() => {
         if (!ignore) {
           setRemoteSharedGame(null);
-          showErrorToast("Không tải được link chia sẻ");
+          showErrorToast(APP_TEXT.toast.shareLoadFailed);
         }
       })
       .finally(() => {
@@ -339,7 +495,7 @@ function App() {
       setDataError("");
       return true;
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Không lưu được dữ liệu.";
+      const message = error instanceof Error ? error.message : APP_TEXT.toast.remoteSaveFailed;
 
       setDataError(message);
       toast.error(message, { id: REMOTE_SAVE_ERROR_TOAST_ID, duration: 2600 });
@@ -351,10 +507,37 @@ function App() {
     if (!selectedGame) return;
 
     const nextGame = updater(selectedGame);
+    if (!options?.skipHistory && nextGame !== selectedGame) {
+      setGameHistory((current) =>
+        [
+          {
+            id: createId("history"),
+            gameId: selectedGame.id,
+            label: options?.historyLabel || "Cập nhật cuộc chơi",
+            createdAt: new Date().toISOString(),
+            previousGame: selectedGame,
+          },
+          ...current,
+        ].slice(0, MAX_GAME_HISTORY_ENTRIES),
+      );
+    }
     persistGames(games.map((game) => (game.id === selectedGame.id ? nextGame : game)));
     void persistRemoteGame(nextGame).then((saved) => {
       if (saved) options?.onSaved?.();
     });
+  }
+
+  function handleUndoLastChange() {
+    const historyEntry = selectedGameHistory[0];
+    if (!historyEntry || !selectedGame) return;
+
+    const nextGames = games.map((game) => (game.id === selectedGame.id ? historyEntry.previousGame : game));
+    persistGames(nextGames);
+    setGameHistory((current) => current.filter((entry) => entry.id !== historyEntry.id));
+    setEditingExpenseId("");
+    setExpenseForm(createNewExpenseForm());
+    void persistRemoteGame(historyEntry.previousGame);
+    showInfoToast("Đã hoàn tác", historyEntry.label);
   }
 
   async function handleLogin(event: FormEvent<HTMLFormElement>) {
@@ -377,9 +560,12 @@ function App() {
       setProfileNameDraft(displayName);
       setAuthError("");
       setLoginPassword("");
-      showSuccessToast("Đăng nhập thành công", `Xin chào ${displayName || loggedInUsername}.`);
+      showSuccessToast(
+        APP_TEXT.toast.loginSuccess,
+        APP_TEXT.toast.loginGreeting(displayName || loggedInUsername),
+      );
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Đăng nhập thất bại.";
+      const message = error instanceof Error ? error.message : APP_TEXT.toast.loginFailed;
 
       setAuthError(message);
       showErrorToast(message);
@@ -399,13 +585,15 @@ function App() {
     setProfileDisplayName("");
     setProfileNameDraft("");
     setProfileSettingsOpen(false);
-    showInfoToast("Đã đăng xuất");
+    showInfoToast(APP_TEXT.toast.loggedOut);
   }
 
   function handleOpenProfileSettings() {
     setProfileNameDraft(profileDisplayName || session);
     setProfileSettingsOpen((current) => !current);
-    showInfoToast(profileSettingsOpen ? "Đã đóng cài đặt tài khoản" : "Đã mở cài đặt tài khoản");
+    showInfoToast(
+      profileSettingsOpen ? APP_TEXT.toast.profileSettingsClosed : APP_TEXT.toast.profileSettingsOpened,
+    );
   }
 
   function handleSaveProfile(event: FormEvent<HTMLFormElement>) {
@@ -416,19 +604,19 @@ function App() {
     setProfileDisplayName(displayName);
     setProfileNameDraft(displayName);
     setProfileSettingsOpen(false);
-    toast.success("Đã lưu tên hiển thị", { duration: 1600 });
+    toast.success(APP_TEXT.toast.profileSaved, { duration: 1600 });
   }
 
   function handleGoogleLogin() {
     if (!GOOGLE_AUTH_URL) {
-      const message = "Google login chưa được cấu hình.";
+      const message = APP_TEXT.toast.googleNotConfigured;
 
       setAuthError(message);
       showErrorToast(message);
       return;
     }
 
-    showInfoToast("Đang chuyển sang Google");
+    showInfoToast(APP_TEXT.toast.googleRedirect);
     window.location.assign(GOOGLE_AUTH_URL);
   }
 
@@ -436,7 +624,7 @@ function App() {
     event.preventDefault();
     const name = newGameName.trim();
     if (!name) {
-      showErrorToast("Nhập tên cuộc chơi trước");
+      showErrorToast(APP_TEXT.toast.gameNameRequired);
       return;
     }
 
@@ -444,15 +632,15 @@ function App() {
     persistGames([game, ...games]);
     setSelectedGameId(game.id);
     setNewGameName("");
-    setExpenseForm(emptyExpenseForm);
+    setExpenseForm(createNewExpenseForm());
     setEditingExpenseId("");
     setActiveWorkspaceTab(DEFAULT_WORKSPACE_TAB);
-    showSuccessToast("Đã tạo cuộc chơi", game.name);
+    showSuccessToast(APP_TEXT.toast.gameCreated, game.name);
     if (sessionToken) {
       createRemoteGame(sessionToken, game)
         .then(() => {
           setDataError("");
-          toast.success("Đã đồng bộ cuộc chơi", { id: CREATE_REMOTE_GAME_TOAST_ID, duration: 1600 });
+          toast.success(APP_TEXT.toast.gameSynced, { id: CREATE_REMOTE_GAME_TOAST_ID, duration: 1600 });
         })
         .catch((error: Error) => {
           setDataError(error.message);
@@ -467,20 +655,20 @@ function App() {
     setSelectedGameId(gameId);
     setCopiedShare(false);
     setEditingExpenseId("");
-    setExpenseForm(emptyExpenseForm);
-    if (nextGame) showInfoToast("Đã chọn cuộc chơi", nextGame.name);
+    setExpenseForm(createNewExpenseForm());
+    if (nextGame) showInfoToast(APP_TEXT.toast.gameSelected, nextGame.name);
   }
 
   function handleAddParticipant(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const name = toParticipantTitleCase(participantForm.name);
     if (!selectedGame) {
-      showErrorToast("Chưa chọn cuộc chơi");
+      showErrorToast(APP_TEXT.toast.gameRequired);
       return;
     }
 
     if (!name) {
-      showErrorToast("Nhập tên người tham gia trước");
+      showErrorToast(APP_TEXT.toast.participantNameRequired);
       return;
     }
 
@@ -500,12 +688,13 @@ function App() {
       payerId: current.payerId || participant.id,
       splitParticipantIds: [...current.splitParticipantIds, participant.id],
     }));
-    showSuccessToast("Đã thêm người tham gia", participant.name);
+    showSuccessToast(APP_TEXT.toast.participantAdded, participant.name);
   }
 
   function handleRemoveParticipant(participantId: string) {
     const participantName =
-      selectedGame?.participants.find((participant) => participant.id === participantId)?.name || "Người tham gia";
+      selectedGame?.participants.find((participant) => participant.id === participantId)?.name ||
+      APP_TEXT.fallback.participant;
 
     updateSelectedGame((game) => ({
       ...game,
@@ -523,16 +712,17 @@ function App() {
       payerId: current.payerId === participantId ? "" : current.payerId,
       splitParticipantIds: current.splitParticipantIds.filter((id) => id !== participantId),
     }));
-    showInfoToast("Đã xóa người tham gia", participantName);
+    showInfoToast(APP_TEXT.toast.participantRemoved, participantName);
   }
 
   function handleToggleSplit(participantId: string) {
     const participantName =
-      selectedGame?.participants.find((participant) => participant.id === participantId)?.name || "Người này";
+      selectedGame?.participants.find((participant) => participant.id === participantId)?.name ||
+      APP_TEXT.fallback.person;
     const isSelected = expenseForm.splitParticipantIds.includes(participantId);
 
     showInfoToast(
-      isSelected ? "Đã bỏ khỏi danh sách chia" : "Đã thêm vào danh sách chia",
+      isSelected ? APP_TEXT.toast.splitRemoved : APP_TEXT.toast.splitAdded,
       participantName,
     );
 
@@ -551,7 +741,7 @@ function App() {
   function handleAddExpense(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!selectedGame) {
-      showErrorToast("Chưa chọn cuộc chơi");
+      showErrorToast(APP_TEXT.toast.gameRequired);
       return;
     }
 
@@ -560,31 +750,37 @@ function App() {
     const splitParticipantIds = expenseForm.splitParticipantIds.filter((id) => participantIds.has(id));
     const amount = parseMoney(expenseForm.amount);
     const categoryId = normalizeExpenseCategoryId(expenseForm.categoryId);
+    const expenseCreatedAt = parseDateTimeLocalInputValue(expenseForm.createdAt);
 
     if (!payerId) {
-      showErrorToast("Chọn người trả trước");
+      showErrorToast(APP_TEXT.toast.payerRequired);
       return;
     }
 
     if (amount <= 0) {
-      showErrorToast("Nhập số tiền lớn hơn 0");
+      showErrorToast(APP_TEXT.toast.amountRequired);
+      return;
+    }
+
+    if (!expenseCreatedAt) {
+      showErrorToast(APP_TEXT.toast.expenseTimeRequired);
       return;
     }
 
     if (splitParticipantIds.length === 0) {
-      showErrorToast("Chọn ít nhất một người để chia");
+      showErrorToast(APP_TEXT.toast.splitRequired);
       return;
     }
 
     const existingExpense = selectedGame.expenses.find((expense) => expense.id === editingExpenseId);
     const expense: Expense = {
       id: existingExpense?.id || createId("expense"),
-      title: expenseForm.title.trim() || "Khoản chi",
+      title: expenseForm.title.trim() || APP_TEXT.fallback.expense,
       amount,
       categoryId,
       payerId,
       splitParticipantIds,
-      createdAt: existingExpense?.createdAt || new Date().toISOString(),
+      createdAt: expenseCreatedAt,
     };
 
     updateSelectedGame((game) => ({
@@ -593,14 +789,15 @@ function App() {
         ? game.expenses.map((item) => (item.id === existingExpense.id ? expense : item))
         : [expense, ...game.expenses],
     }));
-    setExpenseForm({
-      ...emptyExpenseForm,
-      payerId,
-      splitParticipantIds,
-    });
+    setExpenseForm(
+      createNewExpenseForm({
+        payerId,
+        splitParticipantIds,
+      }),
+    );
     setEditingExpenseId("");
     showSuccessToast(
-      existingExpense ? "Đã cập nhật khoản chi" : "Đã thêm khoản chi",
+      existingExpense ? APP_TEXT.toast.expenseUpdated : APP_TEXT.toast.expenseAdded,
       `${expense.title} - ${formatMoney(expense.amount)}`,
     );
   }
@@ -608,14 +805,14 @@ function App() {
   function handleEditExpense(expenseId: string) {
     const expense = selectedGame?.expenses.find((item) => item.id === expenseId);
     if (!expense) {
-      showErrorToast("Không tìm thấy khoản chi");
+      showErrorToast(APP_TEXT.toast.expenseMissing);
       return;
     }
 
     setEditingExpenseId(expense.id);
     setExpenseForm(createExpenseForm(expense));
     setActiveWorkspaceTab("expenses");
-    showInfoToast("Đang sửa khoản chi", expense.title);
+    showInfoToast(APP_TEXT.toast.expenseEditing, expense.title);
     window.setTimeout(() => {
       const expenseTitleInput = Array.from(
         document.querySelectorAll<HTMLInputElement>("[data-expense-title-input]"),
@@ -627,12 +824,13 @@ function App() {
 
   function handleCancelEditExpense() {
     setEditingExpenseId("");
-    setExpenseForm(emptyExpenseForm);
-    showInfoToast("Đã hủy sửa khoản chi");
+    setExpenseForm(createNewExpenseForm());
+    showInfoToast(APP_TEXT.toast.expenseEditCanceled);
   }
 
   function handleRemoveExpense(expenseId: string) {
-    const expenseTitle = selectedGame?.expenses.find((expense) => expense.id === expenseId)?.title || "Khoản chi";
+    const expenseTitle =
+      selectedGame?.expenses.find((expense) => expense.id === expenseId)?.title || APP_TEXT.fallback.expense;
 
     updateSelectedGame((game) => ({
       ...game,
@@ -640,19 +838,28 @@ function App() {
     }));
     if (editingExpenseId === expenseId) {
       setEditingExpenseId("");
-      setExpenseForm(emptyExpenseForm);
+      setExpenseForm(createNewExpenseForm());
     }
-    showInfoToast("Đã xóa khoản chi", expenseTitle);
+    showInfoToast(APP_TEXT.toast.expenseRemoved, expenseTitle);
   }
 
   function handleAddReceipt(participantId: string, amount: number) {
     if (!selectedGame) {
-      showErrorToast("Chưa chọn cuộc chơi");
+      showErrorToast(APP_TEXT.toast.gameRequired);
       return;
     }
 
     if (amount <= 0) {
-      showErrorToast("Không còn khoản cần thu");
+      showErrorToast(APP_TEXT.toast.receiptNoPayable);
+      return;
+    }
+
+    const balance = calculateBalances(selectedGame).find((row) => row.participant.id === participantId)?.balance || 0;
+    const receiptTotals = calculateReceiptTotals(selectedGame);
+    const collectedAmount = receiptTotals.get(participantId) || 0;
+    const remainingAmount = getRemainingPayable(balance, collectedAmount);
+    if (amount > remainingAmount) {
+      showErrorToast(APP_TEXT.toast.receiptAmountExceeded);
       return;
     }
 
@@ -671,7 +878,7 @@ function App() {
       }),
       {
         onSaved: () =>
-          showSuccessToast("Đã ghi nhận thu tiền", `${participantName} - ${formatMoney(amount)}`),
+          showSuccessToast(APP_TEXT.toast.receiptRecorded, `${participantName} - ${formatMoney(amount)}`),
       },
     );
   }
@@ -680,7 +887,9 @@ function App() {
     if (!selectedGame) return;
 
     const receipt = (selectedGame.receipts || []).find((item) => item.id === receiptId);
-    const participantName = receipt ? getParticipantName(selectedGame, receipt.participantId) : "Khoản thu";
+    const participantName = receipt
+      ? getParticipantName(selectedGame, receipt.participantId)
+      : APP_TEXT.fallback.receipt;
 
     updateSelectedGame(
       (game) => ({
@@ -688,18 +897,18 @@ function App() {
         receipts: (game.receipts || []).filter((item) => item.id !== receiptId),
       }),
       {
-        onSaved: () => showInfoToast("Đã xóa khoản thu", participantName),
+        onSaved: () => showInfoToast(APP_TEXT.toast.receiptRemoved, participantName),
       },
     );
   }
 
   async function handleCopyShareLink() {
     if (!selectedGame) {
-      showErrorToast("Chưa chọn cuộc chơi để chia sẻ");
+      showErrorToast(APP_TEXT.toast.shareGameRequired);
       return;
     }
 
-    toast.loading("Đang tạo link chia sẻ", { id: SHARE_LINK_TOAST_ID });
+    toast.loading(APP_TEXT.toast.shareCreating, { id: SHARE_LINK_TOAST_ID });
     let shareUrl = `${window.location.origin}/share/${selectedGame.shareToken}?data=${encodeShareGame(selectedGame)}`;
     if (sessionToken) {
       try {
@@ -707,7 +916,7 @@ function App() {
         shareUrl = `${window.location.origin}${result.url}`;
         setDataError("");
       } catch (error) {
-        const message = error instanceof Error ? error.message : "Không tạo được link chia sẻ.";
+        const message = error instanceof Error ? error.message : APP_TEXT.toast.shareCreateFailed;
         setDataError(message);
         toast.error(message, { id: SHARE_LINK_TOAST_ID, duration: 2600 });
         return;
@@ -717,20 +926,31 @@ function App() {
     try {
       await navigator.clipboard?.writeText(shareUrl);
       setCopiedShare(true);
-      toast.success("Đã sao chép link chia sẻ", {
+      toast.success(APP_TEXT.toast.shareCopied, {
         id: SHARE_LINK_TOAST_ID,
         description: selectedGame.name,
         duration: DEFAULT_TOAST_DURATION_MS,
       });
       window.setTimeout(() => setCopiedShare(false), 1600);
     } catch {
-      toast.error("Không sao chép được link", { id: SHARE_LINK_TOAST_ID, duration: 2600 });
+      toast.error(APP_TEXT.toast.shareCopyFailed, { id: SHARE_LINK_TOAST_ID, duration: 2600 });
     }
   }
 
   function handleOpenExpenseAction() {
+    if (!editingExpenseId) {
+      setExpenseForm((current) =>
+        current.title.trim() || current.amount.trim()
+          ? current
+          : createNewExpenseForm({
+              categoryId: current.categoryId,
+              payerId: current.payerId,
+              splitParticipantIds: current.splitParticipantIds,
+            }),
+      );
+    }
     setActiveWorkspaceTab("expenses");
-    showInfoToast("Đã mở form khoản chi");
+    showInfoToast(APP_TEXT.toast.expenseFormOpened);
     window.setTimeout(() => {
       const expenseTitleInput = Array.from(
         document.querySelectorAll<HTMLInputElement>("[data-expense-title-input]"),
@@ -747,7 +967,7 @@ function App() {
       <PageShell>
         {isLoadingShare ? (
           <main className="app-scroll-pane mx-auto w-full max-w-2xl flex-1 px-3 py-4 sm:px-5 sm:py-5">
-            <EmptyState title="Đang tải link chia sẻ" description="Đang lấy dữ liệu từ Cloudflare KV." />
+            <EmptyState title={APP_TEXT.share.loadingTitle} description={APP_TEXT.share.loadingDescription} />
           </main>
         ) : sharedGame ? (
           <main className="app-scroll-pane mx-auto w-full max-w-2xl flex-1 px-3 py-4 sm:px-5 sm:py-5">
@@ -755,7 +975,7 @@ function App() {
           </main>
         ) : (
           <main className="app-scroll-pane mx-auto w-full max-w-2xl flex-1 px-3 py-4 sm:px-5 sm:py-5">
-            <EmptyState title="Không tìm thấy link chia sẻ" description="Link này không có dữ liệu bản chụp." />
+            <EmptyState title={APP_TEXT.share.missingTitle} description={APP_TEXT.share.missingDescription} />
           </main>
         )}
       </PageShell>
@@ -771,14 +991,12 @@ function App() {
             className="w-full rounded-lg border border-stone-200 bg-white p-5 shadow-sm sm:p-6"
           >
             <div className="mb-6">
-              <p className="text-sm font-medium uppercase tracking-wide text-emerald-700">Chia kèo</p>
-              <h1 className="mt-2 text-2xl font-semibold text-stone-950">Đăng nhập cục bộ</h1>
-              <p className="mt-2 text-sm text-stone-600">
-                Nhập tên đăng nhập và mật khẩu để quản lý trên máy này.
-              </p>
+              <p className="text-sm font-medium uppercase tracking-wide text-emerald-700">{APP_TEXT.app.name}</p>
+              <h1 className="mt-2 text-2xl font-semibold text-stone-950">{APP_TEXT.login.title}</h1>
+              <p className="mt-2 text-sm text-stone-600">{APP_TEXT.login.description}</p>
             </div>
             <label className="block text-sm font-medium text-stone-700" htmlFor="username">
-              Tên đăng nhập
+              {APP_TEXT.login.usernameLabel}
             </label>
             <input
               id="username"
@@ -789,10 +1007,10 @@ function App() {
               }}
               className="mt-2 h-11 w-full rounded-md border border-stone-300 px-3 outline-none transition focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
               autoComplete="username"
-              placeholder="Tên đăng nhập của bạn"
+              placeholder={APP_TEXT.login.usernamePlaceholder}
             />
             <label className="mt-4 block text-sm font-medium text-stone-700" htmlFor="password">
-              Mật khẩu
+              {APP_TEXT.login.passwordLabel}
             </label>
             <input
               id="password"
@@ -804,7 +1022,7 @@ function App() {
               className="mt-2 h-11 w-full rounded-md border border-stone-300 px-3 outline-none transition focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
               type="password"
               autoComplete="current-password"
-              placeholder="Nhập mật khẩu"
+              placeholder={APP_TEXT.login.passwordPlaceholder}
             />
             {authError && <p className="mt-3 text-sm font-medium text-red-600">{authError}</p>}
             <button
@@ -812,11 +1030,11 @@ function App() {
               className="mt-4 inline-flex h-11 w-full items-center justify-center gap-2 rounded-md bg-stone-950 px-4 text-sm font-semibold text-white transition hover:bg-stone-800"
             >
               <WalletCards size={18} />
-              Đăng nhập
+              {APP_TEXT.login.submit}
             </button>
             <div className="my-4 flex items-center gap-3 text-xs font-medium uppercase tracking-wide text-stone-400">
               <span className="h-px flex-1 bg-stone-200" />
-              Hoặc
+              {APP_TEXT.login.separator}
               <span className="h-px flex-1 bg-stone-200" />
             </div>
             <button
@@ -827,7 +1045,7 @@ function App() {
               <span className="flex size-5 items-center justify-center rounded-full bg-white text-base font-bold text-blue-600">
                 G
               </span>
-              Tiếp tục với Google
+              {APP_TEXT.login.google}
             </button>
           </form>
         </section>
@@ -908,8 +1126,10 @@ function App() {
       <header className="shrink-0 border-b border-stone-200 bg-white">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-2 px-2.5 py-2 sm:gap-3 sm:px-4 sm:py-2.5">
           <div className="min-w-0 flex-1">
-            <h1 className="truncate text-base font-semibold leading-tight text-stone-950 sm:text-xl">Chia kèo</h1>
-            <p className="hidden text-sm text-stone-600 sm:block">Tính tiền nhóm và sinh QR nhận tiền.</p>
+            <h1 className="truncate text-base font-semibold leading-tight text-stone-950 sm:text-xl">
+              {APP_TEXT.app.name}
+            </h1>
+            <p className="hidden text-sm text-stone-600 sm:block">{APP_TEXT.app.subtitle}</p>
           </div>
           <div className="relative flex min-w-0 items-center justify-end gap-2">
             <div className="hidden min-w-0 items-center gap-2 rounded-md border border-stone-200 bg-stone-50 px-2.5 py-2 sm:flex">
@@ -924,7 +1144,7 @@ function App() {
               type="button"
               onClick={handleOpenProfileSettings}
               className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-stone-300 bg-white text-stone-700 transition hover:bg-stone-50 sm:h-10 sm:w-10"
-              aria-label="Cài đặt tài khoản"
+              aria-label={APP_TEXT.aria.settings}
               aria-expanded={profileSettingsOpen}
             >
               <Settings size={16} />
@@ -933,22 +1153,22 @@ function App() {
               type="button"
               onClick={handleLogout}
               className="inline-flex h-9 shrink-0 items-center gap-2 rounded-md border border-stone-300 bg-white px-2.5 text-sm font-medium text-stone-700 transition hover:bg-stone-50 sm:h-10 sm:px-3"
-              aria-label="Thoát"
+              aria-label={APP_TEXT.aria.logout}
             >
               <LogOut size={16} />
-              <span className="hidden sm:inline">Thoát</span>
+              <span className="hidden sm:inline">{APP_TEXT.aria.logout}</span>
             </button>
             {profileSettingsOpen && (
               <form
                 onSubmit={handleSaveProfile}
                 className="absolute right-0 top-12 z-30 w-full rounded-lg border border-stone-200 bg-white p-3 shadow-sm sm:w-80"
               >
-                <Field label="Tên hiển thị" icon={UserRoundCheck}>
+                <Field label={APP_TEXT.profile.displayNameLabel} icon={UserRoundCheck}>
                   <input
                     value={profileNameDraft}
                     onChange={(event) => setProfileNameDraft(event.target.value)}
                     className="field"
-                    placeholder="Tên hiển thị"
+                    placeholder={APP_TEXT.profile.displayNamePlaceholder}
                   />
                 </Field>
                 <div className="mt-3 flex justify-end gap-2">
@@ -957,14 +1177,14 @@ function App() {
                     onClick={() => setProfileSettingsOpen(false)}
                     className="inline-flex h-9 items-center justify-center rounded-md border border-stone-300 bg-white px-3 text-sm font-medium text-stone-700 transition hover:bg-stone-50"
                   >
-                    Hủy
+                    {APP_TEXT.profile.cancel}
                   </button>
                   <button
                     type="submit"
                     className="inline-flex h-9 items-center justify-center gap-2 rounded-md bg-emerald-700 px-3 text-sm font-semibold text-white transition hover:bg-emerald-800"
                   >
                     <Check size={15} />
-                    Lưu
+                    {APP_TEXT.profile.save}
                   </button>
                 </div>
               </form>
@@ -977,7 +1197,7 @@ function App() {
         <aside className="app-scroll-pane hidden min-w-0 space-y-2 md:block md:space-y-3">
           <form onSubmit={handleCreateGame} className="rounded-lg border border-stone-200 bg-white p-3 shadow-sm">
             <label className="text-sm font-medium text-stone-700" htmlFor="game-name">
-              Tạo cuộc chơi
+              {APP_TEXT.game.createLabel}
             </label>
             <div className="mt-2 flex gap-2">
               <input
@@ -985,12 +1205,12 @@ function App() {
                 value={newGameName}
                 onChange={(event) => setNewGameName(event.target.value)}
                 className="h-10 min-w-0 flex-1 rounded-md border border-stone-300 px-3 text-sm outline-none transition focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
-                placeholder="Đà Nẵng 2026"
+                placeholder={APP_TEXT.game.createPlaceholder}
               />
               <button
                 type="submit"
                 className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-emerald-700 text-white transition hover:bg-emerald-800"
-                aria-label="Tạo cuộc chơi"
+                aria-label={APP_TEXT.aria.createGame}
               >
                 <Plus size={18} />
               </button>
@@ -1000,7 +1220,7 @@ function App() {
           <section className="rounded-lg border border-stone-200 bg-white p-3 shadow-sm">
             <div className="mb-2 flex items-center gap-2 px-1 text-sm font-semibold text-stone-800">
               <ReceiptText size={17} />
-              Cuộc chơi
+              {APP_TEXT.game.listTitle}
             </div>
             {games.length > 0 ? (
               <div className="flex snap-x gap-2 overflow-x-auto pb-1 md:block md:max-h-[calc(100dvh-13rem)] md:space-y-2 md:overflow-y-auto md:overflow-x-hidden md:pb-0">
@@ -1017,13 +1237,13 @@ function App() {
                   >
                     <span className="block text-sm font-semibold text-stone-950">{game.name}</span>
                     <span className="mt-1 block text-xs text-stone-500">
-                      {game.participants.length} người, {game.expenses.length} khoản
+                      {APP_TEXT.game.gameSummary(game.participants.length, game.expenses.length)}
                     </span>
                   </button>
                 ))}
               </div>
             ) : (
-              <p className="px-1 py-4 text-sm text-stone-500">Chưa có cuộc chơi nào.</p>
+              <p className="px-1 py-4 text-sm text-stone-500">{APP_TEXT.game.emptyList}</p>
             )}
           </section>
         </aside>
@@ -1051,17 +1271,21 @@ function App() {
                     {selectedGame.name}
                   </h2>
                   {dataError && <p className="mt-1 text-sm font-medium text-red-600">{dataError}</p>}
-                  {isLoadingGames && <p className="mt-1 text-sm text-stone-500">Đang đồng bộ D1...</p>}
+                  {isLoadingGames && <p className="mt-1 text-sm text-stone-500">{APP_TEXT.game.syncLoading}</p>}
                 </div>
                 <button
                   type="button"
                   onClick={handleCopyShareLink}
                   className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-md border border-stone-300 bg-white px-3 text-sm font-medium text-stone-700 transition hover:bg-stone-50"
-                  aria-label={copiedShare ? "Đã sao chép" : "Sao chép link chia sẻ"}
+                  aria-label={copiedShare ? APP_TEXT.aria.shareCopied : APP_TEXT.aria.shareCopy}
                 >
                   {copiedShare ? <Copy size={16} /> : <Link size={16} />}
-                  <span className="hidden sm:inline">{copiedShare ? "Đã sao chép" : "Sao chép link chia sẻ"}</span>
-                  <span className="sm:hidden">{copiedShare ? "Xong" : "Link"}</span>
+                  <span className="hidden sm:inline">
+                    {copiedShare ? APP_TEXT.aria.shareCopied : APP_TEXT.aria.shareCopy}
+                  </span>
+                  <span className="sm:hidden">
+                    {copiedShare ? APP_TEXT.game.copyDoneShort : APP_TEXT.game.copyLinkShort}
+                  </span>
                 </button>
               </div>
 
@@ -1084,7 +1308,7 @@ function App() {
               </div>
             </div>
           ) : (
-            <EmptyState title="Bắt đầu một cuộc chơi" description="Tạo cuộc chơi đầu tiên để thêm người và khoản chi." />
+            <EmptyState title={APP_TEXT.game.emptyStartTitle} description={APP_TEXT.game.emptyStartDescription} />
           )}
         </section>
       </main>
@@ -1102,7 +1326,7 @@ function App() {
 function PageShell({ children }: { children: ReactNode }) {
   return (
     <div className="app-shell flex flex-col bg-stone-100 text-stone-950">
-      <Toaster closeButton richColors position="bottom-right" />
+      <Toaster closeButton richColors position="top-right" />
       {children}
     </div>
   );
@@ -1148,11 +1372,11 @@ function WorkspaceBottomBar({
           className={`workspace-fab absolute left-1/2 top-0 flex h-16 w-16 -translate-x-1/2 -translate-y-5 flex-col items-center justify-center rounded-full text-white shadow-sm transition ${
             isExpenseActive ? "ring-4 ring-emerald-100" : ""
           }`}
-          aria-label="Thêm khoản chi"
+          aria-label={APP_TEXT.aria.addExpense}
           aria-current={isExpenseActive ? "page" : undefined}
         >
           <Plus size={23} aria-hidden="true" />
-          <span className="mt-0.5 text-[0.68rem] font-bold leading-none">Chi</span>
+          <span className="mt-0.5 text-[0.68rem] font-bold leading-none">{APP_TEXT.summary.expenseMetric}</span>
         </button>
       </div>
     </nav>
@@ -1193,16 +1417,16 @@ function MobileGameControls({
           type="button"
           onClick={onCopyShareLink}
           className="inline-flex h-9 shrink-0 items-center justify-center gap-1 rounded-md border border-stone-300 bg-white px-2 text-xs font-semibold text-stone-700 transition hover:bg-stone-50"
-          aria-label={copiedShare ? "Đã sao chép" : "Sao chép link chia sẻ"}
+          aria-label={copiedShare ? APP_TEXT.aria.shareCopied : APP_TEXT.aria.shareCopy}
         >
           {copiedShare ? <Copy size={14} /> : <Link size={14} />}
-          {copiedShare ? "Xong" : "Link"}
+          {copiedShare ? APP_TEXT.game.copyDoneShort : APP_TEXT.game.copyLinkShort}
         </button>
       </div>
 
       {(dataError || isLoadingGames) && (
         <p className={`mt-1 truncate text-xs font-medium ${dataError ? "text-red-600" : "text-stone-500"}`}>
-          {dataError || "Đang đồng bộ D1..."}
+          {dataError || APP_TEXT.game.syncLoading}
         </p>
       )}
 
@@ -1211,7 +1435,7 @@ function MobileGameControls({
           value={game.id}
           onValueChange={onSelectGame}
           options={games.map((item) => ({ value: item.id, label: item.name }))}
-          placeholder="Chọn cuộc chơi"
+          placeholder={APP_TEXT.game.selectPlaceholder}
           disabled={games.length === 0}
         />
         <form onSubmit={onCreateGame} className="flex min-w-0 gap-1">
@@ -1219,12 +1443,12 @@ function MobileGameControls({
             value={newGameName}
             onChange={(event) => onNewGameNameChange(event.target.value)}
             className="field min-w-0 flex-1"
-            placeholder="Cuộc chơi mới"
+            placeholder={APP_TEXT.game.mobileCreatePlaceholder}
           />
           <button
             type="submit"
             className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-emerald-700 text-white transition hover:bg-emerald-800"
-            aria-label="Tạo cuộc chơi"
+            aria-label={APP_TEXT.aria.createGame}
           >
             <Plus size={16} />
           </button>
@@ -1270,9 +1494,11 @@ function MobilePeoplePane({
       <div className="flex shrink-0 items-center justify-between gap-2">
         <h3 className="flex items-center gap-2 text-base font-semibold text-stone-950">
           <Users size={16} className="text-emerald-700" />
-          Người
+          {APP_TEXT.people.title}
         </h3>
-        <span className="text-xs font-semibold text-stone-500">{game.participants.length} người</span>
+        <span className="text-xs font-semibold text-stone-500">
+          {APP_TEXT.game.participantsCount(game.participants.length)}
+        </span>
       </div>
 
       <form onSubmit={onSubmit} className="grid shrink-0 grid-cols-[minmax(0,1fr)_2.25rem] gap-2">
@@ -1280,12 +1506,12 @@ function MobilePeoplePane({
           value={form.name}
           onChange={(event) => onChange({ ...form, name: event.target.value, avatarSeed: "" })}
           className="field"
-          placeholder="Tên người tham gia"
+          placeholder={APP_TEXT.people.namePlaceholder}
         />
         <button
           type="submit"
           className="inline-flex h-9 w-9 items-center justify-center rounded-md bg-emerald-700 text-white transition hover:bg-emerald-800"
-          aria-label="Thêm người"
+          aria-label={APP_TEXT.people.add}
         >
           <Plus size={16} />
         </button>
@@ -1299,7 +1525,7 @@ function MobilePeoplePane({
           >
             <img
               className="h-7 w-7 shrink-0 rounded-full bg-stone-100"
-              src={buildAvatarDataUri(getParticipantAvatarSeed(participant), `Avatar của ${participant.name}`)}
+              src={buildAvatarDataUri(getParticipantAvatarSeed(participant), APP_TEXT.people.avatarAlt(participant.name))}
               alt=""
             />
             <span className="min-w-0 flex-1 truncate text-xs font-semibold text-stone-950">{participant.name}</span>
@@ -1307,7 +1533,7 @@ function MobilePeoplePane({
               type="button"
               onClick={() => onRemove(participant.id)}
               className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-red-600 transition hover:bg-red-50"
-              aria-label={`Xóa ${participant.name}`}
+              aria-label={APP_TEXT.people.removeAria(participant.name)}
             >
               <Trash2 size={13} />
             </button>
@@ -1319,31 +1545,31 @@ function MobilePeoplePane({
       <div className="min-h-0 rounded-md border border-stone-200 bg-stone-50 p-2">
         <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-stone-950">
           <WalletCards size={15} className="text-emerald-700" />
-          Tài khoản nhận
+          {APP_TEXT.payment.mobileTitle}
         </div>
         <div className="grid grid-cols-2 gap-2">
-          <CompactField label="Ngân hàng" icon={Landmark} className="col-span-2">
+          <CompactField label={APP_TEXT.payment.bankLabel} icon={Landmark} className="col-span-2">
             <BankSearchSelect
               value={selectedBankId}
               onValueChange={(bankId) => updatePaymentProfile({ bankId })}
               options={VIETQR_BANK_OPTIONS}
-              placeholder="Chọn ngân hàng"
+              placeholder={APP_TEXT.payment.bankPlaceholder}
             />
           </CompactField>
-          <CompactField label="Số TK" icon={CreditCard}>
+          <CompactField label={APP_TEXT.payment.accountNoShortLabel} icon={CreditCard}>
             <input
               value={paymentProfile.accountNo}
               onChange={(event) => updatePaymentProfile({ accountNo: event.target.value })}
               className="field"
-              placeholder="0123456789"
+              placeholder={APP_TEXT.payment.accountNoPlaceholder}
             />
           </CompactField>
-          <CompactField label="Tên TK" icon={UserRoundCheck}>
+          <CompactField label={APP_TEXT.payment.accountNameShortLabel} icon={UserRoundCheck}>
             <input
               value={paymentProfile.accountName}
               onChange={(event) => updatePaymentProfile({ accountName: event.target.value })}
               className="field"
-              placeholder="NGUYEN VAN A"
+              placeholder={APP_TEXT.payment.accountNamePlaceholder}
             />
           </CompactField>
         </div>
@@ -1390,7 +1616,7 @@ function MobileExpensePane({
       payerId,
       splitParticipantIds: form.splitParticipantIds.length > 0 ? form.splitParticipantIds : allParticipantIds,
     });
-    showInfoToast("Đã áp dụng gợi ý", suggestion.title);
+    showInfoToast(APP_TEXT.toast.suggestionApplied, suggestion.title);
   }
 
   return (
@@ -1398,9 +1624,11 @@ function MobileExpensePane({
       <div className="flex shrink-0 items-center justify-between gap-2">
         <h3 className="flex items-center gap-2 text-base font-semibold text-stone-950">
           <Banknote size={16} className="text-blue-700" />
-          Khoản chi
+          {APP_TEXT.expense.title}
         </h3>
-        <span className="text-xs font-semibold text-stone-500">{game.expenses.length} khoản</span>
+        <span className="text-xs font-semibold text-stone-500">
+          {APP_TEXT.game.expensesCount(game.expenses.length)}
+        </span>
       </div>
 
       <div className="grid shrink-0 grid-cols-4 gap-1.5">
@@ -1425,16 +1653,16 @@ function MobileExpensePane({
       </div>
 
       <form onSubmit={onSubmit} className="grid shrink-0 grid-cols-2 gap-2">
-        <CompactField label="Nội dung" icon={ReceiptText}>
+        <CompactField label={APP_TEXT.expense.contentLabel} icon={ReceiptText}>
           <input
             data-expense-title-input="true"
             value={form.title}
             onChange={(event) => onChange({ ...form, title: event.target.value })}
             className="field"
-            placeholder="Ăn tối"
+            placeholder={APP_TEXT.expense.contentPlaceholder}
           />
         </CompactField>
-        <CompactField label="Số tiền" icon={Banknote}>
+        <CompactField label={APP_TEXT.expense.amountLabel} icon={Banknote}>
           <input
             value={form.amount}
             onChange={(event) => onChange({ ...form, amount: formatMoneyInput(event.target.value) })}
@@ -1443,7 +1671,15 @@ function MobileExpensePane({
             placeholder={formatMoney(AMOUNT_PLACEHOLDER_VALUE)}
           />
         </CompactField>
-        <CompactField label="Người trả" icon={WalletCards}>
+        <CompactField label={APP_TEXT.expense.spentAtShortLabel} icon={CalendarClock} className="col-span-2">
+          <input
+            value={form.createdAt}
+            onChange={(event) => onChange({ ...form, createdAt: event.target.value })}
+            className="field"
+            type="datetime-local"
+          />
+        </CompactField>
+        <CompactField label={APP_TEXT.expense.payerLabel} icon={WalletCards}>
           <AppSelect
             value={payerId}
             onValueChange={(value) => onChange({ ...form, payerId: value })}
@@ -1451,12 +1687,12 @@ function MobileExpensePane({
               value: participant.id,
               label: participant.name,
             }))}
-            placeholder="Chưa có người"
+            placeholder={APP_TEXT.expense.payerPlaceholder}
             disabled={game.participants.length === 0}
           />
         </CompactField>
-        <CompactField label="Phân loại" icon={Tags}>
-          <div role="radiogroup" aria-label="Phân loại" className="grid grid-cols-6 gap-1">
+        <CompactField label={APP_TEXT.expense.categoryLabel} icon={Tags}>
+          <div role="radiogroup" aria-label={APP_TEXT.expense.categoryLabel} className="grid grid-cols-6 gap-1">
             {EXPENSE_CATEGORIES.map((category) => (
               <button
                 key={category.id}
@@ -1479,7 +1715,7 @@ function MobileExpensePane({
         <div className="col-span-2">
           <p className="mb-1 flex items-center gap-1.5 text-xs font-medium text-stone-700">
             <Users size={13} aria-hidden="true" />
-            Chia cho ai
+            {APP_TEXT.expense.splitLabel}
           </p>
           <div className="flex flex-wrap gap-1">
             {game.participants.map((participant) => {
@@ -1509,7 +1745,7 @@ function MobileExpensePane({
             className="inline-flex h-9 flex-1 items-center justify-center gap-2 rounded-md bg-blue-700 px-3 text-sm font-semibold text-white transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:bg-stone-300"
           >
             {isEditing ? <Check size={15} /> : <Plus size={15} />}
-            {isEditing ? "Cập nhật khoản chi" : "Thêm khoản chi"}
+            {isEditing ? APP_TEXT.expense.update : APP_TEXT.expense.add}
           </button>
           {isEditing && (
             <button
@@ -1517,7 +1753,7 @@ function MobileExpensePane({
               onClick={onCancelEdit}
               className="inline-flex h-9 items-center justify-center rounded-md border border-stone-300 bg-white px-3 text-xs font-semibold text-stone-700 transition hover:bg-stone-50"
             >
-              Hủy
+              {APP_TEXT.expense.cancel}
             </button>
           )}
         </div>
@@ -1533,14 +1769,17 @@ function MobileExpensePane({
               <ExpenseCategoryIcon categoryId={categoryId} size={14} className="shrink-0 text-emerald-700" />
               <div className="min-w-0 flex-1">
                 <p className="truncate text-xs font-semibold text-stone-950">{expense.title}</p>
-                <p className="truncate text-[0.68rem] text-stone-500">{payer?.name || "Không rõ"} trả</p>
+                <p className="truncate text-[0.68rem] text-stone-500">
+                  {APP_TEXT.expense.paidBy(payer?.name || APP_TEXT.fallback.unknown)} -{" "}
+                  {formatExpenseDateTime(expense.createdAt)}
+                </p>
               </div>
               <span className="shrink-0 text-xs font-semibold text-stone-950">{formatMoney(expense.amount)}</span>
               <button
                 type="button"
                 onClick={() => onEdit(expense.id)}
                 className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-blue-700 transition hover:bg-blue-50"
-                aria-label={`Sửa ${expense.title}`}
+                aria-label={APP_TEXT.expense.editAria(expense.title)}
               >
                 <Pencil size={13} />
               </button>
@@ -1548,7 +1787,7 @@ function MobileExpensePane({
                 type="button"
                 onClick={() => onRemove(expense.id)}
                 className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-red-600 transition hover:bg-red-50"
-                aria-label={`Xóa ${expense.title}`}
+                aria-label={APP_TEXT.expense.removeAria(expense.title)}
               >
                 <Trash2 size={13} />
               </button>
@@ -1594,9 +1833,9 @@ function MobileSummaryPane({
   return (
     <section className="mobile-panel">
       <div className="grid shrink-0 grid-cols-3 gap-1.5">
-        <MiniMetric label="Tổng" value={formatMoney(totalExpense)} icon={Banknote} />
-        <MiniMetric label="Người" value={String(game.participants.length)} icon={Users} />
-        <MiniMetric label="Khoản" value={String(game.expenses.length)} icon={ReceiptText} />
+        <MiniMetric label={APP_TEXT.summary.totalMetric} value={formatMoney(totalExpense)} icon={Banknote} />
+        <MiniMetric label={APP_TEXT.summary.peopleMetric} value={String(game.participants.length)} icon={Users} />
+        <MiniMetric label={APP_TEXT.summary.expenseMetric} value={String(game.expenses.length)} icon={ReceiptText} />
       </div>
 
       {topCategory && (
@@ -1621,7 +1860,9 @@ function MobileSummaryPane({
             </div>
           ))
         ) : (
-          <p className="rounded-md border border-stone-200 px-2 py-2 text-xs text-stone-500">Chưa có người tham gia.</p>
+          <p className="rounded-md border border-stone-200 px-2 py-2 text-xs text-stone-500">
+            {APP_TEXT.summary.noParticipants}
+          </p>
         )}
         {hiddenBalanceCount > 0 && <MorePill count={hiddenBalanceCount} />}
       </div>
@@ -1630,7 +1871,7 @@ function MobileSummaryPane({
         <div className="min-w-0">
           <p className="flex items-center gap-1.5 text-xs font-semibold text-stone-950">
             <QrCode size={14} className="text-emerald-700" />
-            QR nhận tiền
+            {APP_TEXT.summary.qrTitle}
           </p>
           {firstPayer ? (
             <>
@@ -1639,31 +1880,32 @@ function MobileSummaryPane({
               </p>
               <p className="mt-1 text-sm font-bold text-emerald-700">{formatMoney(firstPayerAmount)}</p>
               {firstPayer.collected > 0 && (
-                <p className="mt-1 text-[0.68rem] text-stone-500">Đã thu {formatMoney(firstPayer.collected)}</p>
+                <p className="mt-1 text-[0.68rem] text-stone-500">
+                  {APP_TEXT.summary.collected(formatMoney(firstPayer.collected))}
+                </p>
               )}
               {onAddReceipt && (
-                <button
-                  type="button"
-                  onClick={() => onAddReceipt(firstPayer.row.participant.id, firstPayerAmount)}
-                  className="mt-2 inline-flex h-7 items-center justify-center rounded-md bg-emerald-700 px-2 text-[0.68rem] font-semibold text-white transition hover:bg-emerald-800"
-                >
-                  Đã thu
-                </button>
+                <ReceiptAmountForm
+                  participantId={firstPayer.row.participant.id}
+                  remainingAmount={firstPayerAmount}
+                  onAddReceipt={onAddReceipt}
+                  compact
+                />
               )}
             </>
           ) : (
-            <p className="mt-2 text-xs text-stone-500">Không có khoản cần chuyển.</p>
+            <p className="mt-2 text-xs text-stone-500">{APP_TEXT.summary.noTransfer}</p>
           )}
         </div>
         {firstPayer && hasOwnerQr ? (
           <img
             className="h-28 w-28 rounded-md border border-stone-200 bg-white object-contain"
             src={buildVietQrUrl(paymentProfile, firstPayerAmount, game.code)}
-            alt="QR nhận tiền của chủ cuộc chơi"
+            alt={APP_TEXT.summary.qrAlt}
           />
         ) : (
           <p className="flex h-28 w-28 items-center justify-center rounded-md bg-white px-2 text-center text-[0.68rem] text-stone-500">
-            {firstPayer ? ownerQrIssue : "Chưa cần QR"}
+            {firstPayer ? ownerQrIssue : APP_TEXT.summary.noQr}
           </p>
         )}
       </div>
@@ -1705,6 +1947,55 @@ function MiniMetric({ label, value, icon: Icon }: { label: string; value: string
   );
 }
 
+function ReceiptAmountForm({
+  participantId,
+  remainingAmount,
+  onAddReceipt,
+  compact = false,
+}: {
+  participantId: string;
+  remainingAmount: number;
+  onAddReceipt: (participantId: string, amount: number) => void;
+  compact?: boolean;
+}) {
+  const [amount, setAmount] = useState("");
+
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const parsedAmount = parseMoney(amount);
+    if (parsedAmount <= 0) {
+      showErrorToast(APP_TEXT.toast.amountRequired);
+      return;
+    }
+
+    onAddReceipt(participantId, parsedAmount);
+    setAmount("");
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className={compact ? "mt-2 flex gap-1" : "mt-3 flex flex-col gap-2 sm:flex-row"}>
+      <input
+        value={amount}
+        onChange={(event) => setAmount(formatMoneyInput(event.target.value))}
+        className={compact ? "field h-8 min-w-0 flex-1 px-2 text-xs" : "field min-w-0 flex-1"}
+        inputMode="numeric"
+        placeholder={`${APP_TEXT.summary.collectAdvancePlaceholder} (${formatMoney(remainingAmount)})`}
+        aria-label={APP_TEXT.summary.collectAdvancePlaceholder}
+      />
+      <button
+        type="submit"
+        className={
+          compact
+            ? "inline-flex h-8 shrink-0 items-center justify-center rounded-md bg-emerald-700 px-2 text-[0.68rem] font-semibold text-white transition hover:bg-emerald-800"
+            : "inline-flex h-10 shrink-0 items-center justify-center rounded-md bg-emerald-700 px-3 text-sm font-semibold text-white transition hover:bg-emerald-800"
+        }
+      >
+        {APP_TEXT.summary.collectAdvanceSubmit}
+      </button>
+    </form>
+  );
+}
+
 function MorePill({ count }: { count: number }) {
   return (
     <span className="inline-flex h-7 items-center justify-center rounded-md border border-stone-200 bg-stone-50 px-2 text-xs font-semibold text-stone-500">
@@ -1739,16 +2030,16 @@ function ParticipantPanel({
     <section className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm">
       <div className="mb-4 flex items-center gap-2">
         <Users size={18} className="text-emerald-700" />
-        <h3 className="text-lg font-semibold text-stone-950">Người tham gia</h3>
+        <h3 className="text-lg font-semibold text-stone-950">{APP_TEXT.people.fullTitle}</h3>
       </div>
 
       <form onSubmit={onSubmit} className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto]">
-        <Field label="Tên" icon={UserRoundCheck}>
+        <Field label={APP_TEXT.people.nameLabel} icon={UserRoundCheck}>
           <input
             value={form.name}
             onChange={(event) => onChange({ ...form, name: event.target.value, avatarSeed: "" })}
             className="field"
-            placeholder="Tên người tham gia"
+            placeholder={APP_TEXT.people.namePlaceholder}
           />
         </Field>
         <div className="sm:self-end">
@@ -1757,7 +2048,7 @@ function ParticipantPanel({
             className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-md bg-emerald-700 px-4 text-sm font-semibold text-white transition hover:bg-emerald-800 sm:h-10 sm:w-auto"
           >
             <Plus size={17} />
-            Thêm người
+            {APP_TEXT.people.add}
           </button>
         </div>
         <AvatarSuggestionPicker
@@ -1777,21 +2068,21 @@ function ParticipantPanel({
                 <div className="flex min-w-0 items-center gap-3">
                   <img
                     className="h-11 w-11 shrink-0 rounded-full bg-stone-100"
-                    src={buildAvatarDataUri(avatarSeed, `Avatar của ${participant.name}`)}
-                    alt={`Avatar của ${participant.name}`}
+                    src={buildAvatarDataUri(avatarSeed, APP_TEXT.people.avatarAlt(participant.name))}
+                    alt={APP_TEXT.people.avatarAlt(participant.name)}
                   />
                   <div className="min-w-0">
                     <p className="break-words text-sm font-semibold leading-snug text-stone-950">
                       {participant.name}
                     </p>
-                    <p className="mt-1 text-xs text-stone-500">Người tham gia</p>
+                    <p className="mt-1 text-xs text-stone-500">{APP_TEXT.fallback.participant}</p>
                   </div>
                 </div>
                 <button
                   type="button"
                   onClick={() => onRemove(participant.id)}
                   className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-red-600 transition hover:bg-red-50"
-                  aria-label={`Xóa ${participant.name}`}
+                  aria-label={APP_TEXT.people.removeAria(participant.name)}
                 >
                   <Trash2 size={16} />
                 </button>
@@ -1821,7 +2112,7 @@ function AvatarSuggestionPicker({
 
   return (
     <div className="sm:col-span-2">
-      <p className="mb-2 text-sm font-medium text-stone-700">Gợi ý avatar</p>
+      <p className="mb-2 text-sm font-medium text-stone-700">{APP_TEXT.people.avatarSuggestions}</p>
       <div className="flex flex-wrap gap-2">
         {suggestions.map((avatarSeed, index) => {
           const checked = avatarSeed === activeSeed;
@@ -1836,11 +2127,11 @@ function AvatarSuggestionPicker({
                   ? "border-emerald-600 bg-emerald-50"
                   : "border-stone-200 bg-white hover:bg-stone-50"
               }`}
-              aria-label={`Chọn avatar ${index + 1}`}
+              aria-label={APP_TEXT.people.chooseAvatarAria(index + 1)}
             >
               <img
                 className="h-full w-full rounded-full"
-                src={buildAvatarDataUri(avatarSeed, `Avatar gợi ý ${index + 1}`)}
+                src={buildAvatarDataUri(avatarSeed, APP_TEXT.people.avatarSuggestionAlt(index + 1))}
                 alt=""
               />
             </button>
@@ -1877,9 +2168,9 @@ function PaymentProfilePanel({
     }
 
     saveToastTimeoutRef.current = window.setTimeout(() => {
-      toast.success("Đã tự lưu", {
+      toast.success(APP_TEXT.toast.paymentProfileSaved, {
         id: PAYMENT_PROFILE_SAVE_TOAST_ID,
-        description: "Thông tin nhận tiền đã được cập nhật.",
+        description: APP_TEXT.toast.paymentProfileSavedDescription,
         duration: 1600,
       });
     }, SAVE_TOAST_DELAY_MS);
@@ -1903,33 +2194,33 @@ function PaymentProfilePanel({
     <section className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm">
       <div className="mb-4 flex items-center gap-2">
         <WalletCards size={18} className="text-emerald-700" />
-        <h3 className="text-lg font-semibold text-stone-950">Tài khoản chủ cuộc chơi</h3>
+        <h3 className="text-lg font-semibold text-stone-950">{APP_TEXT.payment.title}</h3>
       </div>
 
       <div className="grid gap-3 md:grid-cols-2">
-        <Field label="Ngân hàng" icon={Landmark}>
+        <Field label={APP_TEXT.payment.bankLabel} icon={Landmark}>
           <BankSearchSelect
             value={selectedBankId}
             onValueChange={(bankId) => updatePaymentProfile({ bankId })}
             options={VIETQR_BANK_OPTIONS}
-            placeholder="Chọn ngân hàng"
+            placeholder={APP_TEXT.payment.bankPlaceholder}
           />
         </Field>
-        <Field label="Số tài khoản" icon={CreditCard}>
+        <Field label={APP_TEXT.payment.accountNoLabel} icon={CreditCard}>
           <input
             value={paymentProfile.accountNo}
             onChange={(event) => updatePaymentProfile({ accountNo: event.target.value })}
             className="field"
-            placeholder="0123456789"
+            placeholder={APP_TEXT.payment.accountNoPlaceholder}
           />
         </Field>
         <div className="md:col-span-2">
-          <Field label="Tên chủ tài khoản" icon={UserRoundCheck}>
+          <Field label={APP_TEXT.payment.accountNameLabel} icon={UserRoundCheck}>
             <input
               value={paymentProfile.accountName}
               onChange={(event) => updatePaymentProfile({ accountName: event.target.value })}
               className="field"
-              placeholder="NGUYEN VAN A"
+              placeholder={APP_TEXT.payment.accountNamePlaceholder}
             />
           </Field>
         </div>
@@ -1973,18 +2264,18 @@ function ExpensePanel({
       payerId,
       splitParticipantIds: form.splitParticipantIds.length > 0 ? form.splitParticipantIds : allParticipantIds,
     });
-    showInfoToast("Đã áp dụng gợi ý", suggestion.title);
+    showInfoToast(APP_TEXT.toast.suggestionApplied, suggestion.title);
   }
 
   return (
     <section className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm">
       <div className="mb-4 flex items-center gap-2">
         <Banknote size={18} className="text-blue-700" />
-        <h3 className="text-lg font-semibold text-stone-950">Khoản chi</h3>
+        <h3 className="text-lg font-semibold text-stone-950">{APP_TEXT.expense.title}</h3>
       </div>
 
       <div className="mb-4">
-        <p className="mb-2 text-sm font-medium text-stone-700">Gợi ý nhanh</p>
+        <p className="mb-2 text-sm font-medium text-stone-700">{APP_TEXT.expense.quickSuggestions}</p>
         <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
           {EXPENSE_SUGGESTIONS.map((suggestion) => {
             const Icon = getExpenseCategoryIcon(suggestion.categoryId);
@@ -2015,16 +2306,16 @@ function ExpensePanel({
       </div>
 
       <form onSubmit={onSubmit} className="grid gap-3 md:grid-cols-2">
-        <Field label="Nội dung" icon={ReceiptText}>
+        <Field label={APP_TEXT.expense.contentLabel} icon={ReceiptText}>
           <input
             data-expense-title-input="true"
             value={form.title}
             onChange={(event) => onChange({ ...form, title: event.target.value })}
             className="field"
-            placeholder="Ăn tối"
+            placeholder={APP_TEXT.expense.contentPlaceholder}
           />
         </Field>
-        <Field label="Số tiền" icon={Banknote}>
+        <Field label={APP_TEXT.expense.amountLabel} icon={Banknote}>
           <input
             value={form.amount}
             onChange={(event) => onChange({ ...form, amount: formatMoneyInput(event.target.value) })}
@@ -2033,8 +2324,16 @@ function ExpensePanel({
             placeholder={formatMoney(AMOUNT_PLACEHOLDER_VALUE)}
           />
         </Field>
-        <Field label="Phân loại" icon={Tags}>
-          <div role="radiogroup" aria-label="Phân loại" className="flex flex-wrap gap-2">
+        <Field label={APP_TEXT.expense.spentAtLabel} icon={CalendarClock}>
+          <input
+            value={form.createdAt}
+            onChange={(event) => onChange({ ...form, createdAt: event.target.value })}
+            className="field"
+            type="datetime-local"
+          />
+        </Field>
+        <Field label={APP_TEXT.expense.categoryLabel} icon={Tags}>
+          <div role="radiogroup" aria-label={APP_TEXT.expense.categoryLabel} className="flex flex-wrap gap-2">
             {EXPENSE_CATEGORIES.map((category) => (
               <button
                 key={category.id}
@@ -2054,7 +2353,7 @@ function ExpensePanel({
             ))}
           </div>
         </Field>
-        <Field label="Người trả" icon={WalletCards}>
+        <Field label={APP_TEXT.expense.payerLabel} icon={WalletCards}>
           <AppSelect
             value={payerId}
             onValueChange={(value) => onChange({ ...form, payerId: value })}
@@ -2062,12 +2361,12 @@ function ExpensePanel({
               value: participant.id,
               label: participant.name,
             }))}
-            placeholder="Chưa có người"
+            placeholder={APP_TEXT.expense.payerPlaceholder}
             disabled={game.participants.length === 0}
           />
         </Field>
         <div>
-          <p className="mb-2 text-sm font-medium text-stone-700">Chia cho ai</p>
+          <p className="mb-2 text-sm font-medium text-stone-700">{APP_TEXT.expense.splitLabel}</p>
           <div className="flex flex-wrap gap-2">
             {game.participants.map((participant) => {
               const checked = form.splitParticipantIds.includes(participant.id);
@@ -2097,7 +2396,7 @@ function ExpensePanel({
               className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-md bg-blue-700 px-4 text-sm font-semibold text-white transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:bg-stone-300 sm:h-10 sm:w-auto"
             >
               {isEditing ? <Check size={17} /> : <Plus size={17} />}
-              {isEditing ? "Cập nhật khoản chi" : "Thêm khoản chi"}
+              {isEditing ? APP_TEXT.expense.update : APP_TEXT.expense.add}
             </button>
             {isEditing && (
               <button
@@ -2105,7 +2404,7 @@ function ExpensePanel({
                 onClick={onCancelEdit}
                 className="inline-flex h-11 w-full items-center justify-center rounded-md border border-stone-300 bg-white px-4 text-sm font-semibold text-stone-700 transition hover:bg-stone-50 sm:h-10 sm:w-auto"
               >
-                Hủy sửa
+                {APP_TEXT.expense.cancelEdit}
               </button>
             )}
           </div>
@@ -2128,7 +2427,14 @@ function ExpensePanel({
                     <CategoryPill categoryId={categoryId} label={categoryLabel} />
                   </div>
                   <p className="mt-1 text-xs text-stone-500">
-                    {payer?.name || "Không rõ"} trả, chia {expense.splitParticipantIds.length} người
+                    {APP_TEXT.expense.paidBySplit(
+                      payer?.name || APP_TEXT.fallback.unknown,
+                      expense.splitParticipantIds.length,
+                    )}
+                  </p>
+                  <p className="mt-1 flex items-center gap-1 text-xs text-stone-500">
+                    <CalendarClock size={12} aria-hidden="true" />
+                    {formatExpenseDateTime(expense.createdAt)}
                   </p>
                 </div>
                 <div className="flex shrink-0 flex-col items-end gap-2 sm:flex-row sm:items-center">
@@ -2137,7 +2443,7 @@ function ExpensePanel({
                     type="button"
                     onClick={() => onEdit(expense.id)}
                     className="inline-flex h-8 w-8 items-center justify-center rounded-md text-blue-700 transition hover:bg-blue-50"
-                    aria-label={`Sửa ${expense.title}`}
+                    aria-label={APP_TEXT.expense.editAria(expense.title)}
                   >
                     <Pencil size={16} />
                   </button>
@@ -2145,7 +2451,7 @@ function ExpensePanel({
                     type="button"
                     onClick={() => onRemove(expense.id)}
                     className="inline-flex h-8 w-8 items-center justify-center rounded-md text-red-600 transition hover:bg-red-50"
-                    aria-label={`Xóa ${expense.title}`}
+                    aria-label={APP_TEXT.expense.removeAria(expense.title)}
                   >
                     <Trash2 size={16} />
                   </button>
@@ -2201,9 +2507,9 @@ function GameDashboard({
       <PatternSummaryCard game={game} totalExpense={totalExpense} />
 
       <section className="grid grid-cols-1 gap-3 min-[420px]:grid-cols-3">
-        <Metric label="Tổng chi" value={formatMoney(totalExpense)} icon={Banknote} />
-        <Metric label="Số người" value={String(game.participants.length)} icon={Users} />
-        <Metric label="Khoản chi" value={String(game.expenses.length)} icon={ReceiptText} />
+        <Metric label={APP_TEXT.summary.totalExpenseMetric} value={formatMoney(totalExpense)} icon={Banknote} />
+        <Metric label={APP_TEXT.summary.peopleCountMetric} value={String(game.participants.length)} icon={Users} />
+        <Metric label={APP_TEXT.summary.expenseCountMetric} value={String(game.expenses.length)} icon={ReceiptText} />
       </section>
 
       <CategorySummaryCard summaries={categorySummaries} />
@@ -2211,7 +2517,7 @@ function GameDashboard({
       <section className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm">
         <h3 className="flex items-center gap-2 text-lg font-semibold text-stone-950">
           <Equal size={18} className="text-emerald-700" aria-hidden="true" />
-          Cân bằng
+          {APP_TEXT.summary.balanceTitle}
         </h3>
         <div className="mt-4 space-y-3">
           {balances.length > 0 ? (
@@ -2229,16 +2535,16 @@ function GameDashboard({
                     <BalancePill value={displayBalance} />
                   </div>
                   <div className="mt-3 grid gap-1 text-xs text-stone-500 min-[420px]:grid-cols-2 min-[420px]:gap-2">
-                    <span>Đã trả: {formatMoney(row.paid)}</span>
-                    <span>Phải chịu: {formatMoney(row.owed)}</span>
-                    {collected > 0 && <span>Đã thu: {formatMoney(collected)}</span>}
-                    {row.balance < 0 && <span>Còn trả: {formatMoney(remaining)}</span>}
+                    <span>{APP_TEXT.summary.paid(formatMoney(row.paid))}</span>
+                    <span>{APP_TEXT.summary.owed(formatMoney(row.owed))}</span>
+                    {collected > 0 && <span>{APP_TEXT.summary.collectedDetail(formatMoney(collected))}</span>}
+                    {row.balance < 0 && <span>{APP_TEXT.summary.remainingPayable(formatMoney(remaining))}</span>}
                   </div>
                 </div>
               );
             })
           ) : (
-            <p className="text-sm text-stone-500">Chưa có người tham gia.</p>
+            <p className="text-sm text-stone-500">{APP_TEXT.summary.noParticipants}</p>
           )}
         </div>
       </section>
@@ -2246,7 +2552,7 @@ function GameDashboard({
       <section className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm">
         <h3 className="flex items-center gap-2 text-lg font-semibold text-stone-950">
           <QrCode size={18} className="text-emerald-700" aria-hidden="true" />
-          Chuyển tiền cho chủ cuộc chơi
+          {APP_TEXT.summary.transferTitle}
         </h3>
         <div className="mt-4 space-y-3">
           {payers.length > 0 ? (
@@ -2259,29 +2565,28 @@ function GameDashboard({
                     <div className="min-w-0">
                       <p className="flex items-center gap-2 text-sm font-semibold text-stone-950">
                         <ArrowUpRight size={15} className="text-red-600" aria-hidden="true" />
-                        {row.participant.name} cần trả
+                        {APP_TEXT.summary.needsToPay(row.participant.name)}
                       </p>
                       <p className="mt-1 text-sm font-bold text-emerald-700">{formatMoney(remaining)}</p>
                       <p className="mt-1 text-xs text-stone-500">
-                        Tổng nợ {formatMoney(grossAmount)}
-                        {collected > 0 ? `, đã thu ${formatMoney(collected)}` : ""}
+                        {collected > 0
+                          ? APP_TEXT.summary.grossDebtWithCollected(formatMoney(grossAmount), formatMoney(collected))
+                          : APP_TEXT.summary.grossDebt(formatMoney(grossAmount))}
                       </p>
                     </div>
-                    {!readOnly && onAddReceipt && (
-                      <button
-                        type="button"
-                        onClick={() => onAddReceipt(row.participant.id, remaining)}
-                        className="inline-flex h-8 shrink-0 items-center justify-center rounded-md bg-emerald-700 px-2 text-xs font-semibold text-white transition hover:bg-emerald-800"
-                      >
-                        Đã thu
-                      </button>
-                    )}
                   </div>
+                  {!readOnly && onAddReceipt && (
+                    <ReceiptAmountForm
+                      participantId={row.participant.id}
+                      remainingAmount={remaining}
+                      onAddReceipt={onAddReceipt}
+                    />
+                  )}
                   {hasOwnerQr ? (
                     <img
                       className="mt-3 w-full rounded-md border border-stone-200"
                       src={buildVietQrUrl(paymentProfile, remaining, game.code)}
-                      alt="QR nhận tiền của chủ cuộc chơi"
+                      alt={APP_TEXT.summary.qrAlt}
                     />
                   ) : (
                     <p className="mt-3 rounded-md bg-stone-50 px-3 py-2 text-sm text-stone-500">
@@ -2293,12 +2598,12 @@ function GameDashboard({
             })
           ) : (
             <p className="text-sm text-stone-500">
-              {readOnly || game.expenses.length > 0 ? "Không còn khoản cần chuyển." : "Thêm khoản chi để tính tiền."}
+              {readOnly || game.expenses.length > 0 ? APP_TEXT.summary.noTransfer : APP_TEXT.summary.addExpenseHint}
             </p>
           )}
           {receipts.length > 0 && (
             <div className="border-t border-stone-200 pt-3">
-              <h4 className="text-sm font-semibold text-stone-950">Đã thu</h4>
+              <h4 className="text-sm font-semibold text-stone-950">{APP_TEXT.summary.collectedTitle}</h4>
               <div className="mt-2 space-y-2">
                 {receipts.map((receipt) => (
                   <div
@@ -2318,7 +2623,7 @@ function GameDashboard({
                           type="button"
                           onClick={() => onRemoveReceipt(receipt.id)}
                           className="inline-flex h-8 w-8 items-center justify-center rounded-md text-red-600 transition hover:bg-red-50"
-                          aria-label="Xóa khoản thu"
+                          aria-label={APP_TEXT.aria.removeReceipt}
                         >
                           <Trash2 size={15} />
                         </button>
@@ -2340,7 +2645,7 @@ function CategorySummaryCard({ summaries }: { summaries: ExpenseCategorySummary[
     <section className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm">
       <h3 className="flex items-center gap-2 text-lg font-semibold text-stone-950">
         <Tags size={18} className="text-emerald-700" aria-hidden="true" />
-        Theo phân loại
+        {APP_TEXT.summary.categoryTitle}
       </h3>
       <div className="mt-4 space-y-2">
         {summaries.length > 0 ? (
@@ -2358,7 +2663,9 @@ function CategorySummaryCard({ summaries }: { summaries: ExpenseCategorySummary[
                   </span>
                   <div className="min-w-0">
                     <p className="break-words text-sm font-semibold leading-snug text-stone-950">{summary.label}</p>
-                    <p className="mt-1 text-xs text-stone-500">{summary.count} khoản</p>
+                    <p className="mt-1 text-xs text-stone-500">
+                      {APP_TEXT.summary.categoryExpenseCount(summary.count)}
+                    </p>
                   </div>
                 </div>
                 <span className="shrink-0 text-sm font-semibold text-stone-950">{formatMoney(summary.total)}</span>
@@ -2366,7 +2673,7 @@ function CategorySummaryCard({ summaries }: { summaries: ExpenseCategorySummary[
             );
           })
         ) : (
-          <p className="text-sm text-stone-500">Chưa có khoản chi.</p>
+          <p className="text-sm text-stone-500">{APP_TEXT.summary.noExpenses}</p>
         )}
       </div>
     </section>
@@ -2380,7 +2687,7 @@ function PatternSummaryCard({ game, totalExpense }: { game: Game; totalExpense: 
       <div className="p-4">
         <p className="flex items-center gap-2 text-xs font-semibold uppercase text-stone-500">
           <Banknote size={15} aria-hidden="true" />
-          Tổng đã chi
+          {APP_TEXT.summary.totalSpent}
         </p>
         <div className="mt-2 flex items-end justify-between gap-3">
           <span className="min-w-0 break-words text-2xl font-semibold leading-tight text-stone-950">
@@ -2535,8 +2842,8 @@ function BankSearchSelect({
                 }
               }}
               className="field searchable-select-search"
-              placeholder="Tìm ngân hàng..."
-              aria-label="Tìm ngân hàng"
+              placeholder={APP_TEXT.bankSearch.placeholder}
+              aria-label={APP_TEXT.bankSearch.ariaLabel}
             />
           </div>
           <div className="searchable-select-list" role="listbox">
@@ -2559,7 +2866,7 @@ function BankSearchSelect({
                 );
               })
             ) : (
-              <p className="searchable-select-empty">Không tìm thấy ngân hàng.</p>
+              <p className="searchable-select-empty">{APP_TEXT.bankSearch.empty}</p>
             )}
           </div>
         </div>
@@ -2598,7 +2905,7 @@ function BalancePill({ value }: { value: number }) {
     return (
       <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-700">
         <ArrowDownLeft size={13} aria-hidden="true" />
-        Nhận {formatMoney(value)}
+        {APP_TEXT.balance.receive(formatMoney(value))}
       </span>
     );
   }
@@ -2607,7 +2914,7 @@ function BalancePill({ value }: { value: number }) {
     return (
       <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-red-50 px-2 py-1 text-xs font-semibold text-red-700">
         <ArrowUpRight size={13} aria-hidden="true" />
-        Trả {formatMoney(Math.abs(value))}
+        {APP_TEXT.balance.pay(formatMoney(Math.abs(value)))}
       </span>
     );
   }
@@ -2615,7 +2922,7 @@ function BalancePill({ value }: { value: number }) {
   return (
     <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-stone-100 px-2 py-1 text-xs font-semibold text-stone-600">
       <Equal size={13} aria-hidden="true" />
-      Đủ
+      {APP_TEXT.balance.settled}
     </span>
   );
 }
