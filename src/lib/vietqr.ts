@@ -1,4 +1,8 @@
-import type { Participant } from "../types";
+import type { ApiParticipant } from "../../shared/api-types";
+
+export type PaymentInfo = Pick<ApiParticipant, "bankId" | "accountNo" | "accountName">;
+
+const QR_CONTENT_MAX_LENGTH = 50;
 
 function normalizeText(value: string) {
   return value
@@ -7,18 +11,18 @@ function normalizeText(value: string) {
     .replace(/[^a-zA-Z0-9 ]/g, " ")
     .replace(/\s+/g, " ")
     .trim()
-    .slice(0, 50);
+    .slice(0, QR_CONTENT_MAX_LENGTH);
 }
 
-export function canBuildVietQr(participant: Participant) {
-  return Boolean(participant.bankId && participant.accountNo && participant.accountName);
+export function canBuildVietQr(payment: PaymentInfo) {
+  return Boolean(payment.bankId && payment.accountNo && payment.accountName);
 }
 
-export function buildVietQrUrl(participant: Participant, amount: number, gameCode: string) {
+export function buildVietQrUrl(payment: PaymentInfo, amount: number, gameCode: string) {
   const content = normalizeText(`CHIA KEO ${gameCode}`);
-  const bankId = encodeURIComponent(participant.bankId.trim());
-  const accountNo = encodeURIComponent(participant.accountNo.trim());
-  const accountName = encodeURIComponent(participant.accountName.trim());
+  const bankId = encodeURIComponent(payment.bankId.trim());
+  const accountNo = encodeURIComponent(payment.accountNo.trim());
+  const accountName = encodeURIComponent(payment.accountName.trim());
 
   return `https://img.vietqr.io/image/${bankId}-${accountNo}-compact2.png?amount=${amount}&addInfo=${encodeURIComponent(
     content,

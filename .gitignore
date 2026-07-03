@@ -10,6 +10,11 @@ dist/
 
 # Environment files
 .env*
+!.env.example
+.dev.vars
+
+# Cloudflare
+.wrangler/
 
 # Logs
 *.log
