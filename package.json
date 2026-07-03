@@ -16,7 +16,8 @@
     "pages:dev": "npm run cloudflare:preview",
     "deploy": "npm run cloudflare:deploy",
     "cloudflare:preview": "npm run build && wrangler pages dev dist --port 8788",
-    "cloudflare:deploy": "npm run build && wrangler pages deploy dist --project-name chiakeo"
+    "cloudflare:deploy": "npm run build && wrangler pages deploy dist --project-name chiakeo",
+    "db:generate": "drizzle-kit generate"
   },
   "dependencies": {
     "@dicebear/core": "^10.3.0",
@@ -25,6 +26,9 @@
     "@radix-ui/react-select": "^2.3.2",
     "@tailwindcss/vite": "^4.0.0",
     "@vitejs/plugin-react": "^5.0.0",
+    "better-auth": "^1.6.23",
+    "drizzle-orm": "^0.45.2",
+    "hono": "^4.12.27",
     "lucide-react": "^0.468.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
@@ -35,12 +39,14 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@cloudflare/workers-types": "^5.20260703.1",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "drizzle-kit": "^0.31.10",
     "jsdom": "^29.1.1",
     "typescript": "^5.7.0",
     "vitest": "^4.1.9",

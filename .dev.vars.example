@@ -1,0 +1,2 @@
+# Copy thanh .dev.vars de chay wrangler dev local.
+BETTER_AUTH_SECRET=dev-secret-thay-bang-chuoi-ngau-nhien-du-dai

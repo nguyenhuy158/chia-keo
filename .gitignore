@@ -23,3 +23,7 @@ yarn-error.log*
 .DS_Store
 .idea/
 .vscode/
+
+# Cloudflare local dev
+.dev.vars
+.wrangler/
