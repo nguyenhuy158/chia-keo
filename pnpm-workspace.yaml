@@ -2,6 +2,8 @@ allowBuilds:
   esbuild: true
   sharp: true
   workerd: true
+minimumReleaseAgeExclude:
+  - '@cloudflare/workers-types@5.20260703.1'
 onlyBuiltDependencies:
   - esbuild
   - sharp
