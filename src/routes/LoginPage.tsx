@@ -86,7 +86,7 @@ export function LoginPage() {
         className="w-full rounded-lg border border-stone-200 bg-white p-6 shadow-sm"
       >
         <div className="mb-6">
-          <p className="text-sm font-medium uppercase tracking-wide text-emerald-700">Chia keo</p>
+          <p className="text-sm font-bold uppercase tracking-wide text-fuchsia-600">Chia keo</p>
           <h1 className="mt-2 text-2xl font-semibold text-stone-950">
             {mode === "sign-in" ? "Dang nhap" : "Dang ky"}
           </h1>
@@ -112,12 +112,12 @@ export function LoginPage() {
           </Field>
         </div>
 
-        {authError && <p className="mt-3 text-sm text-red-600">{authError}</p>}
+        {authError && <p className="mt-3 text-sm text-rose-600">{authError}</p>}
 
         <button
           type="submit"
           disabled={form.formState.isSubmitting}
-          className="mt-4 inline-flex h-11 w-full items-center justify-center gap-2 rounded-md bg-stone-950 px-4 text-sm font-semibold text-white transition hover:bg-stone-800 disabled:cursor-not-allowed disabled:bg-stone-400"
+          className="mt-4 inline-flex h-11 w-full items-center justify-center gap-2 rounded-md bg-gradient-to-r from-violet-600 to-fuchsia-600 px-4 text-sm font-semibold text-white transition hover:from-violet-700 hover:to-fuchsia-700 disabled:cursor-not-allowed disabled:from-stone-400 disabled:to-stone-400"
         >
           <WalletCards size={18} />
           {mode === "sign-in" ? "Dang nhap" : "Dang ky"}
@@ -129,7 +129,7 @@ export function LoginPage() {
             setMode(mode === "sign-in" ? "sign-up" : "sign-in");
             setAuthError("");
           }}
-          className="mt-3 w-full text-center text-sm font-medium text-emerald-700 hover:text-emerald-800"
+          className="mt-3 w-full text-center text-sm font-medium text-violet-600 hover:text-violet-700"
         >
           {mode === "sign-in" ? "Chua co tai khoan? Dang ky" : "Da co tai khoan? Dang nhap"}
         </button>
