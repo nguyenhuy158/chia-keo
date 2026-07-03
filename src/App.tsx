@@ -2111,7 +2111,7 @@ function MobileExpensePane({
         </span>
       </div>
 
-      <div className="flex shrink-0 gap-1.5 overflow-x-auto pb-1">
+      <div className="grid shrink-0 grid-cols-4 gap-1.5">
         {visibleSuggestions.map((suggestion) => {
           const Icon = getExpenseCategoryIcon(suggestion.categoryId);
 
@@ -2121,10 +2121,10 @@ function MobileExpensePane({
               type="button"
               onClick={() => handleApplySuggestion(suggestion)}
               disabled={game.participants.length === 0}
-              className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md border border-stone-200 bg-white px-2.5 text-xs font-semibold text-stone-700 transition hover:border-blue-200 hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex h-8 min-w-0 items-center justify-center gap-1 rounded-md border border-stone-200 bg-white px-1.5 text-[0.7rem] font-semibold text-stone-700 transition hover:border-blue-200 hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              <Icon size={14} className="text-emerald-700" aria-hidden="true" />
-              <span>{suggestion.title}</span>
+              <Icon size={13} className="shrink-0 text-emerald-700" aria-hidden="true" />
+              <span className="min-w-0 truncate">{suggestion.title}</span>
             </button>
           );
         })}

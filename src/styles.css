@@ -32,15 +32,18 @@
 
 html {
   min-width: 320px;
+  max-width: 100%;
   min-height: 100%;
   height: 100%;
   background: var(--tone-page);
+  overflow-x: hidden;
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
 }
 
 body {
   min-width: 320px;
+  max-width: 100%;
   min-height: 100vh;
   min-height: 100svh;
   min-height: 100dvh;
@@ -56,6 +59,7 @@ body {
   background: linear-gradient(180deg, #ffffff 0%, var(--tone-page) 100%);
   color: var(--tone-ink);
   overflow: hidden;
+  overflow-x: hidden;
   overscroll-behavior-x: none;
   -webkit-font-smoothing: antialiased;
 }
@@ -66,16 +70,20 @@ body {
   min-height: 100dvh;
   height: 100%;
   min-width: 0;
+  max-width: 100%;
   overflow: hidden;
+  overflow-x: hidden;
 }
 
 .app-shell {
   width: 100%;
+  max-width: 100%;
   height: 100vh;
   height: 100svh;
   height: 100dvh;
   min-height: 0;
   overflow: hidden;
+  overflow-x: hidden;
 }
 
 .app-scroll-pane {
@@ -88,20 +96,36 @@ body {
 .mobile-one-screen {
   min-height: 0;
   overflow: hidden;
+  overflow-x: hidden;
 }
 
 .mobile-panel {
   display: flex;
   height: 100%;
+  width: 100%;
   min-height: 0;
+  min-width: 0;
   flex-direction: column;
   gap: 0.5rem;
   overflow: hidden;
+  overflow-x: hidden;
   border: 1px solid var(--tone-border);
   border-radius: 0.5rem;
   background: var(--tone-surface);
   padding: 0.625rem;
   box-shadow: var(--tone-shadow);
+}
+
+.mobile-game-controls {
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  overflow-x: hidden;
+}
+
+.mobile-game-controls > *,
+.mobile-panel > * {
+  min-width: 0;
 }
 
 .workspace-bottom-bar {
