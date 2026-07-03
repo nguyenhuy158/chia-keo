@@ -1,27 +1,23 @@
+/// <reference types="vitest/config" />
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
-import { defineConfig } from "vitest/config";
+import { defineConfig } from "vite";
+
+const API_DEV_SERVER = "http://127.0.0.1:8787";
 
 export default defineConfig({
-  build: {
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          avatar: ["@dicebear/core", "@dicebear/styles/lorelei-neutral.json"],
-          router: ["react-router-dom"],
-          validation: ["zod"],
-        },
+  plugins: [react(), tailwindcss()],
+  server: {
+    // Proxy API sang wrangler dev de FE va API cung origin khi phat trien.
+    proxy: {
+      "/api": {
+        target: API_DEV_SERVER,
+        changeOrigin: false,
       },
     },
   },
-  plugins: [react(), tailwindcss()],
   test: {
-    environment: "jsdom",
-    environmentOptions: {
-      jsdom: {
-        url: "http://127.0.0.1/",
-      },
-    },
-    setupFiles: "./src/test/setup.ts",
+    include: ["src/**/*.test.ts", "shared/**/*.test.ts"],
+    environment: "node",
   },
 });
