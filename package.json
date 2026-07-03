@@ -18,7 +18,8 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate:local": "wrangler d1 migrations apply DB --local",
     "db:migrate:remote": "wrangler d1 migrations apply DB --remote",
-    "deploy": "pnpm build && wrangler deploy"
+    "deploy": "pnpm build && wrangler deploy",
+    "e2e": "node e2e/ui-smoke.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",
@@ -42,6 +43,7 @@
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "drizzle-kit": "^0.31.10",
+    "playwright-core": "^1.61.1",
     "typescript": "^5.7.0",
     "vitest": "^4.1.9",
     "wrangler": "^4.106.0"
