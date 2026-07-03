@@ -1,5 +1,5 @@
 import { useNavigate, useParams } from "@tanstack/react-router";
-import { Copy, Link as LinkIcon, Power, RefreshCw, Trash2 } from "lucide-react";
+import { Check, Copy, Link as LinkIcon, Pencil, Power, RefreshCw, Trash2, X } from "lucide-react";
 import { useState } from "react";
 import { ExpensePanel } from "../components/ExpensePanel";
 import { GameDashboard } from "../components/GameDashboard";
@@ -12,8 +12,10 @@ import {
   useGame,
   useRemoveExpense,
   useRemoveParticipant,
+  useRenameGame,
   useRotateShareLink,
   useSetShareLinkEnabled,
+  useUpdateExpense,
 } from "../lib/queries";
 
 const COPY_FEEDBACK_MS = 1600;
@@ -26,12 +28,15 @@ export function GamePage() {
   const addParticipant = useAddParticipant(gameId);
   const removeParticipant = useRemoveParticipant();
   const addExpense = useAddExpense(gameId);
+  const updateExpense = useUpdateExpense();
   const removeExpense = useRemoveExpense();
+  const renameGame = useRenameGame(gameId);
   const rotateShareLink = useRotateShareLink(gameId);
   const setShareLinkEnabled = useSetShareLinkEnabled(gameId);
   const deleteGame = useDeleteGame();
 
   const [copiedShare, setCopiedShare] = useState(false);
+  const [nameDraft, setNameDraft] = useState<string | null>(null);
 
   if (gameQuery.isPending) {
     return <LoadingState />;
@@ -65,12 +70,65 @@ export function GamePage() {
     navigate({ to: "/" });
   }
 
+  async function handleRenameGame() {
+    const name = (nameDraft || "").trim();
+    if (!name || name === game.name) {
+      setNameDraft(null);
+      return;
+    }
+
+    await renameGame.mutateAsync(name);
+    setNameDraft(null);
+  }
+
   return (
     <>
       <div className="mb-5 flex flex-col gap-3 rounded-lg border border-stone-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
-        <div>
+        <div className="min-w-0">
           <p className="text-sm font-medium text-emerald-700">{game.code}</p>
-          <h2 className="text-2xl font-semibold text-stone-950">{game.name}</h2>
+          {nameDraft !== null ? (
+            <div className="mt-1 flex items-center gap-2">
+              <input
+                value={nameDraft}
+                onChange={(event) => setNameDraft(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") handleRenameGame();
+                  if (event.key === "Escape") setNameDraft(null);
+                }}
+                className="field h-10 max-w-xs text-lg font-semibold"
+                autoFocus
+              />
+              <button
+                type="button"
+                onClick={handleRenameGame}
+                disabled={renameGame.isPending}
+                className="inline-flex h-9 w-9 items-center justify-center rounded-md bg-emerald-700 text-white transition hover:bg-emerald-800"
+                aria-label="Luu ten cuoc choi"
+              >
+                <Check size={16} />
+              </button>
+              <button
+                type="button"
+                onClick={() => setNameDraft(null)}
+                className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-stone-300 text-stone-600 transition hover:bg-stone-50"
+                aria-label="Huy doi ten"
+              >
+                <X size={16} />
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <h2 className="truncate text-2xl font-semibold text-stone-950">{game.name}</h2>
+              <button
+                type="button"
+                onClick={() => setNameDraft(game.name)}
+                className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-stone-500 transition hover:bg-stone-100 hover:text-stone-800"
+                aria-label="Doi ten cuoc choi"
+              >
+                <Pencil size={15} />
+              </button>
+            </div>
+          )}
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {shareLink ? (
@@ -140,8 +198,9 @@ export function GamePage() {
             gameId={game.id}
             participants={game.participants}
             expenses={game.expenses}
-            pending={addExpense.isPending}
+            pending={addExpense.isPending || updateExpense.isPending}
             onAdd={(input) => addExpense.mutateAsync(input)}
+            onUpdate={(expenseId, input) => updateExpense.mutateAsync({ expenseId, input })}
             onRemove={(expenseId) => removeExpense.mutate(expenseId)}
           />
         </div>

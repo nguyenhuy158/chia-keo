@@ -83,8 +83,19 @@ export function useAddExpense(gameId: string) {
   return useGameDetailMutation((input: ExpenseInput) => api.expenses.create(gameId, input));
 }
 
+export function useUpdateExpense() {
+  return useGameDetailMutation(
+    (variables: { expenseId: string; input: Partial<ExpenseInput> }) =>
+      api.expenses.update(variables.expenseId, variables.input),
+  );
+}
+
 export function useRemoveExpense() {
   return useGameDetailMutation((expenseId: string) => api.expenses.remove(expenseId));
+}
+
+export function useRenameGame(gameId: string) {
+  return useGameDetailMutation((name: string) => api.games.rename(gameId, { name }));
 }
 
 export function useAiSuggestExpense(gameId: string) {

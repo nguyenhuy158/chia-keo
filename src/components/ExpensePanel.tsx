@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Banknote, ImagePlus, Plus, Sparkles, Trash2 } from "lucide-react";
+import { Banknote, Check, ImagePlus, Pencil, Plus, Sparkles, Trash2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -25,6 +25,7 @@ type ExpensePanelProps = {
   expenses: ApiExpense[];
   pending: boolean;
   onAdd: (input: ExpenseInput) => Promise<unknown>;
+  onUpdate: (expenseId: string, input: Partial<ExpenseInput>) => Promise<unknown>;
   onRemove: (expenseId: string) => void;
 };
 
@@ -52,6 +53,7 @@ export function ExpensePanel({
   expenses,
   pending,
   onAdd,
+  onUpdate,
   onRemove,
 }: ExpensePanelProps) {
   const participantById = new Map(participants.map((participant) => [participant.id, participant]));
@@ -155,14 +157,43 @@ export function ExpensePanel({
     }
   }
 
-  const handleAdd = form.handleSubmit(async (values) => {
-    await onAdd({
+  const [editingExpenseId, setEditingExpenseId] = useState("");
+
+  function startEditExpense(expense: ApiExpense) {
+    setEditingExpenseId(expense.id);
+    form.reset({
+      title: expense.title,
+      amount: String(expense.amount),
+      payerId: expense.payerParticipantId,
+      splitParticipantIds: expense.splitParticipantIds,
+    });
+  }
+
+  function cancelEditExpense() {
+    setEditingExpenseId("");
+    form.reset({
+      title: "",
+      amount: "",
+      payerId: participants[0]?.id || "",
+      splitParticipantIds: participants.map((participant) => participant.id),
+    });
+  }
+
+  const handleSubmit = form.handleSubmit(async (values) => {
+    const input = {
       title: values.title || DEFAULT_EXPENSE_TITLE,
       amount: parseMoney(values.amount),
       note: "",
       payerParticipantId: values.payerId,
       splitParticipantIds: values.splitParticipantIds,
-    });
+    };
+
+    if (editingExpenseId) {
+      await onUpdate(editingExpenseId, input);
+      setEditingExpenseId("");
+    } else {
+      await onAdd(input);
+    }
     form.reset({
       title: "",
       amount: "",
@@ -231,7 +262,7 @@ export function ExpensePanel({
         </p>
       </div>
 
-      <form onSubmit={handleAdd} className="grid gap-3 md:grid-cols-2">
+      <form onSubmit={handleSubmit} className="grid gap-3 md:grid-cols-2">
         <Field label="Noi dung">
           <input {...form.register("title")} className="field" placeholder="An toi" />
         </Field>
@@ -279,23 +310,38 @@ export function ExpensePanel({
             </p>
           )}
         </div>
-        <div className="md:col-span-2">
+        <div className="flex items-center gap-2 md:col-span-2">
           <button
             type="submit"
             disabled={participants.length === 0 || pending}
             className="inline-flex h-10 items-center gap-2 rounded-md bg-blue-700 px-4 text-sm font-semibold text-white transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:bg-stone-300"
           >
-            <Plus size={17} />
-            Them khoan chi
+            {editingExpenseId ? <Check size={17} /> : <Plus size={17} />}
+            {editingExpenseId ? "Luu khoan chi" : "Them khoan chi"}
           </button>
+          {editingExpenseId && (
+            <button
+              type="button"
+              onClick={cancelEditExpense}
+              className="inline-flex h-10 items-center gap-2 rounded-md border border-stone-300 bg-white px-4 text-sm font-medium text-stone-700 transition hover:bg-stone-50"
+            >
+              Huy sua
+            </button>
+          )}
         </div>
       </form>
 
       <div className="mt-5 space-y-2">
         {expenses.map((expense) => {
           const payer = participantById.get(expense.payerParticipantId);
+          const isEditing = expense.id === editingExpenseId;
           return (
-            <div key={expense.id} className="rounded-md border border-stone-200 p-3">
+            <div
+              key={expense.id}
+              className={`rounded-md border p-3 ${
+                isEditing ? "border-blue-500 bg-blue-50" : "border-stone-200"
+              }`}
+            >
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <p className="truncate text-sm font-semibold text-stone-950">{expense.title}</p>
@@ -307,6 +353,14 @@ export function ExpensePanel({
                   <span className="text-sm font-semibold text-stone-950">
                     {formatMoney(expense.amount)}
                   </span>
+                  <button
+                    type="button"
+                    onClick={() => (isEditing ? cancelEditExpense() : startEditExpense(expense))}
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-md text-blue-700 transition hover:bg-blue-50"
+                    aria-label={`Sua ${expense.title}`}
+                  >
+                    <Pencil size={16} />
+                  </button>
                   <button
                     type="button"
                     onClick={() => onRemove(expense.id)}
