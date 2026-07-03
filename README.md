@@ -11,8 +11,8 @@ Ung dung chia tien nhom cho cac buoi an, di choi, du lich hoac nhom chi tieu nho
   - Tao nhieu cuoc choi.
   - Them nguoi tham gia va thong tin ngan hang.
   - Ghi khoan chi, nguoi tra tien, danh sach nguoi cung chia.
-  - Tinh `da tra`, `phan chiu`, `con lai`.
-  - Sinh danh sach chuyen khoan toi uu giua nguoi no va nguoi nhan.
+- Tinh `da tra`, `phan chiu`, `con lai`.
+- Sinh danh sach nguoi can chuyen tien ve chu cuoc choi.
   - Tao link share read-only dang `/share/:token`.
   - Tao VietQR bang `img.vietqr.io` neu nguoi nhan co du thong tin ngan hang.
 
@@ -108,10 +108,10 @@ Token public read-only.
 
 ### `payment_profiles`
 
-Thong tin nhan tien cua tung nguoi.
+Thong tin nhan tien cua chu cuoc choi.
 
 - `id`
-- `participant_id`
+- `game_id`
 - `bank_id`
 - `account_no`
 - `account_name`
@@ -140,13 +140,11 @@ Y nghia balance:
 - `balance < 0`: phai chuyen them.
 - `balance = 0`: da can bang.
 
-Sau khi co balance:
+Sau khi co balance o V1:
 
-1. Tao danh sach nguoi no tu balance am.
-2. Tao danh sach nguoi nhan tu balance duong.
-3. Sap xep theo so tien giam dan.
-4. Ghep nguoi no voi nguoi nhan, moi lan lay so tien nho hon giua hai ben.
-5. Lap den khi het no hoac het nguoi nhan.
+1. Tao danh sach nguoi co `balance < 0`.
+2. Moi nguoi trong danh sach chuyen so tien `abs(balance)` ve tai khoan chu cuoc choi.
+3. QR VietQR lay tu `payment_profiles` cua cuoc choi.
 
 ## API de xuat
 
@@ -175,11 +173,38 @@ Sau khi co balance:
 5. Migration DB chay bang Drizzle.
 6. Public link dang `/share/:token`, read-only, khong can login.
 
+## Cloudflare Pages v1
+
+V1 hien tai deploy frontend static len Cloudflare Pages, chua can Worker/D1.
+Link share la snapshot nam trong URL nen nguoi khac mo link van xem duoc tren
+Cloudflare Pages.
+
+Pages settings:
+
+- Framework preset: `Vite`
+- Build command: `pnpm build`
+- Build output directory: `dist`
+- Environment variable: `NODE_VERSION=22`
+
+Local Wrangler deploy:
+
+```bash
+npx wrangler login
+npx wrangler pages project create chia-keo --production-branch main
+npm run cloudflare:deploy
+```
+
+GitHub Actions deploy:
+
+- Workflow: `.github/workflows/deploy-pages.yml`
+- Secrets can them: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`
+
 ## Bien moi truong de xuat
 
 Frontend:
 
 - `VITE_API_URL`
+- `VITE_GOOGLE_AUTH_URL`
 - `VITE_TURNSTILE_SITE_KEY`
 
 Worker:
@@ -218,4 +243,3 @@ npm install
 npm run dev
 npm run build
 ```
-

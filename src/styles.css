@@ -1,8 +1,24 @@
 @import "tailwindcss";
 
 :root {
-  color: #1d1d1f;
-  background: #f5f5f4;
+  --tone-magenta: #e466bd;
+  --tone-magenta-dark: #c9469e;
+  --tone-rose: #eba0b8;
+  --tone-blush: #f4b8b8;
+  --tone-cream: #fee8b7;
+  --tone-cream-soft: #fff4d8;
+  --tone-page: #fff3f7;
+  --tone-surface: #fffafa;
+  --tone-surface-muted: #fff0f3;
+  --tone-border: #f2c4ce;
+  --tone-border-strong: #e98caf;
+  --tone-ink: #3a2430;
+  --tone-muted: #7d6270;
+  --tone-danger: #b83272;
+  --tone-shadow: 0 8px 22px rgb(228 102 189 / 10%);
+
+  color: var(--tone-ink);
+  background: var(--tone-page);
   font-family:
     Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
     sans-serif;
@@ -18,6 +34,10 @@ body {
   min-width: 320px;
   min-height: 100vh;
   margin: 0;
+  background:
+    radial-gradient(circle at top left, rgb(228 102 189 / 16%), transparent 30rem),
+    linear-gradient(180deg, var(--tone-page) 0%, #fff8ed 100%);
+  color: var(--tone-ink);
 }
 
 button,
@@ -31,7 +51,9 @@ textarea {
   height: 2.5rem;
   width: 100%;
   border-radius: 0.375rem;
-  border: 1px solid #d6d3d1;
+  border: 1px solid var(--tone-border);
+  background: var(--tone-surface);
+  color: var(--tone-ink);
   padding: 0 0.75rem;
   font-size: 0.875rem;
   outline: none;
@@ -41,6 +63,203 @@ textarea {
 }
 
 .field:focus {
-  border-color: #059669;
-  box-shadow: 0 0 0 2px #d1fae5;
+  border-color: var(--tone-border-strong);
+  box-shadow: 0 0 0 2px rgb(228 102 189 / 18%);
+}
+
+.select-trigger {
+  display: inline-flex;
+  height: 2.5rem;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  border-radius: 0.375rem;
+  border: 1px solid var(--tone-border);
+  background: var(--tone-surface);
+  padding: 0 0.75rem;
+  color: var(--tone-ink);
+  font-size: 0.875rem;
+  outline: none;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.select-trigger:focus {
+  border-color: var(--tone-border-strong);
+  box-shadow: 0 0 0 2px rgb(228 102 189 / 18%);
+}
+
+.select-trigger[data-disabled] {
+  cursor: not-allowed;
+  background: var(--tone-surface-muted);
+  color: var(--tone-muted);
+}
+
+.select-content {
+  z-index: 50;
+  min-width: var(--radix-select-trigger-width);
+  overflow: hidden;
+  border-radius: 0.5rem;
+  border: 1px solid var(--tone-border);
+  background: var(--tone-surface);
+  box-shadow:
+    0 18px 45px rgb(228 102 189 / 14%),
+    0 4px 12px rgb(58 36 48 / 8%);
+}
+
+.select-viewport {
+  padding: 0.25rem;
+}
+
+.select-item {
+  position: relative;
+  display: flex;
+  min-height: 2.25rem;
+  cursor: pointer;
+  user-select: none;
+  align-items: center;
+  border-radius: 0.375rem;
+  padding: 0.45rem 2rem 0.45rem 0.75rem;
+  color: var(--tone-ink);
+  font-size: 0.875rem;
+  outline: none;
+}
+
+.select-item[data-highlighted] {
+  background: var(--tone-cream-soft);
+  color: var(--tone-magenta-dark);
+}
+
+.select-item-indicator {
+  position: absolute;
+  right: 0.625rem;
+  display: inline-flex;
+  align-items: center;
+  color: var(--tone-magenta-dark);
+}
+
+.pastel-summary-pattern {
+  aspect-ratio: 1 / 1;
+  width: 100%;
+  overflow: hidden;
+  border-radius: 1.375rem;
+  background: linear-gradient(
+    to bottom,
+    var(--tone-magenta) 0%,
+    var(--tone-magenta) 41%,
+    var(--tone-rose) 41%,
+    var(--tone-rose) 67%,
+    var(--tone-blush) 67%,
+    var(--tone-blush) 85%,
+    var(--tone-cream) 85%,
+    var(--tone-cream) 100%
+  );
+}
+
+::selection {
+  background: var(--tone-cream);
+  color: var(--tone-ink);
+}
+
+.bg-stone-100 {
+  background-color: var(--tone-page) !important;
+}
+
+.bg-stone-50 {
+  background-color: var(--tone-surface-muted) !important;
+}
+
+.bg-white {
+  background-color: var(--tone-surface) !important;
+}
+
+.bg-stone-950,
+.bg-emerald-700,
+.bg-blue-700 {
+  background-color: var(--tone-magenta) !important;
+}
+
+.hover\:bg-stone-800:hover,
+.hover\:bg-emerald-800:hover,
+.hover\:bg-blue-800:hover {
+  background-color: var(--tone-magenta-dark) !important;
+}
+
+.hover\:bg-stone-50:hover {
+  background-color: var(--tone-surface-muted) !important;
+}
+
+.hover\:bg-white:hover {
+  background-color: var(--tone-surface) !important;
+}
+
+.hover\:bg-red-50:hover {
+  background-color: rgb(248 184 184 / 45%) !important;
+}
+
+.bg-emerald-50,
+.bg-blue-50 {
+  background-color: var(--tone-cream-soft) !important;
+}
+
+.bg-red-50 {
+  background-color: rgb(248 184 184 / 38%) !important;
+}
+
+.bg-stone-200,
+.disabled\:bg-stone-300:disabled {
+  background-color: var(--tone-border) !important;
+}
+
+.border-stone-200,
+.border-stone-300 {
+  border-color: var(--tone-border) !important;
+}
+
+.border-emerald-600,
+.border-blue-600 {
+  border-color: var(--tone-border-strong) !important;
+}
+
+.border-dashed {
+  border-color: var(--tone-border-strong) !important;
+}
+
+.text-stone-950,
+.text-stone-900,
+.text-stone-800 {
+  color: var(--tone-ink) !important;
+}
+
+.text-stone-700,
+.text-stone-600,
+.text-stone-500,
+.text-stone-400 {
+  color: var(--tone-muted) !important;
+}
+
+.text-emerald-800,
+.text-emerald-700,
+.text-blue-700,
+.text-blue-600 {
+  color: var(--tone-magenta-dark) !important;
+}
+
+.text-red-700,
+.text-red-600 {
+  color: var(--tone-danger) !important;
+}
+
+.shadow-sm {
+  box-shadow: var(--tone-shadow) !important;
+}
+
+.focus\:border-emerald-600:focus {
+  border-color: var(--tone-border-strong) !important;
+}
+
+.focus\:ring-emerald-100:focus {
+  --tw-ring-color: rgb(228 102 189 / 18%) !important;
 }

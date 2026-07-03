@@ -1,4 +1,4 @@
-import type { Participant } from "../types";
+import type { PaymentProfile } from "../types";
 
 function normalizeText(value: string) {
   return value
@@ -10,15 +10,15 @@ function normalizeText(value: string) {
     .slice(0, 50);
 }
 
-export function canBuildVietQr(participant: Participant) {
-  return Boolean(participant.bankId && participant.accountNo && participant.accountName);
+export function canBuildVietQr(paymentProfile: PaymentProfile | undefined) {
+  return Boolean(paymentProfile?.bankId && paymentProfile.accountNo);
 }
 
-export function buildVietQrUrl(participant: Participant, amount: number, gameCode: string) {
+export function buildVietQrUrl(paymentProfile: PaymentProfile, amount: number, gameCode: string) {
   const content = normalizeText(`CHIA KEO ${gameCode}`);
-  const bankId = encodeURIComponent(participant.bankId.trim());
-  const accountNo = encodeURIComponent(participant.accountNo.trim());
-  const accountName = encodeURIComponent(participant.accountName.trim());
+  const bankId = encodeURIComponent(paymentProfile.bankId.trim());
+  const accountNo = encodeURIComponent(paymentProfile.accountNo.trim());
+  const accountName = encodeURIComponent(paymentProfile.accountName.trim());
 
   return `https://img.vietqr.io/image/${bankId}-${accountNo}-compact2.png?amount=${amount}&addInfo=${encodeURIComponent(
     content,
