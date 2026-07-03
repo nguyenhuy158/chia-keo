@@ -28,6 +28,13 @@ export type Expense = {
   createdAt: string;
 };
 
+export type Receipt = {
+  id: string;
+  participantId: string;
+  amount: number;
+  createdAt: string;
+};
+
 export type Game = {
   id: string;
   code: string;
@@ -35,6 +42,7 @@ export type Game = {
   paymentProfile?: PaymentProfile;
   participants: Participant[];
   expenses: Expense[];
+  receipts?: Receipt[];
   shareToken: string;
   createdAt: string;
 };

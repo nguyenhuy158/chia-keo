@@ -1,4 +1,6 @@
 const categoryIds = new Set(["food", "transport", "lodging", "shopping", "entertainment", "other"]);
+const participantNameLocale = "vi-VN";
+const wordPattern = /[\p{L}\p{M}]+/gu;
 
 function isRecord(value) {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -6,6 +8,21 @@ function isRecord(value) {
 
 function stringValue(value) {
   return typeof value === "string" ? value : "";
+}
+
+function toParticipantTitleCase(value) {
+  return value
+    .trim()
+    .replace(/\s+/g, " ")
+    .replace(wordPattern, (word) => {
+      const characters = Array.from(word);
+      const firstCharacter = characters[0] || "";
+      const rest = characters.slice(1).join("");
+
+      return `${firstCharacter.toLocaleUpperCase(participantNameLocale)}${rest.toLocaleLowerCase(
+        participantNameLocale,
+      )}`;
+    });
 }
 
 function optionalCategory(value) {
@@ -27,7 +44,7 @@ export function normalizeGame(value) {
     ? value.participants.flatMap((participant) => {
         if (!isRecord(participant)) return [];
         const participantId = stringValue(participant.id).trim();
-        const participantName = stringValue(participant.name).trim();
+        const participantName = toParticipantTitleCase(stringValue(participant.name));
         if (!participantId || !participantName) return [];
 
         return [
@@ -71,6 +88,33 @@ export function normalizeGame(value) {
         ];
       })
     : [];
+  const receipts = Array.isArray(value.receipts)
+    ? value.receipts.flatMap((receipt) => {
+        if (!isRecord(receipt)) return [];
+        const receiptId = stringValue(receipt.id).trim();
+        const participantId = stringValue(receipt.participantId).trim();
+        const amount = Number(receipt.amount);
+        const receiptCreatedAt = stringValue(receipt.createdAt).trim();
+        if (
+          !receiptId ||
+          !participantIds.has(participantId) ||
+          !Number.isFinite(amount) ||
+          amount <= 0 ||
+          !receiptCreatedAt
+        ) {
+          return [];
+        }
+
+        return [
+          {
+            id: receiptId,
+            participantId,
+            amount: Math.round(amount),
+            createdAt: receiptCreatedAt,
+          },
+        ];
+      })
+    : [];
 
   return {
     id,
@@ -83,8 +127,8 @@ export function normalizeGame(value) {
     },
     participants,
     expenses,
+    receipts,
     shareToken,
     createdAt,
   };
 }
-

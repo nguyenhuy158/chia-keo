@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { calculateBalances } from "./split";
+import { calculateBalances, calculateReceiptTotals, getRemainingPayable } from "./split";
 import type { Game } from "../types";
 
 const game: Game = {
@@ -22,6 +22,7 @@ const game: Game = {
       createdAt: "2026-07-03T00:00:00.000Z",
     },
   ],
+  receipts: [],
   shareToken: "share_1",
   createdAt: "2026-07-03T00:00:00.000Z",
 };
@@ -31,5 +32,21 @@ describe("calculateBalances", () => {
     const balances = calculateBalances(game);
 
     expect(balances.map((row) => row.balance)).toEqual([66, -33, -33]);
+  });
+
+  it("trừ tiền đã thu khỏi số còn phải trả", () => {
+    const receiptTotals = calculateReceiptTotals({
+      ...game,
+      receipts: [
+        {
+          id: "receipt_1",
+          participantId: "p2",
+          amount: 20,
+          createdAt: "2026-07-03T00:00:00.000Z",
+        },
+      ],
+    });
+
+    expect(getRemainingPayable(-33, receiptTotals.get("p2") || 0)).toBe(13);
   });
 });

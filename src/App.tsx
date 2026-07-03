@@ -3,26 +3,20 @@ import {
   ArrowUpRight,
   Banknote,
   CalendarClock,
-  Car,
   Check,
   ChevronDown,
-  CircleEllipsis,
   Copy,
   CreditCard,
   Equal,
-  Hotel,
   Landmark,
   Link,
   LogOut,
-  PartyPopper,
   Plus,
   QrCode,
   ReceiptText,
   Settings,
-  ShoppingBag,
   Tags,
   Trash2,
-  Utensils,
   UserRoundCheck,
   Users,
   WalletCards,
@@ -55,14 +49,14 @@ import {
 } from "./adapters/browser/vietqr";
 import { decodeShareGame, encodeShareGame } from "./core/application/share-game";
 import {
-  DEFAULT_EXPENSE_CATEGORY_ID,
   EXPENSE_CATEGORIES,
   getExpenseCategoryLabel,
   normalizeExpenseCategoryId,
 } from "./core/domain/expense-categories";
 import { formatMoney, formatMoneyInput, parseMoney } from "./core/domain/money";
-import { calculateBalances } from "./core/domain/split";
-import type { Expense, ExpenseCategoryId, Game, Participant, PaymentProfile } from "./core/domain/types";
+import { toParticipantTitleCase } from "./core/domain/participant-name";
+import { calculateBalances, calculateReceiptTotals, getRemainingPayable } from "./core/domain/split";
+import type { Expense, ExpenseCategoryId, Game, Participant, PaymentProfile, Receipt } from "./core/domain/types";
 import {
   clearSession,
   loadGames,
@@ -73,28 +67,40 @@ import {
   saveProfileName,
   saveSession,
 } from "./adapters/browser/local-storage";
-
-type ParticipantForm = Pick<Participant, "name" | "avatarSeed">;
-
-type ExpenseForm = {
-  title: string;
-  amount: string;
-  categoryId: ExpenseCategoryId;
-  payerId: string;
-  splitParticipantIds: string[];
-};
+import {
+  AMOUNT_PLACEHOLDER_VALUE,
+  CREATE_REMOTE_GAME_TOAST_ID,
+  DAYS_PER_MONTH,
+  DEFAULT_TOAST_DURATION_MS,
+  DEFAULT_WORKSPACE_TAB,
+  EXPENSE_CATEGORY_ICONS,
+  EXPENSE_SUGGESTIONS,
+  GOOGLE_AUTH_URL,
+  MILLISECONDS_PER_DAY,
+  MOBILE_VISIBLE_BALANCE_LIMIT,
+  MOBILE_VISIBLE_EXPENSE_LIMIT,
+  MOBILE_VISIBLE_PARTICIPANT_LIMIT,
+  MOBILE_VISIBLE_SUGGESTION_LIMIT,
+  PAYMENT_PROFILE_SAVE_TOAST_ID,
+  REMOTE_SAVE_ERROR_TOAST_ID,
+  REMOTE_SYNC_TOAST_ID,
+  SAVE_TOAST_DELAY_MS,
+  SHARE_LINK_TOAST_ID,
+  WORKSPACE_TABS,
+  emptyExpenseForm,
+  emptyParticipantForm,
+  emptyPaymentProfile,
+  type ExpenseForm,
+  type ExpenseSuggestion,
+  type ParticipantForm,
+  type WorkspaceTabId,
+} from "./app-constants";
 
 type ExpenseCategorySummary = {
   categoryId: ExpenseCategoryId;
   label: string;
   total: number;
   count: number;
-};
-
-type ExpenseSuggestion = {
-  title: string;
-  amount: number;
-  categoryId: ExpenseCategoryId;
 };
 
 type SelectOption = {
@@ -106,62 +112,17 @@ type GameUpdateOptions = {
   onSaved?: () => void;
 };
 
-type WorkspaceTabId = "people" | "expenses" | "summary";
+function showSuccessToast(message: string, description?: string) {
+  toast.success(message, { description, duration: DEFAULT_TOAST_DURATION_MS });
+}
 
-type WorkspaceTabConfig = {
-  id: WorkspaceTabId;
-  label: string;
-  icon: LucideIcon;
-};
+function showInfoToast(message: string, description?: string) {
+  toast.info(message, { description, duration: DEFAULT_TOAST_DURATION_MS });
+}
 
-const emptyParticipantForm: ParticipantForm = {
-  name: "",
-  avatarSeed: "",
-};
-
-const emptyPaymentProfile: PaymentProfile = {
-  bankId: "",
-  accountNo: "",
-  accountName: "",
-};
-
-const emptyExpenseForm: ExpenseForm = {
-  title: "",
-  amount: "",
-  categoryId: DEFAULT_EXPENSE_CATEGORY_ID,
-  payerId: "",
-  splitParticipantIds: [],
-};
-
-const MILLISECONDS_PER_DAY = 86_400_000;
-const DAYS_PER_MONTH = 30;
-const AMOUNT_PLACEHOLDER_VALUE = 500_000;
-const SAVE_TOAST_DELAY_MS = 450;
-const PAYMENT_PROFILE_SAVE_TOAST_ID = "payment-profile-auto-save";
-const REMOTE_SAVE_ERROR_TOAST_ID = "remote-save-error";
-const GOOGLE_AUTH_URL = import.meta.env.VITE_GOOGLE_AUTH_URL?.trim() || "";
-const DEFAULT_WORKSPACE_TAB: WorkspaceTabId = "people";
-const WORKSPACE_TABS: WorkspaceTabConfig[] = [
-  { id: "people", label: "Người", icon: Users },
-  { id: "expenses", label: "Chi", icon: Banknote },
-  { id: "summary", label: "Tổng kết", icon: QrCode },
-];
-const EXPENSE_SUGGESTIONS: ExpenseSuggestion[] = [
-  { title: "Ăn sáng", amount: 100_000, categoryId: "food" },
-  { title: "Ăn tối", amount: 500_000, categoryId: "food" },
-  { title: "Cà phê", amount: 80_000, categoryId: "food" },
-  { title: "Grab/taxi", amount: 150_000, categoryId: "transport" },
-  { title: "Khách sạn", amount: 1_000_000, categoryId: "lodging" },
-  { title: "Vé vui chơi", amount: 300_000, categoryId: "entertainment" },
-];
-const EXPENSE_CATEGORY_ICONS: Record<ExpenseCategoryId, LucideIcon> = {
-  food: Utensils,
-  transport: Car,
-  lodging: Hotel,
-  shopping: ShoppingBag,
-  entertainment: PartyPopper,
-  other: CircleEllipsis,
-};
+function showErrorToast(message: string, description?: string) {
+  toast.error(message, { description, duration: 2600 });
+}
 
 function createId(prefix: string) {
   const randomValue =
@@ -184,6 +145,7 @@ function createGame(name: string): Game {
     paymentProfile: { ...emptyPaymentProfile },
     participants: [],
     expenses: [],
+    receipts: [],
     shareToken: createId("share").replace("share_", ""),
     createdAt: new Date().toISOString(),
   };
@@ -220,6 +182,10 @@ function summarizeExpenseCategories(expenses: Expense[]): ExpenseCategorySummary
   }
 
   return Array.from(summaries.values()).sort((a, b) => b.total - a.total);
+}
+
+function getParticipantName(game: Game | undefined, participantId: string) {
+  return game?.participants.find((participant) => participant.id === participantId)?.name || "Không rõ";
 }
 
 function getParticipantAvatarSeed(participant: Participant) {
@@ -292,9 +258,17 @@ function App() {
         setGames(remoteGames);
         saveGames(remoteGames);
         setSelectedGameId((current) => current || remoteGames[0]?.id || "");
+        toast.success("Đã đồng bộ dữ liệu", {
+          id: REMOTE_SYNC_TOAST_ID,
+          description: `${remoteGames.length} cuộc chơi đã được tải.`,
+          duration: 1600,
+        });
       })
       .catch((error: Error) => {
-        if (!ignore) setDataError(error.message);
+        if (!ignore) {
+          setDataError(error.message);
+          toast.error(error.message, { id: REMOTE_SYNC_TOAST_ID, duration: 2600 });
+        }
       })
       .finally(() => {
         if (!ignore) setIsLoadingGames(false);
@@ -320,10 +294,16 @@ function App() {
     setIsLoadingShare(true);
     fetchShareSnapshot(shareToken)
       .then((game) => {
-        if (!ignore) setRemoteSharedGame(game);
+        if (!ignore) {
+          setRemoteSharedGame(game);
+          if (game) showSuccessToast("Đã tải link chia sẻ");
+        }
       })
       .catch(() => {
-        if (!ignore) setRemoteSharedGame(null);
+        if (!ignore) {
+          setRemoteSharedGame(null);
+          showErrorToast("Không tải được link chia sẻ");
+        }
       })
       .finally(() => {
         if (!ignore) setIsLoadingShare(false);
@@ -385,8 +365,12 @@ function App() {
       setProfileNameDraft(displayName);
       setAuthError("");
       setLoginPassword("");
+      showSuccessToast("Đăng nhập thành công", `Xin chào ${displayName || loggedInUsername}.`);
     } catch (error) {
-      setAuthError(error instanceof Error ? error.message : "Đăng nhập thất bại.");
+      const message = error instanceof Error ? error.message : "Đăng nhập thất bại.";
+
+      setAuthError(message);
+      showErrorToast(message);
       return;
     }
   }
@@ -403,11 +387,13 @@ function App() {
     setProfileDisplayName("");
     setProfileNameDraft("");
     setProfileSettingsOpen(false);
+    showInfoToast("Đã đăng xuất");
   }
 
   function handleOpenProfileSettings() {
     setProfileNameDraft(profileDisplayName || session);
     setProfileSettingsOpen((current) => !current);
+    showInfoToast(profileSettingsOpen ? "Đã đóng cài đặt tài khoản" : "Đã mở cài đặt tài khoản");
   }
 
   function handleSaveProfile(event: FormEvent<HTMLFormElement>) {
@@ -423,17 +409,24 @@ function App() {
 
   function handleGoogleLogin() {
     if (!GOOGLE_AUTH_URL) {
-      setAuthError("Google login chưa được cấu hình.");
+      const message = "Google login chưa được cấu hình.";
+
+      setAuthError(message);
+      showErrorToast(message);
       return;
     }
 
+    showInfoToast("Đang chuyển sang Google");
     window.location.assign(GOOGLE_AUTH_URL);
   }
 
   function handleCreateGame(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const name = newGameName.trim();
-    if (!name) return;
+    if (!name) {
+      showErrorToast("Nhập tên cuộc chơi trước");
+      return;
+    }
 
     const game = createGame(name);
     persistGames([game, ...games]);
@@ -441,17 +434,40 @@ function App() {
     setNewGameName("");
     setExpenseForm(emptyExpenseForm);
     setActiveWorkspaceTab(DEFAULT_WORKSPACE_TAB);
+    showSuccessToast("Đã tạo cuộc chơi", game.name);
     if (sessionToken) {
       createRemoteGame(sessionToken, game)
-        .then(() => setDataError(""))
-        .catch((error: Error) => setDataError(error.message));
+        .then(() => {
+          setDataError("");
+          toast.success("Đã đồng bộ cuộc chơi", { id: CREATE_REMOTE_GAME_TOAST_ID, duration: 1600 });
+        })
+        .catch((error: Error) => {
+          setDataError(error.message);
+          toast.error(error.message, { id: CREATE_REMOTE_GAME_TOAST_ID, duration: 2600 });
+        });
     }
+  }
+
+  function handleSelectGame(gameId: string) {
+    const nextGame = games.find((game) => game.id === gameId);
+
+    setSelectedGameId(gameId);
+    setCopiedShare(false);
+    if (nextGame) showInfoToast("Đã chọn cuộc chơi", nextGame.name);
   }
 
   function handleAddParticipant(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const name = participantForm.name.trim();
-    if (!selectedGame || !name) return;
+    const name = toParticipantTitleCase(participantForm.name);
+    if (!selectedGame) {
+      showErrorToast("Chưa chọn cuộc chơi");
+      return;
+    }
+
+    if (!name) {
+      showErrorToast("Nhập tên người tham gia trước");
+      return;
+    }
 
     const participant: Participant = {
       id: createId("participant"),
@@ -469,12 +485,17 @@ function App() {
       payerId: current.payerId || participant.id,
       splitParticipantIds: [...current.splitParticipantIds, participant.id],
     }));
+    showSuccessToast("Đã thêm người tham gia", participant.name);
   }
 
   function handleRemoveParticipant(participantId: string) {
+    const participantName =
+      selectedGame?.participants.find((participant) => participant.id === participantId)?.name || "Người tham gia";
+
     updateSelectedGame((game) => ({
       ...game,
       participants: game.participants.filter((participant) => participant.id !== participantId),
+      receipts: (game.receipts || []).filter((receipt) => receipt.participantId !== participantId),
       expenses: game.expenses
         .filter((expense) => expense.payerId !== participantId)
         .map((expense) => ({
@@ -487,14 +508,25 @@ function App() {
       payerId: current.payerId === participantId ? "" : current.payerId,
       splitParticipantIds: current.splitParticipantIds.filter((id) => id !== participantId),
     }));
+    showInfoToast("Đã xóa người tham gia", participantName);
   }
 
   function handleToggleSplit(participantId: string) {
+    const participantName =
+      selectedGame?.participants.find((participant) => participant.id === participantId)?.name || "Người này";
+    const isSelected = expenseForm.splitParticipantIds.includes(participantId);
+
+    showInfoToast(
+      isSelected ? "Đã bỏ khỏi danh sách chia" : "Đã thêm vào danh sách chia",
+      participantName,
+    );
+
     setExpenseForm((current) => {
-      const isSelected = current.splitParticipantIds.includes(participantId);
+      const currentlySelected = current.splitParticipantIds.includes(participantId);
+
       return {
         ...current,
-        splitParticipantIds: isSelected
+        splitParticipantIds: currentlySelected
           ? current.splitParticipantIds.filter((id) => id !== participantId)
           : [...current.splitParticipantIds, participantId],
       };
@@ -503,7 +535,10 @@ function App() {
 
   function handleAddExpense(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!selectedGame) return;
+    if (!selectedGame) {
+      showErrorToast("Chưa chọn cuộc chơi");
+      return;
+    }
 
     const participantIds = new Set(selectedGame.participants.map((participant) => participant.id));
     const payerId = expenseForm.payerId || selectedGame.participants[0]?.id || "";
@@ -511,7 +546,20 @@ function App() {
     const amount = parseMoney(expenseForm.amount);
     const categoryId = normalizeExpenseCategoryId(expenseForm.categoryId);
 
-    if (!payerId || amount <= 0 || splitParticipantIds.length === 0) return;
+    if (!payerId) {
+      showErrorToast("Chọn người trả trước");
+      return;
+    }
+
+    if (amount <= 0) {
+      showErrorToast("Nhập số tiền lớn hơn 0");
+      return;
+    }
+
+    if (splitParticipantIds.length === 0) {
+      showErrorToast("Chọn ít nhất một người để chia");
+      return;
+    }
 
     const expense: Expense = {
       id: createId("expense"),
@@ -532,18 +580,74 @@ function App() {
       payerId,
       splitParticipantIds,
     });
+    showSuccessToast("Đã thêm khoản chi", `${expense.title} - ${formatMoney(expense.amount)}`);
   }
 
   function handleRemoveExpense(expenseId: string) {
+    const expenseTitle = selectedGame?.expenses.find((expense) => expense.id === expenseId)?.title || "Khoản chi";
+
     updateSelectedGame((game) => ({
       ...game,
       expenses: game.expenses.filter((expense) => expense.id !== expenseId),
     }));
+    showInfoToast("Đã xóa khoản chi", expenseTitle);
+  }
+
+  function handleAddReceipt(participantId: string, amount: number) {
+    if (!selectedGame) {
+      showErrorToast("Chưa chọn cuộc chơi");
+      return;
+    }
+
+    if (amount <= 0) {
+      showErrorToast("Không còn khoản cần thu");
+      return;
+    }
+
+    const participantName = getParticipantName(selectedGame, participantId);
+    const receipt: Receipt = {
+      id: createId("receipt"),
+      participantId,
+      amount,
+      createdAt: new Date().toISOString(),
+    };
+
+    updateSelectedGame(
+      (game) => ({
+        ...game,
+        receipts: [receipt, ...(game.receipts || [])],
+      }),
+      {
+        onSaved: () =>
+          showSuccessToast("Đã ghi nhận thu tiền", `${participantName} - ${formatMoney(amount)}`),
+      },
+    );
+  }
+
+  function handleRemoveReceipt(receiptId: string) {
+    if (!selectedGame) return;
+
+    const receipt = (selectedGame.receipts || []).find((item) => item.id === receiptId);
+    const participantName = receipt ? getParticipantName(selectedGame, receipt.participantId) : "Khoản thu";
+
+    updateSelectedGame(
+      (game) => ({
+        ...game,
+        receipts: (game.receipts || []).filter((item) => item.id !== receiptId),
+      }),
+      {
+        onSaved: () => showInfoToast("Đã xóa khoản thu", participantName),
+      },
+    );
   }
 
   async function handleCopyShareLink() {
-    if (!selectedGame) return;
+    if (!selectedGame) {
+      showErrorToast("Chưa chọn cuộc chơi để chia sẻ");
+      return;
+    }
 
+    toast.loading("Đang tạo link chia sẻ", { id: SHARE_LINK_TOAST_ID });
     let shareUrl = `${window.location.origin}/share/${selectedGame.shareToken}?data=${encodeShareGame(selectedGame)}`;
     if (sessionToken) {
       try {
@@ -553,14 +657,35 @@ function App() {
       } catch (error) {
         const message = error instanceof Error ? error.message : "Không tạo được link chia sẻ.";
         setDataError(message);
-        toast.error(message);
+        toast.error(message, { id: SHARE_LINK_TOAST_ID, duration: 2600 });
         return;
       }
     }
 
-    await navigator.clipboard?.writeText(shareUrl);
-    setCopiedShare(true);
-    window.setTimeout(() => setCopiedShare(false), 1600);
+    try {
+      await navigator.clipboard?.writeText(shareUrl);
+      setCopiedShare(true);
+      toast.success("Đã sao chép link chia sẻ", {
+        id: SHARE_LINK_TOAST_ID,
+        description: selectedGame.name,
+        duration: DEFAULT_TOAST_DURATION_MS,
+      });
+      window.setTimeout(() => setCopiedShare(false), 1600);
+    } catch {
+      toast.error("Không sao chép được link", { id: SHARE_LINK_TOAST_ID, duration: 2600 });
+    }
+  }
+
+  function handleOpenExpenseAction() {
+    setActiveWorkspaceTab("expenses");
+    showInfoToast("Đã mở form khoản chi");
+    window.setTimeout(() => {
+      const expenseTitleInput = Array.from(
+        document.querySelectorAll<HTMLInputElement>("[data-expense-title-input]"),
+      ).find((input) => input.offsetParent !== null);
+
+      expenseTitleInput?.focus();
+    }, 0);
   }
 
   if (isShareMode) {
@@ -687,19 +812,49 @@ function App() {
   }
 
   function renderSummaryPane(game: Game) {
-    return <GameDashboard game={game} />;
+    return <GameDashboard game={game} onAddReceipt={handleAddReceipt} onRemoveReceipt={handleRemoveReceipt} />;
+  }
+
+  function renderMobilePane(game: Game) {
+    if (activeWorkspaceTab === "expenses") {
+      return (
+        <MobileExpensePane
+          game={game}
+          form={expenseForm}
+          onChange={setExpenseForm}
+          onToggleSplit={handleToggleSplit}
+          onSubmit={handleAddExpense}
+          onRemove={handleRemoveExpense}
+        />
+      );
+    }
+
+    if (activeWorkspaceTab === "summary") {
+      return <MobileSummaryPane game={game} onAddReceipt={handleAddReceipt} />;
+    }
+
+    return (
+      <MobilePeoplePane
+        game={game}
+        form={participantForm}
+        onChange={setParticipantForm}
+        onSubmit={handleAddParticipant}
+        onRemove={handleRemoveParticipant}
+        onUpdate={updateSelectedGame}
+      />
+    );
   }
 
   return (
     <PageShell>
       <header className="shrink-0 border-b border-stone-200 bg-white">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-3 py-2.5 sm:px-4">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-2 px-2.5 py-2 sm:gap-3 sm:px-4 sm:py-2.5">
           <div className="min-w-0 flex-1">
-            <h1 className="truncate text-lg font-semibold leading-tight text-stone-950 sm:text-xl">Chia kèo</h1>
+            <h1 className="truncate text-base font-semibold leading-tight text-stone-950 sm:text-xl">Chia kèo</h1>
             <p className="hidden text-sm text-stone-600 sm:block">Tính tiền nhóm và sinh QR nhận tiền.</p>
           </div>
           <div className="relative flex min-w-0 items-center justify-end gap-2">
-            <div className="hidden min-w-0 items-center gap-2 rounded-md border border-stone-200 bg-stone-50 px-2.5 py-2 min-[420px]:flex">
+            <div className="hidden min-w-0 items-center gap-2 rounded-md border border-stone-200 bg-stone-50 px-2.5 py-2 sm:flex">
               <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-700">
                 <UserRoundCheck size={16} aria-hidden="true" />
               </span>
@@ -710,7 +865,7 @@ function App() {
             <button
               type="button"
               onClick={handleOpenProfileSettings}
-              className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-stone-300 bg-white text-stone-700 transition hover:bg-stone-50"
+              className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-stone-300 bg-white text-stone-700 transition hover:bg-stone-50 sm:h-10 sm:w-10"
               aria-label="Cài đặt tài khoản"
               aria-expanded={profileSettingsOpen}
             >
@@ -719,7 +874,7 @@ function App() {
             <button
               type="button"
               onClick={handleLogout}
-              className="inline-flex h-10 shrink-0 items-center gap-2 rounded-md border border-stone-300 bg-white px-3 text-sm font-medium text-stone-700 transition hover:bg-stone-50"
+              className="inline-flex h-9 shrink-0 items-center gap-2 rounded-md border border-stone-300 bg-white px-2.5 text-sm font-medium text-stone-700 transition hover:bg-stone-50 sm:h-10 sm:px-3"
               aria-label="Thoát"
             >
               <LogOut size={16} />
@@ -760,8 +915,8 @@ function App() {
         </div>
       </header>
 
-      <main className="mx-auto grid min-h-0 w-full max-w-6xl flex-1 grid-rows-[auto_minmax(0,1fr)] gap-3 overflow-hidden px-3 py-3 md:grid-cols-[260px_minmax(0,1fr)] md:grid-rows-1 md:px-4 xl:grid-cols-[280px_minmax(0,1fr)]">
-        <aside className="app-scroll-pane min-w-0 space-y-2 md:space-y-3">
+      <main className="mx-auto grid min-h-0 w-full max-w-6xl flex-1 grid-rows-[minmax(0,1fr)] gap-2 overflow-hidden px-2 py-2 md:grid-cols-[260px_minmax(0,1fr)] md:grid-rows-1 md:gap-3 md:px-4 md:py-3 xl:grid-cols-[280px_minmax(0,1fr)]">
+        <aside className="app-scroll-pane hidden min-w-0 space-y-2 md:block md:space-y-3">
           <form onSubmit={handleCreateGame} className="rounded-lg border border-stone-200 bg-white p-3 shadow-sm">
             <label className="text-sm font-medium text-stone-700" htmlFor="game-name">
               Tạo cuộc chơi
@@ -795,10 +950,7 @@ function App() {
                   <button
                     key={game.id}
                     type="button"
-                    onClick={() => {
-                      setSelectedGameId(game.id);
-                      setCopiedShare(false);
-                    }}
+                    onClick={() => handleSelectGame(game.id)}
                     className={`w-48 shrink-0 snap-start rounded-md border px-3 py-2.5 text-left transition md:w-full ${
                       selectedGame?.id === game.id
                         ? "border-emerald-600 bg-emerald-50"
@@ -820,8 +972,21 @@ function App() {
 
         <section className="min-h-0 min-w-0 overflow-hidden">
           {selectedGame ? (
-            <div className="flex h-full min-h-0 flex-col gap-3">
-              <div className="flex shrink-0 items-center justify-between gap-3 rounded-lg border border-stone-200 bg-white p-3 shadow-sm">
+            <div className="flex h-full min-h-0 flex-col gap-2 md:gap-3">
+              <MobileGameControls
+                game={selectedGame}
+                games={games}
+                newGameName={newGameName}
+                copiedShare={copiedShare}
+                dataError={dataError}
+                isLoadingGames={isLoadingGames}
+                onNewGameNameChange={setNewGameName}
+                onCreateGame={handleCreateGame}
+                onSelectGame={handleSelectGame}
+                onCopyShareLink={handleCopyShareLink}
+              />
+
+              <div className="hidden shrink-0 items-center justify-between gap-3 rounded-lg border border-stone-200 bg-white p-3 shadow-sm md:flex">
                 <div className="min-w-0">
                   <p className="text-sm font-medium text-emerald-700">{selectedGame.code}</p>
                   <h2 className="truncate text-lg font-semibold leading-tight text-stone-950 sm:text-xl">
@@ -842,10 +1007,10 @@ function App() {
                 </button>
               </div>
 
-              <WorkspaceTabBar activeTab={activeWorkspaceTab} onChange={setActiveWorkspaceTab} />
-
               <div className="min-h-0 flex-1 overflow-hidden">
-                <div className="app-scroll-pane h-full pr-1 xl:hidden">
+                <div className="mobile-one-screen h-full md:hidden">{renderMobilePane(selectedGame)}</div>
+
+                <div className="app-scroll-pane hidden h-full pr-1 md:block xl:hidden">
                   {activeWorkspaceTab === "people" && renderPeoplePane(selectedGame)}
                   {activeWorkspaceTab === "expenses" && renderExpensePane(selectedGame)}
                   {activeWorkspaceTab === "summary" && renderSummaryPane(selectedGame)}
@@ -865,6 +1030,13 @@ function App() {
           )}
         </section>
       </main>
+      {selectedGame && (
+        <WorkspaceBottomBar
+          activeTab={activeWorkspaceTab}
+          onChange={setActiveWorkspaceTab}
+          onAction={handleOpenExpenseAction}
+        />
+      )}
     </PageShell>
   );
 }
@@ -878,35 +1050,582 @@ function PageShell({ children }: { children: ReactNode }) {
   );
 }
 
-function WorkspaceTabBar({
+function WorkspaceBottomBar({
   activeTab,
   onChange,
+  onAction,
 }: {
   activeTab: WorkspaceTabId;
   onChange: (tab: WorkspaceTabId) => void;
+  onAction: () => void;
+}) {
+  const sideTabs = WORKSPACE_TABS.filter((tab) => tab.id !== "expenses");
+  const isExpenseActive = activeTab === "expenses";
+
+  return (
+    <nav className="workspace-bottom-bar shrink-0 border-t border-stone-200 bg-white px-5 pb-[calc(0.5rem+env(safe-area-inset-bottom))] pt-2 shadow-sm xl:hidden">
+      <div className="relative mx-auto grid max-w-md grid-cols-[1fr_5rem_1fr] items-end gap-2">
+        {sideTabs.map((tab, index) => {
+          const Icon = tab.icon;
+          const isActive = activeTab === tab.id;
+
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => onChange(tab.id)}
+              className={`inline-flex h-12 min-w-0 flex-col items-center justify-center gap-1 rounded-md px-2 text-xs font-semibold transition ${
+                isActive ? "bg-emerald-50 text-emerald-800" : "text-stone-600 hover:bg-stone-50"
+              } ${index === 1 ? "col-start-3" : ""}`}
+              aria-current={isActive ? "page" : undefined}
+            >
+              <Icon size={17} aria-hidden="true" />
+              <span className="truncate">{tab.label}</span>
+            </button>
+          );
+        })}
+        <button
+          type="button"
+          onClick={onAction}
+          className={`workspace-fab absolute left-1/2 top-0 flex h-16 w-16 -translate-x-1/2 -translate-y-5 flex-col items-center justify-center rounded-full text-white shadow-sm transition ${
+            isExpenseActive ? "ring-4 ring-emerald-100" : ""
+          }`}
+          aria-label="Thêm khoản chi"
+          aria-current={isExpenseActive ? "page" : undefined}
+        >
+          <Plus size={23} aria-hidden="true" />
+          <span className="mt-0.5 text-[0.68rem] font-bold leading-none">Chi</span>
+        </button>
+      </div>
+    </nav>
+  );
+}
+
+function MobileGameControls({
+  game,
+  games,
+  newGameName,
+  copiedShare,
+  dataError,
+  isLoadingGames,
+  onNewGameNameChange,
+  onCreateGame,
+  onSelectGame,
+  onCopyShareLink,
+}: {
+  game: Game;
+  games: Game[];
+  newGameName: string;
+  copiedShare: boolean;
+  dataError: string;
+  isLoadingGames: boolean;
+  onNewGameNameChange: (name: string) => void;
+  onCreateGame: (event: FormEvent<HTMLFormElement>) => void;
+  onSelectGame: (gameId: string) => void;
+  onCopyShareLink: () => void;
 }) {
   return (
-    <nav className="grid shrink-0 grid-cols-3 gap-1 rounded-lg border border-stone-200 bg-white p-1 shadow-sm xl:hidden">
-      {WORKSPACE_TABS.map((tab) => {
-        const Icon = tab.icon;
-        const isActive = activeTab === tab.id;
+    <section className="mobile-game-controls shrink-0 rounded-lg border border-stone-200 bg-white p-2 shadow-sm md:hidden">
+      <div className="flex items-center justify-between gap-2">
+        <div className="min-w-0">
+          <p className="text-xs font-semibold text-emerald-700">{game.code}</p>
+          <h2 className="truncate text-base font-semibold leading-tight text-stone-950">{game.name}</h2>
+        </div>
+        <button
+          type="button"
+          onClick={onCopyShareLink}
+          className="inline-flex h-9 shrink-0 items-center justify-center gap-1 rounded-md border border-stone-300 bg-white px-2 text-xs font-semibold text-stone-700 transition hover:bg-stone-50"
+          aria-label={copiedShare ? "Đã sao chép" : "Sao chép link chia sẻ"}
+        >
+          {copiedShare ? <Copy size={14} /> : <Link size={14} />}
+          {copiedShare ? "Xong" : "Link"}
+        </button>
+      </div>
 
-        return (
+      {(dataError || isLoadingGames) && (
+        <p className={`mt-1 truncate text-xs font-medium ${dataError ? "text-red-600" : "text-stone-500"}`}>
+          {dataError || "Đang đồng bộ D1..."}
+        </p>
+      )}
+
+      <div className="mt-2 grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-2">
+        <AppSelect
+          value={game.id}
+          onValueChange={onSelectGame}
+          options={games.map((item) => ({ value: item.id, label: item.name }))}
+          placeholder="Chọn cuộc chơi"
+          disabled={games.length === 0}
+        />
+        <form onSubmit={onCreateGame} className="flex min-w-0 gap-1">
+          <input
+            value={newGameName}
+            onChange={(event) => onNewGameNameChange(event.target.value)}
+            className="field min-w-0 flex-1"
+            placeholder="Cuộc chơi mới"
+          />
           <button
-            key={tab.id}
-            type="button"
-            onClick={() => onChange(tab.id)}
-            className={`inline-flex h-10 min-w-0 items-center justify-center gap-2 rounded-md px-2 text-sm font-semibold transition ${
-              isActive ? "bg-emerald-50 text-emerald-800" : "text-stone-600 hover:bg-stone-50"
-            }`}
-            aria-current={isActive ? "page" : undefined}
+            type="submit"
+            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-emerald-700 text-white transition hover:bg-emerald-800"
+            aria-label="Tạo cuộc chơi"
           >
-            <Icon size={16} aria-hidden="true" />
-            <span className="truncate">{tab.label}</span>
+            <Plus size={16} />
           </button>
-        );
-      })}
-    </nav>
+        </form>
+      </div>
+    </section>
+  );
+}
+
+function MobilePeoplePane({
+  game,
+  form,
+  onChange,
+  onSubmit,
+  onRemove,
+  onUpdate,
+}: {
+  game: Game;
+  form: ParticipantForm;
+  onChange: (form: ParticipantForm) => void;
+  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+  onRemove: (participantId: string) => void;
+  onUpdate: (updater: (game: Game) => Game, options?: GameUpdateOptions) => void;
+}) {
+  const paymentProfile = { ...emptyPaymentProfile, ...game.paymentProfile };
+  const selectedBankId = resolveVietQrBankId(paymentProfile.bankId);
+  const visibleParticipants = game.participants.slice(0, MOBILE_VISIBLE_PARTICIPANT_LIMIT);
+  const hiddenParticipantCount = Math.max(0, game.participants.length - visibleParticipants.length);
+
+  function updatePaymentProfile(patch: Partial<PaymentProfile>) {
+    onUpdate((current) => ({
+      ...current,
+      paymentProfile: {
+        ...emptyPaymentProfile,
+        ...current.paymentProfile,
+        ...patch,
+      },
+    }));
+  }
+
+  return (
+    <section className="mobile-panel">
+      <div className="flex shrink-0 items-center justify-between gap-2">
+        <h3 className="flex items-center gap-2 text-base font-semibold text-stone-950">
+          <Users size={16} className="text-emerald-700" />
+          Người
+        </h3>
+        <span className="text-xs font-semibold text-stone-500">{game.participants.length} người</span>
+      </div>
+
+      <form onSubmit={onSubmit} className="grid shrink-0 grid-cols-[minmax(0,1fr)_2.25rem] gap-2">
+        <input
+          value={form.name}
+          onChange={(event) => onChange({ ...form, name: event.target.value, avatarSeed: "" })}
+          className="field"
+          placeholder="Tên người tham gia"
+        />
+        <button
+          type="submit"
+          className="inline-flex h-9 w-9 items-center justify-center rounded-md bg-emerald-700 text-white transition hover:bg-emerald-800"
+          aria-label="Thêm người"
+        >
+          <Plus size={16} />
+        </button>
+      </form>
+
+      <div className="grid shrink-0 grid-cols-2 gap-1.5">
+        {visibleParticipants.map((participant) => (
+          <div
+            key={participant.id}
+            className="flex min-w-0 items-center gap-1.5 rounded-md border border-stone-200 px-2 py-1.5"
+          >
+            <img
+              className="h-7 w-7 shrink-0 rounded-full bg-stone-100"
+              src={buildAvatarDataUri(getParticipantAvatarSeed(participant), `Avatar của ${participant.name}`)}
+              alt=""
+            />
+            <span className="min-w-0 flex-1 truncate text-xs font-semibold text-stone-950">{participant.name}</span>
+            <button
+              type="button"
+              onClick={() => onRemove(participant.id)}
+              className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-red-600 transition hover:bg-red-50"
+              aria-label={`Xóa ${participant.name}`}
+            >
+              <Trash2 size={13} />
+            </button>
+          </div>
+        ))}
+        {hiddenParticipantCount > 0 && <MorePill count={hiddenParticipantCount} />}
+      </div>
+
+      <div className="min-h-0 rounded-md border border-stone-200 bg-stone-50 p-2">
+        <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-stone-950">
+          <WalletCards size={15} className="text-emerald-700" />
+          Tài khoản nhận
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <CompactField label="Ngân hàng" icon={Landmark} className="col-span-2">
+            <BankSearchSelect
+              value={selectedBankId}
+              onValueChange={(bankId) => updatePaymentProfile({ bankId })}
+              options={VIETQR_BANK_OPTIONS}
+              placeholder="Chọn ngân hàng"
+            />
+          </CompactField>
+          <CompactField label="Số TK" icon={CreditCard}>
+            <input
+              value={paymentProfile.accountNo}
+              onChange={(event) => updatePaymentProfile({ accountNo: event.target.value })}
+              className="field"
+              placeholder="0123456789"
+            />
+          </CompactField>
+          <CompactField label="Tên TK" icon={UserRoundCheck}>
+            <input
+              value={paymentProfile.accountName}
+              onChange={(event) => updatePaymentProfile({ accountName: event.target.value })}
+              className="field"
+              placeholder="NGUYEN VAN A"
+            />
+          </CompactField>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function MobileExpensePane({
+  game,
+  form,
+  onChange,
+  onToggleSplit,
+  onSubmit,
+  onRemove,
+}: {
+  game: Game;
+  form: ExpenseForm;
+  onChange: (form: ExpenseForm) => void;
+  onToggleSplit: (participantId: string) => void;
+  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+  onRemove: (expenseId: string) => void;
+}) {
+  const payerId = form.payerId || game.participants[0]?.id || "";
+  const visibleExpenses = game.expenses.slice(0, MOBILE_VISIBLE_EXPENSE_LIMIT);
+  const hiddenExpenseCount = Math.max(0, game.expenses.length - visibleExpenses.length);
+  const visibleSuggestions = EXPENSE_SUGGESTIONS.slice(0, MOBILE_VISIBLE_SUGGESTION_LIMIT);
+
+  function handleApplySuggestion(suggestion: ExpenseSuggestion) {
+    const allParticipantIds = game.participants.map((participant) => participant.id);
+
+    onChange({
+      ...form,
+      title: suggestion.title,
+      amount: formatMoney(suggestion.amount),
+      categoryId: suggestion.categoryId,
+      payerId,
+      splitParticipantIds: form.splitParticipantIds.length > 0 ? form.splitParticipantIds : allParticipantIds,
+    });
+    showInfoToast("Đã áp dụng gợi ý", suggestion.title);
+  }
+
+  return (
+    <section className="mobile-panel">
+      <div className="flex shrink-0 items-center justify-between gap-2">
+        <h3 className="flex items-center gap-2 text-base font-semibold text-stone-950">
+          <Banknote size={16} className="text-blue-700" />
+          Khoản chi
+        </h3>
+        <span className="text-xs font-semibold text-stone-500">{game.expenses.length} khoản</span>
+      </div>
+
+      <div className="grid shrink-0 grid-cols-4 gap-1.5">
+        {visibleSuggestions.map((suggestion) => {
+          const Icon = getExpenseCategoryIcon(suggestion.categoryId);
+
+          return (
+            <button
+              key={`${suggestion.categoryId}-${suggestion.title}`}
+              type="button"
+              onClick={() => handleApplySuggestion(suggestion)}
+              disabled={game.participants.length === 0}
+              className="flex min-w-0 flex-col items-center rounded-md border border-stone-200 bg-stone-50 px-1.5 py-1.5 text-center transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <Icon size={15} className="text-emerald-700" aria-hidden="true" />
+              <span className="mt-1 max-w-full truncate text-[0.68rem] font-semibold text-stone-950">
+                {suggestion.title}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      <form onSubmit={onSubmit} className="grid shrink-0 grid-cols-2 gap-2">
+        <CompactField label="Nội dung" icon={ReceiptText}>
+          <input
+            data-expense-title-input="true"
+            value={form.title}
+            onChange={(event) => onChange({ ...form, title: event.target.value })}
+            className="field"
+            placeholder="Ăn tối"
+          />
+        </CompactField>
+        <CompactField label="Số tiền" icon={Banknote}>
+          <input
+            value={form.amount}
+            onChange={(event) => onChange({ ...form, amount: formatMoneyInput(event.target.value) })}
+            className="field"
+            inputMode="numeric"
+            placeholder={formatMoney(AMOUNT_PLACEHOLDER_VALUE)}
+          />
+        </CompactField>
+        <CompactField label="Người trả" icon={WalletCards}>
+          <AppSelect
+            value={payerId}
+            onValueChange={(value) => onChange({ ...form, payerId: value })}
+            options={game.participants.map((participant) => ({
+              value: participant.id,
+              label: participant.name,
+            }))}
+            placeholder="Chưa có người"
+            disabled={game.participants.length === 0}
+          />
+        </CompactField>
+        <CompactField label="Phân loại" icon={Tags}>
+          <div role="radiogroup" aria-label="Phân loại" className="grid grid-cols-6 gap-1">
+            {EXPENSE_CATEGORIES.map((category) => (
+              <button
+                key={category.id}
+                type="button"
+                role="radio"
+                aria-label={category.label}
+                aria-checked={form.categoryId === category.id}
+                onClick={() => onChange({ ...form, categoryId: normalizeExpenseCategoryId(category.id) })}
+                className={`inline-flex h-9 items-center justify-center rounded-md border transition ${
+                  form.categoryId === category.id
+                    ? "border-emerald-600 bg-emerald-50 text-emerald-800"
+                    : "border-stone-300 bg-white text-stone-600 hover:bg-stone-50"
+                }`}
+              >
+                <ExpenseCategoryIcon categoryId={category.id} size={14} />
+              </button>
+            ))}
+          </div>
+        </CompactField>
+        <div className="col-span-2">
+          <p className="mb-1 flex items-center gap-1.5 text-xs font-medium text-stone-700">
+            <Users size={13} aria-hidden="true" />
+            Chia cho ai
+          </p>
+          <div className="flex flex-wrap gap-1">
+            {game.participants.map((participant) => {
+              const checked = form.splitParticipantIds.includes(participant.id);
+              return (
+                <button
+                  key={participant.id}
+                  type="button"
+                  onClick={() => onToggleSplit(participant.id)}
+                  className={`inline-flex h-8 max-w-24 items-center gap-1 rounded-md border px-2 text-xs font-medium transition ${
+                    checked
+                      ? "border-emerald-600 bg-emerald-50 text-emerald-800"
+                      : "border-stone-300 bg-white text-stone-600 hover:bg-stone-50"
+                  }`}
+                >
+                  {checked && <Check size={12} aria-hidden="true" />}
+                  <span className="truncate">{participant.name}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+        <button
+          type="submit"
+          disabled={game.participants.length === 0}
+          className="col-span-2 inline-flex h-9 items-center justify-center gap-2 rounded-md bg-blue-700 px-3 text-sm font-semibold text-white transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:bg-stone-300"
+        >
+          <Plus size={15} />
+          Thêm khoản chi
+        </button>
+      </form>
+
+      <div className="min-h-0 space-y-1.5">
+        {visibleExpenses.map((expense) => {
+          const payer = game.participants.find((participant) => participant.id === expense.payerId);
+          const categoryId = normalizeExpenseCategoryId(expense.categoryId);
+
+          return (
+            <div key={expense.id} className="flex items-center gap-2 rounded-md border border-stone-200 px-2 py-1.5">
+              <ExpenseCategoryIcon categoryId={categoryId} size={14} className="shrink-0 text-emerald-700" />
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-xs font-semibold text-stone-950">{expense.title}</p>
+                <p className="truncate text-[0.68rem] text-stone-500">{payer?.name || "Không rõ"} trả</p>
+              </div>
+              <span className="shrink-0 text-xs font-semibold text-stone-950">{formatMoney(expense.amount)}</span>
+              <button
+                type="button"
+                onClick={() => onRemove(expense.id)}
+                className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-red-600 transition hover:bg-red-50"
+                aria-label={`Xóa ${expense.title}`}
+              >
+                <Trash2 size={13} />
+              </button>
+            </div>
+          );
+        })}
+        {hiddenExpenseCount > 0 && <MorePill count={hiddenExpenseCount} />}
+      </div>
+    </section>
+  );
+}
+
+function MobileSummaryPane({
+  game,
+  onAddReceipt,
+}: {
+  game: Game;
+  onAddReceipt?: (participantId: string, amount: number) => void;
+}) {
+  const balances = calculateBalances(game);
+  const receiptTotals = calculateReceiptTotals(game);
+  const totalExpense = game.expenses.reduce((total, expense) => total + expense.amount, 0);
+  const categorySummaries = summarizeExpenseCategories(game.expenses);
+  const paymentProfile = { ...emptyPaymentProfile, ...game.paymentProfile };
+  const payers = balances
+    .map((row) => {
+      const collected = receiptTotals.get(row.participant.id) || 0;
+      return {
+        row,
+        collected,
+        remaining: getRemainingPayable(row.balance, collected),
+      };
+    })
+    .filter((item) => item.remaining > 0);
+  const firstPayer = payers[0];
+  const firstPayerAmount = firstPayer?.remaining || 0;
+  const visibleBalances = balances.slice(0, MOBILE_VISIBLE_BALANCE_LIMIT);
+  const hiddenBalanceCount = Math.max(0, balances.length - visibleBalances.length);
+  const topCategory = categorySummaries[0];
+  const hasOwnerQr = canBuildVietQr(paymentProfile);
+  const ownerQrIssue = getVietQrPaymentIssue(paymentProfile);
+
+  return (
+    <section className="mobile-panel">
+      <div className="grid shrink-0 grid-cols-3 gap-1.5">
+        <MiniMetric label="Tổng" value={formatMoney(totalExpense)} icon={Banknote} />
+        <MiniMetric label="Người" value={String(game.participants.length)} icon={Users} />
+        <MiniMetric label="Khoản" value={String(game.expenses.length)} icon={ReceiptText} />
+      </div>
+
+      {topCategory && (
+        <div className="flex shrink-0 items-center justify-between gap-2 rounded-md border border-stone-200 px-2 py-1.5">
+          <span className="flex min-w-0 items-center gap-2 text-xs font-semibold text-stone-950">
+            <ExpenseCategoryIcon categoryId={topCategory.categoryId} size={14} className="text-emerald-700" />
+            <span className="truncate">{topCategory.label}</span>
+          </span>
+          <span className="shrink-0 text-xs font-semibold text-stone-950">{formatMoney(topCategory.total)}</span>
+        </div>
+      )}
+
+      <div className="min-h-0 space-y-1.5">
+        {visibleBalances.length > 0 ? (
+          visibleBalances.map((row) => (
+            <div
+              key={row.participant.id}
+              className="flex items-center justify-between gap-2 rounded-md border border-stone-200 px-2 py-1.5"
+            >
+              <span className="min-w-0 truncate text-xs font-semibold text-stone-950">{row.participant.name}</span>
+              <BalancePill value={row.balance} />
+            </div>
+          ))
+        ) : (
+          <p className="rounded-md border border-stone-200 px-2 py-2 text-xs text-stone-500">Chưa có người tham gia.</p>
+        )}
+        {hiddenBalanceCount > 0 && <MorePill count={hiddenBalanceCount} />}
+      </div>
+
+      <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_7rem] gap-2 rounded-md border border-stone-200 bg-stone-50 p-2">
+        <div className="min-w-0">
+          <p className="flex items-center gap-1.5 text-xs font-semibold text-stone-950">
+            <QrCode size={14} className="text-emerald-700" />
+            QR nhận tiền
+          </p>
+          {firstPayer ? (
+            <>
+              <p className="mt-2 truncate text-sm font-semibold text-stone-950">
+                {firstPayer.row.participant.name}
+              </p>
+              <p className="mt-1 text-sm font-bold text-emerald-700">{formatMoney(firstPayerAmount)}</p>
+              {firstPayer.collected > 0 && (
+                <p className="mt-1 text-[0.68rem] text-stone-500">Đã thu {formatMoney(firstPayer.collected)}</p>
+              )}
+              {onAddReceipt && (
+                <button
+                  type="button"
+                  onClick={() => onAddReceipt(firstPayer.row.participant.id, firstPayerAmount)}
+                  className="mt-2 inline-flex h-7 items-center justify-center rounded-md bg-emerald-700 px-2 text-[0.68rem] font-semibold text-white transition hover:bg-emerald-800"
+                >
+                  Đã thu
+                </button>
+              )}
+            </>
+          ) : (
+            <p className="mt-2 text-xs text-stone-500">Không có khoản cần chuyển.</p>
+          )}
+        </div>
+        {firstPayer && hasOwnerQr ? (
+          <img
+            className="h-28 w-28 rounded-md border border-stone-200 bg-white object-contain"
+            src={buildVietQrUrl(paymentProfile, firstPayerAmount, game.code)}
+            alt="QR nhận tiền của chủ cuộc chơi"
+          />
+        ) : (
+          <p className="flex h-28 w-28 items-center justify-center rounded-md bg-white px-2 text-center text-[0.68rem] text-stone-500">
+            {firstPayer ? ownerQrIssue : "Chưa cần QR"}
+          </p>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function CompactField({
+  label,
+  icon: Icon,
+  children,
+  className = "",
+}: {
+  label: string;
+  icon?: LucideIcon;
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <div className={className}>
+      <span className="compact-field-label mb-1 flex items-center gap-1.5 text-xs font-medium text-stone-700">
+        {Icon && <Icon size={13} aria-hidden="true" />}
+        {label}
+      </span>
+      {children}
+    </div>
+  );
+}
+
+function MiniMetric({ label, value, icon: Icon }: { label: string; value: string; icon: LucideIcon }) {
+  return (
+    <div className="min-w-0 rounded-md border border-stone-200 bg-white px-2 py-1.5">
+      <div className="flex items-center justify-between gap-1">
+        <p className="truncate text-[0.68rem] font-semibold uppercase text-stone-500">{label}</p>
+        <Icon size={13} className="shrink-0 text-emerald-700" aria-hidden="true" />
+      </div>
+      <p className="mt-1 truncate text-xs font-semibold text-stone-950">{value}</p>
+    </div>
+  );
+}
+
+function MorePill({ count }: { count: number }) {
+  return (
+    <span className="inline-flex h-7 items-center justify-center rounded-md border border-stone-200 bg-stone-50 px-2 text-xs font-semibold text-stone-500">
+      +{count}
+    </span>
   );
 }
 
@@ -1163,6 +1882,7 @@ function ExpensePanel({
       payerId,
       splitParticipantIds: form.splitParticipantIds.length > 0 ? form.splitParticipantIds : allParticipantIds,
     });
+    showInfoToast("Đã áp dụng gợi ý", suggestion.title);
   }
 
   return (
@@ -1206,6 +1926,7 @@ function ExpensePanel({
       <form onSubmit={onSubmit} className="grid gap-3 md:grid-cols-2">
         <Field label="Nội dung" icon={ReceiptText}>
           <input
+            data-expense-title-input="true"
             value={form.title}
             onChange={(event) => onChange({ ...form, title: event.target.value })}
             className="field"
@@ -1328,12 +2049,33 @@ function ExpensePanel({
   );
 }
 
-function GameDashboard({ game, readOnly = false }: { game: Game; readOnly?: boolean }) {
+function GameDashboard({
+  game,
+  readOnly = false,
+  onAddReceipt,
+  onRemoveReceipt,
+}: {
+  game: Game;
+  readOnly?: boolean;
+  onAddReceipt?: (participantId: string, amount: number) => void;
+  onRemoveReceipt?: (receiptId: string) => void;
+}) {
   const balances = calculateBalances(game);
+  const receiptTotals = calculateReceiptTotals(game);
   const totalExpense = game.expenses.reduce((total, expense) => total + expense.amount, 0);
   const categorySummaries = summarizeExpenseCategories(game.expenses);
   const paymentProfile = { ...emptyPaymentProfile, ...game.paymentProfile };
-  const payers = balances.filter((row) => row.balance < 0);
+  const receipts = game.receipts || [];
+  const payers = balances
+    .map((row) => {
+      const collected = receiptTotals.get(row.participant.id) || 0;
+      return {
+        row,
+        collected,
+        remaining: getRemainingPayable(row.balance, collected),
+      };
+    })
+    .filter((item) => item.remaining > 0);
   const hasOwnerQr = canBuildVietQr(paymentProfile);
   const ownerQrIssue = getVietQrPaymentIssue(paymentProfile);
 
@@ -1363,20 +2105,28 @@ function GameDashboard({ game, readOnly = false }: { game: Game; readOnly?: bool
         </h3>
         <div className="mt-4 space-y-3">
           {balances.length > 0 ? (
-            balances.map((row) => (
-              <div key={row.participant.id} className="rounded-md border border-stone-200 p-3">
-                <div className="flex flex-col gap-2 min-[420px]:flex-row min-[420px]:items-center min-[420px]:justify-between">
-                  <p className="min-w-0 break-words text-sm font-semibold leading-snug text-stone-950">
-                    {row.participant.name}
-                  </p>
-                  <BalancePill value={row.balance} />
+            balances.map((row) => {
+              const collected = receiptTotals.get(row.participant.id) || 0;
+              const remaining = getRemainingPayable(row.balance, collected);
+              const displayBalance = row.balance < 0 ? -remaining : row.balance;
+
+              return (
+                <div key={row.participant.id} className="rounded-md border border-stone-200 p-3">
+                  <div className="flex flex-col gap-2 min-[420px]:flex-row min-[420px]:items-center min-[420px]:justify-between">
+                    <p className="min-w-0 break-words text-sm font-semibold leading-snug text-stone-950">
+                      {row.participant.name}
+                    </p>
+                    <BalancePill value={displayBalance} />
+                  </div>
+                  <div className="mt-3 grid gap-1 text-xs text-stone-500 min-[420px]:grid-cols-2 min-[420px]:gap-2">
+                    <span>Đã trả: {formatMoney(row.paid)}</span>
+                    <span>Phải chịu: {formatMoney(row.owed)}</span>
+                    {collected > 0 && <span>Đã thu: {formatMoney(collected)}</span>}
+                    {row.balance < 0 && <span>Còn trả: {formatMoney(remaining)}</span>}
+                  </div>
                 </div>
-                <div className="mt-3 grid gap-1 text-xs text-stone-500 min-[420px]:grid-cols-2 min-[420px]:gap-2">
-                  <span>Đã trả: {formatMoney(row.paid)}</span>
-                  <span>Phải chịu: {formatMoney(row.owed)}</span>
-                </div>
-              </div>
-            ))
+              );
+            })
           ) : (
             <p className="text-sm text-stone-500">Chưa có người tham gia.</p>
           )}
@@ -1390,24 +2140,37 @@ function GameDashboard({ game, readOnly = false }: { game: Game; readOnly?: bool
         </h3>
         <div className="mt-4 space-y-3">
           {payers.length > 0 ? (
-            payers.map((row) => {
-              const amount = Math.abs(row.balance);
+            payers.map(({ row, collected, remaining }) => {
+              const grossAmount = Math.abs(row.balance);
 
               return (
-                <div key={`${row.participant.id}-${amount}`} className="rounded-md border border-stone-200 p-3">
+                <div key={`${row.participant.id}-${remaining}`} className="rounded-md border border-stone-200 p-3">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <p className="flex items-center gap-2 text-sm font-semibold text-stone-950">
                         <ArrowUpRight size={15} className="text-red-600" aria-hidden="true" />
                         {row.participant.name} cần trả
                       </p>
-                      <p className="mt-1 text-sm font-bold text-emerald-700">{formatMoney(amount)}</p>
+                      <p className="mt-1 text-sm font-bold text-emerald-700">{formatMoney(remaining)}</p>
+                      <p className="mt-1 text-xs text-stone-500">
+                        Tổng nợ {formatMoney(grossAmount)}
+                        {collected > 0 ? `, đã thu ${formatMoney(collected)}` : ""}
+                      </p>
                     </div>
+                    {!readOnly && onAddReceipt && (
+                      <button
+                        type="button"
+                        onClick={() => onAddReceipt(row.participant.id, remaining)}
+                        className="inline-flex h-8 shrink-0 items-center justify-center rounded-md bg-emerald-700 px-2 text-xs font-semibold text-white transition hover:bg-emerald-800"
+                      >
+                        Đã thu
+                      </button>
+                    )}
                   </div>
                   {hasOwnerQr ? (
                     <img
                       className="mt-3 w-full rounded-md border border-stone-200"
-                      src={buildVietQrUrl(paymentProfile, amount, game.code)}
+                      src={buildVietQrUrl(paymentProfile, remaining, game.code)}
                       alt="QR nhận tiền của chủ cuộc chơi"
                     />
                   ) : (
@@ -1420,8 +2183,41 @@ function GameDashboard({ game, readOnly = false }: { game: Game; readOnly?: bool
             })
           ) : (
             <p className="text-sm text-stone-500">
-              {readOnly ? "Không có khoản cần chuyển." : "Thêm khoản chi để tính tiền."}
+              {readOnly || game.expenses.length > 0 ? "Không còn khoản cần chuyển." : "Thêm khoản chi để tính tiền."}
             </p>
+          )}
+          {receipts.length > 0 && (
+            <div className="border-t border-stone-200 pt-3">
+              <h4 className="text-sm font-semibold text-stone-950">Đã thu</h4>
+              <div className="mt-2 space-y-2">
+                {receipts.map((receipt) => (
+                  <div
+                    key={receipt.id}
+                    className="flex items-center justify-between gap-3 rounded-md bg-stone-50 px-3 py-2"
+                  >
+                    <div className="min-w-0">
+                      <p className="break-words text-sm font-semibold text-stone-950">
+                        {getParticipantName(game, receipt.participantId)}
+                      </p>
+                      <p className="text-xs text-stone-500">{new Date(receipt.createdAt).toLocaleString("vi-VN")}</p>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-2">
+                      <span className="text-sm font-semibold text-emerald-700">{formatMoney(receipt.amount)}</span>
+                      {!readOnly && onRemoveReceipt && (
+                        <button
+                          type="button"
+                          onClick={() => onRemoveReceipt(receipt.id)}
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-md text-red-600 transition hover:bg-red-50"
+                          aria-label="Xóa khoản thu"
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           )}
         </div>
       </section>

@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { EXPENSE_CATEGORY_IDS } from "./expense-categories";
+import { toParticipantTitleCase } from "./participant-name";
 import type { Game } from "./types";
 
 const PaymentProfileSchema = z.object({
@@ -10,7 +11,7 @@ const PaymentProfileSchema = z.object({
 
 const ParticipantSchema = z.object({
   id: z.string(),
-  name: z.string(),
+  name: z.string().transform(toParticipantTitleCase),
   avatarSeed: z.string().optional(),
 });
 
@@ -24,6 +25,13 @@ const ExpenseSchema = z.object({
   createdAt: z.string(),
 });
 
+const ReceiptSchema = z.object({
+  id: z.string(),
+  participantId: z.string(),
+  amount: z.number().nonnegative(),
+  createdAt: z.string(),
+});
+
 export const GameSchema = z.object({
   id: z.string(),
   code: z.string(),
@@ -31,6 +39,7 @@ export const GameSchema = z.object({
   paymentProfile: PaymentProfileSchema.optional(),
   participants: z.array(ParticipantSchema),
   expenses: z.array(ExpenseSchema),
+  receipts: z.array(ReceiptSchema).optional().default([]),
   shareToken: z.string(),
   createdAt: z.string(),
 });

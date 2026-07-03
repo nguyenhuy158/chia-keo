@@ -1,5 +1,5 @@
 export async function readGames(db, userId) {
-  const [gameResult, participantResult, expenseResult, splitResult] = await Promise.all([
+  const [gameResult, participantResult, expenseResult, splitResult, receiptResult] = await Promise.all([
     db
       .prepare(
         `SELECT *
@@ -40,6 +40,16 @@ export async function readGames(db, userId) {
       )
       .bind(userId)
       .all(),
+    db
+      .prepare(
+        `SELECT receipts.*
+         FROM receipts
+         JOIN games ON games.id = receipts.game_id
+         WHERE games.owner_user_id = ?
+         ORDER BY receipts.created_at DESC`,
+      )
+      .bind(userId)
+      .all(),
   ]);
 
   const games = (gameResult.results || []).map((row) => ({
@@ -53,6 +63,7 @@ export async function readGames(db, userId) {
     },
     participants: [],
     expenses: [],
+    receipts: [],
     shareToken: row.share_token,
     createdAt: row.created_at,
   }));
@@ -83,6 +94,15 @@ export async function readGames(db, userId) {
 
   for (const row of splitResult.results || []) {
     expensesById.get(row.expense_id)?.splitParticipantIds.push(row.participant_id);
+  }
+
+  for (const row of receiptResult.results || []) {
+    byGameId.get(row.game_id)?.receipts.push({
+      id: row.id,
+      participantId: row.participant_id,
+      amount: row.amount,
+      createdAt: row.created_at,
+    });
   }
 
   return games;
@@ -126,6 +146,7 @@ export async function saveGame(db, userId, game) {
       ),
     db.prepare("DELETE FROM expense_splits WHERE expense_id IN (SELECT id FROM expenses WHERE game_id = ?)").bind(game.id),
     db.prepare("DELETE FROM expenses WHERE game_id = ?").bind(game.id),
+    db.prepare("DELETE FROM receipts WHERE game_id = ?").bind(game.id),
     db.prepare("DELETE FROM participants WHERE game_id = ?").bind(game.id),
   ];
 
@@ -160,6 +181,17 @@ export async function saveGame(db, userId, game) {
           .bind(expense.id, participantId, index),
       );
     });
+  });
+
+  (game.receipts || []).forEach((receipt) => {
+    statements.push(
+      db
+        .prepare(
+          `INSERT INTO receipts (id, game_id, participant_id, amount, created_at)
+           VALUES (?, ?, ?, ?, ?)`,
+        )
+        .bind(receipt.id, game.id, receipt.participantId, receipt.amount, receipt.createdAt),
+    );
   });
 
   await db.batch(statements);

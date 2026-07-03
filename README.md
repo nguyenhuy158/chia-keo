@@ -16,6 +16,32 @@ Ung dung chia tien nhom cho cac buoi an, di choi, du lich hoac nhom chi tieu nho
   - Tao link share read-only dang `/share/:token`.
   - Tao VietQR bang `img.vietqr.io` neu nguoi nhan co du thong tin ngan hang.
 
+## Kiến trúc hiện tại
+
+Project đang áp dụng hexagonal architecture dạng nhẹ cho frontend.
+
+```text
+src/
+  core/
+    domain/          # Type, rule tính tiền, tiền tệ, phân loại, schema
+    application/     # Use case điều phối domain
+    ports/           # Interface để adapter implement khi cần
+  adapters/
+    browser/         # localStorage, fetch API, DiceBear avatar, VietQR
+  lib/               # Compatibility re-export cho import cũ
+  App.tsx            # Presentation layer
+```
+
+Quy tắc chính:
+
+- `src/core` không import `fetch`, `localStorage`, DiceBear, VietQR, React UI hoặc browser API.
+- Logic tính toán và validate nằm trong `src/core/domain`.
+- Use case phối hợp nhiều rule nằm trong `src/core/application`.
+- Code phụ thuộc browser/service ngoài nằm trong `src/adapters/browser`.
+- UI chỉ gọi core/adapters qua entrypoint rõ ràng, không tự chứa business rule phức tạp.
+
+Xem thêm: `docs/architecture.md`.
+
 ## Stack production de xuat
 
 ### Core

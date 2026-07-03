@@ -87,6 +87,44 @@ body {
   -webkit-overflow-scrolling: touch;
 }
 
+.mobile-one-screen {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.mobile-panel {
+  display: flex;
+  height: 100%;
+  min-height: 0;
+  flex-direction: column;
+  gap: 0.5rem;
+  overflow: hidden;
+  border: 1px solid var(--tone-border);
+  border-radius: 0.5rem;
+  background: var(--tone-surface);
+  padding: 0.625rem;
+  box-shadow: var(--tone-shadow);
+}
+
+.workspace-bottom-bar {
+  position: relative;
+  z-index: 40;
+  box-shadow:
+    0 -12px 30px rgb(58 36 48 / 8%),
+    0 -2px 8px rgb(58 36 48 / 6%);
+}
+
+.workspace-fab {
+  background: var(--tone-magenta);
+  box-shadow:
+    0 16px 28px rgb(184 63 146 / 22%),
+    0 4px 10px rgb(58 36 48 / 12%);
+}
+
+.workspace-fab:active {
+  transform: translateX(-50%) translateY(-1.1rem) scale(0.96);
+}
+
 button,
 input,
 select,
@@ -304,6 +342,47 @@ textarea {
 
   .searchable-select-content {
     max-height: calc(100dvh - 1.5rem);
+  }
+
+  .app-shell {
+    padding-bottom: 0;
+  }
+
+  .mobile-game-controls .field,
+  .mobile-game-controls .select-trigger,
+  .mobile-panel .field,
+  .mobile-panel .select-trigger {
+    height: 2.25rem;
+    min-height: 2.25rem;
+    padding: 0 0.625rem;
+    font-size: 0.875rem;
+  }
+
+  .mobile-panel .select-trigger {
+    gap: 0.25rem;
+  }
+
+  .mobile-panel .select-trigger svg,
+  .mobile-game-controls .select-trigger svg {
+    width: 0.875rem;
+    height: 0.875rem;
+  }
+
+  .compact-field-label {
+    line-height: 1;
+  }
+}
+
+@media (min-width: 1280px) {
+  .workspace-bottom-bar {
+    display: none;
+  }
+}
+
+@media (max-width: 1279px) {
+  .app-scroll-pane {
+    padding-bottom: 1rem;
+    scroll-padding-bottom: 5rem;
   }
 }
 

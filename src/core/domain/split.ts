@@ -40,6 +40,22 @@ export function calculateBalances(game: Game): ParticipantBalance[] {
   }));
 }
 
+export function calculateReceiptTotals(game: Game) {
+  const totals = new Map<string, number>();
+
+  for (const receipt of game.receipts || []) {
+    totals.set(receipt.participantId, (totals.get(receipt.participantId) || 0) + receipt.amount);
+  }
+
+  return totals;
+}
+
+export function getRemainingPayable(balance: number, collectedAmount: number) {
+  if (balance >= 0) return 0;
+
+  return Math.max(0, Math.abs(balance) - collectedAmount);
+}
+
 export function calculateSettlements(balances: ParticipantBalance[]): Settlement[] {
   const debtors = balances
     .filter((row) => row.balance < 0)
