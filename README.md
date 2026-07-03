@@ -5,7 +5,7 @@ Ung dung chia tien nhom cho cac buoi an, di choi, du lich hoac nhom chi tieu nho
 ## Hien trang
 
 - Frontend: React, Vite, TypeScript, Tailwind CSS.
-- Luu tru: `localStorage`.
+- Luu tru: Cloudflare D1 cho du lieu chinh, KV cho snapshot share, `localStorage` chi lam cache/session phia browser.
 - Dang nhap hien tai: username/password local, chua co backend auth.
 - Tinh nang dang co:
   - Tao nhieu cuoc choi.
@@ -175,9 +175,8 @@ Sau khi co balance o V1:
 
 ## Cloudflare Pages v1
 
-V1 hien tai deploy frontend static len Cloudflare Pages, chua can Worker/D1.
-Link share la snapshot nam trong URL nen nguoi khac mo link van xem duoc tren
-Cloudflare Pages.
+V1 hien tai deploy frontend static len Cloudflare Pages, Pages Functions xu ly
+API, D1 luu du lieu chinh, KV luu snapshot share.
 
 Pages settings:
 
@@ -185,12 +184,15 @@ Pages settings:
 - Build command: `pnpm build`
 - Build output directory: `dist`
 - Environment variable: `NODE_VERSION=22`
+- D1 binding: `DB` -> `chiakeo-db`
+- KV binding: `SHARE_SNAPSHOTS`
 
 Local Wrangler deploy:
 
 ```bash
 npx wrangler login
 npx wrangler pages project create chiakeo --production-branch main
+npx wrangler d1 migrations apply chiakeo-db --remote
 npm run cloudflare:deploy
 ```
 
@@ -227,11 +229,11 @@ Worker:
 
 1. Tach routing FE sang TanStack Router.
 2. Them form validation bang react-hook-form + zod.
-3. Them Hono Worker API.
-4. Them Drizzle schema va D1 migrations.
-5. Thay `localStorage` bang API + React Query.
+3. Bo sung API nang cao neu can tach Pages Functions sang Worker rieng.
+4. Bo sung migration moi khi schema D1 thay doi.
+5. Them React Query neu can cache/sync API phuc tap hon.
 6. Them Better Auth username/password.
-7. Them public share backed by DB.
+7. Mo rong public share neu can expiry/disable tren UI.
 8. Chot QR: VietQR ngan hang Viet Nam hay QR text/link thuong.
 9. Them test cho logic split va settlement.
 10. Cau hinh deploy Cloudflare Pages + Worker.

@@ -1,8 +1,7 @@
-# Cloudflare v1 deploy
+# Cloudflare deploy
 
-V1 deploy frontend len Cloudflare Pages. Du lieu van nam trong browser
-`localStorage`. Link share duoc tao theo dang snapshot, co nhung du lieu can xem
-ngay trong URL.
+Deploy frontend len Cloudflare Pages, Pages Functions xu ly API, D1 luu du
+lieu chinh, KV luu snapshot cho link share ngan.
 
 ## Cach 1: Cloudflare Pages Git integration
 
@@ -16,7 +15,10 @@ ngay trong URL.
    - Root directory: de trong hoac `/`.
 5. Environment variables:
    - `NODE_VERSION=22`
-6. Save and Deploy.
+6. Bindings:
+   - D1 binding `DB` -> database `chiakeo-db`
+   - KV binding `SHARE_SNAPSHOTS` -> namespace `SHARE_SNAPSHOTS`
+7. Save and Deploy.
 
 File `public/_redirects` da cau hinh SPA fallback de `/share/:token` chay duoc
 tren Pages.
@@ -42,6 +44,12 @@ Deploy:
 npm run cloudflare:deploy
 ```
 
+Chay migration D1:
+
+```bash
+npx wrangler d1 migrations apply chiakeo-db --remote
+```
+
 ## Cach 3: GitHub Actions
 
 Dung workflow `.github/workflows/deploy-pages.yml`.
@@ -54,9 +62,9 @@ Them repo secrets:
 Khi push len branch `main`, GitHub Actions se build va deploy `dist` len
 Cloudflare Pages project `chiakeo`.
 
-## Gioi han v1
+## Luu tru
 
-- Chua co Worker API.
-- Chua co D1 database.
-- Login chi la local UI, chua co auth that.
+- D1 `chiakeo-db`: users, sessions, games, participants, expenses, splits.
+- KV `SHARE_SNAPSHOTS`: snapshot read-only cho `/share/:token`.
+- `localStorage`: chi con cache UI va session token phia browser.
 - Link share la snapshot, khong tu cap nhat neu nguoi tao sua data sau do.

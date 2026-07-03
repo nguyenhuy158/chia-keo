@@ -53,3 +53,6 @@ screenshots for visible UI changes.
 
 Keep responses short and focused. If a requirement is unclear, ask before making
 assumptions.
+Design UI/UX to fit inside a single viewport by default. Avoid page-level
+scrolling; use compact layouts, tabs, panes, or contained internal lists when
+content can overflow.

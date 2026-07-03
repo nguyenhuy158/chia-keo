@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import App from "./App";
 
 function renderApp(path = "/") {
@@ -17,10 +17,20 @@ function renderApp(path = "/") {
 describe("App", () => {
   beforeEach(() => {
     localStorage.clear();
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() =>
+        Promise.resolve({
+          ok: false,
+          json: () => Promise.resolve({ error: "Không tìm thấy link chia sẻ." }),
+        }),
+      ),
+    );
   });
 
   afterEach(() => {
     cleanup();
+    vi.unstubAllGlobals();
   });
 
   it("hiển thị màn hình đăng nhập cục bộ", () => {
@@ -37,9 +47,9 @@ describe("App", () => {
     expect(screen.getByText("Google login chưa được cấu hình.")).toBeInTheDocument();
   });
 
-  it("hiển thị trạng thái thiếu dữ liệu chia sẻ qua React Router", () => {
+  it("hiển thị trạng thái thiếu dữ liệu chia sẻ qua React Router", async () => {
     renderApp("/share/missing-token");
 
-    expect(screen.getByText("Không tìm thấy link chia sẻ")).toBeInTheDocument();
+    expect(await screen.findByText("Không tìm thấy link chia sẻ")).toBeInTheDocument();
   });
 });
