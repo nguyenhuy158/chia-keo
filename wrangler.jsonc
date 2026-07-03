@@ -1,0 +1,27 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "chia-keo",
+  "main": "worker/src/index.ts",
+  "compatibility_date": "2026-06-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": "./dist",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*"]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "chia-keo",
+      // Thay bang database_id that sau khi chay: wrangler d1 create chia-keo
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "drizzle"
+    }
+  ],
+  "vars": {
+    // Origin FE duoc phep goi API (chi can khi FE khong cung domain voi Worker).
+    "ALLOWED_ORIGINS": ""
+  }
+  // BETTER_AUTH_SECRET: dat bang `wrangler secret put BETTER_AUTH_SECRET` khi deploy,
+  // hoac trong file .dev.vars khi chay local.
+}
