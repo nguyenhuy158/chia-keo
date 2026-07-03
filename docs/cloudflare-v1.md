@@ -29,11 +29,11 @@ Dang nhap Cloudflare:
 npx wrangler login
 ```
 
-Neu Pages project `chia-keo` chua ton tai, tao truoc trong Cloudflare Dashboard
+Neu Pages project `chiakeo` chua ton tai, tao truoc trong Cloudflare Dashboard
 hoac chay:
 
 ```bash
-npx wrangler pages project create chia-keo --production-branch main
+npx wrangler pages project create chiakeo --production-branch main
 ```
 
 Deploy:
@@ -52,7 +52,7 @@ Them repo secrets:
 - `CLOUDFLARE_ACCOUNT_ID`
 
 Khi push len branch `main`, GitHub Actions se build va deploy `dist` len
-Cloudflare Pages project `chia-keo`.
+Cloudflare Pages project `chiakeo`.
 
 ## Gioi han v1
 

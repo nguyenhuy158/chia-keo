@@ -16,7 +16,7 @@
     "pages:dev": "npm run cloudflare:preview",
     "deploy": "npm run cloudflare:deploy",
     "cloudflare:preview": "npm run build && wrangler pages dev dist --port 8788",
-    "cloudflare:deploy": "npm run build && wrangler pages deploy dist --project-name chia-keo"
+    "cloudflare:deploy": "npm run build && wrangler pages deploy dist --project-name chiakeo"
   },
   "dependencies": {
     "@dicebear/core": "^10.3.0",

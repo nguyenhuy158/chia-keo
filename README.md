@@ -190,7 +190,7 @@ Local Wrangler deploy:
 
 ```bash
 npx wrangler login
-npx wrangler pages project create chia-keo --production-branch main
+npx wrangler pages project create chiakeo --production-branch main
 npm run cloudflare:deploy
 ```
 
