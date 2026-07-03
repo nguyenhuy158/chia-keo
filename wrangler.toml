@@ -1,0 +1,8 @@
+name = "chiakeo"
+compatibility_date = "2026-07-03"
+pages_build_output_dir = "./dist"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "chiakeo-db"
+database_id = "d583fc77-ae15-4dfc-9c23-e36240e437f3"
