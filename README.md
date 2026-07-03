@@ -11,9 +11,11 @@ Ung dung chia tien nhom cho cac buoi an, di choi, du lich hoac nhom chi tieu nho
   - Tao nhieu cuoc choi.
   - Them nguoi tham gia va thong tin ngan hang.
   - Ghi khoan chi, nguoi tra tien, danh sach nguoi cung chia.
+  - Dùng Gemini để gợi ý khoản chi từ câu nhập nhanh hoặc ảnh hóa đơn.
+  - Lưu mẫu chi tiêu, xuất báo cáo text và xem thống kê nhanh.
 - Tinh `da tra`, `phan chiu`, `con lai`.
 - Sinh danh sach nguoi can chuyen tien ve chu cuoc choi.
-  - Tao link share read-only dang `/share/:token`.
+  - Tạo link share dạng chỉ xem hoặc cho nhập thêm khoản chi qua `/share/:token`.
   - Tao VietQR bang `img.vietqr.io` neu nguoi nhan co du thong tin ngan hang.
 
 ## Kiến trúc hiện tại
@@ -189,6 +191,9 @@ Sau khi co balance o V1:
 - `GET /games/:gameId/summary`
 - `POST /games/:gameId/share-links`
 - `GET /share/:token`
+- `POST /api/ai/expense`
+- `POST /api/ai/receipt`
+- `PUT /api/share/:token` khi link share có quyền edit
 
 ## Deploy flow
 
@@ -210,6 +215,8 @@ Pages settings:
 - Build command: `pnpm build`
 - Build output directory: `dist`
 - Environment variable: `NODE_VERSION=22`
+- Secret: `GEMINI_API_KEY` để bật tính năng AI Gemini.
+- Environment variable tùy chọn: `GEMINI_MODEL`, mặc định `gemini-2.0-flash`.
 - D1 binding: `DB` -> `chiakeo-db`
 - KV binding: `SHARE_SNAPSHOTS`
 
@@ -240,6 +247,8 @@ Worker:
 - `BETTER_AUTH_SECRET`
 - `BETTER_AUTH_URL`
 - `TURNSTILE_SECRET_KEY`
+- `GEMINI_API_KEY`
+- `GEMINI_MODEL`
 - D1 binding: `DB`
 
 ## Bao mat

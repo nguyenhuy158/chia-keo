@@ -15,6 +15,8 @@ lieu chinh, KV luu snapshot cho link share ngan.
    - Root directory: de trong hoac `/`.
 5. Environment variables:
    - `NODE_VERSION=22`
+   - Secret `GEMINI_API_KEY` để bật AI nhập nhanh và OCR hóa đơn.
+   - `GEMINI_MODEL=gemini-2.0-flash` nếu muốn cố định model.
 6. Bindings:
    - D1 binding `DB` -> database `chiakeo-db`
    - KV binding `SHARE_SNAPSHOTS` -> namespace `SHARE_SNAPSHOTS`
@@ -44,6 +46,12 @@ Deploy:
 npm run cloudflare:deploy
 ```
 
+Gemini cần cấu hình secret trước khi dùng AI trên production:
+
+```bash
+npx wrangler pages secret put GEMINI_API_KEY --project-name chiakeo
+```
+
 Chay migration D1:
 
 ```bash
@@ -65,6 +73,6 @@ Cloudflare Pages project `chiakeo`.
 ## Luu tru
 
 - D1 `chiakeo-db`: users, sessions, games, participants, expenses, splits.
-- KV `SHARE_SNAPSHOTS`: snapshot read-only cho `/share/:token`.
+- KV `SHARE_SNAPSHOTS`: snapshot cho `/share/:token`, có thể là chỉ xem hoặc cho nhập khoản chi.
 - `localStorage`: chi con cache UI va session token phia browser.
-- Link share la snapshot, khong tu cap nhat neu nguoi tao sua data sau do.
+- Link share là snapshot. Link quyền edit lưu lại khoản chi mới vào KV snapshot, không sửa ngược game gốc của chủ tài khoản.

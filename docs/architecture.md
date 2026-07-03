@@ -8,10 +8,13 @@ src/
     domain/
       types.ts
       split.ts
+      statistics.ts
       money.ts
       expense-categories.ts
       schema.ts
     application/
+      ai-expense.ts
+      report.ts
       share-game.ts
     ports/
       game-repository.ts
@@ -77,7 +80,10 @@ Khi thêm logic mới:
 | Tính balance chia tiền | `src/core/domain/split.ts` |
 | Format/parse VND | `src/core/domain/money.ts` |
 | Phân loại chi tiêu | `src/core/domain/expense-categories.ts` |
+| Thống kê nhanh | `src/core/domain/statistics.ts` |
 | Validate game từ storage/share | `src/core/domain/schema.ts` |
+| Parse draft khoản chi từ AI | `src/core/application/ai-expense.ts` |
+| Tạo báo cáo text | `src/core/application/report.ts` |
 | Encode/decode share token | `src/core/application/share-game.ts` |
 | Lưu localStorage/session | `src/adapters/browser/local-storage.ts` |
 | Gọi API backend | `src/adapters/browser/remote-api.ts` |

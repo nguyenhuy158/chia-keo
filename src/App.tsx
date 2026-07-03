@@ -153,10 +153,35 @@ const REPORT_FILE_EXTENSION = ".txt";
 const REPORT_MIME_TYPE = "text/plain;charset=utf-8";
 const RECEIPT_IMAGE_ACCEPT = "image/png,image/jpeg,image/webp";
 
+const APP_MARK_SIZE_CLASSES = {
+  sm: "size-10",
+  md: "size-12",
+  lg: "size-14",
+} as const;
+const APP_ICON_SRC = "/app-icon.png";
+
 const SHARE_PERMISSION_OPTIONS: SelectOption[] = [
-  { value: "view", label: "Chỉ xem" },
-  { value: "edit", label: "Cho nhập chi" },
+  { value: "view", label: APP_TEXT.share.permissionView },
+  { value: "edit", label: APP_TEXT.share.permissionEdit },
 ];
+
+function AppMark({
+  size = "md",
+  className = "",
+}: {
+  size?: keyof typeof APP_MARK_SIZE_CLASSES;
+  className?: string;
+}) {
+  return (
+    <span
+      className={`inline-flex shrink-0 items-center justify-center ${APP_MARK_SIZE_CLASSES[size]} ${className}`}
+      role="img"
+      aria-label={APP_TEXT.app.iconLabel}
+    >
+      <img className="h-full w-full rounded-xl object-cover shadow-sm" src={APP_ICON_SRC} alt="" aria-hidden="true" />
+    </span>
+  );
+}
 
 function showSuccessToast(message: string, description?: string) {
   toast.success(message, { description, duration: DEFAULT_TOAST_DURATION_MS });
@@ -243,6 +268,10 @@ function createNewExpenseForm(patch: Partial<ExpenseForm> = {}): ExpenseForm {
     createdAt: createDateTimeLocalInputValue(),
     ...patch,
   };
+}
+
+function sortExpensesByCreatedAt(expenses: Expense[]) {
+  return [...expenses].sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
 }
 
 function summarizeExpenseCategories(expenses: Expense[]): ExpenseCategorySummary[] {
@@ -463,7 +492,7 @@ function App() {
       .then((snapshot) => {
         if (!ignore) {
           setRemoteSharedGame(snapshot?.game || null);
-          setRemoteSharePermission(snapshot?.permission || "view");
+          setRemoteSharePermission(snapshot?.permission === "edit" ? "edit" : "view");
           if (snapshot?.game) showSuccessToast(APP_TEXT.toast.shareLoaded);
         }
       })
@@ -513,7 +542,7 @@ function App() {
           {
             id: createId("history"),
             gameId: selectedGame.id,
-            label: options?.historyLabel || "Cập nhật cuộc chơi",
+            label: options?.historyLabel || APP_TEXT.toast.historyDefaultLabel,
             createdAt: new Date().toISOString(),
             previousGame: selectedGame,
           },
@@ -537,7 +566,7 @@ function App() {
     setEditingExpenseId("");
     setExpenseForm(createNewExpenseForm());
     void persistRemoteGame(historyEntry.previousGame);
-    showInfoToast("Đã hoàn tác", historyEntry.label);
+    showInfoToast(APP_TEXT.toast.undoApplied, historyEntry.label);
   }
 
   async function handleLogin(event: FormEvent<HTMLFormElement>) {
@@ -785,9 +814,11 @@ function App() {
 
     updateSelectedGame((game) => ({
       ...game,
-      expenses: existingExpense
-        ? game.expenses.map((item) => (item.id === existingExpense.id ? expense : item))
-        : [expense, ...game.expenses],
+      expenses: sortExpensesByCreatedAt(
+        existingExpense
+          ? game.expenses.map((item) => (item.id === existingExpense.id ? expense : item))
+          : [expense, ...game.expenses],
+      ),
     }));
     setExpenseForm(
       createNewExpenseForm({
@@ -841,6 +872,151 @@ function App() {
       setExpenseForm(createNewExpenseForm());
     }
     showInfoToast(APP_TEXT.toast.expenseRemoved, expenseTitle);
+  }
+
+  function applyAiExpenseDraft(draft: AiExpenseDraft) {
+    if (!selectedGame) {
+      showErrorToast(APP_TEXT.toast.gameRequired);
+      return;
+    }
+
+    const payer = findParticipantByName(selectedGame.participants, draft.payerName) || selectedGame.participants[0];
+    const splitParticipantIds = Array.from(
+      new Set(
+        draft.splitNames
+          .map((name) => findParticipantByName(selectedGame.participants, name)?.id)
+          .filter((id): id is string => Boolean(id)),
+      ),
+    );
+    const fallbackSplitIds = selectedGame.participants.map((participant) => participant.id);
+
+    setExpenseForm((current) => ({
+      ...current,
+      title: draft.title,
+      amount: draft.amount > 0 ? formatMoney(draft.amount) : current.amount,
+      categoryId: normalizeExpenseCategoryId(draft.categoryId),
+      payerId: payer?.id || current.payerId,
+      splitParticipantIds: splitParticipantIds.length > 0 ? splitParticipantIds : fallbackSplitIds,
+      createdAt: current.createdAt || createDateTimeLocalInputValue(),
+    }));
+    setActiveWorkspaceTab("expenses");
+    showSuccessToast(APP_TEXT.toast.aiExpenseFilled, `${draft.title} - ${formatMoney(draft.amount)}`);
+  }
+
+  async function handleSuggestExpenseWithAi() {
+    if (!selectedGame) {
+      showErrorToast(APP_TEXT.toast.gameRequired);
+      return;
+    }
+    if (!sessionToken) {
+      showErrorToast(APP_TEXT.toast.geminiLoginRequired);
+      return;
+    }
+
+    const text = aiExpenseText.trim();
+    if (!text) {
+      showErrorToast(APP_TEXT.toast.aiExpenseTextRequired);
+      return;
+    }
+
+    setIsAiExpenseLoading(true);
+    try {
+      const draft = await suggestExpenseWithAi(sessionToken, {
+        text,
+        participants: selectedGame.participants,
+      });
+
+      applyAiExpenseDraft(draft);
+      setAiExpenseText("");
+    } catch (error) {
+      showErrorToast(error instanceof Error ? error.message : APP_TEXT.toast.aiExpenseSuggestFailed);
+    } finally {
+      setIsAiExpenseLoading(false);
+    }
+  }
+
+  async function handleScanReceiptWithAi(file: File) {
+    if (!selectedGame) {
+      showErrorToast(APP_TEXT.toast.gameRequired);
+      return;
+    }
+    if (!sessionToken) {
+      showErrorToast(APP_TEXT.toast.geminiLoginRequired);
+      return;
+    }
+
+    setIsAiReceiptLoading(true);
+    try {
+      const image = await readFileAsBase64(file);
+      const draft = await scanReceiptWithAi(sessionToken, { image });
+
+      applyAiExpenseDraft(draft);
+    } catch (error) {
+      showErrorToast(error instanceof Error ? error.message : APP_TEXT.toast.aiReceiptScanFailed);
+    } finally {
+      setIsAiReceiptLoading(false);
+    }
+  }
+
+  function persistExpenseTemplates(nextTemplates: ExpenseTemplate[]) {
+    setExpenseTemplates(nextTemplates);
+    saveExpenseTemplates(nextTemplates);
+  }
+
+  function handleApplyExpenseTemplate(template: ExpenseTemplate) {
+    if (!selectedGame) return;
+
+    const participantIds = selectedGame.participants.map((participant) => participant.id);
+
+    setExpenseForm((current) => ({
+      ...current,
+      title: template.title,
+      amount: formatMoney(template.amount),
+      categoryId: normalizeExpenseCategoryId(template.categoryId),
+      payerId: current.payerId || selectedGame.participants[0]?.id || "",
+      splitParticipantIds: current.splitParticipantIds.length > 0 ? current.splitParticipantIds : participantIds,
+      createdAt: current.createdAt || createDateTimeLocalInputValue(),
+    }));
+    showInfoToast(APP_TEXT.toast.templateApplied, template.title);
+  }
+
+  function handleSaveExpenseTemplate() {
+    const title = expenseForm.title.trim();
+    const amount = parseMoney(expenseForm.amount);
+    if (!title || amount <= 0) {
+      showErrorToast(APP_TEXT.toast.templateRequired);
+      return;
+    }
+
+    const template: ExpenseTemplate = {
+      id: createId("template"),
+      title,
+      amount,
+      categoryId: normalizeExpenseCategoryId(expenseForm.categoryId),
+      createdAt: new Date().toISOString(),
+    };
+
+    persistExpenseTemplates([template, ...expenseTemplates].slice(0, 12));
+    showSuccessToast(APP_TEXT.toast.templateSaved, template.title);
+  }
+
+  function handleRemoveExpenseTemplate(templateId: string) {
+    persistExpenseTemplates(expenseTemplates.filter((template) => template.id !== templateId));
+    showInfoToast(APP_TEXT.toast.templateRemoved);
+  }
+
+  async function handleCopyReport(game: Game) {
+    try {
+      await navigator.clipboard.writeText(createGameReportText(game));
+      showSuccessToast(APP_TEXT.toast.reportCopied);
+    } catch {
+      showErrorToast(APP_TEXT.toast.reportCopyFailed);
+    }
+  }
+
+  function handleDownloadReport(game: Game) {
+    downloadTextFile(createReportFileName(game), createGameReportText(game));
+    showSuccessToast(APP_TEXT.toast.reportDownloaded, game.name);
   }
 
   function handleAddReceipt(participantId: string, amount: number) {
@@ -909,10 +1085,10 @@ function App() {
     }
 
     toast.loading(APP_TEXT.toast.shareCreating, { id: SHARE_LINK_TOAST_ID });
-    let shareUrl = `${window.location.origin}/share/${selectedGame.shareToken}?data=${encodeShareGame(selectedGame)}`;
+    let shareUrl = buildShareDataUrl(window.location.origin, selectedGame, sharePermission);
     if (sessionToken) {
       try {
-        const result = await createShareSnapshot(sessionToken, selectedGame);
+        const result = await createShareSnapshot(sessionToken, selectedGame, sharePermission);
         shareUrl = `${window.location.origin}${result.url}`;
         setDataError("");
       } catch (error) {
@@ -971,7 +1147,16 @@ function App() {
           </main>
         ) : sharedGame ? (
           <main className="app-scroll-pane mx-auto w-full max-w-2xl flex-1 px-3 py-4 sm:px-5 sm:py-5">
-            <GameDashboard game={sharedGame} readOnly />
+            {remoteSharePermission === "edit" ? (
+              <SharedEditableGame initialGame={sharedGame} shareToken={shareToken} />
+            ) : (
+              <GameDashboard
+                game={sharedGame}
+                readOnly
+                onCopyReport={handleCopyReport}
+                onDownloadReport={handleDownloadReport}
+              />
+            )}
           </main>
         ) : (
           <main className="app-scroll-pane mx-auto w-full max-w-2xl flex-1 px-3 py-4 sm:px-5 sm:py-5">
@@ -991,7 +1176,7 @@ function App() {
             className="w-full rounded-lg border border-stone-200 bg-white p-5 shadow-sm sm:p-6"
           >
             <div className="mb-6">
-              <p className="text-sm font-medium uppercase tracking-wide text-emerald-700">{APP_TEXT.app.name}</p>
+              <AppMark size="lg" />
               <h1 className="mt-2 text-2xl font-semibold text-stone-950">{APP_TEXT.login.title}</h1>
               <p className="mt-2 text-sm text-stone-600">{APP_TEXT.login.description}</p>
             </div>
@@ -1080,12 +1265,30 @@ function App() {
         onEdit={handleEditExpense}
         onCancelEdit={handleCancelEditExpense}
         editingExpenseId={editingExpenseId}
+        templates={expenseTemplates}
+        aiText={aiExpenseText}
+        isAiExpenseLoading={isAiExpenseLoading}
+        isAiReceiptLoading={isAiReceiptLoading}
+        onAiTextChange={setAiExpenseText}
+        onSuggestWithAi={handleSuggestExpenseWithAi}
+        onScanReceipt={handleScanReceiptWithAi}
+        onApplyTemplate={handleApplyExpenseTemplate}
+        onSaveTemplate={handleSaveExpenseTemplate}
+        onRemoveTemplate={handleRemoveExpenseTemplate}
       />
     );
   }
 
   function renderSummaryPane(game: Game) {
-    return <GameDashboard game={game} onAddReceipt={handleAddReceipt} onRemoveReceipt={handleRemoveReceipt} />;
+    return (
+      <GameDashboard
+        game={game}
+        onAddReceipt={handleAddReceipt}
+        onRemoveReceipt={handleRemoveReceipt}
+        onCopyReport={handleCopyReport}
+        onDownloadReport={handleDownloadReport}
+      />
+    );
   }
 
   function renderMobilePane(game: Game) {
@@ -1101,6 +1304,16 @@ function App() {
           onEdit={handleEditExpense}
           onCancelEdit={handleCancelEditExpense}
           editingExpenseId={editingExpenseId}
+          templates={expenseTemplates}
+          aiText={aiExpenseText}
+          isAiExpenseLoading={isAiExpenseLoading}
+          isAiReceiptLoading={isAiReceiptLoading}
+          onAiTextChange={setAiExpenseText}
+          onSuggestWithAi={handleSuggestExpenseWithAi}
+          onScanReceipt={handleScanReceiptWithAi}
+          onApplyTemplate={handleApplyExpenseTemplate}
+          onSaveTemplate={handleSaveExpenseTemplate}
+          onRemoveTemplate={handleRemoveExpenseTemplate}
         />
       );
     }
@@ -1125,11 +1338,12 @@ function App() {
     <PageShell>
       <header className="shrink-0 border-b border-stone-200 bg-white">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-2 px-2.5 py-2 sm:gap-3 sm:px-4 sm:py-2.5">
-          <div className="min-w-0 flex-1">
-            <h1 className="truncate text-base font-semibold leading-tight text-stone-950 sm:text-xl">
-              {APP_TEXT.app.name}
-            </h1>
-            <p className="hidden text-sm text-stone-600 sm:block">{APP_TEXT.app.subtitle}</p>
+          <div className="flex min-w-0 flex-1 items-center gap-3">
+            <AppMark />
+            <div className="min-w-0">
+              <h1 className="sr-only">{APP_TEXT.app.iconLabel}</h1>
+              <p className="hidden truncate text-sm font-medium text-stone-600 sm:block">{APP_TEXT.app.subtitle}</p>
+            </div>
           </div>
           <div className="relative flex min-w-0 items-center justify-end gap-2">
             <div className="hidden min-w-0 items-center gap-2 rounded-md border border-stone-200 bg-stone-50 px-2.5 py-2 sm:flex">
@@ -1161,27 +1375,37 @@ function App() {
             {profileSettingsOpen && (
               <form
                 onSubmit={handleSaveProfile}
-                className="absolute right-0 top-12 z-30 w-full rounded-lg border border-stone-200 bg-white p-3 shadow-sm sm:w-80"
+                className="absolute right-0 top-12 z-30 w-72 max-w-[calc(100vw-1rem)] rounded-lg border border-stone-200 bg-white p-3 shadow-lg shadow-stone-200/70 sm:w-80"
               >
-                <Field label={APP_TEXT.profile.displayNameLabel} icon={UserRoundCheck}>
+                <div className="mb-3 flex items-center gap-2 border-b border-stone-100 pb-3">
+                  <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-emerald-50 text-emerald-700">
+                    <UserRoundCheck size={17} aria-hidden="true" />
+                  </span>
+                  <p className="min-w-0 text-sm font-semibold text-stone-950">{APP_TEXT.aria.settings}</p>
+                </div>
+                <label className="mb-2 block text-sm font-medium text-stone-700" htmlFor="profile-display-name">
+                  {APP_TEXT.profile.displayNameLabel}
+                </label>
+                <div>
                   <input
+                    id="profile-display-name"
                     value={profileNameDraft}
                     onChange={(event) => setProfileNameDraft(event.target.value)}
-                    className="field"
+                    className="field w-full"
                     placeholder={APP_TEXT.profile.displayNamePlaceholder}
                   />
-                </Field>
+                </div>
                 <div className="mt-3 flex justify-end gap-2">
                   <button
                     type="button"
                     onClick={() => setProfileSettingsOpen(false)}
-                    className="inline-flex h-9 items-center justify-center rounded-md border border-stone-300 bg-white px-3 text-sm font-medium text-stone-700 transition hover:bg-stone-50"
+                    className="inline-flex h-10 min-w-20 items-center justify-center rounded-md border border-stone-300 bg-white px-3 text-sm font-medium text-stone-700 transition hover:bg-stone-50"
                   >
                     {APP_TEXT.profile.cancel}
                   </button>
                   <button
                     type="submit"
-                    className="inline-flex h-9 items-center justify-center gap-2 rounded-md bg-emerald-700 px-3 text-sm font-semibold text-white transition hover:bg-emerald-800"
+                    className="inline-flex h-10 min-w-20 items-center justify-center gap-2 rounded-md bg-emerald-700 px-3 text-sm font-semibold text-white transition hover:bg-emerald-800"
                   >
                     <Check size={15} />
                     {APP_TEXT.profile.save}
@@ -1256,12 +1480,16 @@ function App() {
                 games={games}
                 newGameName={newGameName}
                 copiedShare={copiedShare}
+                sharePermission={sharePermission}
                 dataError={dataError}
                 isLoadingGames={isLoadingGames}
+                canUndo={selectedGameHistory.length > 0}
                 onNewGameNameChange={setNewGameName}
                 onCreateGame={handleCreateGame}
                 onSelectGame={handleSelectGame}
+                onSharePermissionChange={(value) => setSharePermission(value as SharePermission)}
                 onCopyShareLink={handleCopyShareLink}
+                onUndoLastChange={handleUndoLastChange}
               />
 
               <div className="hidden shrink-0 items-center justify-between gap-3 rounded-lg border border-stone-200 bg-white p-3 shadow-sm md:flex">
@@ -1273,20 +1501,39 @@ function App() {
                   {dataError && <p className="mt-1 text-sm font-medium text-red-600">{dataError}</p>}
                   {isLoadingGames && <p className="mt-1 text-sm text-stone-500">{APP_TEXT.game.syncLoading}</p>}
                 </div>
-                <button
-                  type="button"
-                  onClick={handleCopyShareLink}
-                  className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-md border border-stone-300 bg-white px-3 text-sm font-medium text-stone-700 transition hover:bg-stone-50"
-                  aria-label={copiedShare ? APP_TEXT.aria.shareCopied : APP_TEXT.aria.shareCopy}
-                >
-                  {copiedShare ? <Copy size={16} /> : <Link size={16} />}
-                  <span className="hidden sm:inline">
-                    {copiedShare ? APP_TEXT.aria.shareCopied : APP_TEXT.aria.shareCopy}
-                  </span>
-                  <span className="sm:hidden">
-                    {copiedShare ? APP_TEXT.game.copyDoneShort : APP_TEXT.game.copyLinkShort}
-                  </span>
-                </button>
+                <div className="flex shrink-0 items-center gap-2">
+                  <div className="w-36">
+                    <AppSelect
+                      value={sharePermission}
+                      onValueChange={(value) => setSharePermission(value as SharePermission)}
+                      options={SHARE_PERMISSION_OPTIONS}
+                      placeholder={APP_TEXT.share.permissionPlaceholder}
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleUndoLastChange}
+                    disabled={selectedGameHistory.length === 0}
+                    className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-md border border-stone-300 bg-white px-3 text-sm font-medium text-stone-700 transition hover:bg-stone-50 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <RotateCcw size={16} />
+                    {APP_TEXT.toast.undoApplied}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleCopyShareLink}
+                    className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-md border border-stone-300 bg-white px-3 text-sm font-medium text-stone-700 transition hover:bg-stone-50"
+                    aria-label={copiedShare ? APP_TEXT.aria.shareCopied : APP_TEXT.aria.shareCopy}
+                  >
+                    {copiedShare ? <Copy size={16} /> : <Link size={16} />}
+                    <span className="hidden sm:inline">
+                      {copiedShare ? APP_TEXT.aria.shareCopied : APP_TEXT.aria.shareCopy}
+                    </span>
+                    <span className="sm:hidden">
+                      {copiedShare ? APP_TEXT.game.copyDoneShort : APP_TEXT.game.copyLinkShort}
+                    </span>
+                  </button>
+                </div>
               </div>
 
               <div className="min-h-0 flex-1 overflow-hidden">
@@ -1320,6 +1567,191 @@ function App() {
         />
       )}
     </PageShell>
+  );
+}
+
+function SharedEditableGame({ initialGame, shareToken }: { initialGame: Game; shareToken: string }) {
+  const [game, setGame] = useState(initialGame);
+  const [expenseForm, setExpenseForm] = useState<ExpenseForm>(() =>
+    createNewExpenseForm({
+      payerId: initialGame.participants[0]?.id || "",
+      splitParticipantIds: initialGame.participants.map((participant) => participant.id),
+    }),
+  );
+  const [editingExpenseId, setEditingExpenseId] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    setGame(initialGame);
+    setExpenseForm(
+      createNewExpenseForm({
+        payerId: initialGame.participants[0]?.id || "",
+        splitParticipantIds: initialGame.participants.map((participant) => participant.id),
+      }),
+    );
+    setEditingExpenseId("");
+  }, [initialGame]);
+
+  function persistSharedGame(nextGame: Game, onSaved?: () => void) {
+    setGame(nextGame);
+    setIsSaving(true);
+    void saveShareSnapshot(shareToken, nextGame)
+      .then((snapshot) => {
+        if (snapshot?.game) setGame(snapshot.game);
+        onSaved?.();
+      })
+      .catch((error) => {
+        showErrorToast(error instanceof Error ? error.message : APP_TEXT.toast.shareSaveFailed);
+      })
+      .finally(() => setIsSaving(false));
+  }
+
+  function handleToggleSplit(participantId: string) {
+    setExpenseForm((current) => {
+      const selected = current.splitParticipantIds.includes(participantId);
+
+      return {
+        ...current,
+        splitParticipantIds: selected
+          ? current.splitParticipantIds.filter((id) => id !== participantId)
+          : [...current.splitParticipantIds, participantId],
+      };
+    });
+  }
+
+  function handleAddExpense(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    const participantIds = new Set(game.participants.map((participant) => participant.id));
+    const payerId = expenseForm.payerId || game.participants[0]?.id || "";
+    const splitParticipantIds = expenseForm.splitParticipantIds.filter((id) => participantIds.has(id));
+    const amount = parseMoney(expenseForm.amount);
+    const categoryId = normalizeExpenseCategoryId(expenseForm.categoryId);
+    const expenseCreatedAt = parseDateTimeLocalInputValue(expenseForm.createdAt);
+    if (!payerId) {
+      showErrorToast(APP_TEXT.toast.payerRequired);
+      return;
+    }
+    if (amount <= 0) {
+      showErrorToast(APP_TEXT.toast.amountRequired);
+      return;
+    }
+    if (!expenseCreatedAt) {
+      showErrorToast(APP_TEXT.toast.expenseTimeRequired);
+      return;
+    }
+    if (splitParticipantIds.length === 0) {
+      showErrorToast(APP_TEXT.toast.splitRequired);
+      return;
+    }
+
+    const existingExpense = game.expenses.find((expense) => expense.id === editingExpenseId);
+    const expense: Expense = {
+      id: existingExpense?.id || createId("expense"),
+      title: expenseForm.title.trim() || APP_TEXT.fallback.expense,
+      amount,
+      categoryId,
+      payerId,
+      splitParticipantIds,
+      createdAt: expenseCreatedAt,
+    };
+    const nextGame = {
+      ...game,
+      expenses: existingExpense
+        ? game.expenses.map((item) => (item.id === existingExpense.id ? expense : item))
+        : [expense, ...game.expenses],
+    };
+
+    persistSharedGame(nextGame, () =>
+      showSuccessToast(
+        existingExpense ? APP_TEXT.toast.expenseUpdated : APP_TEXT.toast.expenseAdded,
+        `${expense.title} - ${formatMoney(expense.amount)}`,
+      ),
+    );
+    setExpenseForm(createNewExpenseForm({ payerId, splitParticipantIds }));
+    setEditingExpenseId("");
+  }
+
+  function handleEditExpense(expenseId: string) {
+    const expense = game.expenses.find((item) => item.id === expenseId);
+    if (!expense) {
+      showErrorToast(APP_TEXT.toast.expenseMissing);
+      return;
+    }
+
+    setEditingExpenseId(expense.id);
+    setExpenseForm(createExpenseForm(expense));
+  }
+
+  function handleCancelEditExpense() {
+    setEditingExpenseId("");
+    setExpenseForm(createNewExpenseForm());
+  }
+
+  function handleRemoveExpense(expenseId: string) {
+    const expenseTitle = game.expenses.find((expense) => expense.id === expenseId)?.title || APP_TEXT.fallback.expense;
+    const nextGame = {
+      ...game,
+      expenses: game.expenses.filter((expense) => expense.id !== expenseId),
+    };
+
+    persistSharedGame(nextGame, () => showInfoToast(APP_TEXT.toast.expenseRemoved, expenseTitle));
+    if (editingExpenseId === expenseId) {
+      setEditingExpenseId("");
+      setExpenseForm(createNewExpenseForm());
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      <section className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div className="min-w-0">
+            <p className="text-sm font-medium text-emerald-700">{game.code}</p>
+            <h1 className="mt-1 truncate text-2xl font-semibold text-stone-950">{game.name}</h1>
+          </div>
+          <span className="inline-flex h-8 shrink-0 items-center justify-center rounded-md bg-emerald-50 px-3 text-xs font-semibold text-emerald-800">
+            {isSaving ? APP_TEXT.share.saving : APP_TEXT.share.editableLink}
+          </span>
+        </div>
+      </section>
+
+      <ExpensePanel
+        game={game}
+        form={expenseForm}
+        onChange={setExpenseForm}
+        onToggleSplit={handleToggleSplit}
+        onSubmit={handleAddExpense}
+        onRemove={handleRemoveExpense}
+        onEdit={handleEditExpense}
+        onCancelEdit={handleCancelEditExpense}
+        editingExpenseId={editingExpenseId}
+        templates={[]}
+        aiText=""
+        isAiExpenseLoading={false}
+        isAiReceiptLoading={false}
+        onAiTextChange={() => undefined}
+        onSuggestWithAi={() => undefined}
+        onScanReceipt={() => undefined}
+        onApplyTemplate={() => undefined}
+        onSaveTemplate={() => undefined}
+        onRemoveTemplate={() => undefined}
+        showAdvancedTools={false}
+      />
+
+      <GameDashboard
+        game={game}
+        readOnly
+        onCopyReport={(currentGame) => {
+          void navigator.clipboard.writeText(createGameReportText(currentGame));
+          showSuccessToast(APP_TEXT.toast.reportCopied);
+        }}
+        onDownloadReport={(currentGame) => {
+          downloadTextFile(createReportFileName(currentGame), createGameReportText(currentGame));
+          showSuccessToast(APP_TEXT.toast.reportDownloaded, currentGame.name);
+        }}
+      />
+    </div>
   );
 }
 
@@ -1388,23 +1820,31 @@ function MobileGameControls({
   games,
   newGameName,
   copiedShare,
+  sharePermission,
   dataError,
   isLoadingGames,
+  canUndo,
   onNewGameNameChange,
   onCreateGame,
   onSelectGame,
+  onSharePermissionChange,
   onCopyShareLink,
+  onUndoLastChange,
 }: {
   game: Game;
   games: Game[];
   newGameName: string;
   copiedShare: boolean;
+  sharePermission: SharePermission;
   dataError: string;
   isLoadingGames: boolean;
+  canUndo: boolean;
   onNewGameNameChange: (name: string) => void;
   onCreateGame: (event: FormEvent<HTMLFormElement>) => void;
   onSelectGame: (gameId: string) => void;
+  onSharePermissionChange: (permission: string) => void;
   onCopyShareLink: () => void;
+  onUndoLastChange: () => void;
 }) {
   return (
     <section className="mobile-game-controls shrink-0 rounded-lg border border-stone-200 bg-white p-2 shadow-sm md:hidden">
@@ -1429,6 +1869,24 @@ function MobileGameControls({
           {dataError || APP_TEXT.game.syncLoading}
         </p>
       )}
+
+      <div className="mt-2 grid grid-cols-[minmax(0,1fr)_auto] gap-2">
+        <AppSelect
+          value={sharePermission}
+          onValueChange={onSharePermissionChange}
+          options={SHARE_PERMISSION_OPTIONS}
+          placeholder={APP_TEXT.share.permissionPlaceholder}
+        />
+        <button
+          type="button"
+          onClick={onUndoLastChange}
+          disabled={!canUndo}
+          className="inline-flex h-9 items-center justify-center gap-1 rounded-md border border-stone-300 bg-white px-2 text-xs font-semibold text-stone-700 transition hover:bg-stone-50 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          <RotateCcw size={14} />
+          {APP_TEXT.toast.undoApplied}
+        </button>
+      </div>
 
       <div className="mt-2 grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-2">
         <AppSelect
@@ -1588,6 +2046,17 @@ function MobileExpensePane({
   onEdit,
   onCancelEdit,
   editingExpenseId,
+  templates = [],
+  aiText = "",
+  isAiExpenseLoading = false,
+  isAiReceiptLoading = false,
+  onAiTextChange,
+  onSuggestWithAi,
+  onScanReceipt,
+  onApplyTemplate,
+  onSaveTemplate,
+  onRemoveTemplate,
+  showAdvancedTools = true,
 }: {
   game: Game;
   form: ExpenseForm;
@@ -1598,6 +2067,17 @@ function MobileExpensePane({
   onEdit: (expenseId: string) => void;
   onCancelEdit: () => void;
   editingExpenseId: string;
+  templates?: ExpenseTemplate[];
+  aiText?: string;
+  isAiExpenseLoading?: boolean;
+  isAiReceiptLoading?: boolean;
+  onAiTextChange?: (value: string) => void;
+  onSuggestWithAi?: () => void;
+  onScanReceipt?: (file: File) => void;
+  onApplyTemplate?: (template: ExpenseTemplate) => void;
+  onSaveTemplate?: () => void;
+  onRemoveTemplate?: (templateId: string) => void;
+  showAdvancedTools?: boolean;
 }) {
   const payerId = form.payerId || game.participants[0]?.id || "";
   const visibleExpenses = game.expenses.slice(0, MOBILE_VISIBLE_EXPENSE_LIMIT);
@@ -1631,7 +2111,7 @@ function MobileExpensePane({
         </span>
       </div>
 
-      <div className="grid shrink-0 grid-cols-4 gap-1.5">
+      <div className="flex shrink-0 gap-1.5 overflow-x-auto pb-1">
         {visibleSuggestions.map((suggestion) => {
           const Icon = getExpenseCategoryIcon(suggestion.categoryId);
 
@@ -1641,12 +2121,10 @@ function MobileExpensePane({
               type="button"
               onClick={() => handleApplySuggestion(suggestion)}
               disabled={game.participants.length === 0}
-              className="flex min-w-0 flex-col items-center rounded-md border border-stone-200 bg-stone-50 px-1.5 py-1.5 text-center transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md border border-stone-200 bg-white px-2.5 text-xs font-semibold text-stone-700 transition hover:border-blue-200 hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              <Icon size={15} className="text-emerald-700" aria-hidden="true" />
-              <span className="mt-1 max-w-full truncate text-[0.68rem] font-semibold text-stone-950">
-                {suggestion.title}
-              </span>
+              <Icon size={14} className="text-emerald-700" aria-hidden="true" />
+              <span>{suggestion.title}</span>
             </button>
           );
         })}
@@ -1671,7 +2149,7 @@ function MobileExpensePane({
             placeholder={formatMoney(AMOUNT_PLACEHOLDER_VALUE)}
           />
         </CompactField>
-        <CompactField label={APP_TEXT.expense.spentAtShortLabel} icon={CalendarClock} className="col-span-2">
+        <CompactField label={APP_TEXT.expense.spentAtShortLabel} icon={CalendarClock}>
           <input
             value={form.createdAt}
             onChange={(event) => onChange({ ...form, createdAt: event.target.value })}
@@ -1691,8 +2169,12 @@ function MobileExpensePane({
             disabled={game.participants.length === 0}
           />
         </CompactField>
-        <CompactField label={APP_TEXT.expense.categoryLabel} icon={Tags}>
-          <div role="radiogroup" aria-label={APP_TEXT.expense.categoryLabel} className="grid grid-cols-6 gap-1">
+        <CompactField label={APP_TEXT.expense.categoryLabel} icon={Tags} className="col-span-2">
+          <div
+            role="radiogroup"
+            aria-label={APP_TEXT.expense.categoryLabel}
+            className="grid grid-cols-6 gap-1 rounded-md border border-stone-200 bg-stone-50 p-1"
+          >
             {EXPENSE_CATEGORIES.map((category) => (
               <button
                 key={category.id}
@@ -1701,7 +2183,7 @@ function MobileExpensePane({
                 aria-label={category.label}
                 aria-checked={form.categoryId === category.id}
                 onClick={() => onChange({ ...form, categoryId: normalizeExpenseCategoryId(category.id) })}
-                className={`inline-flex h-9 items-center justify-center rounded-md border transition ${
+                className={`inline-flex h-8 items-center justify-center rounded-md border transition ${
                   form.categoryId === category.id
                     ? "border-emerald-600 bg-emerald-50 text-emerald-800"
                     : "border-stone-300 bg-white text-stone-600 hover:bg-stone-50"
@@ -1745,7 +2227,7 @@ function MobileExpensePane({
             className="inline-flex h-9 flex-1 items-center justify-center gap-2 rounded-md bg-blue-700 px-3 text-sm font-semibold text-white transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:bg-stone-300"
           >
             {isEditing ? <Check size={15} /> : <Plus size={15} />}
-            {isEditing ? APP_TEXT.expense.update : APP_TEXT.expense.add}
+            {isEditing ? APP_TEXT.expense.updateShort : APP_TEXT.expense.addShort}
           </button>
           {isEditing && (
             <button
@@ -1811,6 +2293,7 @@ function MobileSummaryPane({
   const receiptTotals = calculateReceiptTotals(game);
   const totalExpense = game.expenses.reduce((total, expense) => total + expense.amount, 0);
   const categorySummaries = summarizeExpenseCategories(game.expenses);
+  const statistics = calculateGameStatistics(game);
   const paymentProfile = { ...emptyPaymentProfile, ...game.paymentProfile };
   const payers = balances
     .map((row) => {
@@ -1968,30 +2451,40 @@ function ReceiptAmountForm({
       return;
     }
 
+    if (parsedAmount > remainingAmount) {
+      showErrorToast(APP_TEXT.toast.receiptAmountExceeded);
+      return;
+    }
+
     onAddReceipt(participantId, parsedAmount);
     setAmount("");
   }
 
   return (
-    <form onSubmit={handleSubmit} className={compact ? "mt-2 flex gap-1" : "mt-3 flex flex-col gap-2 sm:flex-row"}>
-      <input
-        value={amount}
-        onChange={(event) => setAmount(formatMoneyInput(event.target.value))}
-        className={compact ? "field h-8 min-w-0 flex-1 px-2 text-xs" : "field min-w-0 flex-1"}
-        inputMode="numeric"
-        placeholder={`${APP_TEXT.summary.collectAdvancePlaceholder} (${formatMoney(remainingAmount)})`}
-        aria-label={APP_TEXT.summary.collectAdvancePlaceholder}
-      />
-      <button
-        type="submit"
-        className={
-          compact
-            ? "inline-flex h-8 shrink-0 items-center justify-center rounded-md bg-emerald-700 px-2 text-[0.68rem] font-semibold text-white transition hover:bg-emerald-800"
-            : "inline-flex h-10 shrink-0 items-center justify-center rounded-md bg-emerald-700 px-3 text-sm font-semibold text-white transition hover:bg-emerald-800"
-        }
-      >
-        {APP_TEXT.summary.collectAdvanceSubmit}
-      </button>
+    <form onSubmit={handleSubmit} className={compact ? "mt-2 space-y-1" : "mt-3 space-y-2"}>
+      {!compact && (
+        <p className="text-xs font-semibold text-stone-700">{APP_TEXT.summary.collectAdvanceTitle}</p>
+      )}
+      <div className={compact ? "flex gap-1" : "flex flex-col gap-2 sm:flex-row"}>
+        <input
+          value={amount}
+          onChange={(event) => setAmount(formatMoneyInput(event.target.value))}
+          className={compact ? "field h-8 min-w-0 flex-1 px-2 text-xs" : "field min-w-0 flex-1"}
+          inputMode="numeric"
+          placeholder={`${APP_TEXT.summary.collectAdvancePlaceholder} (${formatMoney(remainingAmount)})`}
+          aria-label={APP_TEXT.summary.collectAdvancePlaceholder}
+        />
+        <button
+          type="submit"
+          className={
+            compact
+              ? "inline-flex h-8 shrink-0 items-center justify-center rounded-md bg-emerald-700 px-2 text-[0.68rem] font-semibold text-white transition hover:bg-emerald-800"
+              : "inline-flex h-10 shrink-0 items-center justify-center rounded-md bg-emerald-700 px-3 text-sm font-semibold text-white transition hover:bg-emerald-800"
+          }
+        >
+          {APP_TEXT.summary.collectAdvanceSubmit}
+        </button>
+      </div>
     </form>
   );
 }
@@ -2239,6 +2732,17 @@ function ExpensePanel({
   onEdit,
   onCancelEdit,
   editingExpenseId,
+  templates,
+  aiText,
+  isAiExpenseLoading,
+  isAiReceiptLoading,
+  onAiTextChange,
+  onSuggestWithAi,
+  onScanReceipt,
+  onApplyTemplate,
+  onSaveTemplate,
+  onRemoveTemplate,
+  showAdvancedTools = true,
 }: {
   game: Game;
   form: ExpenseForm;
@@ -2249,9 +2753,24 @@ function ExpensePanel({
   onEdit: (expenseId: string) => void;
   onCancelEdit: () => void;
   editingExpenseId: string;
+  templates?: ExpenseTemplate[];
+  aiText?: string;
+  isAiExpenseLoading?: boolean;
+  isAiReceiptLoading?: boolean;
+  onAiTextChange?: (value: string) => void;
+  onSuggestWithAi?: () => void;
+  onScanReceipt?: (file: File) => void;
+  onApplyTemplate?: (template: ExpenseTemplate) => void;
+  onSaveTemplate?: () => void;
+  onRemoveTemplate?: (templateId: string) => void;
+  showAdvancedTools?: boolean;
 }) {
   const payerId = form.payerId || game.participants[0]?.id || "";
   const isEditing = Boolean(editingExpenseId);
+  const hasAiTools = Boolean(onAiTextChange && onSuggestWithAi && onScanReceipt);
+  const hasTemplateTools = Boolean(onApplyTemplate && onSaveTemplate && onRemoveTemplate);
+  const shouldShowAdvancedTools = showAdvancedTools && (hasAiTools || hasTemplateTools);
+  const visibleTemplates = templates || [];
 
   function handleApplySuggestion(suggestion: ExpenseSuggestion) {
     const allParticipantIds = game.participants.map((participant) => participant.id);
@@ -2304,6 +2823,107 @@ function ExpensePanel({
           })}
         </div>
       </div>
+
+      {shouldShowAdvancedTools && (
+        <div className="mb-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)]">
+          {hasAiTools && (
+            <div className="rounded-md border border-stone-200 bg-stone-50 p-3">
+              <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-stone-950">
+                <Sparkles size={16} className="text-emerald-700" />
+                {APP_TEXT.expense.aiTitle}
+              </div>
+              <textarea
+                value={aiText}
+                onChange={(event) => onAiTextChange?.(event.target.value)}
+                className="field min-h-20 resize-none bg-white"
+                placeholder={APP_TEXT.expense.aiPlaceholder}
+              />
+              <div className="mt-2 flex flex-col gap-2 sm:flex-row">
+                <button
+                  type="button"
+                  onClick={onSuggestWithAi}
+                  disabled={isAiExpenseLoading}
+                  className="inline-flex h-9 flex-1 items-center justify-center gap-2 rounded-md bg-emerald-700 px-3 text-sm font-semibold text-white transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:bg-stone-300"
+                >
+                  <Sparkles size={15} />
+                  {isAiExpenseLoading ? APP_TEXT.expense.aiSuggestLoading : APP_TEXT.expense.aiSuggest}
+                </button>
+                <label className="inline-flex h-9 flex-1 cursor-pointer items-center justify-center gap-2 rounded-md border border-stone-300 bg-white px-3 text-sm font-semibold text-stone-700 transition hover:bg-stone-50">
+                  <Upload size={15} />
+                  {isAiReceiptLoading ? APP_TEXT.expense.aiReceiptLoading : APP_TEXT.expense.aiReceipt}
+                  <input
+                    type="file"
+                    accept={RECEIPT_IMAGE_ACCEPT}
+                    className="hidden"
+                    disabled={isAiReceiptLoading}
+                    onChange={(event) => {
+                      const file = event.target.files?.[0];
+                      event.currentTarget.value = "";
+                      if (file) onScanReceipt?.(file);
+                    }}
+                  />
+                </label>
+              </div>
+            </div>
+          )}
+
+          {hasTemplateTools && (
+            <div className="rounded-md border border-stone-200 bg-stone-50 p-3">
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <p className="flex items-center gap-2 text-sm font-semibold text-stone-950">
+                  <Save size={16} className="text-emerald-700" />
+                  {APP_TEXT.expense.templateTitle}
+                </p>
+                <button
+                  type="button"
+                  onClick={onSaveTemplate}
+                  className="inline-flex h-8 shrink-0 items-center justify-center gap-1 rounded-md border border-stone-300 bg-white px-2 text-xs font-semibold text-stone-700 transition hover:bg-stone-50"
+                >
+                  <Plus size={13} />
+                  {APP_TEXT.expense.saveTemplate}
+                </button>
+              </div>
+              <div className="grid max-h-36 gap-2 overflow-y-auto pr-1">
+                {visibleTemplates.length > 0 ? (
+                  visibleTemplates.map((template) => (
+                    <div key={template.id} className="flex min-w-0 items-center gap-2 rounded-md bg-white p-2">
+                      <button
+                        type="button"
+                        onClick={() => onApplyTemplate?.(template)}
+                        className="flex min-w-0 flex-1 items-center gap-2 text-left"
+                      >
+                        <ExpenseCategoryIcon
+                          categoryId={template.categoryId}
+                          size={15}
+                          className="shrink-0 text-emerald-700"
+                        />
+                        <span className="min-w-0">
+                          <span className="block truncate text-sm font-semibold text-stone-950">{template.title}</span>
+                          <span className="block truncate text-xs text-stone-500">
+                            {getExpenseCategoryLabel(template.categoryId)} - {formatMoney(template.amount)}
+                          </span>
+                        </span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => onRemoveTemplate?.(template.id)}
+                        className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-red-600 transition hover:bg-red-50"
+                        aria-label={APP_TEXT.expense.removeTemplateAria(template.title)}
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  ))
+                ) : (
+                  <p className="rounded-md bg-white px-3 py-2 text-sm text-stone-500">
+                    {APP_TEXT.expense.templateEmpty}
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       <form onSubmit={onSubmit} className="grid gap-3 md:grid-cols-2">
         <Field label={APP_TEXT.expense.contentLabel} icon={ReceiptText}>
@@ -2470,16 +3090,21 @@ function GameDashboard({
   readOnly = false,
   onAddReceipt,
   onRemoveReceipt,
+  onCopyReport,
+  onDownloadReport,
 }: {
   game: Game;
   readOnly?: boolean;
   onAddReceipt?: (participantId: string, amount: number) => void;
   onRemoveReceipt?: (receiptId: string) => void;
+  onCopyReport?: (game: Game) => void;
+  onDownloadReport?: (game: Game) => void;
 }) {
   const balances = calculateBalances(game);
   const receiptTotals = calculateReceiptTotals(game);
   const totalExpense = game.expenses.reduce((total, expense) => total + expense.amount, 0);
   const categorySummaries = summarizeExpenseCategories(game.expenses);
+  const statistics = calculateGameStatistics(game);
   const paymentProfile = { ...emptyPaymentProfile, ...game.paymentProfile };
   const receipts = game.receipts || [];
   const payers = balances
@@ -2504,6 +3129,31 @@ function GameDashboard({
         </section>
       )}
 
+      {(onCopyReport || onDownloadReport) && (
+        <section className="flex flex-wrap gap-2 rounded-lg border border-stone-200 bg-white p-3 shadow-sm">
+          {onCopyReport && (
+            <button
+              type="button"
+              onClick={() => onCopyReport(game)}
+              className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-stone-300 bg-white px-3 text-sm font-semibold text-stone-700 transition hover:bg-stone-50"
+            >
+              <Copy size={15} />
+              {APP_TEXT.summary.copyReport}
+            </button>
+          )}
+          {onDownloadReport && (
+            <button
+              type="button"
+              onClick={() => onDownloadReport(game)}
+              className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-stone-300 bg-white px-3 text-sm font-semibold text-stone-700 transition hover:bg-stone-50"
+            >
+              <FileDown size={15} />
+              {APP_TEXT.summary.downloadReport}
+            </button>
+          )}
+        </section>
+      )}
+
       <PatternSummaryCard game={game} totalExpense={totalExpense} />
 
       <section className="grid grid-cols-1 gap-3 min-[420px]:grid-cols-3">
@@ -2511,6 +3161,8 @@ function GameDashboard({
         <Metric label={APP_TEXT.summary.peopleCountMetric} value={String(game.participants.length)} icon={Users} />
         <Metric label={APP_TEXT.summary.expenseCountMetric} value={String(game.expenses.length)} icon={ReceiptText} />
       </section>
+
+      <StatisticsCard statistics={statistics} />
 
       <CategorySummaryCard summaries={categorySummaries} />
 
@@ -2637,6 +3289,39 @@ function GameDashboard({
         </div>
       </section>
     </aside>
+  );
+}
+
+function StatisticsCard({ statistics }: { statistics: ReturnType<typeof calculateGameStatistics> }) {
+  const topPayer = statistics.topPayer
+    ? `${statistics.topPayer.participant.name} - ${formatMoney(statistics.topPayer.amount)}`
+    : APP_TEXT.statistics.empty;
+  const topCategory = statistics.topCategory
+    ? `${statistics.topCategory.label} - ${formatMoney(statistics.topCategory.amount)}`
+    : APP_TEXT.statistics.empty;
+
+  return (
+    <section className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm">
+      <h3 className="flex items-center gap-2 text-lg font-semibold text-stone-950">
+        <Sparkles size={18} className="text-emerald-700" aria-hidden="true" />
+        {APP_TEXT.statistics.title}
+      </h3>
+      <div className="mt-3 grid gap-2 sm:grid-cols-2">
+        <StatRow label={APP_TEXT.statistics.averagePerParticipant} value={formatMoney(statistics.averagePerParticipant)} />
+        <StatRow label={APP_TEXT.statistics.topPayer} value={topPayer} />
+        <StatRow label={APP_TEXT.statistics.topCategory} value={topCategory} />
+        <StatRow label={APP_TEXT.statistics.transferCount} value={String(statistics.transactionCount)} />
+      </div>
+    </section>
+  );
+}
+
+function StatRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="min-w-0 rounded-md bg-stone-50 px-3 py-2">
+      <p className="truncate text-xs font-semibold uppercase text-stone-500">{label}</p>
+      <p className="mt-1 break-words text-sm font-semibold leading-snug text-stone-950">{value}</p>
+    </div>
   );
 }
 

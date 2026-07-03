@@ -2,19 +2,28 @@ import { formatMoney } from "../domain/money";
 import { calculateBalances, calculateReceiptTotals, getRemainingPayable } from "../domain/split";
 import type { Game } from "../domain/types";
 
+function formatExpenseDateTime(createdAt: string) {
+  const date = new Date(createdAt);
+  if (Number.isNaN(date.getTime())) return "Không rõ";
+
+  return date.toLocaleString("vi-VN");
+}
+
 export function createGameReportText(game: Game) {
   const totalExpense = game.expenses.reduce((total, expense) => total + expense.amount, 0);
   const balances = calculateBalances(game);
   const receiptTotals = calculateReceiptTotals(game);
   const lines = [
-    `Chia kèo: ${game.name}`,
+    `Cuộc chơi: ${game.name}`,
     `Mã: ${game.code}`,
     `Tổng chi: ${formatMoney(totalExpense)}`,
     `Số người: ${game.participants.length}`,
     `Số khoản chi: ${game.expenses.length}`,
     "",
     "Khoản chi:",
-    ...game.expenses.map((expense) => `- ${expense.title}: ${formatMoney(expense.amount)}`),
+    ...game.expenses.map(
+      (expense) => `- ${formatExpenseDateTime(expense.createdAt)} - ${expense.title}: ${formatMoney(expense.amount)}`,
+    ),
     "",
     "Cân bằng:",
     ...balances.map((row) => {
