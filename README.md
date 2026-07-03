@@ -115,6 +115,10 @@ Base path `/api`. Cac route can dang nhap (cookie session), tru share.
   (xoa nguoi se chia lai cac khoan chi lien quan; khoan chi khong con ai chiu bi xoa).
 - `POST /api/games/:gameId/expenses`, `PATCH|DELETE /api/expenses/:expenseId`
   (server tu chia `expense_splits` tu `splitParticipantIds`).
+- `POST /api/ai/expense` — goi y khoan chi tu cau nhap nhanh (Gemini); tra ve
+  title/amount/payer/splits da map sang participant id.
+- `POST /api/ai/receipt` — doc anh hoa don (jpeg/png/webp base64) ra title/amount.
+  Ca hai can secret `GEMINI_API_KEY` (khong co thi tra 400 `gemini_not_configured`).
 - `POST /api/games/:gameId/share-links` — tao/doi token (token cu het hieu luc).
 - `PATCH /api/games/:gameId/share-link` — bat/tat link.
 - `GET /api/share/:token` — public, read-only.
@@ -153,6 +157,8 @@ Frontend (build-time):
 Worker:
 
 - `BETTER_AUTH_SECRET` — secret (wrangler secret / `.dev.vars`).
+- `GEMINI_API_KEY` — secret bat tinh nang AI; `GEMINI_MODEL` tuy chon
+  (mac dinh `gemini-2.0-flash`).
 - `BETTER_AUTH_URL` — optional; mac dinh suy ra tu request.
 - `ALLOWED_ORIGINS` — danh sach origin FE cach nhau dau phay (chi can khi khac origin).
 - D1 binding: `DB`.

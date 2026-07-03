@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { AUTH_BASE_PATH, createAuth, getTrustedOrigins } from "./auth";
 import type { Env } from "./env";
+import { aiRouter } from "./routes/ai";
 import { gamesRouter } from "./routes/games";
 import { shareRouter } from "./routes/share";
 
@@ -24,6 +25,7 @@ app.get("/api/health", (c) => c.json({ ok: true }));
 app.on(["GET", "POST"], `${AUTH_BASE_PATH}/*`, (c) => createAuth(c.env).handler(c.req.raw));
 
 app.route("/api", shareRouter);
+app.route("/api", aiRouter);
 app.route("/api", gamesRouter);
 
 export default app;

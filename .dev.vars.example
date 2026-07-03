@@ -1,2 +1,5 @@
 # Copy thanh .dev.vars de chay wrangler dev local.
 BETTER_AUTH_SECRET=dev-secret-thay-bang-chuoi-ngau-nhien-du-dai
+# Bat tinh nang AI (goi y khoan chi + quet hoa don). Khong co thi /api/ai/* tra 400.
+# GEMINI_API_KEY=your-key
+# GEMINI_MODEL=gemini-2.0-flash

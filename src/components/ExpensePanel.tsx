@@ -1,11 +1,13 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Banknote, Plus, Trash2 } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { Banknote, ImagePlus, Plus, Sparkles, Trash2 } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import type { ResolvedAiExpense } from "../../shared/ai";
 import type { ApiExpense, ApiParticipant } from "../../shared/api-types";
 import { DEFAULT_EXPENSE_TITLE, type ExpenseInput } from "../../shared/schemas";
 import { formatMoney, parseMoney } from "../lib/money";
+import { useAiScanReceipt, useAiSuggestExpense } from "../lib/queries";
 import { Field } from "./ui";
 
 const expenseFormSchema = z.object({
@@ -18,6 +20,7 @@ const expenseFormSchema = z.object({
 type ExpenseFormValues = z.infer<typeof expenseFormSchema>;
 
 type ExpensePanelProps = {
+  gameId: string;
   participants: ApiParticipant[];
   expenses: ApiExpense[];
   pending: boolean;
@@ -25,7 +28,26 @@ type ExpensePanelProps = {
   onRemove: (expenseId: string) => void;
 };
 
+const AI_ERROR_MESSAGES: Record<string, string> = {
+  gemini_not_configured: "Server chua cau hinh GEMINI_API_KEY nen chua dung duoc AI.",
+  gemini_invalid_response: "AI tra du lieu khong hop le, thu lai voi cau ro hon.",
+  gemini_request_failed: "Goi AI that bai, thu lai sau.",
+};
+
+function readFileAsBase64(file: File) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = String(reader.result || "");
+      resolve(result.slice(result.indexOf(",") + 1));
+    };
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
+}
+
 export function ExpensePanel({
+  gameId,
   participants,
   expenses,
   pending,
@@ -86,6 +108,53 @@ export function ExpensePanel({
     );
   }
 
+  const aiSuggest = useAiSuggestExpense(gameId);
+  const aiReceipt = useAiScanReceipt(gameId);
+  const [aiText, setAiText] = useState("");
+  const [aiError, setAiError] = useState("");
+  const aiPending = aiSuggest.isPending || aiReceipt.isPending;
+
+  function applyAiSuggestion(suggestion: ResolvedAiExpense) {
+    if (suggestion.title) form.setValue("title", suggestion.title);
+    if (suggestion.amount > 0) form.setValue("amount", String(suggestion.amount));
+    if (suggestion.payerParticipantId) form.setValue("payerId", suggestion.payerParticipantId);
+    if (suggestion.splitParticipantIds.length > 0) {
+      form.setValue("splitParticipantIds", suggestion.splitParticipantIds);
+    }
+  }
+
+  function toAiErrorMessage(error: unknown) {
+    const code = error instanceof Error ? error.message : "";
+    return AI_ERROR_MESSAGES[code] || "Goi AI that bai, thu lai sau.";
+  }
+
+  async function handleAiSuggest() {
+    const text = aiText.trim();
+    if (!text || aiPending) return;
+
+    setAiError("");
+    try {
+      const { suggestion } = await aiSuggest.mutateAsync(text);
+      applyAiSuggestion(suggestion);
+      setAiText("");
+    } catch (error) {
+      setAiError(toAiErrorMessage(error));
+    }
+  }
+
+  async function handleAiReceipt(file: File | undefined) {
+    if (!file || aiPending) return;
+
+    setAiError("");
+    try {
+      const data = await readFileAsBase64(file);
+      const { suggestion } = await aiReceipt.mutateAsync({ mimeType: file.type, data });
+      applyAiSuggestion(suggestion);
+    } catch (error) {
+      setAiError(toAiErrorMessage(error));
+    }
+  }
+
   const handleAdd = form.handleSubmit(async (values) => {
     await onAdd({
       title: values.title || DEFAULT_EXPENSE_TITLE,
@@ -107,6 +176,59 @@ export function ExpensePanel({
       <div className="mb-4 flex items-center gap-2">
         <Banknote size={18} className="text-blue-700" />
         <h3 className="text-lg font-semibold text-stone-950">Khoan chi</h3>
+      </div>
+
+      <div className="mb-4 rounded-md border border-violet-200 bg-violet-50 p-3">
+        <div className="flex items-center gap-2 text-sm font-medium text-violet-800">
+          <Sparkles size={15} />
+          Nhap nhanh bang AI
+        </div>
+        <div className="mt-2 flex gap-2">
+          <input
+            value={aiText}
+            onChange={(event) => setAiText(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                event.preventDefault();
+                handleAiSuggest();
+              }
+            }}
+            className="field flex-1 bg-white"
+            placeholder="Vi du: an toi 500k Huy tra chia 3"
+            disabled={participants.length === 0}
+          />
+          <button
+            type="button"
+            onClick={handleAiSuggest}
+            disabled={aiPending || participants.length === 0}
+            className="inline-flex h-10 shrink-0 items-center gap-2 rounded-md bg-violet-700 px-3 text-sm font-semibold text-white transition hover:bg-violet-800 disabled:cursor-not-allowed disabled:bg-stone-300"
+          >
+            <Sparkles size={15} />
+            {aiSuggest.isPending ? "Dang doc..." : "Goi y"}
+          </button>
+          <label
+            className={`inline-flex h-10 shrink-0 cursor-pointer items-center gap-2 rounded-md border border-violet-300 bg-white px-3 text-sm font-medium text-violet-800 transition hover:bg-violet-100 ${
+              aiPending || participants.length === 0 ? "pointer-events-none opacity-50" : ""
+            }`}
+            title="Quet anh hoa don"
+          >
+            <ImagePlus size={15} />
+            {aiReceipt.isPending ? "Dang quet..." : "Hoa don"}
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="hidden"
+              onChange={(event) => {
+                handleAiReceipt(event.target.files?.[0]);
+                event.target.value = "";
+              }}
+            />
+          </label>
+        </div>
+        {aiError && <p className="mt-2 text-xs text-red-600">{aiError}</p>}
+        <p className="mt-2 text-xs text-violet-700">
+          AI dien san form ben duoi, kiem tra lai truoc khi them.
+        </p>
       </div>
 
       <form onSubmit={handleAdd} className="grid gap-3 md:grid-cols-2">
