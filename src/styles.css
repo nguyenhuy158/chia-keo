@@ -230,6 +230,48 @@ textarea {
   color: var(--tone-muted);
 }
 
+.participant-more {
+  position: relative;
+  min-width: 0;
+}
+
+.participant-more-content {
+  position: absolute;
+  z-index: 35;
+  top: calc(100% + 0.375rem);
+  left: 0;
+  width: min(20rem, calc(200% + 0.375rem));
+  max-width: calc(100dvw - 2.5rem);
+  overflow: hidden;
+  border: 1px solid var(--tone-border);
+  border-radius: 0.5rem;
+  background: var(--tone-surface);
+  box-shadow:
+    0 18px 45px rgb(15 23 42 / 12%),
+    0 4px 12px rgb(15 23 42 / 8%);
+}
+
+.participant-more-list {
+  max-height: min(13.5rem, 34dvh);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0.25rem;
+  -webkit-overflow-scrolling: touch;
+}
+
+.participant-more-item {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 0.375rem;
+  padding: 0.375rem 0.5rem;
+}
+
+.participant-more-item:hover {
+  background: var(--tone-surface-muted);
+}
+
 .select-content {
   z-index: 50;
   min-width: var(--radix-select-trigger-width);

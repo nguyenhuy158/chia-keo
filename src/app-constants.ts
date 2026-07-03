@@ -74,6 +74,7 @@ export const GOOGLE_AUTH_URL = import.meta.env.VITE_GOOGLE_AUTH_URL?.trim() || "
 export const DEFAULT_WORKSPACE_TAB: WorkspaceTabId = "people";
 export const MOBILE_VISIBLE_PARTICIPANT_LIMIT = 4;
 export const MOBILE_VISIBLE_EXPENSE_LIMIT = 2;
+export const EXPENSE_PANEL_PAGE_SIZE = 6;
 export const MOBILE_VISIBLE_BALANCE_LIMIT = 3;
 export const MOBILE_VISIBLE_SUGGESTION_LIMIT = 4;
 

@@ -1,13 +1,9 @@
-import { requireUser } from "../../_lib/auth.js";
 import { json, badRequest, readJson } from "../../_lib/http.js";
 import { normalizeGame } from "../../_lib/validation.js";
 
 const SHARE_TTL_SECONDS = 60 * 60 * 24 * 180;
 
 export async function onRequestPost(context) {
-  const auth = await requireUser(context);
-  if (auth.response) return auth.response;
-
   const body = await readJson(context.request);
   const game = normalizeGame(body?.game);
   const permission = body?.permission === "edit" ? "edit" : "view";

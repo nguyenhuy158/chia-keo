@@ -94,6 +94,13 @@ export const APP_TEXT = {
     permissionEdit: "Cho nhập chi",
     editableLink: "Link cho nhập chi",
   },
+  shareTabs: {
+    entry: "Nhập chi",
+    overview: "Tổng quan",
+    expenses: "Khoản chi",
+    balances: "Cân bằng",
+    transfers: "Chuyển tiền",
+  },
   login: {
     title: "Đăng nhập cục bộ",
     description: "Nhập tên đăng nhập và mật khẩu để quản lý trên máy này.",
@@ -113,6 +120,11 @@ export const APP_TEXT = {
     shareCopied: "Đã sao chép",
     shareCopy: "Sao chép link chia sẻ",
     removeReceipt: "Xóa khoản thu",
+  },
+  pagination: {
+    previous: "Trang trước",
+    next: "Trang sau",
+    pageStatus: (current: number, total: number) => `Trang ${current}/${total}`,
   },
   game: {
     createLabel: "Tạo cuộc chơi",
@@ -146,6 +158,7 @@ export const APP_TEXT = {
     avatarAlt: (name: string) => `Avatar của ${name}`,
     avatarSuggestionAlt: (index: number) => `Avatar gợi ý ${index}`,
     chooseAvatarAria: (index: number) => `Chọn avatar ${index}`,
+    showAllAria: (count: number) => `Xem tất cả ${count} người tham gia`,
     removeAria: (name: string) => `Xóa ${name}`,
   },
   payment: {

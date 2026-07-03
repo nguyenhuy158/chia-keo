@@ -5,6 +5,8 @@ import {
   CalendarClock,
   Check,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   Copy,
   CreditCard,
   Equal,
@@ -29,7 +31,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import * as Select from "@radix-ui/react-select";
-import { type FormEvent, type ReactNode, useEffect, useRef, useState } from "react";
+import { type FormEvent, type ReactNode, useEffect, useId, useRef, useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import { Toaster, toast } from "sonner";
 import {
@@ -56,7 +58,7 @@ import {
   getVietQrPaymentIssue,
   resolveVietQrBankId,
 } from "./adapters/browser/vietqr";
-import { decodeShareGame, encodeShareGame } from "./core/application/share-game";
+import { decodeShareGame } from "./core/application/share-game";
 import { createGameReportText } from "./core/application/report";
 import type { AiExpenseDraft } from "./core/application/ai-expense";
 import {
@@ -97,6 +99,7 @@ import {
   DATETIME_LOCAL_INPUT_LENGTH,
   DEFAULT_TOAST_DURATION_MS,
   DEFAULT_WORKSPACE_TAB,
+  EXPENSE_PANEL_PAGE_SIZE,
   EXPENSE_CATEGORY_ICONS,
   EXPENSE_SUGGESTIONS,
   GOOGLE_AUTH_URL,
@@ -129,6 +132,27 @@ type ExpenseCategorySummary = {
   count: number;
 };
 
+type ShareInfoTabId = "overview" | "expenses" | "balances" | "transfers";
+type SharedEditableTabId = "entry" | ShareInfoTabId;
+
+type SharedTabConfig<TTabId extends string> = {
+  id: TTabId;
+  label: string;
+  icon: LucideIcon;
+};
+
+const SHARED_INFO_TABS: SharedTabConfig<ShareInfoTabId>[] = [
+  { id: "overview", label: APP_TEXT.shareTabs.overview, icon: Sparkles },
+  { id: "expenses", label: APP_TEXT.shareTabs.expenses, icon: ReceiptText },
+  { id: "balances", label: APP_TEXT.shareTabs.balances, icon: Equal },
+  { id: "transfers", label: APP_TEXT.shareTabs.transfers, icon: QrCode },
+];
+
+const SHARED_EDITABLE_TABS: SharedTabConfig<SharedEditableTabId>[] = [
+  { id: "entry", label: APP_TEXT.shareTabs.entry, icon: Banknote },
+  ...SHARED_INFO_TABS,
+];
+
 type SelectOption = {
   value: string;
   label: string;
@@ -152,6 +176,11 @@ const MAX_GAME_HISTORY_ENTRIES = 20;
 const REPORT_FILE_EXTENSION = ".txt";
 const REPORT_MIME_TYPE = "text/plain;charset=utf-8";
 const RECEIPT_IMAGE_ACCEPT = "image/png,image/jpeg,image/webp";
+const FIRST_PAGE_INDEX = 0;
+const MINIMUM_PAGE_COUNT = 1;
+const PAGE_STEP = 1;
+const SHARE_TOKEN_LENGTH = 8;
+const SHARE_TOKEN_ALPHABET = "abcdefghjkmnpqrstuvwxyz23456789";
 
 const APP_MARK_SIZE_CLASSES = {
   sm: "size-10",
@@ -208,6 +237,24 @@ function createGameCode() {
   return Math.random().toString(36).slice(2, 8).toUpperCase();
 }
 
+function createShareToken() {
+  const values = new Uint32Array(SHARE_TOKEN_LENGTH);
+
+  if (typeof crypto !== "undefined" && "getRandomValues" in crypto) {
+    crypto.getRandomValues(values);
+  } else {
+    for (let index = 0; index < values.length; index += 1) {
+      values[index] = Math.floor(Math.random() * SHARE_TOKEN_ALPHABET.length);
+    }
+  }
+
+  return Array.from(values, (value) => SHARE_TOKEN_ALPHABET[value % SHARE_TOKEN_ALPHABET.length]).join("");
+}
+
+function shouldRefreshShareToken(shareToken: string) {
+  return shareToken.length > SHARE_TOKEN_LENGTH;
+}
+
 function createGame(name: string): Game {
   return {
     id: createId("game"),
@@ -217,7 +264,7 @@ function createGame(name: string): Game {
     participants: [],
     expenses: [],
     receipts: [],
-    shareToken: createId("share").replace("share_", ""),
+    shareToken: createShareToken(),
     createdAt: new Date().toISOString(),
   };
 }
@@ -272,6 +319,51 @@ function createNewExpenseForm(patch: Partial<ExpenseForm> = {}): ExpenseForm {
 
 function sortExpensesByCreatedAt(expenses: Expense[]) {
   return [...expenses].sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
+}
+
+function getPageCount(totalItems: number, pageSize: number) {
+  return Math.max(MINIMUM_PAGE_COUNT, Math.ceil(totalItems / pageSize));
+}
+
+function clampPageIndex(pageIndex: number, pageCount: number) {
+  return Math.min(Math.max(pageIndex, FIRST_PAGE_INDEX), pageCount - PAGE_STEP);
+}
+
+function useExpensePagination(expenseCount: number, pageSize: number, resetKey: string) {
+  const [pageIndex, setPageIndex] = useState(FIRST_PAGE_INDEX);
+  const previousExpenseCountRef = useRef(expenseCount);
+  const previousResetKeyRef = useRef(resetKey);
+  const pageCount = getPageCount(expenseCount, pageSize);
+  const clampedPageIndex = clampPageIndex(pageIndex, pageCount);
+  const pageStart = clampedPageIndex * pageSize;
+
+  useEffect(() => {
+    setPageIndex((current) => clampPageIndex(current, pageCount));
+  }, [pageCount]);
+
+  useEffect(() => {
+    const shouldResetPage =
+      previousResetKeyRef.current !== resetKey || expenseCount > previousExpenseCountRef.current;
+
+    if (shouldResetPage) {
+      setPageIndex(FIRST_PAGE_INDEX);
+    }
+
+    previousExpenseCountRef.current = expenseCount;
+    previousResetKeyRef.current = resetKey;
+  }, [expenseCount, resetKey]);
+
+  return {
+    pageIndex: clampedPageIndex,
+    pageCount,
+    pageStart,
+    pageEnd: pageStart + pageSize,
+    shouldPaginate: pageCount > MINIMUM_PAGE_COUNT,
+    canGoPrevious: clampedPageIndex > FIRST_PAGE_INDEX,
+    canGoNext: clampedPageIndex < pageCount - PAGE_STEP,
+    goToPreviousPage: () => setPageIndex((current) => clampPageIndex(current - PAGE_STEP, pageCount)),
+    goToNextPage: () => setPageIndex((current) => clampPageIndex(current + PAGE_STEP, pageCount)),
+  };
 }
 
 function summarizeExpenseCategories(expenses: Expense[]): ExpenseCategorySummary[] {
@@ -351,13 +443,6 @@ function readFileAsBase64(file: File) {
     reader.onerror = () => reject(new Error(APP_TEXT.error.fileReadFailed));
     reader.readAsDataURL(file);
   });
-}
-
-function buildShareDataUrl(origin: string, game: Game, permission: SharePermission) {
-  const params = new URLSearchParams({ data: encodeShareGame(game) });
-  if (permission === "edit") params.set("mode", permission);
-
-  return `${origin}/share/${game.shareToken}?${params.toString()}`;
 }
 
 function createReportFileName(game: Game) {
@@ -1085,18 +1170,23 @@ function App() {
     }
 
     toast.loading(APP_TEXT.toast.shareCreating, { id: SHARE_LINK_TOAST_ID });
-    let shareUrl = buildShareDataUrl(window.location.origin, selectedGame, sharePermission);
-    if (sessionToken) {
-      try {
-        const result = await createShareSnapshot(sessionToken, selectedGame, sharePermission);
-        shareUrl = `${window.location.origin}${result.url}`;
-        setDataError("");
-      } catch (error) {
-        const message = error instanceof Error ? error.message : APP_TEXT.toast.shareCreateFailed;
-        setDataError(message);
-        toast.error(message, { id: SHARE_LINK_TOAST_ID, duration: 2600 });
-        return;
+    let shareUrl = "";
+    const shareableGame = shouldRefreshShareToken(selectedGame.shareToken)
+      ? { ...selectedGame, shareToken: createShareToken() }
+      : selectedGame;
+
+    try {
+      const result = await createShareSnapshot(sessionToken, shareableGame, sharePermission);
+      shareUrl = `${window.location.origin}${result.url}`;
+      if (shareableGame !== selectedGame) {
+        updateSelectedGame(() => shareableGame, { skipHistory: true });
       }
+      setDataError("");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : APP_TEXT.toast.shareCreateFailed;
+      setDataError(message);
+      toast.error(message, { id: SHARE_LINK_TOAST_ID, duration: 2600 });
+      return;
     }
 
     try {
@@ -1142,24 +1232,23 @@ function App() {
     return (
       <PageShell>
         {isLoadingShare ? (
-          <main className="app-scroll-pane mx-auto w-full max-w-2xl flex-1 px-3 py-4 sm:px-5 sm:py-5">
+          <main className="mx-auto flex min-h-0 w-full max-w-2xl flex-1 items-center px-3 py-4 sm:px-5 sm:py-5">
             <EmptyState title={APP_TEXT.share.loadingTitle} description={APP_TEXT.share.loadingDescription} />
           </main>
         ) : sharedGame ? (
-          <main className="app-scroll-pane mx-auto w-full max-w-2xl flex-1 px-3 py-4 sm:px-5 sm:py-5">
+          <main className="mx-auto flex min-h-0 w-full max-w-5xl flex-1 px-2 py-2 sm:px-4 sm:py-3">
             {remoteSharePermission === "edit" ? (
               <SharedEditableGame initialGame={sharedGame} shareToken={shareToken} />
             ) : (
-              <GameDashboard
+              <SharedReadOnlyGame
                 game={sharedGame}
-                readOnly
                 onCopyReport={handleCopyReport}
                 onDownloadReport={handleDownloadReport}
               />
             )}
           </main>
         ) : (
-          <main className="app-scroll-pane mx-auto w-full max-w-2xl flex-1 px-3 py-4 sm:px-5 sm:py-5">
+          <main className="mx-auto flex min-h-0 w-full max-w-2xl flex-1 items-center px-3 py-4 sm:px-5 sm:py-5">
             <EmptyState title={APP_TEXT.share.missingTitle} description={APP_TEXT.share.missingDescription} />
           </main>
         )}
@@ -1570,6 +1659,356 @@ function App() {
   );
 }
 
+function SharedReadOnlyGame({
+  game,
+  onCopyReport,
+  onDownloadReport,
+}: {
+  game: Game;
+  onCopyReport: (game: Game) => void;
+  onDownloadReport: (game: Game) => void;
+}) {
+  const [activeTab, setActiveTab] = useState<ShareInfoTabId>("overview");
+
+  return (
+    <div className="flex h-full min-h-0 w-full flex-col gap-2">
+      <SharedGameHeader
+        game={game}
+        actions={
+          <>
+            <button
+              type="button"
+              onClick={() => onCopyReport(game)}
+              className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-stone-300 bg-white px-3 text-sm font-semibold text-stone-700 transition hover:bg-stone-50"
+            >
+              <Copy size={15} />
+              <span className="hidden min-[420px]:inline">{APP_TEXT.summary.copyReport}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => onDownloadReport(game)}
+              className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-stone-300 bg-white px-3 text-sm font-semibold text-stone-700 transition hover:bg-stone-50"
+            >
+              <FileDown size={15} />
+              <span className="hidden min-[420px]:inline">{APP_TEXT.summary.downloadReport}</span>
+            </button>
+          </>
+        }
+      />
+      <SharedTabList tabs={SHARED_INFO_TABS} activeTab={activeTab} onChange={setActiveTab} />
+      <div className="app-scroll-pane min-h-0 flex-1 pr-1">
+        <SharedInfoTabPanel game={game} activeTab={activeTab} />
+      </div>
+    </div>
+  );
+}
+
+function SharedGameHeader({
+  game,
+  badge,
+  actions,
+}: {
+  game: Game;
+  badge?: ReactNode;
+  actions?: ReactNode;
+}) {
+  return (
+    <section className="shrink-0 rounded-lg border border-stone-200 bg-white p-3 shadow-sm sm:p-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
+          <p className="text-sm font-medium text-emerald-700">{game.code}</p>
+          <h1 className="mt-1 truncate text-xl font-semibold leading-tight text-stone-950 sm:text-2xl">
+            {game.name}
+          </h1>
+        </div>
+        {(badge || actions) && (
+          <div className="flex shrink-0 flex-wrap items-center gap-2">
+            {badge}
+            {actions}
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function SharedTabList<TTabId extends string>({
+  tabs,
+  activeTab,
+  onChange,
+}: {
+  tabs: readonly SharedTabConfig<TTabId>[];
+  activeTab: TTabId;
+  onChange: (tab: TTabId) => void;
+}) {
+  return (
+    <nav
+      className="shrink-0 overflow-x-auto rounded-lg border border-stone-200 bg-white p-1 shadow-sm"
+      role="tablist"
+      aria-label={APP_TEXT.share.permissionPlaceholder}
+    >
+      <div className="flex min-w-max gap-1">
+        {tabs.map((tab) => {
+          const Icon = tab.icon;
+          const isActive = activeTab === tab.id;
+
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              role="tab"
+              aria-selected={isActive}
+              onClick={() => onChange(tab.id)}
+              className={`inline-flex h-9 items-center justify-center gap-1.5 rounded-md px-3 text-xs font-semibold transition sm:text-sm ${
+                isActive ? "bg-emerald-50 text-emerald-800" : "text-stone-600 hover:bg-stone-50"
+              }`}
+            >
+              <Icon size={15} aria-hidden="true" />
+              {tab.label}
+            </button>
+          );
+        })}
+      </div>
+    </nav>
+  );
+}
+
+function SharedInfoTabPanel({ game, activeTab }: { game: Game; activeTab: ShareInfoTabId }) {
+  if (activeTab === "expenses") {
+    return <SharedExpensesPanel game={game} />;
+  }
+
+  if (activeTab === "balances") {
+    return <SharedBalancesPanel game={game} />;
+  }
+
+  if (activeTab === "transfers") {
+    return <SharedTransfersPanel game={game} />;
+  }
+
+  return <SharedOverviewPanel game={game} />;
+}
+
+function SharedOverviewPanel({ game }: { game: Game }) {
+  const totalExpense = game.expenses.reduce((total, expense) => total + expense.amount, 0);
+  const categorySummaries = summarizeExpenseCategories(game.expenses);
+  const statistics = calculateGameStatistics(game);
+
+  return (
+    <div className="space-y-3 pb-1">
+      <PatternSummaryCard game={game} totalExpense={totalExpense} />
+      <section className="grid grid-cols-1 gap-2 min-[420px]:grid-cols-3 sm:gap-3">
+        <Metric label={APP_TEXT.summary.totalExpenseMetric} value={formatMoney(totalExpense)} icon={Banknote} />
+        <Metric label={APP_TEXT.summary.peopleCountMetric} value={String(game.participants.length)} icon={Users} />
+        <Metric label={APP_TEXT.summary.expenseCountMetric} value={String(game.expenses.length)} icon={ReceiptText} />
+      </section>
+      <StatisticsCard statistics={statistics} />
+      <CategorySummaryCard summaries={categorySummaries} />
+    </div>
+  );
+}
+
+function SharedExpensesPanel({ game }: { game: Game }) {
+  const expensePagination = useExpensePagination(game.expenses.length, EXPENSE_PANEL_PAGE_SIZE, game.id);
+  const visibleExpenses = game.expenses.slice(expensePagination.pageStart, expensePagination.pageEnd);
+
+  return (
+    <section className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm">
+      <div className="flex items-center justify-between gap-2">
+        <h3 className="flex items-center gap-2 text-lg font-semibold text-stone-950">
+          <ReceiptText size={18} className="text-emerald-700" aria-hidden="true" />
+          {APP_TEXT.expense.title}
+        </h3>
+        <span className="text-xs font-semibold text-stone-500">
+          {APP_TEXT.game.expensesCount(game.expenses.length)}
+        </span>
+      </div>
+      <div className="mt-4 space-y-2">
+        {visibleExpenses.length > 0 ? (
+          visibleExpenses.map((expense) => {
+            const payer = game.participants.find((participant) => participant.id === expense.payerId);
+            const categoryId = normalizeExpenseCategoryId(expense.categoryId);
+            const categoryLabel = getExpenseCategoryLabel(categoryId);
+
+            return (
+              <div key={expense.id} className="rounded-md border border-stone-200 p-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="flex min-w-0 flex-wrap items-center gap-2">
+                      <p className="min-w-0 break-words text-sm font-semibold leading-snug text-stone-950">
+                        {expense.title}
+                      </p>
+                      <CategoryPill categoryId={categoryId} label={categoryLabel} />
+                    </div>
+                    <p className="mt-1 text-xs text-stone-500">
+                      {APP_TEXT.expense.paidBySplit(
+                        payer?.name || APP_TEXT.fallback.unknown,
+                        expense.splitParticipantIds.length,
+                      )}
+                    </p>
+                    <p className="mt-1 flex items-center gap-1 text-xs text-stone-500">
+                      <CalendarClock size={12} aria-hidden="true" />
+                      {formatExpenseDateTime(expense.createdAt)}
+                    </p>
+                  </div>
+                  <span className="shrink-0 text-sm font-semibold text-stone-950">
+                    {formatMoney(expense.amount)}
+                  </span>
+                </div>
+              </div>
+            );
+          })
+        ) : (
+          <p className="text-sm text-stone-500">{APP_TEXT.summary.noExpenses}</p>
+        )}
+        {expensePagination.shouldPaginate && (
+          <PaginationControls
+            pageIndex={expensePagination.pageIndex}
+            pageCount={expensePagination.pageCount}
+            canGoPrevious={expensePagination.canGoPrevious}
+            canGoNext={expensePagination.canGoNext}
+            onPrevious={expensePagination.goToPreviousPage}
+            onNext={expensePagination.goToNextPage}
+            className="pt-1"
+          />
+        )}
+      </div>
+    </section>
+  );
+}
+
+function SharedBalancesPanel({ game }: { game: Game }) {
+  const balances = calculateBalances(game);
+  const receiptTotals = calculateReceiptTotals(game);
+
+  return (
+    <section className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm">
+      <h3 className="flex items-center gap-2 text-lg font-semibold text-stone-950">
+        <Equal size={18} className="text-emerald-700" aria-hidden="true" />
+        {APP_TEXT.summary.balanceTitle}
+      </h3>
+      <div className="mt-4 space-y-3">
+        {balances.length > 0 ? (
+          balances.map((row) => {
+            const collected = receiptTotals.get(row.participant.id) || 0;
+            const remaining = getRemainingPayable(row.balance, collected);
+            const displayBalance = row.balance < 0 ? -remaining : row.balance;
+
+            return (
+              <div key={row.participant.id} className="rounded-md border border-stone-200 p-3">
+                <div className="flex flex-col gap-2 min-[420px]:flex-row min-[420px]:items-center min-[420px]:justify-between">
+                  <p className="min-w-0 break-words text-sm font-semibold leading-snug text-stone-950">
+                    {row.participant.name}
+                  </p>
+                  <BalancePill value={displayBalance} />
+                </div>
+                <div className="mt-3 grid gap-1 text-xs text-stone-500 min-[420px]:grid-cols-2 min-[420px]:gap-2">
+                  <span>{APP_TEXT.summary.paid(formatMoney(row.paid))}</span>
+                  <span>{APP_TEXT.summary.owed(formatMoney(row.owed))}</span>
+                  {collected > 0 && <span>{APP_TEXT.summary.collectedDetail(formatMoney(collected))}</span>}
+                  {row.balance < 0 && <span>{APP_TEXT.summary.remainingPayable(formatMoney(remaining))}</span>}
+                </div>
+              </div>
+            );
+          })
+        ) : (
+          <p className="text-sm text-stone-500">{APP_TEXT.summary.noParticipants}</p>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function SharedTransfersPanel({ game }: { game: Game }) {
+  const balances = calculateBalances(game);
+  const receiptTotals = calculateReceiptTotals(game);
+  const paymentProfile = { ...emptyPaymentProfile, ...game.paymentProfile };
+  const receipts = game.receipts || [];
+  const payers = balances
+    .map((row) => {
+      const collected = receiptTotals.get(row.participant.id) || 0;
+      return {
+        row,
+        collected,
+        remaining: getRemainingPayable(row.balance, collected),
+      };
+    })
+    .filter((item) => item.remaining > 0);
+  const hasOwnerQr = canBuildVietQr(paymentProfile);
+  const ownerQrIssue = getVietQrPaymentIssue(paymentProfile);
+
+  return (
+    <div className="space-y-3 pb-1">
+      <section className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm">
+        <h3 className="flex items-center gap-2 text-lg font-semibold text-stone-950">
+          <QrCode size={18} className="text-emerald-700" aria-hidden="true" />
+          {APP_TEXT.summary.transferTitle}
+        </h3>
+        <div className="mt-4 grid gap-3 lg:grid-cols-2">
+          {payers.length > 0 ? (
+            payers.map(({ row, collected, remaining }) => {
+              const grossAmount = Math.abs(row.balance);
+
+              return (
+                <div key={`${row.participant.id}-${remaining}`} className="rounded-md border border-stone-200 p-3">
+                  <div className="min-w-0">
+                    <p className="flex items-center gap-2 text-sm font-semibold text-stone-950">
+                      <ArrowUpRight size={15} className="text-red-600" aria-hidden="true" />
+                      {APP_TEXT.summary.needsToPay(row.participant.name)}
+                    </p>
+                    <p className="mt-1 text-sm font-bold text-emerald-700">{formatMoney(remaining)}</p>
+                    <p className="mt-1 text-xs text-stone-500">
+                      {collected > 0
+                        ? APP_TEXT.summary.grossDebtWithCollected(formatMoney(grossAmount), formatMoney(collected))
+                        : APP_TEXT.summary.grossDebt(formatMoney(grossAmount))}
+                    </p>
+                  </div>
+                  {hasOwnerQr ? (
+                    <img
+                      className="mt-3 h-48 w-full rounded-md border border-stone-200 bg-white object-contain"
+                      src={buildVietQrUrl(paymentProfile, remaining, game.code)}
+                      alt={APP_TEXT.summary.qrAlt}
+                    />
+                  ) : (
+                    <p className="mt-3 rounded-md bg-stone-50 px-3 py-2 text-sm text-stone-500">
+                      {ownerQrIssue}
+                    </p>
+                  )}
+                </div>
+              );
+            })
+          ) : (
+            <p className="text-sm text-stone-500">
+              {game.expenses.length > 0 ? APP_TEXT.summary.noTransfer : APP_TEXT.summary.addExpenseHint}
+            </p>
+          )}
+        </div>
+      </section>
+
+      {receipts.length > 0 && (
+        <section className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm">
+          <h4 className="text-sm font-semibold text-stone-950">{APP_TEXT.summary.collectedTitle}</h4>
+          <div className="mt-2 space-y-2">
+            {receipts.map((receipt) => (
+              <div key={receipt.id} className="flex items-center justify-between gap-3 rounded-md bg-stone-50 px-3 py-2">
+                <div className="min-w-0">
+                  <p className="break-words text-sm font-semibold text-stone-950">
+                    {getParticipantName(game, receipt.participantId)}
+                  </p>
+                  <p className="text-xs text-stone-500">{new Date(receipt.createdAt).toLocaleString("vi-VN")}</p>
+                </div>
+                <span className="shrink-0 text-sm font-semibold text-emerald-700">
+                  {formatMoney(receipt.amount)}
+                </span>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+    </div>
+  );
+}
+
 function SharedEditableGame({ initialGame, shareToken }: { initialGame: Game; shareToken: string }) {
   const [game, setGame] = useState(initialGame);
   const [expenseForm, setExpenseForm] = useState<ExpenseForm>(() =>
@@ -1580,6 +2019,7 @@ function SharedEditableGame({ initialGame, shareToken }: { initialGame: Game; sh
   );
   const [editingExpenseId, setEditingExpenseId] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [activeTab, setActiveTab] = useState<SharedEditableTabId>("entry");
 
   useEffect(() => {
     setGame(initialGame);
@@ -1590,6 +2030,7 @@ function SharedEditableGame({ initialGame, shareToken }: { initialGame: Game; sh
       }),
     );
     setEditingExpenseId("");
+    setActiveTab("entry");
   }, [initialGame]);
 
   function persistSharedGame(nextGame: Game, onSaved?: () => void) {
@@ -1681,6 +2122,7 @@ function SharedEditableGame({ initialGame, shareToken }: { initialGame: Game; sh
 
     setEditingExpenseId(expense.id);
     setExpenseForm(createExpenseForm(expense));
+    setActiveTab("entry");
   }
 
   function handleCancelEditExpense() {
@@ -1703,54 +2145,44 @@ function SharedEditableGame({ initialGame, shareToken }: { initialGame: Game; sh
   }
 
   return (
-    <div className="space-y-4">
-      <section className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <div className="min-w-0">
-            <p className="text-sm font-medium text-emerald-700">{game.code}</p>
-            <h1 className="mt-1 truncate text-2xl font-semibold text-stone-950">{game.name}</h1>
-          </div>
+    <div className="flex h-full min-h-0 w-full flex-col gap-2">
+      <SharedGameHeader
+        game={game}
+        badge={
           <span className="inline-flex h-8 shrink-0 items-center justify-center rounded-md bg-emerald-50 px-3 text-xs font-semibold text-emerald-800">
             {isSaving ? APP_TEXT.share.saving : APP_TEXT.share.editableLink}
           </span>
-        </div>
-      </section>
-
-      <ExpensePanel
-        game={game}
-        form={expenseForm}
-        onChange={setExpenseForm}
-        onToggleSplit={handleToggleSplit}
-        onSubmit={handleAddExpense}
-        onRemove={handleRemoveExpense}
-        onEdit={handleEditExpense}
-        onCancelEdit={handleCancelEditExpense}
-        editingExpenseId={editingExpenseId}
-        templates={[]}
-        aiText=""
-        isAiExpenseLoading={false}
-        isAiReceiptLoading={false}
-        onAiTextChange={() => undefined}
-        onSuggestWithAi={() => undefined}
-        onScanReceipt={() => undefined}
-        onApplyTemplate={() => undefined}
-        onSaveTemplate={() => undefined}
-        onRemoveTemplate={() => undefined}
-        showAdvancedTools={false}
+        }
       />
-
-      <GameDashboard
-        game={game}
-        readOnly
-        onCopyReport={(currentGame) => {
-          void navigator.clipboard.writeText(createGameReportText(currentGame));
-          showSuccessToast(APP_TEXT.toast.reportCopied);
-        }}
-        onDownloadReport={(currentGame) => {
-          downloadTextFile(createReportFileName(currentGame), createGameReportText(currentGame));
-          showSuccessToast(APP_TEXT.toast.reportDownloaded, currentGame.name);
-        }}
-      />
+      <SharedTabList tabs={SHARED_EDITABLE_TABS} activeTab={activeTab} onChange={setActiveTab} />
+      <div className="app-scroll-pane min-h-0 flex-1 pr-1">
+        {activeTab === "entry" ? (
+          <ExpensePanel
+            game={game}
+            form={expenseForm}
+            onChange={setExpenseForm}
+            onToggleSplit={handleToggleSplit}
+            onSubmit={handleAddExpense}
+            onRemove={handleRemoveExpense}
+            onEdit={handleEditExpense}
+            onCancelEdit={handleCancelEditExpense}
+            editingExpenseId={editingExpenseId}
+            templates={[]}
+            aiText=""
+            isAiExpenseLoading={false}
+            isAiReceiptLoading={false}
+            onAiTextChange={() => undefined}
+            onSuggestWithAi={() => undefined}
+            onScanReceipt={() => undefined}
+            onApplyTemplate={() => undefined}
+            onSaveTemplate={() => undefined}
+            onRemoveTemplate={() => undefined}
+            showAdvancedTools={false}
+          />
+        ) : (
+          <SharedInfoTabPanel game={game} activeTab={activeTab} />
+        )}
+      </div>
     </div>
   );
 }
@@ -1997,7 +2429,13 @@ function MobilePeoplePane({
             </button>
           </div>
         ))}
-        {hiddenParticipantCount > 0 && <MorePill count={hiddenParticipantCount} />}
+        {hiddenParticipantCount > 0 && (
+          <ParticipantMorePopover
+            count={hiddenParticipantCount}
+            participants={game.participants}
+            onRemove={onRemove}
+          />
+        )}
       </div>
 
       <div className="min-h-0 rounded-md border border-stone-200 bg-stone-50 p-2">
@@ -2080,8 +2518,8 @@ function MobileExpensePane({
   showAdvancedTools?: boolean;
 }) {
   const payerId = form.payerId || game.participants[0]?.id || "";
-  const visibleExpenses = game.expenses.slice(0, MOBILE_VISIBLE_EXPENSE_LIMIT);
-  const hiddenExpenseCount = Math.max(0, game.expenses.length - visibleExpenses.length);
+  const expensePagination = useExpensePagination(game.expenses.length, MOBILE_VISIBLE_EXPENSE_LIMIT, game.id);
+  const visibleExpenses = game.expenses.slice(expensePagination.pageStart, expensePagination.pageEnd);
   const visibleSuggestions = EXPENSE_SUGGESTIONS.slice(0, MOBILE_VISIBLE_SUGGESTION_LIMIT);
   const isEditing = Boolean(editingExpenseId);
 
@@ -2276,7 +2714,18 @@ function MobileExpensePane({
             </div>
           );
         })}
-        {hiddenExpenseCount > 0 && <MorePill count={hiddenExpenseCount} />}
+        {expensePagination.shouldPaginate && (
+          <PaginationControls
+            pageIndex={expensePagination.pageIndex}
+            pageCount={expensePagination.pageCount}
+            canGoPrevious={expensePagination.canGoPrevious}
+            canGoNext={expensePagination.canGoNext}
+            onPrevious={expensePagination.goToPreviousPage}
+            onNext={expensePagination.goToNextPage}
+            compact
+            className="pt-1"
+          />
+        )}
       </div>
     </section>
   );
@@ -2494,6 +2943,149 @@ function MorePill({ count }: { count: number }) {
     <span className="inline-flex h-7 items-center justify-center rounded-md border border-stone-200 bg-stone-50 px-2 text-xs font-semibold text-stone-500">
       +{count}
     </span>
+  );
+}
+
+function PaginationControls({
+  pageIndex,
+  pageCount,
+  canGoPrevious,
+  canGoNext,
+  onPrevious,
+  onNext,
+  compact = false,
+  className = "",
+}: {
+  pageIndex: number;
+  pageCount: number;
+  canGoPrevious: boolean;
+  canGoNext: boolean;
+  onPrevious: () => void;
+  onNext: () => void;
+  compact?: boolean;
+  className?: string;
+}) {
+  const buttonClassName = compact
+    ? "inline-flex h-7 w-8 items-center justify-center rounded-md border border-stone-200 bg-stone-50 text-stone-700 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 disabled:cursor-not-allowed disabled:opacity-40"
+    : "inline-flex h-9 w-10 items-center justify-center rounded-md border border-stone-200 bg-white text-stone-700 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 disabled:cursor-not-allowed disabled:opacity-40";
+  const iconSize = compact ? 14 : 16;
+
+  return (
+    <div className={`flex items-center justify-between gap-2 ${className}`}>
+      <button
+        type="button"
+        className={buttonClassName}
+        onClick={onPrevious}
+        disabled={!canGoPrevious}
+        aria-label={APP_TEXT.pagination.previous}
+      >
+        <ChevronLeft size={iconSize} aria-hidden="true" />
+      </button>
+      <span className={compact ? "text-[0.68rem] font-semibold text-stone-500" : "text-xs font-semibold text-stone-500"}>
+        {APP_TEXT.pagination.pageStatus(pageIndex + PAGE_STEP, pageCount)}
+      </span>
+      <button
+        type="button"
+        className={buttonClassName}
+        onClick={onNext}
+        disabled={!canGoNext}
+        aria-label={APP_TEXT.pagination.next}
+      >
+        <ChevronRight size={iconSize} aria-hidden="true" />
+      </button>
+    </div>
+  );
+}
+
+function ParticipantMorePopover({
+  count,
+  participants,
+  onRemove,
+}: {
+  count: number;
+  participants: Participant[];
+  onRemove: (participantId: string) => void;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement | null>(null);
+  const popoverId = useId();
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    function handlePointerDown(event: MouseEvent) {
+      if (rootRef.current?.contains(event.target as Node)) return;
+
+      setIsOpen(false);
+    }
+
+    document.addEventListener("mousedown", handlePointerDown);
+
+    return () => document.removeEventListener("mousedown", handlePointerDown);
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (count > 0) return;
+
+    setIsOpen(false);
+  }, [count]);
+
+  return (
+    <div
+      ref={rootRef}
+      className="participant-more"
+      onKeyDown={(event) => {
+        if (event.key === "Escape") {
+          setIsOpen(false);
+        }
+      }}
+    >
+      <button
+        type="button"
+        className="inline-flex h-7 w-full items-center justify-center rounded-md border border-stone-200 bg-stone-50 px-2 text-xs font-semibold text-stone-500 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700"
+        aria-expanded={isOpen}
+        aria-controls={isOpen ? popoverId : undefined}
+        aria-haspopup="dialog"
+        aria-label={APP_TEXT.people.showAllAria(participants.length)}
+        onClick={() => setIsOpen((current) => !current)}
+      >
+        +{count}
+      </button>
+
+      {isOpen && (
+        <div id={popoverId} className="participant-more-content" role="dialog" aria-label={APP_TEXT.people.fullTitle}>
+          <div className="flex items-center justify-between gap-2 border-b border-stone-200 px-2.5 py-2">
+            <span className="text-xs font-semibold text-stone-950">{APP_TEXT.people.fullTitle}</span>
+            <span className="text-[0.68rem] font-semibold text-stone-500">
+              {APP_TEXT.game.participantsCount(participants.length)}
+            </span>
+          </div>
+          <div className="participant-more-list">
+            {participants.map((participant) => (
+              <div key={participant.id} className="participant-more-item">
+                <img
+                  className="h-7 w-7 shrink-0 rounded-full bg-stone-100"
+                  src={buildAvatarDataUri(
+                    getParticipantAvatarSeed(participant),
+                    APP_TEXT.people.avatarAlt(participant.name),
+                  )}
+                  alt=""
+                />
+                <span className="min-w-0 flex-1 truncate text-xs font-semibold text-stone-950">{participant.name}</span>
+                <button
+                  type="button"
+                  onClick={() => onRemove(participant.id)}
+                  className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-red-600 transition hover:bg-red-50"
+                  aria-label={APP_TEXT.people.removeAria(participant.name)}
+                >
+                  <Trash2 size={13} />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -2771,6 +3363,8 @@ function ExpensePanel({
   const hasTemplateTools = Boolean(onApplyTemplate && onSaveTemplate && onRemoveTemplate);
   const shouldShowAdvancedTools = showAdvancedTools && (hasAiTools || hasTemplateTools);
   const visibleTemplates = templates || [];
+  const expensePagination = useExpensePagination(game.expenses.length, EXPENSE_PANEL_PAGE_SIZE, game.id);
+  const visibleExpenses = game.expenses.slice(expensePagination.pageStart, expensePagination.pageEnd);
 
   function handleApplySuggestion(suggestion: ExpenseSuggestion) {
     const allParticipantIds = game.participants.map((participant) => participant.id);
@@ -3032,7 +3626,7 @@ function ExpensePanel({
       </form>
 
       <div className="mt-5 space-y-2">
-        {game.expenses.map((expense) => {
+        {visibleExpenses.map((expense) => {
           const payer = game.participants.find((participant) => participant.id === expense.payerId);
           const categoryId = normalizeExpenseCategoryId(expense.categoryId);
           const categoryLabel = getExpenseCategoryLabel(categoryId);
@@ -3080,6 +3674,17 @@ function ExpensePanel({
             </div>
           );
         })}
+        {expensePagination.shouldPaginate && (
+          <PaginationControls
+            pageIndex={expensePagination.pageIndex}
+            pageCount={expensePagination.pageCount}
+            canGoPrevious={expensePagination.canGoPrevious}
+            canGoNext={expensePagination.canGoNext}
+            onPrevious={expensePagination.goToPreviousPage}
+            onNext={expensePagination.goToNextPage}
+            className="pt-1"
+          />
+        )}
       </div>
     </section>
   );
