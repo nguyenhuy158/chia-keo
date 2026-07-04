@@ -30,6 +30,12 @@ export function createAuth(env: Env) {
     baseURL: env.BETTER_AUTH_URL,
     basePath: AUTH_BASE_PATH,
     trustedOrigins: getTrustedOrigins(env),
+    onAPIError: {
+      // Better Auth tu nuot loi va tra 500 rong; log ra de xem duoc trong Cloudflare.
+      onError(error) {
+        console.error("Better Auth error:", error);
+      },
+    },
     emailAndPassword: {
       enabled: true,
     },
