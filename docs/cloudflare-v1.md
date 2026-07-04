@@ -13,13 +13,22 @@ bo du lieu ung dung.
    - Build command: `pnpm build`.
    - Build output directory: `dist`.
    - Root directory: de trong hoac `/`.
+   - Compatibility flag: `nodejs_compat` (Better Auth + Drizzle can Node builtins).
 5. Environment variables:
    - `NODE_VERSION=22`
-   - Secret `GEMINI_API_KEY` để bật AI nhập nhanh và OCR hóa đơn.
-   - `GEMINI_MODEL=gemini-2.0-flash` nếu muốn cố định model.
+   - Secret `BETTER_AUTH_SECRET` (bat buoc) — chuoi ngau nhien du dai de ky
+     session; thieu bien nay thi dang nhap/dang ky khong chay.
+   - `ALLOWED_ORIGINS` (tuy chon) — danh sach origin FE duoc phep goi API,
+     phan tach bang dau phay; chi can khi FE khac domain voi API.
+   - Secret `GEMINI_API_KEY` (tuy chon) de bat AI nhap nhanh va OCR hoa don.
+   - `GEMINI_MODEL=gemini-2.0-flash` (tuy chon) neu muon co dinh model.
 6. Bindings:
    - D1 binding `DB` -> database `chiakeo-db`
 7. Save and Deploy.
+
+> App dang nhap bang email/password + username (Better Auth), khong dung Google
+> OAuth. Khong can cac secret `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`,
+> `GOOGLE_REDIRECT_URI`.
 
 File `public/_redirects` da cau hinh SPA fallback de `/share/:token` chay duoc
 tren Pages.
@@ -43,6 +52,12 @@ Deploy:
 
 ```bash
 npm run cloudflare:deploy
+```
+
+`BETTER_AUTH_SECRET` bat buoc, set truoc khi deploy:
+
+```bash
+npx wrangler pages secret put BETTER_AUTH_SECRET --project-name chiakeo
 ```
 
 Gemini cần cấu hình secret trước khi dùng AI trên production:
