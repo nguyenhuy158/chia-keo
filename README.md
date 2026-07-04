@@ -6,7 +6,7 @@ Ung dung chia tien nhom cho cac buoi an, di choi, du lich hoac nhom chi tieu nho
 
 - Frontend: React, Vite, TypeScript, Tailwind CSS.
 - Luu tru: Cloudflare D1 cho users, session, game, share link, profile va mau chi tieu.
-- Dang nhap: username/password qua Pages Functions, session luu bang HttpOnly cookie.
+- Dang nhap: username/password qua Better Auth tren Worker, session luu bang HttpOnly cookie.
 - Tinh nang dang co:
   - Tao nhieu cuoc choi.
   - Them nguoi tham gia va thong tin ngan hang.
@@ -195,43 +195,33 @@ Sau khi co balance o V1:
 - `POST /api/ai/receipt`
 - `PUT /api/share/:token` khi link share có quyền edit
 
-## Deploy flow
+## Backend & deploy hien tai
 
-1. Code luu tren GitHub.
-2. Cloudflare Pages connect GitHub de deploy FE tu dong khi push `main`.
-3. API Worker deploy bang `wrangler deploy`.
-4. Bind D1 vao Worker trong `wrangler.toml` hoac `wrangler.jsonc`.
-5. Migration DB chay bang Drizzle.
-6. Public link dang `/share/:token`, read-only, khong can login.
+Chi con **mot backend duy nhat**: Hono Worker trong `worker/`. Toan bo `/api/*`
+(auth Better Auth, games/participants/expenses, summary, share, AI) do Worker xu
+ly. Schema D1 quan ly bang Drizzle (`worker/src/db/schema.ts`, migration o
+`drizzle/`).
 
-## Cloudflare Pages v1
-
-V1 hien tai deploy frontend static len Cloudflare Pages, Pages Functions xu ly
-API va D1 luu toan bo du lieu ung dung.
+Deploy qua **Cloudflare Pages** (khong dung GitHub Actions): Pages connect
+GitHub, tu build + deploy khi push `main`. Pages Functions chi con mot shim
+`functions/api/[[path]].ts` uy quyen moi request `/api/*` cho Hono app trong
+`worker/` — nen khong con backend trung lap.
 
 Pages settings:
 
 - Framework preset: `Vite`
 - Build command: `pnpm build`
 - Build output directory: `dist`
-- Environment variable: `NODE_VERSION=22`
-- Secret: `GEMINI_API_KEY` để bật tính năng AI Gemini.
-- Environment variable tùy chọn: `GEMINI_MODEL`, mặc định `gemini-2.0-flash`.
+- Compatibility flag: `nodejs_compat` (Better Auth can node builtins)
 - D1 binding: `DB` -> `chiakeo-db`
+- Secret: `BETTER_AUTH_SECRET` (bat buoc); `GEMINI_API_KEY` (tuy chon, bat AI);
+  `GEMINI_MODEL` (tuy chon, mac dinh `gemini-2.0-flash`)
 
-Local Wrangler deploy:
+Config Worker/Pages nam trong `wrangler.jsonc` (va `wrangler.toml`). Migration D1:
 
 ```bash
-npx wrangler login
-npx wrangler pages project create chiakeo --production-branch main
-npx wrangler d1 migrations apply chiakeo-db --remote
-npm run cloudflare:deploy
+pnpm db:migrate:remote   # wrangler d1 migrations apply DB --remote
 ```
-
-GitHub Actions deploy:
-
-- Workflow: `.github/workflows/deploy-pages.yml`
-- Secrets can them: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`
 
 ## Bien moi truong de xuat
 
@@ -261,16 +251,19 @@ Worker:
 
 ## Roadmap
 
-1. Tach routing FE sang TanStack Router.
-2. Them form validation bang react-hook-form + zod.
-3. Bo sung API nang cao neu can tach Pages Functions sang Worker rieng.
-4. Bo sung migration moi khi schema D1 thay doi.
-5. Them React Query neu can cache/sync API phuc tap hon.
-6. Them Better Auth username/password.
-7. Mo rong public share neu can expiry/disable tren UI.
-8. Chot QR: VietQR ngan hang Viet Nam hay QR text/link thuong.
-9. Them test cho logic split va settlement.
-10. Cau hinh deploy Cloudflare Pages + Worker.
+1. ~~Tach routing FE sang TanStack Router.~~ Xong.
+2. ~~Them form validation bang react-hook-form + zod.~~ Xong.
+3. ~~Gop backend ve mot Worker (Hono) duy nhat, Pages uy quyen qua catch-all.~~ Xong.
+4. ~~Bo sung migration Drizzle khi schema D1 thay doi.~~ Dang dung `drizzle/`.
+5. ~~Them React Query cho cache/sync API.~~ Xong.
+6. ~~Them Better Auth username/password.~~ Xong.
+7. ~~Public share tren UI (bat/tat, doi token).~~ Xong.
+8. ~~Chot QR: VietQR ngan hang Viet Nam.~~ Xong (`img.vietqr.io`).
+9. ~~Them test cho logic split va settlement.~~ Xong (`pnpm test`).
+10. ~~Cau hinh deploy Cloudflare (khong dung GitHub Actions).~~ Xong.
+
+Con lai: rate limit + Turnstile o tang canh, dong bo lai tai lieu kien truc
+(`docs/`) cho khop backend Worker.
 
 ## Lenh local
 
