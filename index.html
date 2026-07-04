@@ -13,6 +13,19 @@
       rel="stylesheet"
     />
     <title>Tính tiền nhóm</title>
+    <script>
+      // Ap dung theme truoc khi React mount de tranh nhap nhay (FOUC).
+      try {
+        var stored = localStorage.getItem("chia-keo-theme") || "system";
+        var prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+        var isDark = stored === "dark" || (stored === "system" && prefersDark);
+        if (isDark) {
+          document.documentElement.classList.add("dark");
+          var meta = document.querySelector('meta[name="theme-color"]');
+          if (meta) meta.setAttribute("content", "#0c0a09");
+        }
+      } catch (e) {}
+    </script>
   </head>
   <body>
     <div id="root"></div>

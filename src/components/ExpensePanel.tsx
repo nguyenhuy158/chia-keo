@@ -1,13 +1,14 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Banknote, Check, ImagePlus, Pencil, Plus, Sparkles, Trash2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 import type { ResolvedAiExpense } from "../../shared/ai";
 import type { ApiExpense, ApiParticipant } from "../../shared/api-types";
 import { DEFAULT_EXPENSE_TITLE, type ExpenseInput } from "../../shared/schemas";
 import { formatMoney, parseMoney } from "../lib/money";
 import { useAiScanReceipt, useAiSuggestExpense } from "../lib/queries";
+import { MoneyInput } from "./MoneyInput";
 import { Field } from "./ui";
 
 const expenseFormSchema = z.object({
@@ -110,6 +111,17 @@ export function ExpensePanel({
     );
   }
 
+  function setAllSplit(selectAll: boolean) {
+    form.setValue(
+      "splitParticipantIds",
+      selectAll ? participants.map((participant) => participant.id) : [],
+      { shouldValidate: form.formState.isSubmitted },
+    );
+  }
+
+  const allSelected =
+    participants.length > 0 && splitParticipantIds.length === participants.length;
+
   const aiSuggest = useAiSuggestExpense(gameId);
   const aiReceipt = useAiScanReceipt(gameId);
   const [aiText, setAiText] = useState("");
@@ -203,18 +215,18 @@ export function ExpensePanel({
   });
 
   return (
-    <section className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm">
+    <section className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm dark:border-stone-800 dark:bg-stone-900">
       <div className="mb-4 flex items-center gap-2">
         <Banknote size={18} className="text-amber-500" />
-        <h3 className="text-lg font-semibold text-stone-950">Khoan chi</h3>
+        <h3 className="text-lg font-semibold text-stone-950 dark:text-stone-50">Khoan chi</h3>
       </div>
 
-      <div className="mb-4 rounded-md border border-violet-200 bg-violet-50 p-3">
-        <div className="flex items-center gap-2 text-sm font-medium text-violet-800">
+      <div className="mb-4 rounded-md border border-violet-200 bg-violet-50 p-3 dark:border-violet-500/30 dark:bg-violet-500/10">
+        <div className="flex items-center gap-2 text-sm font-medium text-violet-800 dark:text-violet-300">
           <Sparkles size={15} />
           Nhap nhanh bang AI
         </div>
-        <div className="mt-2 flex gap-2">
+        <div className="mt-2 flex flex-wrap gap-2">
           <input
             value={aiText}
             onChange={(event) => setAiText(event.target.value)}
@@ -224,7 +236,7 @@ export function ExpensePanel({
                 handleAiSuggest();
               }
             }}
-            className="field flex-1 bg-white"
+            className="field w-full flex-1 bg-white sm:w-auto"
             placeholder="Vi du: an toi 500k Huy tra chia 3"
             disabled={participants.length === 0}
           />
@@ -232,13 +244,13 @@ export function ExpensePanel({
             type="button"
             onClick={handleAiSuggest}
             disabled={aiPending || participants.length === 0}
-            className="inline-flex h-10 shrink-0 items-center gap-2 rounded-md bg-violet-700 px-3 text-sm font-semibold text-white transition hover:bg-violet-800 disabled:cursor-not-allowed disabled:bg-stone-300"
+            className="inline-flex h-11 shrink-0 items-center gap-2 rounded-md bg-violet-700 px-3 text-sm font-semibold text-white transition hover:bg-violet-800 active:scale-95 disabled:cursor-not-allowed disabled:bg-stone-300 dark:disabled:bg-stone-700 sm:h-10"
           >
             <Sparkles size={15} />
             {aiSuggest.isPending ? "Dang doc..." : "Goi y"}
           </button>
           <label
-            className={`inline-flex h-10 shrink-0 cursor-pointer items-center gap-2 rounded-md border border-violet-300 bg-white px-3 text-sm font-medium text-violet-800 transition hover:bg-violet-100 ${
+            className={`inline-flex h-11 shrink-0 cursor-pointer items-center gap-2 rounded-md border border-violet-300 bg-white px-3 text-sm font-medium text-violet-800 transition hover:bg-violet-100 dark:border-violet-500/40 dark:bg-stone-800 dark:text-violet-300 dark:hover:bg-stone-700 sm:h-10 ${
               aiPending || participants.length === 0 ? "pointer-events-none opacity-50" : ""
             }`}
             title="Quet anh hoa don"
@@ -256,8 +268,8 @@ export function ExpensePanel({
             />
           </label>
         </div>
-        {aiError && <p className="mt-2 text-xs text-rose-600">{aiError}</p>}
-        <p className="mt-2 text-xs text-violet-700">
+        {aiError && <p className="mt-2 text-xs text-rose-600 dark:text-rose-400">{aiError}</p>}
+        <p className="mt-2 text-xs text-violet-700 dark:text-violet-300/80">
           AI dien san form ben duoi, kiem tra lai truoc khi them.
         </p>
       </div>
@@ -267,11 +279,17 @@ export function ExpensePanel({
           <input {...form.register("title")} className="field" placeholder="An toi" />
         </Field>
         <Field label="So tien" error={form.formState.errors.amount?.message}>
-          <input
-            {...form.register("amount")}
-            className="field"
-            inputMode="numeric"
-            placeholder="500000"
+          <Controller
+            control={form.control}
+            name="amount"
+            render={({ field }) => (
+              <MoneyInput
+                value={field.value}
+                onChange={field.onChange}
+                onBlur={field.onBlur}
+                placeholder="500.000"
+              />
+            )}
           />
         </Field>
         <Field label="Nguoi tra" error={form.formState.errors.payerId?.message}>
@@ -284,7 +302,18 @@ export function ExpensePanel({
           </select>
         </Field>
         <div>
-          <p className="mb-2 text-sm font-medium text-stone-700">Chia cho ai</p>
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <p className="text-sm font-medium text-stone-700 dark:text-stone-300">Chia cho ai</p>
+            {participants.length > 1 && (
+              <button
+                type="button"
+                onClick={() => setAllSplit(!allSelected)}
+                className="rounded-md px-2 py-1 text-xs font-semibold text-violet-700 transition hover:bg-violet-50 active:bg-violet-100 dark:text-violet-400 dark:hover:bg-violet-500/10 dark:active:bg-violet-500/20"
+              >
+                {allSelected ? "Bo chon" : "Chon tat ca"}
+              </button>
+            )}
+          </div>
           <div className="flex flex-wrap gap-2">
             {participants.map((participant) => {
               const checked = splitParticipantIds.includes(participant.id);
@@ -293,10 +322,10 @@ export function ExpensePanel({
                   key={participant.id}
                   type="button"
                   onClick={() => toggleSplit(participant.id)}
-                  className={`h-9 rounded-md border px-3 text-sm font-medium transition ${
+                  className={`min-h-11 rounded-md border px-3 text-sm font-medium transition active:scale-95 ${
                     checked
-                      ? "border-violet-600 bg-violet-50 text-violet-800"
-                      : "border-stone-300 bg-white text-stone-600 hover:bg-stone-50"
+                      ? "border-violet-600 bg-violet-50 text-violet-800 dark:border-violet-500 dark:bg-violet-500/15 dark:text-violet-300"
+                      : "border-stone-300 bg-white text-stone-600 hover:bg-stone-50 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-300 dark:hover:bg-stone-700"
                   }`}
                 >
                   {participant.name}
@@ -305,16 +334,16 @@ export function ExpensePanel({
             })}
           </div>
           {form.formState.errors.splitParticipantIds && (
-            <p className="mt-1 text-xs text-rose-600">
+            <p className="mt-1 text-xs text-rose-600 dark:text-rose-400">
               {form.formState.errors.splitParticipantIds.message}
             </p>
           )}
         </div>
-        <div className="flex items-center gap-2 md:col-span-2">
+        <div className="flex flex-wrap items-center gap-2 md:col-span-2">
           <button
             type="submit"
             disabled={participants.length === 0 || pending}
-            className="inline-flex h-10 items-center gap-2 rounded-md bg-violet-600 px-4 text-sm font-semibold text-white transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:bg-stone-300"
+            className="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-violet-600 px-4 text-sm font-semibold text-white transition hover:bg-violet-700 active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-stone-300 dark:disabled:bg-stone-700"
           >
             {editingExpenseId ? <Check size={17} /> : <Plus size={17} />}
             {editingExpenseId ? "Luu khoan chi" : "Them khoan chi"}
@@ -323,7 +352,7 @@ export function ExpensePanel({
             <button
               type="button"
               onClick={cancelEditExpense}
-              className="inline-flex h-10 items-center gap-2 rounded-md border border-stone-300 bg-white px-4 text-sm font-medium text-stone-700 transition hover:bg-stone-50"
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-md border border-stone-300 bg-white px-4 text-sm font-medium text-stone-700 transition hover:bg-stone-50 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-200 dark:hover:bg-stone-800"
             >
               Huy sua
             </button>
@@ -339,24 +368,28 @@ export function ExpensePanel({
             <div
               key={expense.id}
               className={`rounded-md border p-3 ${
-                isEditing ? "border-violet-500 bg-violet-50" : "border-stone-200"
+                isEditing
+                  ? "border-violet-500 bg-violet-50 dark:border-violet-500 dark:bg-violet-500/10"
+                  : "border-stone-200 dark:border-stone-800"
               }`}
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold text-stone-950">{expense.title}</p>
-                  <p className="mt-1 text-xs text-stone-500">
+                  <p className="truncate text-sm font-semibold text-stone-950 dark:text-stone-50">
+                    {expense.title}
+                  </p>
+                  <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">
                     {payer?.name || "Khong ro"} tra, chia {expense.splitParticipantIds.length} nguoi
                   </p>
                 </div>
-                <div className="flex shrink-0 items-center gap-2">
-                  <span className="text-sm font-semibold text-stone-950 tabular">
+                <div className="flex shrink-0 items-center gap-1">
+                  <span className="text-sm font-semibold text-stone-950 tabular dark:text-stone-50">
                     {formatMoney(expense.amount)}
                   </span>
                   <button
                     type="button"
                     onClick={() => (isEditing ? cancelEditExpense() : startEditExpense(expense))}
-                    className="inline-flex h-8 w-8 items-center justify-center rounded-md text-violet-700 transition hover:bg-violet-50"
+                    className="inline-flex h-11 w-11 items-center justify-center rounded-md text-violet-700 transition hover:bg-violet-50 active:bg-violet-100 dark:text-violet-400 dark:hover:bg-violet-500/10 dark:active:bg-violet-500/20"
                     aria-label={`Sua ${expense.title}`}
                   >
                     <Pencil size={16} />
@@ -364,7 +397,7 @@ export function ExpensePanel({
                   <button
                     type="button"
                     onClick={() => onRemove(expense.id)}
-                    className="inline-flex h-8 w-8 items-center justify-center rounded-md text-rose-600 transition hover:bg-rose-50"
+                    className="inline-flex h-11 w-11 items-center justify-center rounded-md text-rose-600 transition hover:bg-rose-50 active:bg-rose-100 dark:text-rose-400 dark:hover:bg-rose-500/10 dark:active:bg-rose-500/20"
                     aria-label={`Xoa ${expense.title}`}
                   >
                     <Trash2 size={16} />
