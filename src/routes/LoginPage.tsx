@@ -99,7 +99,7 @@ export function LoginPage() {
 
         <div className="space-y-3">
           <Field label="Username" error={form.formState.errors.username?.message}>
-            <input {...form.register("username")} className="field" placeholder="huy" autoComplete="username" />
+            <input {...form.register("username")} className="field" placeholder="Ten dang nhap" autoComplete="username" />
           </Field>
           <Field label="Mat khau" error={form.formState.errors.password?.message}>
             <input
