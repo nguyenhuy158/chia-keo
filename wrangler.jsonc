@@ -1,8 +1,8 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "chia-keo",
+  "name": "chiakeo",
   "main": "worker/src/index.ts",
-  "compatibility_date": "2026-06-01",
+  "compatibility_date": "2026-07-03",
   "compatibility_flags": ["nodejs_compat"],
   "assets": {
     "directory": "./dist",
@@ -12,9 +12,8 @@
   "d1_databases": [
     {
       "binding": "DB",
-      "database_name": "chia-keo",
-      // Thay bang database_id that sau khi chay: wrangler d1 create chia-keo
-      "database_id": "00000000-0000-0000-0000-000000000000",
+      "database_name": "chiakeo-db",
+      "database_id": "d583fc77-ae15-4dfc-9c23-e36240e437f3",
       "migrations_dir": "drizzle"
     }
   ],
