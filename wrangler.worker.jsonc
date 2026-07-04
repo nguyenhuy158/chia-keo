@@ -1,12 +1,16 @@
-// Cau hinh cho Cloudflare Pages (git integration doc file nay khi build).
-// Can `pages_build_output_dir` de Pages chap nhan config, nho do
-// `nodejs_compat` duoc ap dung cho Pages Functions (better-auth can node:crypto).
+// Cau hinh Worker cho dev local (`pnpm dev:api`).
+// Deploy production dung Cloudflare Pages voi config trong wrangler.jsonc.
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "chiakeo",
-  "pages_build_output_dir": "./dist",
+  "main": "worker/src/index.ts",
   "compatibility_date": "2026-07-03",
   "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": "./dist",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*"]
+  },
   "d1_databases": [
     {
       "binding": "DB",
@@ -19,6 +23,5 @@
     // Origin FE duoc phep goi API (chi can khi FE khong cung domain voi Worker).
     "ALLOWED_ORIGINS": ""
   }
-  // BETTER_AUTH_SECRET: dat trong Pages dashboard (Settings > Variables and Secrets)
-  // hoac trong file .dev.vars khi chay local.
+  // BETTER_AUTH_SECRET: dat trong file .dev.vars khi chay local.
 }

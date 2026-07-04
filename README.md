@@ -198,9 +198,12 @@ Sau khi co balance o V1:
 ## Deploy flow
 
 1. Code luu tren GitHub.
-2. Cloudflare Pages connect GitHub de deploy FE tu dong khi push `main`.
-3. API Worker deploy bang `wrangler deploy`.
-4. Bind D1 vao Worker trong `wrangler.toml` hoac `wrangler.jsonc`.
+2. Cloudflare Pages connect GitHub de deploy FE + Pages Functions tu dong khi
+   push `main`. Pages doc cau hinh tu `wrangler.jsonc` (co
+   `pages_build_output_dir` va flag `nodejs_compat`).
+3. Dev API local dung `pnpm dev:api` voi cau hinh Worker trong
+   `wrangler.worker.jsonc`.
+4. Bind D1 (`DB` -> `chiakeo-db`) khai bao trong `wrangler.jsonc`.
 5. Migration DB chay bang Drizzle.
 6. Public link dang `/share/:token`, read-only, khong can login.
 
