@@ -41,10 +41,10 @@ export function ParticipantPanel({ participants, pending, onAdd, onRemove }: Par
   });
 
   return (
-    <section className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm">
+    <section className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm dark:border-stone-800 dark:bg-stone-900">
       <div className="mb-4 flex items-center gap-2">
-        <Users size={18} className="text-violet-600" />
-        <h3 className="text-lg font-semibold text-stone-950">Nguoi tham gia</h3>
+        <Users size={18} className="text-violet-600 dark:text-violet-400" />
+        <h3 className="text-lg font-semibold text-stone-950 dark:text-stone-50">Nguoi tham gia</h3>
       </div>
 
       <form onSubmit={handleAdd} className="grid gap-3 md:grid-cols-2">
@@ -64,7 +64,7 @@ export function ParticipantPanel({ participants, pending, onAdd, onRemove }: Par
           <button
             type="submit"
             disabled={pending}
-            className="inline-flex h-10 items-center gap-2 rounded-md bg-violet-600 px-4 text-sm font-semibold text-white transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:bg-stone-300"
+            className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-md bg-violet-600 px-4 text-sm font-semibold text-white transition hover:bg-violet-700 active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-stone-300 dark:disabled:bg-stone-700 sm:w-auto"
           >
             <Plus size={17} />
             Them nguoi
@@ -74,11 +74,16 @@ export function ParticipantPanel({ participants, pending, onAdd, onRemove }: Par
 
       <div className="mt-5 grid gap-2 sm:grid-cols-2">
         {participants.map((participant) => (
-          <div key={participant.id} className="rounded-md border border-stone-200 p-3">
+          <div
+            key={participant.id}
+            className="rounded-md border border-stone-200 p-3 dark:border-stone-800"
+          >
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <p className="truncate text-sm font-semibold text-stone-950">{participant.name}</p>
-                <p className="mt-1 truncate text-xs text-stone-500">
+                <p className="truncate text-sm font-semibold text-stone-950 dark:text-stone-50">
+                  {participant.name}
+                </p>
+                <p className="mt-1 truncate text-xs text-stone-500 dark:text-stone-400">
                   {participant.bankId && participant.accountNo
                     ? `${participant.bankId} - ${participant.accountNo}`
                     : "Chua co thong tin QR"}
@@ -87,7 +92,7 @@ export function ParticipantPanel({ participants, pending, onAdd, onRemove }: Par
               <button
                 type="button"
                 onClick={() => onRemove(participant.id)}
-                className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-rose-600 transition hover:bg-rose-50"
+                className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md text-rose-600 transition hover:bg-rose-50 active:bg-rose-100 dark:text-rose-400 dark:hover:bg-rose-500/10 dark:active:bg-rose-500/20"
                 aria-label={`Xoa ${participant.name}`}
               >
                 <Trash2 size={16} />

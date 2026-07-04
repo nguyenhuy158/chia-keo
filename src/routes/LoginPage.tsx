@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { authClient, usernameToEmail } from "../lib/auth-client";
+import { ThemeToggle } from "../components/theme";
 import { Field, LoadingState } from "../components/ui";
 
 const credentialsSchema = z.object({
@@ -83,18 +84,23 @@ export function LoginPage() {
     <section className="mx-auto flex min-h-screen w-full max-w-md items-center px-5">
       <form
         onSubmit={handleSubmit}
-        className="w-full rounded-lg border border-stone-200 bg-white p-6 shadow-sm"
+        className="w-full rounded-lg border border-stone-200 bg-white p-6 shadow-sm dark:border-stone-800 dark:bg-stone-900"
       >
-        <div className="mb-6">
-          <p className="text-sm font-bold uppercase tracking-wide text-fuchsia-600">Chia keo</p>
-          <h1 className="mt-2 text-2xl font-semibold text-stone-950">
-            {mode === "sign-in" ? "Dang nhap" : "Dang ky"}
-          </h1>
-          <p className="mt-2 text-sm text-stone-600">
-            {mode === "sign-in"
-              ? "Dang nhap bang username va mat khau."
-              : "Tao tai khoan moi de quan ly cac cuoc choi."}
-          </p>
+        <div className="mb-6 flex items-start justify-between gap-3">
+          <div>
+            <p className="text-sm font-bold uppercase tracking-wide text-fuchsia-600 dark:text-fuchsia-400">
+              Chia keo
+            </p>
+            <h1 className="mt-2 text-2xl font-semibold text-stone-950 dark:text-stone-50">
+              {mode === "sign-in" ? "Dang nhap" : "Dang ky"}
+            </h1>
+            <p className="mt-2 text-sm text-stone-600 dark:text-stone-400">
+              {mode === "sign-in"
+                ? "Dang nhap bang username va mat khau."
+                : "Tao tai khoan moi de quan ly cac cuoc choi."}
+            </p>
+          </div>
+          <ThemeToggle />
         </div>
 
         <div className="space-y-3">
@@ -112,7 +118,7 @@ export function LoginPage() {
           </Field>
         </div>
 
-        {authError && <p className="mt-3 text-sm text-rose-600">{authError}</p>}
+        {authError && <p className="mt-3 text-sm text-rose-600 dark:text-rose-400">{authError}</p>}
 
         <button
           type="submit"
@@ -129,7 +135,7 @@ export function LoginPage() {
             setMode(mode === "sign-in" ? "sign-up" : "sign-in");
             setAuthError("");
           }}
-          className="mt-3 w-full text-center text-sm font-medium text-violet-600 hover:text-violet-700"
+          className="mt-3 w-full text-center text-sm font-medium text-violet-600 hover:text-violet-700 dark:text-violet-400 dark:hover:text-violet-300"
         >
           {mode === "sign-in" ? "Chua co tai khoan? Dang ky" : "Da co tai khoan? Dang nhap"}
         </button>
