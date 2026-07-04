@@ -1,18 +1,16 @@
 name = "chiakeo"
-main = "worker/src/index.ts"
 compatibility_date = "2026-07-03"
+# nodejs_compat can cho Pages Functions vi API dung better-auth + drizzle (can Node built-ins).
 compatibility_flags = ["nodejs_compat"]
+# Deploy bang Cloudflare Pages: build ra ./dist, functions/ xu ly /api/*.
+pages_build_output_dir = "./dist"
 
-[assets]
-directory = "./dist"
-not_found_handling = "single-page-application"
-run_worker_first = ["/api/*"]
+# Origin FE duoc phep goi API (chi can khi FE khong cung domain voi API).
+[vars]
+ALLOWED_ORIGINS = ""
 
 [[d1_databases]]
 binding = "DB"
 database_name = "chiakeo-db"
 database_id = "d583fc77-ae15-4dfc-9c23-e36240e437f3"
 migrations_dir = "drizzle"
-
-[vars]
-ALLOWED_ORIGINS = ""
