@@ -25,7 +25,23 @@ app.use("/api/*", (c, next) => {
   })(c, next);
 });
 
-app.get("/api/health", (c) => c.json({ ok: true }));
+app.get("/api/health", async (c) => {
+  // Kiem tra D1 da chay migration chua de chan doan nhanh loi 500 khi login.
+  try {
+    await c.env.DB.prepare("SELECT 1 FROM user LIMIT 1").first();
+    return c.json({ ok: true, db: "ok" });
+  } catch (error) {
+    console.error("D1 health check failed:", error);
+    return c.json(
+      {
+        ok: false,
+        db: "error",
+        hint: "Chay: npx wrangler d1 migrations apply DB --remote",
+      },
+      500,
+    );
+  }
+});
 
 app.use(`${AUTH_BASE_PATH}/sign-in/*`, rateLimitPost("auth", AUTH_RATE_LIMIT));
 app.use(`${AUTH_BASE_PATH}/sign-up/*`, rateLimitPost("auth", AUTH_RATE_LIMIT));
@@ -37,5 +53,11 @@ app.on(["GET", "POST"], `${AUTH_BASE_PATH}/*`, (c) => createAuth(c.env).handler(
 app.route("/api", shareRouter);
 app.route("/api", aiRouter);
 app.route("/api", gamesRouter);
+
+app.onError((error, c) => {
+  // Log ra Cloudflare de 500 khong con "cam" nhu truoc.
+  console.error(`API error at ${c.req.method} ${c.req.path}:`, error);
+  return c.json({ error: "INTERNAL_SERVER_ERROR" }, 500);
+});
 
 export default app;
