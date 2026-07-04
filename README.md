@@ -6,7 +6,7 @@ Ung dung chia tien nhom cho cac buoi an, di choi, du lich hoac nhom chi tieu nho
 
 - Frontend: React, Vite, TypeScript, Tailwind CSS.
 - Luu tru: Cloudflare D1 cho users, session, game, share link, profile va mau chi tieu.
-- Dang nhap: username/password qua Pages Functions, session luu bang HttpOnly cookie.
+- Dang nhap: username/password qua Better Auth tren Worker, session luu bang HttpOnly cookie.
 - Tinh nang dang co:
   - Tao nhieu cuoc choi.
   - Them nguoi tham gia va thong tin ngan hang.
@@ -195,43 +195,37 @@ Sau khi co balance o V1:
 - `POST /api/ai/receipt`
 - `PUT /api/share/:token` khi link share có quyền edit
 
-## Deploy flow
+## Backend: mot Worker duy nhat
 
-1. Code luu tren GitHub.
-2. Cloudflare Pages connect GitHub de deploy FE tu dong khi push `main`.
-3. API Worker deploy bang `wrangler deploy`.
-4. Bind D1 vao Worker trong `wrangler.toml` hoac `wrangler.jsonc`.
-5. Migration DB chay bang Drizzle.
-6. Public link dang `/share/:token`, read-only, khong can login.
+Toan bo API `/api/*` do Hono Worker trong `worker/` xu ly, cung phuc vu static FE
+qua Cloudflare "Worker with static assets" (SPA fallback + `run_worker_first`
+cho `/api/*`) khai bao trong `wrangler.jsonc`. Schema D1 quan ly bang Drizzle
+trong `worker/src/db/schema.ts`, migration sinh o `drizzle/`.
 
-## Cloudflare Pages v1
+Lop Pages Functions cu (`functions/`) va migration SQL cu (`migrations/`) da bi
+go bo: frontend hien tai dung Better Auth + `/api/games` + `/api/ai`, chi khop voi
+Worker. Ban Pages Functions cu con luu tai branch `archive/pages-functions`.
 
-V1 hien tai deploy frontend static len Cloudflare Pages, Pages Functions xu ly
-API va D1 luu toan bo du lieu ung dung.
+## Deploy (Cloudflare, khong dung GitHub Actions)
 
-Pages settings:
+Deploy Worker (kem FE) bang mot trong hai cach, deu la Cloudflare-native:
 
-- Framework preset: `Vite`
-- Build command: `pnpm build`
-- Build output directory: `dist`
-- Environment variable: `NODE_VERSION=22`
-- Secret: `GEMINI_API_KEY` để bật tính năng AI Gemini.
-- Environment variable tùy chọn: `GEMINI_MODEL`, mặc định `gemini-2.0-flash`.
-- D1 binding: `DB` -> `chiakeo-db`
+- **Cloudflare Workers Builds** (khuyen nghi): noi repo GitHub voi Worker trong
+  dashboard Cloudflare, tu build + deploy khi push `main`. Khong can GitHub Actions.
+- **Thu cong**: `pnpm deploy` (chay `pnpm build && wrangler deploy`).
 
-Local Wrangler deploy:
+Chuan bi mot lan:
 
 ```bash
-npx wrangler login
-npx wrangler pages project create chiakeo --production-branch main
-npx wrangler d1 migrations apply chiakeo-db --remote
-npm run cloudflare:deploy
+wrangler d1 create chia-keo          # dien database_id that vao wrangler.jsonc
+wrangler secret put BETTER_AUTH_SECRET
+wrangler secret put GEMINI_API_KEY   # tuy chon, de bat tinh nang AI
+pnpm db:migrate:remote               # apply migration Drizzle len D1
 ```
 
-GitHub Actions deploy:
-
-- Workflow: `.github/workflows/deploy-pages.yml`
-- Secrets can them: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`
+Binding/flag can co tren Worker: D1 `DB`, compatibility flag `nodejs_compat`
+(da khai trong `wrangler.jsonc`), secret `BETTER_AUTH_SECRET`
+(+ `GEMINI_API_KEY` neu dung AI).
 
 ## Bien moi truong de xuat
 
