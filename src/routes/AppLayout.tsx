@@ -47,10 +47,10 @@ export function AppLayout() {
             </button>
             <div className="min-w-0">
               <h1 className="truncate bg-gradient-to-r from-violet-600 to-fuchsia-600 bg-clip-text text-lg font-extrabold text-transparent sm:text-xl">
-                Chia keo
+                Chia kèo
               </h1>
               <p className="hidden text-sm text-stone-600 dark:text-stone-400 sm:block">
-                Tinh tien nhom va sinh QR nhan tien.
+                Tính tiền nhóm và sinh QR nhận tiền.
               </p>
             </div>
           </div>
@@ -65,7 +65,7 @@ export function AppLayout() {
               className="inline-flex h-11 items-center gap-2 rounded-md border border-stone-300 bg-white px-3 text-sm font-medium text-stone-700 transition hover:bg-stone-50 active:bg-stone-100 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-200 dark:hover:bg-stone-800 dark:active:bg-stone-700"
             >
               <LogOut size={16} />
-              <span className="hidden sm:inline">Thoat</span>
+              <span className="hidden sm:inline">Thoát</span>
             </button>
           </div>
         </div>
@@ -80,7 +80,7 @@ export function AppLayout() {
         </section>
       </main>
 
-      <Drawer open={gamesOpen} onClose={() => setGamesOpen(false)} title="Cuoc choi">
+      <Drawer open={gamesOpen} onClose={() => setGamesOpen(false)} title="Cuộc chơi">
         <GamesSidebar onNavigate={() => setGamesOpen(false)} />
       </Drawer>
     </MobileShellContext.Provider>

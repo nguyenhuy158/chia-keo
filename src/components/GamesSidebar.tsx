@@ -6,7 +6,7 @@ import { z } from "zod";
 import { useCreateGame, useGames } from "../lib/queries";
 
 const gameFormSchema = z.object({
-  name: z.string().trim().min(1, "Nhap ten cuoc choi"),
+  name: z.string().trim().min(1, "Nhập tên cuộc chơi"),
 });
 
 type GameFormValues = z.infer<typeof gameFormSchema>;
@@ -35,20 +35,20 @@ export function GamesSidebar({ onNavigate }: { onNavigate?: () => void }) {
         className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm dark:border-stone-800 dark:bg-stone-900"
       >
         <label className="text-sm font-medium text-stone-700 dark:text-stone-300" htmlFor="game-name">
-          Tao cuoc choi
+          Tạo cuộc chơi
         </label>
         <div className="mt-2 flex gap-2">
           <input
             id="game-name"
             {...form.register("name")}
             className="h-11 min-w-0 flex-1 rounded-md border border-stone-300 bg-white px-3 text-sm text-stone-950 outline-none transition placeholder:text-stone-400 focus:border-violet-600 focus:ring-2 focus:ring-violet-100 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-100 dark:placeholder:text-stone-500 dark:focus:ring-violet-900/40 sm:h-10"
-            placeholder="Da Nang 2026"
+            placeholder="Đà Nẵng 2026"
           />
           <button
             type="submit"
             disabled={createGame.isPending}
             className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-violet-600 text-white transition hover:bg-violet-700 active:scale-95 disabled:cursor-not-allowed disabled:bg-stone-300 dark:disabled:bg-stone-700 sm:h-10 sm:w-10"
-            aria-label="Tao cuoc choi"
+            aria-label="Tạo cuộc chơi"
           >
             <Plus size={18} />
           </button>
@@ -63,10 +63,10 @@ export function GamesSidebar({ onNavigate }: { onNavigate?: () => void }) {
       <section className="rounded-lg border border-stone-200 bg-white p-3 shadow-sm dark:border-stone-800 dark:bg-stone-900">
         <div className="mb-2 flex items-center gap-2 px-1 text-sm font-semibold text-stone-800 dark:text-stone-200">
           <ReceiptText size={17} />
-          Cuoc choi
+          Cuộc chơi
         </div>
         {gamesQuery.isPending ? (
-          <p className="px-1 py-4 text-sm text-stone-500 dark:text-stone-400">Dang tai...</p>
+          <p className="px-1 py-4 text-sm text-stone-500 dark:text-stone-400">Đang tải...</p>
         ) : gamesQuery.data && gamesQuery.data.length > 0 ? (
           <div className="space-y-2">
             {gamesQuery.data.map((game) => (
@@ -85,13 +85,13 @@ export function GamesSidebar({ onNavigate }: { onNavigate?: () => void }) {
                   {game.name}
                 </span>
                 <span className="mt-1 block text-xs text-stone-500 dark:text-stone-400">
-                  {game.participantCount} nguoi, {game.expenseCount} khoan
+                  {game.participantCount} người, {game.expenseCount} khoản
                 </span>
               </Link>
             ))}
           </div>
         ) : (
-          <p className="px-1 py-4 text-sm text-stone-500 dark:text-stone-400">Chua co cuoc choi nao.</p>
+          <p className="px-1 py-4 text-sm text-stone-500 dark:text-stone-400">Chưa có cuộc chơi nào.</p>
         )}
       </section>
     </aside>

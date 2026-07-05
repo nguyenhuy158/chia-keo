@@ -32,13 +32,13 @@ export function GameDashboard({
       )}
 
       <section className="grid grid-cols-3 gap-3">
-        <Metric label="Tong chi" value={formatMoney(summary.totalExpense)} />
-        <Metric label="So nguoi" value={String(participants.length)} />
-        <Metric label="Khoan chi" value={String(expenseCount)} />
+        <Metric label="Tổng chi" value={formatMoney(summary.totalExpense)} />
+        <Metric label="Số người" value={String(participants.length)} />
+        <Metric label="Khoản chi" value={String(expenseCount)} />
       </section>
 
       <section className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm dark:border-stone-800 dark:bg-stone-900">
-        <h3 className="text-lg font-semibold text-stone-950 dark:text-stone-50">Can bang</h3>
+        <h3 className="text-lg font-semibold text-stone-950 dark:text-stone-50">Cân bằng</h3>
         <div className="mt-4 space-y-3">
           {summary.balances.length > 0 ? (
             summary.balances.map((row) => {
@@ -57,21 +57,21 @@ export function GameDashboard({
                     <BalancePill value={row.balance} />
                   </div>
                   <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-stone-500 dark:text-stone-400">
-                    <span>Da tra: {formatMoney(row.paid)}</span>
-                    <span>Phai chiu: {formatMoney(row.owed)}</span>
+                    <span>Đã trả: {formatMoney(row.paid)}</span>
+                    <span>Phải chịu: {formatMoney(row.owed)}</span>
                   </div>
                 </div>
               );
             })
           ) : (
-            <p className="text-sm text-stone-500 dark:text-stone-400">Chua co nguoi tham gia.</p>
+            <p className="text-sm text-stone-500 dark:text-stone-400">Chưa có người tham gia.</p>
           )}
         </div>
       </section>
 
       <section className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm dark:border-stone-800 dark:bg-stone-900">
         <h3 className="text-lg font-semibold text-stone-950 dark:text-stone-50">
-          Chuyen khoan toi uu
+          Chuyển khoản tối ưu
         </h3>
         <div className="mt-4 space-y-3">
           {summary.settlements.length > 0 ? (
@@ -88,7 +88,7 @@ export function GameDashboard({
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <p className="text-sm font-semibold text-stone-950 dark:text-stone-50">
-                        {from.name} tra {to.name}
+                        {from.name} trả {to.name}
                       </p>
                       <p className="mt-1 text-sm font-bold text-violet-700 tabular dark:text-violet-400">
                         {formatMoney(settlement.amount)}
@@ -99,14 +99,14 @@ export function GameDashboard({
                     <img
                       className="mt-3 w-full rounded-md border border-stone-200 bg-white dark:border-stone-700"
                       src={buildVietQrUrl(to, settlement.amount, code)}
-                      alt={`QR nhan tien cua ${to.name}`}
+                      alt={`QR nhận tiền của ${to.name}`}
                     />
                   )}
                 </div>
               );
             })
           ) : (
-            <p className="text-sm text-stone-500 dark:text-stone-400">Them khoan chi de tinh tien.</p>
+            <p className="text-sm text-stone-500 dark:text-stone-400">Thêm khoản chi để tính tiền.</p>
           )}
         </div>
       </section>

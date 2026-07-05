@@ -8,8 +8,8 @@ export function HomePage() {
   return (
     <div className="space-y-4">
       <EmptyState
-        title="Bat dau mot cuoc choi"
-        description="Chon mot cuoc choi hoac tao cuoc choi moi de them nguoi va khoan chi."
+        title="Bắt đầu một cuộc chơi"
+        description="Chọn một cuộc chơi hoặc tạo cuộc chơi mới để thêm người và khoản chi."
       />
       <button
         type="button"
@@ -17,7 +17,7 @@ export function HomePage() {
         className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-md bg-violet-600 px-4 text-sm font-semibold text-white transition hover:bg-violet-700 active:scale-[0.99] lg:hidden"
       >
         <ListChecks size={18} />
-        Mo danh sach cuoc choi
+        Mở danh sách cuộc chơi
       </button>
     </div>
   );

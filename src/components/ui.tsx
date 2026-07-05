@@ -18,7 +18,7 @@ export function EmptyState({ title, description }: { title: string; description:
   );
 }
 
-export function LoadingState({ label = "Dang tai..." }: { label?: string }) {
+export function LoadingState({ label = "Đang tải..." }: { label?: string }) {
   return (
     <div className="flex min-h-40 items-center justify-center rounded-lg border border-stone-200 bg-white p-8 dark:border-stone-800 dark:bg-stone-900">
       <p className="text-sm text-stone-500 dark:text-stone-400">{label}</p>
@@ -61,7 +61,7 @@ export function BalancePill({ value }: { value: number }) {
   if (value > 0) {
     return (
       <span className="shrink-0 rounded-full bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-700 tabular dark:bg-emerald-500/15 dark:text-emerald-300">
-        Nhan {formatMoney(value)}
+        Nhận {formatMoney(value)}
       </span>
     );
   }
@@ -69,14 +69,14 @@ export function BalancePill({ value }: { value: number }) {
   if (value < 0) {
     return (
       <span className="shrink-0 rounded-full bg-rose-50 px-2 py-1 text-xs font-semibold text-rose-700 tabular dark:bg-rose-500/15 dark:text-rose-300">
-        Tra {formatMoney(Math.abs(value))}
+        Trả {formatMoney(Math.abs(value))}
       </span>
     );
   }
 
   return (
     <span className="shrink-0 rounded-full bg-stone-100 px-2 py-1 text-xs font-semibold text-stone-600 dark:bg-stone-800 dark:text-stone-300">
-      Du
+      Đủ
     </span>
   );
 }

@@ -35,13 +35,13 @@ function ExpenseMatrix({ participants, expenses, summary }: ExpenseMatrixProps) 
     <section className="min-h-0 overflow-hidden rounded-lg border border-stone-200 bg-white shadow-sm dark:border-stone-800 dark:bg-stone-900">
       <div className="flex items-center justify-between gap-3 border-b border-stone-200 px-3 py-3 dark:border-stone-800">
         <div>
-          <h2 className="text-sm font-semibold text-stone-950 dark:text-stone-50">Bang chia</h2>
+          <h2 className="text-sm font-semibold text-stone-950 dark:text-stone-50">Bảng chia</h2>
           <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">
-            Tick vang la nguoi tham gia khoan chi.
+            Tick vàng là người tham gia khoản chi.
           </p>
         </div>
         <span className="shrink-0 text-xs font-semibold text-stone-500 tabular dark:text-stone-400">
-          {expenses.length} khoan
+          {expenses.length} khoản
         </span>
       </div>
 
@@ -56,7 +56,7 @@ function ExpenseMatrix({ participants, expenses, summary }: ExpenseMatrixProps) 
                 className="sticky left-0 top-0 z-30 border-b border-r border-dashed border-stone-300 bg-stone-50 px-3 py-3 font-semibold dark:border-stone-700 dark:bg-stone-950"
                 style={{ width: STICKY_DESCRIPTION_WIDTH, minWidth: STICKY_DESCRIPTION_WIDTH }}
               >
-                Noi dung
+                Nội dung
               </th>
               <th
                 className="sticky top-0 z-20 border-b border-r border-dashed border-stone-300 bg-stone-50 px-2 py-3 text-right font-semibold dark:border-stone-700 dark:bg-stone-950"
@@ -66,7 +66,7 @@ function ExpenseMatrix({ participants, expenses, summary }: ExpenseMatrixProps) 
                   minWidth: STICKY_TOTAL_WIDTH,
                 }}
               >
-                Tong chi
+                Tổng chi
               </th>
               <th
                 className="sticky top-0 z-20 border-b border-r border-dashed border-stone-300 bg-stone-50 px-2 py-3 text-right font-semibold dark:border-stone-700 dark:bg-stone-950"
@@ -76,7 +76,7 @@ function ExpenseMatrix({ participants, expenses, summary }: ExpenseMatrixProps) 
                   minWidth: STICKY_COUNT_WIDTH,
                 }}
               >
-                Nguoi
+                Người
               </th>
               <th
                 className="sticky top-0 z-20 border-b border-r border-dashed border-stone-300 bg-stone-50 px-2 py-3 text-right font-semibold dark:border-stone-700 dark:bg-stone-950"
@@ -86,7 +86,7 @@ function ExpenseMatrix({ participants, expenses, summary }: ExpenseMatrixProps) 
                   minWidth: STICKY_SHARE_WIDTH,
                 }}
               >
-                /nguoi
+                /người
               </th>
               {participants.map((participant) => {
                 const balance = balanceByParticipantId.get(participant.id);
@@ -193,8 +193,8 @@ export function SharePage() {
     return (
       <div className="mx-auto w-full max-w-2xl px-5 py-10">
         <EmptyState
-          title="Khong tim thay link chia se"
-          description="Link khong ton tai, da bi tat hoac da het han."
+          title="Không tìm thấy link chia sẻ"
+          description="Link không tồn tại, đã bị tắt hoặc đã hết hạn."
         />
       </div>
     );
@@ -203,8 +203,8 @@ export function SharePage() {
   const view = shareQuery.data;
   const participantById = new Map(view.participants.map((participant) => [participant.id, participant]));
   const tabs: Array<{ id: ShareTab; label: string; icon: typeof ListChecks }> = [
-    { id: "summary", label: "Tong ket", icon: ListChecks },
-    { id: "matrix", label: "Bang chia", icon: Table2 },
+    { id: "summary", label: "Tổng kết", icon: ListChecks },
+    { id: "matrix", label: "Bảng chia", icon: Table2 },
   ];
 
   return (
@@ -254,7 +254,7 @@ export function SharePage() {
 
             <section className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm dark:border-stone-800 dark:bg-stone-900">
               <h3 className="text-lg font-semibold text-stone-950 dark:text-stone-50">
-                Cac khoan chi
+                Các khoản chi
               </h3>
               <div className="mt-4 space-y-2">
                 {view.expenses.length > 0 ? (
@@ -271,8 +271,8 @@ export function SharePage() {
                               {expense.title}
                             </p>
                             <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">
-                              {payer?.name || "Khong ro"} tra, chia{" "}
-                              {expense.splitParticipantIds.length} nguoi
+                              {payer?.name || "Không rõ"} trả, chia{" "}
+                              {expense.splitParticipantIds.length} người
                             </p>
                           </div>
                           <span className="shrink-0 text-sm font-semibold text-stone-950 tabular dark:text-stone-50">
@@ -284,7 +284,7 @@ export function SharePage() {
                   })
                 ) : (
                   <p className="text-sm text-stone-500 dark:text-stone-400">
-                    Chua co khoan chi nao.
+                    Chưa có khoản chi nào.
                   </p>
                 )}
               </div>

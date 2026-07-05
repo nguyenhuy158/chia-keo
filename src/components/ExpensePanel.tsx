@@ -13,9 +13,9 @@ import { Field } from "./ui";
 
 const expenseFormSchema = z.object({
   title: z.string().trim(),
-  amount: z.string().refine((value) => parseMoney(value) > 0, "Nhap so tien hop le"),
-  payerId: z.string().min(1, "Chon nguoi tra"),
-  splitParticipantIds: z.array(z.string()).min(1, "Chon it nhat mot nguoi cung chia"),
+  amount: z.string().refine((value) => parseMoney(value) > 0, "Nhập số tiền hợp lệ"),
+  payerId: z.string().min(1, "Chọn người trả"),
+  splitParticipantIds: z.array(z.string()).min(1, "Chọn ít nhất một người cùng chia"),
 });
 
 type ExpenseFormValues = z.infer<typeof expenseFormSchema>;
@@ -31,9 +31,9 @@ type ExpensePanelProps = {
 };
 
 const AI_ERROR_MESSAGES: Record<string, string> = {
-  gemini_not_configured: "Server chua cau hinh GEMINI_API_KEY nen chua dung duoc AI.",
-  gemini_invalid_response: "AI tra du lieu khong hop le, thu lai voi cau ro hon.",
-  gemini_request_failed: "Goi AI that bai, thu lai sau.",
+  gemini_not_configured: "Server chưa cấu hình GEMINI_API_KEY nên chưa dùng được AI.",
+  gemini_invalid_response: "AI trả dữ liệu không hợp lệ, thử lại với câu rõ hơn.",
+  gemini_request_failed: "Gọi AI thất bại, thử lại sau.",
 };
 
 function readFileAsBase64(file: File) {
@@ -139,7 +139,7 @@ export function ExpensePanel({
 
   function toAiErrorMessage(error: unknown) {
     const code = error instanceof Error ? error.message : "";
-    return AI_ERROR_MESSAGES[code] || "Goi AI that bai, thu lai sau.";
+    return AI_ERROR_MESSAGES[code] || "Gọi AI thất bại, thử lại sau.";
   }
 
   async function handleAiSuggest() {
@@ -218,13 +218,13 @@ export function ExpensePanel({
     <section className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm dark:border-stone-800 dark:bg-stone-900">
       <div className="mb-4 flex items-center gap-2">
         <Banknote size={18} className="text-amber-500" />
-        <h3 className="text-lg font-semibold text-stone-950 dark:text-stone-50">Khoan chi</h3>
+        <h3 className="text-lg font-semibold text-stone-950 dark:text-stone-50">Khoản chi</h3>
       </div>
 
       <div className="mb-4 rounded-md border border-violet-200 bg-violet-50 p-3 dark:border-violet-500/30 dark:bg-violet-500/10">
         <div className="flex items-center gap-2 text-sm font-medium text-violet-800 dark:text-violet-300">
           <Sparkles size={15} />
-          Nhap nhanh bang AI
+          Nhập nhanh bằng AI
         </div>
         <div className="mt-2 flex flex-wrap gap-2">
           <input
@@ -237,7 +237,7 @@ export function ExpensePanel({
               }
             }}
             className="field w-full flex-1 bg-white sm:w-auto"
-            placeholder="Vi du: an toi 500k Huy tra chia 3"
+            placeholder="Ví dụ: ăn tối 500k Huy trả chia 3"
             disabled={participants.length === 0}
           />
           <button
@@ -247,16 +247,16 @@ export function ExpensePanel({
             className="inline-flex h-11 shrink-0 items-center gap-2 rounded-md bg-violet-700 px-3 text-sm font-semibold text-white transition hover:bg-violet-800 active:scale-95 disabled:cursor-not-allowed disabled:bg-stone-300 dark:disabled:bg-stone-700 sm:h-10"
           >
             <Sparkles size={15} />
-            {aiSuggest.isPending ? "Dang doc..." : "Goi y"}
+            {aiSuggest.isPending ? "Đang đọc..." : "Gợi ý"}
           </button>
           <label
             className={`inline-flex h-11 shrink-0 cursor-pointer items-center gap-2 rounded-md border border-violet-300 bg-white px-3 text-sm font-medium text-violet-800 transition hover:bg-violet-100 dark:border-violet-500/40 dark:bg-stone-800 dark:text-violet-300 dark:hover:bg-stone-700 sm:h-10 ${
               aiPending || participants.length === 0 ? "pointer-events-none opacity-50" : ""
             }`}
-            title="Quet anh hoa don"
+            title="Quét ảnh hóa đơn"
           >
             <ImagePlus size={15} />
-            {aiReceipt.isPending ? "Dang quet..." : "Hoa don"}
+            {aiReceipt.isPending ? "Đang quét..." : "Hóa đơn"}
             <input
               type="file"
               accept="image/jpeg,image/png,image/webp"
@@ -270,15 +270,15 @@ export function ExpensePanel({
         </div>
         {aiError && <p className="mt-2 text-xs text-rose-600 dark:text-rose-400">{aiError}</p>}
         <p className="mt-2 text-xs text-violet-700 dark:text-violet-300/80">
-          AI dien san form ben duoi, kiem tra lai truoc khi them.
+          AI điền sẵn form bên dưới, kiểm tra lại trước khi thêm.
         </p>
       </div>
 
       <form onSubmit={handleSubmit} className="grid gap-3 md:grid-cols-2">
-        <Field label="Noi dung">
-          <input {...form.register("title")} className="field" placeholder="An toi" />
+        <Field label="Nội dung">
+          <input {...form.register("title")} className="field" placeholder="Ăn tối" />
         </Field>
-        <Field label="So tien" error={form.formState.errors.amount?.message}>
+        <Field label="Số tiền" error={form.formState.errors.amount?.message}>
           <Controller
             control={form.control}
             name="amount"
@@ -292,7 +292,7 @@ export function ExpensePanel({
             )}
           />
         </Field>
-        <Field label="Nguoi tra" error={form.formState.errors.payerId?.message}>
+        <Field label="Người trả" error={form.formState.errors.payerId?.message}>
           <select {...form.register("payerId")} value={payerId} className="field">
             {participants.map((participant) => (
               <option key={participant.id} value={participant.id}>
@@ -310,7 +310,7 @@ export function ExpensePanel({
                 onClick={() => setAllSplit(!allSelected)}
                 className="rounded-md px-2 py-1 text-xs font-semibold text-violet-700 transition hover:bg-violet-50 active:bg-violet-100 dark:text-violet-400 dark:hover:bg-violet-500/10 dark:active:bg-violet-500/20"
               >
-                {allSelected ? "Bo chon" : "Chon tat ca"}
+                {allSelected ? "Bỏ chọn" : "Chọn tất cả"}
               </button>
             )}
           </div>
@@ -346,7 +346,7 @@ export function ExpensePanel({
             className="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-violet-600 px-4 text-sm font-semibold text-white transition hover:bg-violet-700 active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-stone-300 dark:disabled:bg-stone-700"
           >
             {editingExpenseId ? <Check size={17} /> : <Plus size={17} />}
-            {editingExpenseId ? "Luu khoan chi" : "Them khoan chi"}
+            {editingExpenseId ? "Lưu khoản chi" : "Thêm khoản chi"}
           </button>
           {editingExpenseId && (
             <button
@@ -354,7 +354,7 @@ export function ExpensePanel({
               onClick={cancelEditExpense}
               className="inline-flex h-11 items-center justify-center gap-2 rounded-md border border-stone-300 bg-white px-4 text-sm font-medium text-stone-700 transition hover:bg-stone-50 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-200 dark:hover:bg-stone-800"
             >
-              Huy sua
+              Hủy sửa
             </button>
           )}
         </div>
@@ -379,7 +379,7 @@ export function ExpensePanel({
                     {expense.title}
                   </p>
                   <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">
-                    {payer?.name || "Khong ro"} tra, chia {expense.splitParticipantIds.length} nguoi
+                    {payer?.name || "Không rõ"} trả, chia {expense.splitParticipantIds.length} người
                   </p>
                 </div>
                 <div className="flex shrink-0 items-center gap-1">
@@ -390,7 +390,7 @@ export function ExpensePanel({
                     type="button"
                     onClick={() => (isEditing ? cancelEditExpense() : startEditExpense(expense))}
                     className="inline-flex h-11 w-11 items-center justify-center rounded-md text-violet-700 transition hover:bg-violet-50 active:bg-violet-100 dark:text-violet-400 dark:hover:bg-violet-500/10 dark:active:bg-violet-500/20"
-                    aria-label={`Sua ${expense.title}`}
+                    aria-label={`Sửa ${expense.title}`}
                   >
                     <Pencil size={16} />
                   </button>
@@ -398,7 +398,7 @@ export function ExpensePanel({
                     type="button"
                     onClick={() => onRemove(expense.id)}
                     className="inline-flex h-11 w-11 items-center justify-center rounded-md text-rose-600 transition hover:bg-rose-50 active:bg-rose-100 dark:text-rose-400 dark:hover:bg-rose-500/10 dark:active:bg-rose-500/20"
-                    aria-label={`Xoa ${expense.title}`}
+                    aria-label={`Xóa ${expense.title}`}
                   >
                     <Trash2 size={16} />
                   </button>

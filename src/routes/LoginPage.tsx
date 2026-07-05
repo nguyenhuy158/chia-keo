@@ -12,10 +12,10 @@ const credentialsSchema = z.object({
   username: z
     .string()
     .trim()
-    .min(3, "Username toi thieu 3 ky tu")
-    .max(30, "Username toi da 30 ky tu")
-    .regex(/^[a-zA-Z0-9_.]+$/, "Chi dung chu, so, dau cham va gach duoi"),
-  password: z.string().min(8, "Mat khau toi thieu 8 ky tu").max(128, "Mat khau qua dai"),
+    .min(3, "Username tối thiểu 3 ký tự")
+    .max(30, "Username tối đa 30 ký tự")
+    .regex(/^[a-zA-Z0-9_.]+$/, "Chỉ dùng chữ, số, dấu chấm và gạch dưới"),
+  password: z.string().min(8, "Mật khẩu tối thiểu 8 ký tự").max(128, "Mật khẩu quá dài"),
 });
 
 type CredentialsValues = z.infer<typeof credentialsSchema>;
@@ -23,9 +23,9 @@ type CredentialsValues = z.infer<typeof credentialsSchema>;
 type AuthMode = "sign-in" | "sign-up";
 
 const AUTH_ERROR_MESSAGES: Record<string, string> = {
-  INVALID_USERNAME_OR_PASSWORD: "Sai username hoac mat khau.",
-  USERNAME_IS_ALREADY_TAKEN: "Username da co nguoi dung.",
-  USER_ALREADY_EXISTS: "Tai khoan da ton tai.",
+  INVALID_USERNAME_OR_PASSWORD: "Sai username hoặc mật khẩu.",
+  USERNAME_IS_ALREADY_TAKEN: "Username đã có người dùng.",
+  USER_ALREADY_EXISTS: "Tài khoản đã tồn tại.",
 };
 
 export function LoginPage() {
@@ -72,7 +72,7 @@ export function LoginPage() {
     if (result.error) {
       const code = result.error.code || "";
       setAuthError(
-        AUTH_ERROR_MESSAGES[code] || result.error.message || "Co loi xay ra, thu lai sau.",
+        AUTH_ERROR_MESSAGES[code] || result.error.message || "Có lỗi xảy ra, thử lại sau.",
       );
       return;
     }
@@ -89,15 +89,15 @@ export function LoginPage() {
         <div className="mb-6 flex items-start justify-between gap-3">
           <div>
             <p className="text-sm font-bold uppercase tracking-wide text-fuchsia-600 dark:text-fuchsia-400">
-              Chia keo
+              Chia kèo
             </p>
             <h1 className="mt-2 text-2xl font-semibold text-stone-950 dark:text-stone-50">
-              {mode === "sign-in" ? "Dang nhap" : "Dang ky"}
+              {mode === "sign-in" ? "Đăng nhập" : "Đăng ký"}
             </h1>
             <p className="mt-2 text-sm text-stone-600 dark:text-stone-400">
               {mode === "sign-in"
-                ? "Dang nhap bang username va mat khau."
-                : "Tao tai khoan moi de quan ly cac cuoc choi."}
+                ? "Đăng nhập bằng username và mật khẩu."
+                : "Tạo tài khoản mới để quản lý các cuộc chơi."}
             </p>
           </div>
           <ThemeToggle />
@@ -105,9 +105,9 @@ export function LoginPage() {
 
         <div className="space-y-3">
           <Field label="Username" error={form.formState.errors.username?.message}>
-            <input {...form.register("username")} className="field" placeholder="Ten dang nhap" autoComplete="username" />
+            <input {...form.register("username")} className="field" placeholder="Tên đăng nhập" autoComplete="username" />
           </Field>
-          <Field label="Mat khau" error={form.formState.errors.password?.message}>
+          <Field label="Mật khẩu" error={form.formState.errors.password?.message}>
             <input
               {...form.register("password")}
               type="password"
@@ -126,7 +126,7 @@ export function LoginPage() {
           className="mt-4 inline-flex h-11 w-full items-center justify-center gap-2 rounded-md bg-gradient-to-r from-violet-600 to-fuchsia-600 px-4 text-sm font-semibold text-white transition hover:from-violet-700 hover:to-fuchsia-700 disabled:cursor-not-allowed disabled:from-stone-400 disabled:to-stone-400"
         >
           <WalletCards size={18} />
-          {mode === "sign-in" ? "Dang nhap" : "Dang ky"}
+          {mode === "sign-in" ? "Đăng nhập" : "Đăng ký"}
         </button>
 
         <button
@@ -137,7 +137,7 @@ export function LoginPage() {
           }}
           className="mt-3 w-full text-center text-sm font-medium text-violet-600 hover:text-violet-700 dark:text-violet-400 dark:hover:text-violet-300"
         >
-          {mode === "sign-in" ? "Chua co tai khoan? Dang ky" : "Da co tai khoan? Dang nhap"}
+          {mode === "sign-in" ? "Chưa có tài khoản? Đăng ký" : "Đã có tài khoản? Đăng nhập"}
         </button>
       </form>
     </section>

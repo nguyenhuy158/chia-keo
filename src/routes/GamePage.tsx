@@ -63,8 +63,8 @@ export function GamePage() {
   if (gameQuery.isError || !gameQuery.data) {
     return (
       <EmptyState
-        title="Khong tim thay cuoc choi"
-        description="Cuoc choi khong ton tai hoac ban khong co quyen xem."
+        title="Không tìm thấy cuộc chơi"
+        description="Cuộc chơi không tồn tại hoặc bạn không có quyền xem."
       />
     );
   }
@@ -79,15 +79,15 @@ export function GamePage() {
     try {
       await navigator.clipboard?.writeText(shareUrl);
       setCopiedShare(true);
-      toast("Da sao chep link chia se");
+      toast("Đã sao chép link chia sẻ");
       window.setTimeout(() => setCopiedShare(false), COPY_FEEDBACK_MS);
     } catch {
-      toast("Khong sao chep duoc link", "error");
+      toast("Không sao chép được link", "error");
     }
   }
 
   async function handleDeleteGame() {
-    if (!window.confirm(`Xoa cuoc choi "${game.name}"?`)) return;
+    if (!window.confirm(`Xóa cuộc chơi "${game.name}"?`)) return;
 
     await deleteGame.mutateAsync(game.id);
     navigate({ to: "/" });
@@ -147,14 +147,14 @@ export function GamePage() {
         className="inline-flex h-11 items-center justify-center gap-2 rounded-md border border-stone-300 bg-white px-3 text-sm font-medium text-stone-700 transition hover:bg-stone-50 disabled:cursor-not-allowed disabled:text-stone-400 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-200 dark:hover:bg-stone-800 dark:disabled:text-stone-600"
       >
         {copiedShare ? <Copy size={16} /> : <LinkIcon size={16} />}
-        {copiedShare ? "Da copy" : shareLink.enabled ? "Copy link share" : "Link dang tat"}
+        {copiedShare ? "Đã copy" : shareLink.enabled ? "Copy link share" : "Link đang tắt"}
       </button>
       <button
         type="button"
         onClick={() => setShareLinkEnabled.mutate(!shareLink.enabled)}
         disabled={setShareLinkEnabled.isPending}
         className="inline-flex h-11 items-center justify-center gap-2 rounded-md border border-stone-300 bg-white px-3 text-sm font-medium text-stone-700 transition hover:bg-stone-50 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-200 dark:hover:bg-stone-800"
-        title={shareLink.enabled ? "Tat link share" : "Bat link share"}
+        title={shareLink.enabled ? "Tắt link share" : "Bật link share"}
       >
         <Power
           size={16}
@@ -164,17 +164,17 @@ export function GamePage() {
               : "text-rose-600 dark:text-rose-400"
           }
         />
-        {shareLink.enabled ? "Tat link" : "Bat link"}
+        {shareLink.enabled ? "Tắt link" : "Bật link"}
       </button>
       <button
         type="button"
         onClick={() => rotateShareLink.mutate()}
         disabled={rotateShareLink.isPending}
         className="inline-flex h-11 items-center justify-center gap-2 rounded-md border border-stone-300 bg-white px-3 text-sm font-medium text-stone-700 transition hover:bg-stone-50 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-200 dark:hover:bg-stone-800"
-        title="Tao token moi, link cu se het hieu luc"
+        title="Tạo token mới, link cũ sẽ hết hiệu lực"
       >
         <RefreshCw size={16} />
-        Doi link
+        Đổi link
       </button>
     </>
   ) : (
@@ -185,7 +185,7 @@ export function GamePage() {
       className="inline-flex h-11 items-center justify-center gap-2 rounded-md border border-stone-300 bg-white px-3 text-sm font-medium text-stone-700 transition hover:bg-stone-50 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-200 dark:hover:bg-stone-800"
     >
       <LinkIcon size={16} />
-      Tao link share
+      Tạo link share
     </button>
   );
 
@@ -197,7 +197,7 @@ export function GamePage() {
       className="inline-flex h-11 items-center justify-center gap-2 rounded-md border border-rose-200 bg-white px-3 text-sm font-medium text-rose-600 transition hover:bg-rose-50 dark:border-rose-900/60 dark:bg-stone-900 dark:text-rose-400 dark:hover:bg-rose-500/10"
     >
       <Trash2 size={16} />
-      Xoa
+      Xóa
     </button>
   );
 
@@ -223,7 +223,7 @@ export function GamePage() {
                 onClick={handleRenameGame}
                 disabled={renameGame.isPending}
                 className="inline-flex h-11 w-11 items-center justify-center rounded-md bg-violet-600 text-white transition hover:bg-violet-700"
-                aria-label="Luu ten cuoc choi"
+                aria-label="Lưu tên cuộc chơi"
               >
                 <Check size={16} />
               </button>
@@ -231,7 +231,7 @@ export function GamePage() {
                 type="button"
                 onClick={() => setNameDraft(null)}
                 className="inline-flex h-11 w-11 items-center justify-center rounded-md border border-stone-300 text-stone-600 transition hover:bg-stone-50 dark:border-stone-700 dark:text-stone-300 dark:hover:bg-stone-800"
-                aria-label="Huy doi ten"
+                aria-label="Hủy đổi tên"
               >
                 <X size={16} />
               </button>
@@ -245,7 +245,7 @@ export function GamePage() {
                 type="button"
                 onClick={() => setNameDraft(game.name)}
                 className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md text-stone-500 transition hover:bg-stone-100 hover:text-stone-800 dark:text-stone-400 dark:hover:bg-stone-800 dark:hover:text-stone-100"
-                aria-label="Doi ten cuoc choi"
+                aria-label="Đổi tên cuộc chơi"
               >
                 <Pencil size={15} />
               </button>
@@ -290,7 +290,7 @@ export function GamePage() {
       <BottomSheet
         open={actionsOpen}
         onClose={() => setActionsOpen(false)}
-        title="Tuy chon cuoc choi"
+        title="Tùy chọn cuộc chơi"
       >
         <div className="flex flex-col gap-2 pb-2 [&>button]:w-full">
           {shareActions}
