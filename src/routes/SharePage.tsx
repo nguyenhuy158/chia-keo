@@ -22,6 +22,14 @@ const STICKY_TOTAL_WIDTH = 96;
 const STICKY_COUNT_WIDTH = 68;
 const STICKY_SHARE_WIDTH = 86;
 
+function getExpenseShare(expense: ApiExpense) {
+  const splitParticipantIds = new Set(expense.splitParticipantIds);
+  const splitCount = expense.splitParticipantIds.length;
+  const shareAmount = splitCount > 0 ? Math.round(expense.amount / splitCount) : 0;
+
+  return { shareAmount, splitCount, splitParticipantIds };
+}
+
 function formatPlainMoney(value: number) {
   return new Intl.NumberFormat("vi-VN", { maximumFractionDigits: 0 }).format(value);
 }
@@ -45,7 +53,64 @@ function ExpenseMatrix({ participants, expenses, summary }: ExpenseMatrixProps) 
         </span>
       </div>
 
-      <div className="max-h-[calc(100vh-13rem)] overflow-auto">
+      <div className="max-h-[calc(100vh-13rem)] space-y-3 overflow-auto p-3 md:hidden">
+        {expenses.map((expense) => {
+          const { shareAmount, splitCount, splitParticipantIds } = getExpenseShare(expense);
+
+          return (
+            <article
+              key={expense.id}
+              className="rounded-md border border-stone-200 bg-white p-3 dark:border-stone-800 dark:bg-stone-900"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <h3 className="min-w-0 text-sm font-semibold text-stone-950 dark:text-stone-50">
+                  {expense.title}
+                </h3>
+                <span className="shrink-0 text-sm font-semibold text-stone-950 tabular dark:text-stone-50">
+                  {formatPlainMoney(expense.amount)}
+                </span>
+              </div>
+
+              <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
+                <div className="rounded-md bg-stone-50 px-2 py-2 dark:bg-stone-950">
+                  <p className="font-medium text-stone-500 dark:text-stone-400">Người</p>
+                  <p className="mt-1 font-semibold tabular text-stone-950 dark:text-stone-50">
+                    {splitCount}
+                  </p>
+                </div>
+                <div className="rounded-md bg-stone-50 px-2 py-2 dark:bg-stone-950">
+                  <p className="font-medium text-stone-500 dark:text-stone-400">/người</p>
+                  <p className="mt-1 font-semibold tabular text-stone-950 dark:text-stone-50">
+                    {formatPlainMoney(shareAmount)}
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                {participants.map((participant) => {
+                  const isIncluded = splitParticipantIds.has(participant.id);
+
+                  return (
+                    <span
+                      key={participant.id}
+                      className={`inline-flex min-w-0 items-center gap-1.5 rounded-md px-2 py-1.5 text-xs font-semibold ${
+                        isIncluded
+                          ? "bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300"
+                          : "bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300"
+                      }`}
+                    >
+                      {isIncluded ? <Check size={14} /> : <Square size={14} />}
+                      <span className="truncate">{participant.name}</span>
+                    </span>
+                  );
+                })}
+              </div>
+            </article>
+          );
+        })}
+      </div>
+
+      <div className="hidden max-h-[calc(100vh-13rem)] overflow-auto md:block">
         <table
           className="w-full border-separate border-spacing-0 text-left text-sm"
           style={{ minWidth: Math.max(MATRIX_MIN_WIDTH, 560 + participants.length * 112) }}
@@ -107,9 +172,7 @@ function ExpenseMatrix({ participants, expenses, summary }: ExpenseMatrixProps) 
           </thead>
           <tbody>
             {expenses.map((expense) => {
-              const splitParticipantIds = new Set(expense.splitParticipantIds);
-              const splitCount = expense.splitParticipantIds.length;
-              const shareAmount = splitCount > 0 ? Math.round(expense.amount / splitCount) : 0;
+              const { shareAmount, splitCount, splitParticipantIds } = getExpenseShare(expense);
 
               return (
                 <tr key={expense.id}>

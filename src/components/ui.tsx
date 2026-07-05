@@ -50,7 +50,7 @@ export function Metric({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-lg border border-stone-200 bg-white p-3 shadow-sm dark:border-stone-800 dark:bg-stone-900">
       <p className="text-xs font-medium uppercase text-stone-500 dark:text-stone-400">{label}</p>
-      <p className="mt-2 truncate text-lg font-semibold text-stone-950 tabular dark:text-stone-50">
+      <p className="mt-2 text-base font-semibold leading-tight text-stone-950 tabular dark:text-stone-50 sm:text-lg">
         {value}
       </p>
     </div>
