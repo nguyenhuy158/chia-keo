@@ -1,5 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus, Trash2, Users } from "lucide-react";
+import { Check, Pencil, Plus, Trash2, Users, X } from "lucide-react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import type { ApiParticipant } from "../../shared/api-types";
@@ -26,10 +27,18 @@ type ParticipantPanelProps = {
   participants: ApiParticipant[];
   pending: boolean;
   onAdd: (input: ParticipantInput) => Promise<unknown>;
+  onUpdate: (participantId: string, input: Partial<ParticipantInput>) => Promise<unknown>;
   onRemove: (participantId: string) => void;
 };
 
-export function ParticipantPanel({ participants, pending, onAdd, onRemove }: ParticipantPanelProps) {
+export function ParticipantPanel({
+  participants,
+  pending,
+  onAdd,
+  onUpdate,
+  onRemove,
+}: ParticipantPanelProps) {
+  const [editingParticipantId, setEditingParticipantId] = useState<string | null>(null);
   const form = useForm<ParticipantFormValues>({
     resolver: zodResolver(participantFormSchema),
     defaultValues: emptyForm,
@@ -40,6 +49,28 @@ export function ParticipantPanel({ participants, pending, onAdd, onRemove }: Par
     form.reset(emptyForm);
   });
 
+  function startEdit(participant: ApiParticipant) {
+    setEditingParticipantId(participant.id);
+    form.reset({
+      name: participant.name,
+      bankId: participant.bankId,
+      accountNo: participant.accountNo,
+      accountName: participant.accountName,
+    });
+  }
+
+  function cancelEdit() {
+    setEditingParticipantId(null);
+    form.reset(emptyForm);
+  }
+
+  const handleSaveEdit = form.handleSubmit(async (values) => {
+    if (!editingParticipantId) return;
+
+    await onUpdate(editingParticipantId, values);
+    cancelEdit();
+  });
+
   return (
     <section className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm dark:border-stone-800 dark:bg-stone-900">
       <div className="mb-4 flex items-center gap-2">
@@ -47,7 +78,7 @@ export function ParticipantPanel({ participants, pending, onAdd, onRemove }: Par
         <h3 className="text-lg font-semibold text-stone-950 dark:text-stone-50">Nguoi tham gia</h3>
       </div>
 
-      <form onSubmit={handleAdd} className="grid gap-3 md:grid-cols-2">
+      <form onSubmit={editingParticipantId ? handleSaveEdit : handleAdd} className="grid gap-3 md:grid-cols-2">
         <Field label="Ten" error={form.formState.errors.name?.message}>
           <input {...form.register("name")} className="field" placeholder="Huy" />
         </Field>
@@ -66,9 +97,20 @@ export function ParticipantPanel({ participants, pending, onAdd, onRemove }: Par
             disabled={pending}
             className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-md bg-violet-600 px-4 text-sm font-semibold text-white transition hover:bg-violet-700 active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-stone-300 dark:disabled:bg-stone-700 sm:w-auto"
           >
-            <Plus size={17} />
-            Them nguoi
+            {editingParticipantId ? <Check size={17} /> : <Plus size={17} />}
+            {editingParticipantId ? "Luu thong tin" : "Them nguoi"}
           </button>
+          {editingParticipantId && (
+            <button
+              type="button"
+              onClick={cancelEdit}
+              disabled={pending}
+              className="mt-2 inline-flex h-11 w-full items-center justify-center gap-2 rounded-md border border-stone-300 bg-white px-4 text-sm font-semibold text-stone-700 transition hover:bg-stone-50 active:scale-[0.99] disabled:cursor-not-allowed disabled:text-stone-400 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-200 dark:hover:bg-stone-800 sm:ml-2 sm:mt-0 sm:w-auto"
+            >
+              <X size={17} />
+              Huy
+            </button>
+          )}
         </div>
       </form>
 
@@ -89,14 +131,26 @@ export function ParticipantPanel({ participants, pending, onAdd, onRemove }: Par
                     : "Chua co thong tin QR"}
                 </p>
               </div>
-              <button
-                type="button"
-                onClick={() => onRemove(participant.id)}
-                className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md text-rose-600 transition hover:bg-rose-50 active:bg-rose-100 dark:text-rose-400 dark:hover:bg-rose-500/10 dark:active:bg-rose-500/20"
-                aria-label={`Xoa ${participant.name}`}
-              >
-                <Trash2 size={16} />
-              </button>
+              <div className="flex shrink-0 items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => startEdit(participant)}
+                  disabled={pending}
+                  className="inline-flex h-11 w-11 items-center justify-center rounded-md text-stone-600 transition hover:bg-stone-50 active:bg-stone-100 disabled:cursor-not-allowed disabled:text-stone-300 dark:text-stone-300 dark:hover:bg-stone-800 dark:active:bg-stone-700"
+                  aria-label={`Sua ${participant.name}`}
+                >
+                  <Pencil size={16} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onRemove(participant.id)}
+                  disabled={pending}
+                  className="inline-flex h-11 w-11 items-center justify-center rounded-md text-rose-600 transition hover:bg-rose-50 active:bg-rose-100 disabled:cursor-not-allowed disabled:text-rose-300 dark:text-rose-400 dark:hover:bg-rose-500/10 dark:active:bg-rose-500/20"
+                  aria-label={`Xoa ${participant.name}`}
+                >
+                  <Trash2 size={16} />
+                </button>
+              </div>
             </div>
           </div>
         ))}

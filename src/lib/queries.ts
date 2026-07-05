@@ -79,6 +79,13 @@ export function useRemoveParticipant() {
   return useGameDetailMutation((participantId: string) => api.participants.remove(participantId));
 }
 
+export function useUpdateParticipant() {
+  return useGameDetailMutation(
+    (variables: { participantId: string; input: Partial<ParticipantInput> }) =>
+      api.participants.update(variables.participantId, variables.input),
+  );
+}
+
 export function useAddExpense(gameId: string) {
   return useGameDetailMutation((input: ExpenseInput) => api.expenses.create(gameId, input));
 }

@@ -29,6 +29,7 @@ import {
   useRotateShareLink,
   useSetShareLinkEnabled,
   useUpdateExpense,
+  useUpdateParticipant,
 } from "../lib/queries";
 
 const COPY_FEEDBACK_MS = 1600;
@@ -41,6 +42,7 @@ export function GamePage() {
 
   const addParticipant = useAddParticipant(gameId);
   const removeParticipant = useRemoveParticipant();
+  const updateParticipant = useUpdateParticipant();
   const addExpense = useAddExpense(gameId);
   const updateExpense = useUpdateExpense();
   const removeExpense = useRemoveExpense();
@@ -105,8 +107,11 @@ export function GamePage() {
   const participantPanel = (
     <ParticipantPanel
       participants={game.participants}
-      pending={addParticipant.isPending}
+      pending={addParticipant.isPending || updateParticipant.isPending}
       onAdd={(input) => addParticipant.mutateAsync(input)}
+      onUpdate={(participantId, input) =>
+        updateParticipant.mutateAsync({ participantId, input })
+      }
       onRemove={(participantId) => removeParticipant.mutate(participantId)}
     />
   );
