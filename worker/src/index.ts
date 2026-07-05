@@ -14,7 +14,7 @@ const CREATE_RATE_LIMIT = { limit: 30, windowMs: 60_000 };
 const app = new Hono<{ Bindings: Env }>();
 
 app.use("/api/*", (c, next) => {
-  const allowedOrigins = getTrustedOrigins(c.env);
+  const allowedOrigins = getTrustedOrigins(c.env, c.req.url);
 
   return cors({
     origin: (origin) => (allowedOrigins.includes(origin) ? origin : null),
@@ -48,7 +48,9 @@ app.use(`${AUTH_BASE_PATH}/sign-up/*`, rateLimitPost("auth", AUTH_RATE_LIMIT));
 app.use("/api/games", rateLimitPost("create-game", CREATE_RATE_LIMIT));
 app.use("/api/games/:gameId/share-links", rateLimitPost("share-link", CREATE_RATE_LIMIT));
 
-app.on(["GET", "POST"], `${AUTH_BASE_PATH}/*`, (c) => createAuth(c.env).handler(c.req.raw));
+app.on(["GET", "POST"], `${AUTH_BASE_PATH}/*`, (c) =>
+  createAuth(c.env, c.req.url).handler(c.req.raw),
+);
 
 app.route("/api", shareRouter);
 app.route("/api", aiRouter);
