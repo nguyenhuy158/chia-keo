@@ -54,12 +54,12 @@ aiRouter.post("/ai/expense", async (c) => {
   const participants = await loadParticipants(db, game.id);
 
   const prompt = [
-    "Ban la tro ly nhap chi tieu nhom tieng Viet.",
-    "Hay doc cau nhap chi va tra JSON duy nhat theo schema:",
+    "Bạn là trợ lý nhập chi tiêu nhóm tiếng Việt.",
+    "Hãy đọc câu nhập chi và trả JSON duy nhất theo schema:",
     '{"title":"string","amount":number,"payerName":"string","splitNames":["string"],"note":"string","confidence":number}',
-    "Quy doi k/nghin thanh 1000, tr/trieu thanh 1000000.",
-    "Neu khong ro nguoi chia thi dung toan bo nguoi tham gia.",
-    `Nguoi tham gia: ${participants.map((participant) => participant.name).join(", ") || "chua co"}.`,
+    "Quy đổi k/nghìn thành 1000, tr/triệu thành 1000000.",
+    "Nếu không rõ người chia thì dùng toàn bộ người tham gia.",
+    `Người tham gia: ${participants.map((participant) => participant.name).join(", ") || "chưa có"}.`,
     `Cau nhap: ${input.text}`,
   ].join("\n");
 
@@ -83,11 +83,11 @@ aiRouter.post("/ai/receipt", async (c) => {
   const participants = await loadParticipants(db, game.id);
 
   const prompt = [
-    "Ban la tro ly OCR hoa don tieng Viet.",
-    "Doc anh hoa don va tra JSON duy nhat theo schema:",
+    "Bạn là trợ lý OCR hóa đơn tiếng Việt.",
+    "Đọc ảnh hóa đơn và trả JSON duy nhất theo schema:",
     '{"title":"string","amount":number,"note":"string","confidence":number}',
-    "amount la tong tien phai tra bang VND, chi la so nguyen.",
-    "title ngan gon, vi du: Hoa don an toi, Ca phe, Khach san.",
+    "amount là tổng tiền phải trả bằng VND, chỉ là số nguyên.",
+    "title ngắn gọn, ví dụ: Hóa đơn ăn tối, Cà phê, Khách sạn.",
   ].join("\n");
 
   const parts: GeminiPart[] = [
@@ -102,7 +102,7 @@ aiRouter.post("/ai/receipt", async (c) => {
 
   const normalized = normalizeAiExpense(result.json);
   const suggestion = resolveAiExpense(
-    { ...normalized, title: normalized.title || "Hoa don" },
+    { ...normalized, title: normalized.title || "Hóa đơn" },
     participants,
   );
   return c.json({ suggestion });

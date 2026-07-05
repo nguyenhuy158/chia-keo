@@ -5,7 +5,7 @@ export const PARTICIPANT_NAME_MAX_LENGTH = 50;
 export const EXPENSE_TITLE_MAX_LENGTH = 100;
 export const EXPENSE_NOTE_MAX_LENGTH = 500;
 export const MAX_EXPENSE_AMOUNT = 1_000_000_000_000;
-export const DEFAULT_EXPENSE_TITLE = "Khoan chi";
+export const DEFAULT_EXPENSE_TITLE = "Khoản chi";
 
 export const gameInputSchema = z.object({
   name: z.string().trim().min(1).max(GAME_NAME_MAX_LENGTH),

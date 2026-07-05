@@ -93,11 +93,11 @@ export function canBuildVietQr(payment: PaymentInfo | undefined) {
 
 export function getVietQrPaymentIssue(payment: PaymentInfo | undefined) {
   if (!payment?.bankId || !payment.accountNo) {
-    return "Nguoi nhan chua nhap ma ngan hang va so tai khoan.";
+    return "Người nhận chưa nhập mã ngân hàng và số tài khoản.";
   }
 
   if (!resolveVietQrBankId(payment.bankId)) {
-    return `Ma ngan hang "${payment.bankId}" chưa hỗ trợ VietQR. Voi MBBank dung MB, MBB hoac MBBank.`;
+    return `Mã ngân hàng "${payment.bankId}" chưa hỗ trợ VietQR. Với MBBank dùng MB, MBB hoặc MBBank.`;
   }
 
   return "";
