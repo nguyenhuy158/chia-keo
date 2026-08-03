@@ -1,6 +1,6 @@
 // Adapter fetch cho GameApiPort: goi backend qua HTTP, cookie session di kem.
 
-import type { ApiError } from "../../../shared/api-types";
+import type { ApiBankListResponse, ApiError } from "../../../shared/api-types";
 import type { GameApiPort } from "../../core/ports/game-api";
 
 export const API_BASE = import.meta.env.VITE_API_URL || "";
@@ -73,6 +73,9 @@ export function createHttpGameApi(): GameApiPort {
       view: (token) => request(`/api/share/${token}`),
       photos: (token) => request(`/api/share/${token}/photos`),
       photo: (token, photoId) => request(`/api/share/${token}/photos/${photoId}`),
+    },
+    banks: {
+      list: () => request<ApiBankListResponse>(`/api/banks`).then((body) => body.banks),
     },
     ai: {
       suggestExpense: (gameId, text) => post(`/api/ai/expense`, { gameId, text }),

@@ -1,4 +1,4 @@
-import type { ApiParticipant } from "./api-types";
+import type { ApiBank, ApiParticipant } from "./api-types";
 
 export type PaymentInfo = Pick<ApiParticipant, "bankId" | "accountNo" | "accountName">;
 
@@ -65,6 +65,31 @@ const vietQrBankAliases = new Map([
   ["VPBANK", "VPB"],
 ]);
 
+// Danh ba ngan hang dong tu API VietQR (cache o D1). Danh sach tinh o tren chi
+// la du phong khi chua tai duoc danh ba; dang ky them vao day de resolve/nhan
+// dien du ~60 ngan hang ma khong phai cap nhat code moi lan VietQR them bank.
+let dynamicBankLabels: ReadonlyMap<string, string> = new Map();
+
+/** Dang ky danh ba ngan hang dong (goi lai se thay the toan bo danh ba cu). */
+export function registerVietQrBanks(banks: readonly Pick<ApiBank, "code" | "shortName">[]) {
+  const labels = new Map<string, string>();
+
+  for (const bank of banks) {
+    const code = normalizeBankId(bank.code);
+    if (code) labels.set(code, bank.shortName);
+  }
+
+  dynamicBankLabels = labels;
+}
+
+/** Danh sach du phong (tu VIETQR_BANK_OPTIONS) khi chua co du lieu upstream. */
+export function getFallbackVietQrBanks(): ApiBank[] {
+  return VIETQR_BANK_OPTIONS.map(({ value, label }) => {
+    const shortName = label.replace(/\s*\(.*\)$/, "");
+    return { bin: "", code: value, shortName, name: shortName };
+  });
+}
+
 function normalizeText(value: string) {
   return value
     .normalize("NFD")
@@ -87,14 +112,20 @@ export function resolveVietQrBankId(value: string) {
   const bankId = normalizeBankId(value);
   if (/^\d{6}$/.test(bankId)) return bankId;
 
-  return vietQrBankAliases.get(bankId) || vietQrBankIds.get(bankId) || "";
+  if (vietQrBankAliases.has(bankId) || vietQrBankIds.has(bankId)) {
+    return vietQrBankAliases.get(bankId) || bankId;
+  }
+
+  return dynamicBankLabels.has(bankId) ? bankId : "";
 }
 
 /** Ten ngan hang de hien thi, tra ve chinh ma neu khong co trong danh sach. */
 export function getVietQrBankLabel(bankId: string) {
   const resolved = resolveVietQrBankId(bankId);
   const option = VIETQR_BANK_OPTIONS.find((bank) => bank.value === resolved);
-  return option ? option.label.replace(/\s*\(.*\)$/, "") : resolved || bankId;
+  if (option) return option.label.replace(/\s*\(.*\)$/, "");
+
+  return dynamicBankLabels.get(resolved) || resolved || bankId;
 }
 
 export function canBuildVietQr(payment: PaymentInfo | undefined) {

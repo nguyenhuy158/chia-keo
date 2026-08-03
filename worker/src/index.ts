@@ -4,6 +4,7 @@ import { AUTH_BASE_PATH, createAuth, getTrustedOrigins } from "./auth";
 import type { Env } from "./env";
 import { rateLimitPost } from "./lib/rate-limit-middleware";
 import { aiRouter } from "./routes/ai";
+import { banksRouter } from "./routes/banks";
 import { gamesRouter } from "./routes/games";
 import { photosRouter } from "./routes/photos";
 import { qrRouter } from "./routes/qr";
@@ -58,6 +59,7 @@ app.on(["GET", "POST"], `${AUTH_BASE_PATH}/*`, (c) =>
 );
 
 app.route("/api", qrRouter);
+app.route("/api", banksRouter);
 app.route("/api", shareRouter);
 app.route("/api", aiRouter);
 app.route("/api", photosRouter);

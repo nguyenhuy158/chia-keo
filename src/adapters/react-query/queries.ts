@@ -13,6 +13,7 @@ import type {
   SettlementMode,
   TransferInput,
 } from "../../../shared/schemas";
+import { registerVietQrBanks } from "../../../shared/vietqr";
 import { getGameApi } from "../../core/container";
 
 export const gameKeys = {
@@ -34,6 +35,27 @@ export const photoKeys = {
 
 /** Anh goc khong bao gio doi nen giu trong cache ca phien lam viec. */
 const PHOTO_DETAIL_STALE_TIME = Infinity;
+
+export const bankKeys = {
+  all: ["banks"] as const,
+};
+
+/** Danh ba ngan hang gan nhu tinh, giu ca phien lam viec khong can refetch. */
+const BANKS_STALE_TIME = Infinity;
+
+export function useBanks() {
+  return useQuery({
+    queryKey: bankKeys.all,
+    queryFn: async () => {
+      const banks = await getGameApi().banks.list();
+      // Nap danh ba dong de resolveVietQrBankId/getVietQrBankLabel nhan dien
+      // duoc ca ma ngoai danh sach tinh (CAKE, TIMO, ...).
+      registerVietQrBanks(banks);
+      return banks;
+    },
+    staleTime: BANKS_STALE_TIME,
+  });
+}
 
 export function useGames() {
   return useQuery({ queryKey: gameKeys.all, queryFn: () => getGameApi().games.list() });

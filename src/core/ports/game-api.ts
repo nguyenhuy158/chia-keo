@@ -3,6 +3,7 @@
 
 import type {
   ApiAiSuggestionResponse,
+  ApiBank,
   ApiGame,
   ApiGameDetail,
   ApiPhoto,
@@ -58,6 +59,10 @@ export type GameApiPort = {
     view(token: string): Promise<ApiShareView>;
     photos(token: string): Promise<ApiPhoto[]>;
     photo(token: string, photoId: string): Promise<ApiPhotoDetail>;
+  };
+  banks: {
+    /** Danh ba ngan hang VietQR cho dropdown, server cache o D1. */
+    list(): Promise<ApiBank[]>;
   };
   ai: {
     suggestExpense(gameId: string, text: string): Promise<ApiAiSuggestionResponse>;

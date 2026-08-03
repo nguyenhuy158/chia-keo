@@ -98,6 +98,22 @@ export type ApiShareView = {
   summary: ApiSummary;
 };
 
+/** Ngan hang ho tro VietQR, lay tu api.vietqr.io va cache o D1. */
+export type ApiBank = {
+  /** Ma BIN 6 chu so (chuan Napas). */
+  bin: string;
+  /** Ma ngan hang dung trong URL anh VietQR, vi du "VCB". */
+  code: string;
+  shortName: string;
+  name: string;
+};
+
+export type ApiBankListResponse = {
+  banks: ApiBank[];
+  /** Du lieu den tu dau: cache/upstream/stale-cache/fallback (de chan doan). */
+  source: string;
+};
+
 export type ApiError = {
   error: string;
 };

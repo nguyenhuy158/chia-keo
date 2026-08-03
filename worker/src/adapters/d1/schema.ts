@@ -177,6 +177,15 @@ export const shareLinks = sqliteTable(
   (table) => [index("share_links_game_id_idx").on(table.gameId)],
 );
 
+// Cache payload JSON tu API ben ngoai (hien tai: danh ba ngan hang VietQR),
+// de moi request khong phai goi lai upstream va van co du lieu khi upstream loi.
+export const apiCache = sqliteTable("api_cache", {
+  key: text("key").primaryKey(),
+  payload: text("payload").notNull(),
+  // ISO timestamp luc fetch tu upstream, dung de tinh TTL.
+  fetchedAt: text("fetched_at").notNull(),
+});
+
 export const paymentProfiles = sqliteTable(
   "payment_profiles",
   {

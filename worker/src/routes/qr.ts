@@ -2,8 +2,12 @@ import { Hono } from "hono";
 import {
   VIETQR_ACCOUNT_PATTERN,
   buildVietQrUrl,
+  registerVietQrBanks,
   resolveVietQrBankId,
 } from "../../../shared/vietqr";
+import { createD1ApiCache } from "../adapters/d1/api-cache";
+import { createDb } from "../adapters/d1/game-repository";
+import { getCachedBanks } from "../core/application/banks";
 import type { Env } from "../env";
 
 const MAX_AMOUNT = 1_000_000_000_000;
@@ -18,7 +22,16 @@ export const qrRouter = new Hono<{ Bindings: Env }>();
  * khong tro thanh open proxy.
  */
 qrRouter.get("/qr", async (c) => {
-  const bankId = resolveVietQrBankId(c.req.query("bank") || "");
+  const rawBank = c.req.query("bank") || "";
+  let bankId = resolveVietQrBankId(rawBank);
+
+  // Ma ngoai danh sach tinh (vi du CAKE, TIMO) van hop le neu co trong danh ba
+  // dong da cache o D1; nap danh ba vao registry roi thu nhan dien lai.
+  if (!bankId && rawBank) {
+    registerVietQrBanks(await getCachedBanks(createD1ApiCache(createDb(c.env.DB))));
+    bankId = resolveVietQrBankId(rawBank);
+  }
+
   const accountNo = (c.req.query("account") || "").trim();
   const amount = Number(c.req.query("amount") || "");
 

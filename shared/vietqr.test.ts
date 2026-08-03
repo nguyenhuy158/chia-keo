@@ -1,12 +1,14 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import {
   VIETQR_ACCOUNT_PATTERN,
   VIETQR_BANK_OPTIONS,
   buildVietQrProxyPath,
   buildVietQrUrl,
   canBuildVietQr,
+  getFallbackVietQrBanks,
   getVietQrBankLabel,
   getVietQrPaymentIssue,
+  registerVietQrBanks,
   resolveVietQrBankId,
 } from "./vietqr";
 
@@ -99,6 +101,40 @@ describe("buildVietQrProxyPath", () => {
     const path = buildVietQrProxyPath(fullPayment, 148_800.6, "ABC123");
 
     expect(new URLSearchParams(path.split("?")[1]).get("amount")).toBe("148801");
+  });
+});
+
+describe("registerVietQrBanks", () => {
+  afterEach(() => registerVietQrBanks([]));
+
+  it("nhận diện mã ngoài danh sách tĩnh sau khi đăng ký danh bạ động", () => {
+    expect(resolveVietQrBankId("CAKE")).toBe("");
+
+    registerVietQrBanks([{ code: "CAKE", shortName: "CAKE by VPBank" }]);
+
+    expect(resolveVietQrBankId("CAKE")).toBe("CAKE");
+    expect(resolveVietQrBankId("cake")).toBe("CAKE");
+    expect(getVietQrBankLabel("CAKE")).toBe("CAKE by VPBank");
+    expect(canBuildVietQr({ bankId: "CAKE", accountNo: "0123456789", accountName: "A" })).toBe(
+      true,
+    );
+  });
+
+  it("đăng ký lại sẽ thay thế danh bạ cũ, mã lạ vẫn bị từ chối", () => {
+    registerVietQrBanks([{ code: "CAKE", shortName: "CAKE by VPBank" }]);
+    registerVietQrBanks([]);
+
+    expect(resolveVietQrBankId("CAKE")).toBe("");
+    expect(resolveVietQrBankId("VCB")).toBe("VCB");
+  });
+});
+
+describe("getFallbackVietQrBanks", () => {
+  it("chuyển danh sách tĩnh thành danh bạ dự phòng cùng shape với API", () => {
+    const banks = getFallbackVietQrBanks();
+
+    expect(banks.length).toBe(VIETQR_BANK_OPTIONS.length);
+    expect(banks[0]).toEqual({ bin: "", code: "VCB", shortName: "Vietcombank", name: "Vietcombank" });
   });
 });
 

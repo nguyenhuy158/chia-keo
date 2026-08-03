@@ -1,11 +1,17 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Check, Pencil, Plus, Trash2, Users, X } from "lucide-react";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 import type { ApiParticipant } from "../../shared/api-types";
 import type { ParticipantInput } from "../../shared/schemas";
+import { getFallbackVietQrBanks } from "../../shared/vietqr";
+import { useBanks } from "../adapters/react-query/queries";
+import { BankSelect } from "./BankSelect";
 import { Field } from "./ui";
+
+// Danh sach tinh dung tam khi API danh ba ngan hang chua tai xong hoac loi.
+const FALLBACK_BANKS = getFallbackVietQrBanks();
 
 const participantFormSchema = z.object({
   name: z.string().trim().min(1, "Nhập tên người tham gia"),
@@ -39,6 +45,8 @@ export function ParticipantPanel({
   onRemove,
 }: ParticipantPanelProps) {
   const [editingParticipantId, setEditingParticipantId] = useState<string | null>(null);
+  const banksQuery = useBanks();
+  const banks = banksQuery.data && banksQuery.data.length > 0 ? banksQuery.data : FALLBACK_BANKS;
   const form = useForm<ParticipantFormValues>({
     resolver: zodResolver(participantFormSchema),
     defaultValues: emptyForm,
@@ -83,7 +91,13 @@ export function ParticipantPanel({
           <input {...form.register("name")} className="field" placeholder="Huy" />
         </Field>
         <Field label="Mã ngân hàng">
-          <input {...form.register("bankId")} className="field" placeholder="VCB, TCB, MBB..." />
+          <Controller
+            control={form.control}
+            name="bankId"
+            render={({ field }) => (
+              <BankSelect banks={banks} value={field.value} onChange={field.onChange} />
+            )}
+          />
         </Field>
         <Field label="Số tài khoản">
           <input {...form.register("accountNo")} className="field" placeholder="0123456789" />

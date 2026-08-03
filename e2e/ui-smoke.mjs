@@ -79,7 +79,10 @@ try {
 
   // 4. Them 2 nguoi (1 nguoi co thong tin ngan hang)
   await page.fill('input[placeholder="Huy"]', "An");
-  await page.fill('input[placeholder="VCB, TCB, MBB..."]', "VCB");
+  // Ma ngan hang gio la dropdown co tim kiem: mo, go ma, Enter chon ket qua dau.
+  await page.click('button[aria-label="Mã ngân hàng"]');
+  await page.fill('input[placeholder="Tìm ngân hàng..."]', "VCB");
+  await page.keyboard.press("Enter");
   await page.fill('input[placeholder="0123456789"]', "111222333");
   await page.fill('input[placeholder="NGUYEN VAN A"]', "LE AN");
   await page.click("text=Thêm người");
