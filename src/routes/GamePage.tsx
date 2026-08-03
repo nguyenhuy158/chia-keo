@@ -324,6 +324,11 @@ export function GamePage() {
         {activeSection === "expenses" && expensePanel}
         {activeSection === "photos" && photoPanel}
         {activeSection === "summary" && dashboard}
+        {activeSection === "summary" && (
+          <div className="rounded-lg border border-stone-200 bg-white p-3 shadow-sm dark:border-stone-800 dark:bg-stone-900 [&>button]:w-full">
+            {copyAction}
+          </div>
+        )}
       </div>
 
       {/* Tab anh co nut them anh rieng nen khong hien FAB khoan chi. */}
