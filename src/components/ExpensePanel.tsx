@@ -3,6 +3,7 @@ import {
   Banknote,
   Check,
   ImagePlus,
+  Minus,
   Paperclip,
   Pencil,
   Plus,
@@ -138,6 +139,88 @@ function readFileAsBase64(file: File) {
     reader.onerror = () => reject(reader.error);
     reader.readAsDataURL(file);
   });
+}
+
+/**
+ * Tong tien da chia o che do "So tien". Doi mau + noi con thieu/vuot bao nhieu vi
+ * day la dieu kien duy nhat chan submit.
+ */
+function AmountSplitTotal({ assigned, total }: { assigned: number; total: number }) {
+  const diff = total - assigned;
+  const balanced = diff === 0 && total > 0;
+  const tone = balanced
+    ? "text-emerald-700 dark:text-emerald-400"
+    : "text-amber-700 dark:text-amber-400";
+
+  return (
+    <p className={`mt-2 text-xs font-medium tabular ${tone}`}>
+      Đã nhập {formatMoney(assigned)} / {formatMoney(total)}
+      {balanced && " — vừa đủ"}
+      {/* total = 0 nghia la chua dien "So tien" o tren, khong phai chia sai. */}
+      {!balanced && total === 0 && " — nhập số tiền ở trên trước"}
+      {!balanced && total > 0 && diff > 0 && ` — còn thiếu ${formatMoney(diff)}`}
+      {!balanced && diff < 0 && ` — vượt ${formatMoney(-diff)}`}
+    </p>
+  );
+}
+
+const STEPPER_BUTTON =
+  "flex h-full w-11 shrink-0 items-center justify-center text-stone-600 transition hover:bg-stone-100 active:bg-stone-200 disabled:opacity-30 disabled:hover:bg-transparent dark:text-stone-300 dark:hover:bg-stone-700 dark:active:bg-stone-600";
+
+/**
+ * Nhap so phan bang nut +/- thay vi spinner mac dinh cua <input type="number">
+ * (spinner chi hien khi hover, qua nho de bam tren mobile). Van cho go tay.
+ */
+function SharesStepper({
+  value,
+  onChange,
+  name,
+}: {
+  value: string;
+  onChange: (next: string) => void;
+  name: string;
+}) {
+  const parsed = Number.parseInt(value, 10);
+  const current = Number.isFinite(parsed) ? parsed : 1;
+
+  function step(delta: number) {
+    onChange(String(Math.min(MAX_SPLIT_WEIGHT, Math.max(1, current + delta))));
+  }
+
+  return (
+    <div className="flex shrink-0 items-center gap-1.5">
+      <div className="flex h-11 items-center overflow-hidden rounded-lg border border-stone-300 bg-white dark:border-stone-700 dark:bg-stone-800">
+        <button
+          type="button"
+          onClick={() => step(-1)}
+          disabled={current <= 1}
+          aria-label={`Giảm số phần của ${name}`}
+          className={STEPPER_BUTTON}
+        >
+          <Minus size={16} />
+        </button>
+        <input
+          inputMode="numeric"
+          value={value}
+          onChange={(event) => onChange(event.target.value.replace(/\D/g, ""))}
+          // Chot lai gia tri hop le khi roi input: tranh de trong hoac 0.
+          onBlur={() => onChange(String(Math.min(MAX_SPLIT_WEIGHT, Math.max(1, current))))}
+          className="tabular h-full w-10 min-w-0 border-x border-stone-200 bg-transparent text-center text-stone-900 outline-none dark:border-stone-700 dark:text-stone-100"
+          aria-label={`Số phần của ${name}`}
+        />
+        <button
+          type="button"
+          onClick={() => step(1)}
+          disabled={current >= MAX_SPLIT_WEIGHT}
+          aria-label={`Tăng số phần của ${name}`}
+          className={STEPPER_BUTTON}
+        >
+          <Plus size={16} />
+        </button>
+      </div>
+      <span className="text-xs text-stone-500 dark:text-stone-400">phần</span>
+    </div>
+  );
 }
 
 export function ExpensePanel({
@@ -406,7 +489,7 @@ export function ExpensePanel({
                 handleAiSuggest();
               }
             }}
-            className="field w-full flex-1 bg-white sm:w-auto"
+            className="field w-full flex-1 bg-white dark:bg-stone-800 sm:w-auto"
             placeholder="Ví dụ: ăn tối 500k Huy trả chia 3"
             disabled={participants.length === 0}
           />
@@ -473,7 +556,20 @@ export function ExpensePanel({
         </Field>
         <div className="md:col-span-2">
           <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-            <p className="text-sm font-medium text-stone-700 dark:text-stone-300">Chia cho ai</p>
+            {/* Nut chon tat ca dat canh nhan, khong ep vao segmented control keo
+                nguoi dung tuong la tab thu 4. */}
+            <div className="flex items-center gap-3">
+              <p className="text-sm font-medium text-stone-700 dark:text-stone-300">Chia cho ai</p>
+              {participants.length > 1 && (
+                <button
+                  type="button"
+                  onClick={() => setAllSplit(!allSelected)}
+                  className="rounded-md px-2 py-1 text-xs font-semibold text-violet-700 underline decoration-violet-300 underline-offset-2 transition hover:bg-violet-50 active:bg-violet-100 dark:text-violet-400 dark:decoration-violet-500/50 dark:hover:bg-violet-500/10 dark:active:bg-violet-500/20"
+                >
+                  {allSelected ? "Bỏ chọn" : "Chọn tất cả"}
+                </button>
+              )}
+            </div>
             <div className="flex items-center gap-2">
               <div className="flex rounded-md bg-stone-100 p-0.5 dark:bg-stone-800">
                 {SPLIT_MODE_OPTIONS.map((option) => (
@@ -495,15 +591,6 @@ export function ExpensePanel({
                   </button>
                 ))}
               </div>
-              {participants.length > 1 && (
-                <button
-                  type="button"
-                  onClick={() => setAllSplit(!allSelected)}
-                  className="rounded-md px-2 py-1 text-xs font-semibold text-violet-700 transition hover:bg-violet-50 active:bg-violet-100 dark:text-violet-400 dark:hover:bg-violet-500/10 dark:active:bg-violet-500/20"
-                >
-                  {allSelected ? "Bỏ chọn" : "Chọn tất cả"}
-                </button>
-              )}
             </div>
           </div>
 
@@ -546,25 +633,17 @@ export function ExpensePanel({
                     </button>
                     {checked &&
                       (splitMode === "shares" ? (
-                        <div className="flex shrink-0 items-center gap-1.5">
-                          <input
-                            type="number"
-                            min={1}
-                            max={MAX_SPLIT_WEIGHT}
-                            inputMode="numeric"
-                            value={splitValues[participant.id] ?? "1"}
-                            onChange={(event) =>
-                              form.setValue(
-                                "splitValues",
-                                { ...splitValues, [participant.id]: event.target.value },
-                                { shouldValidate: form.formState.isSubmitted },
-                              )
-                            }
-                            className="field w-20 text-right"
-                            aria-label={`Số phần của ${participant.name}`}
-                          />
-                          <span className="text-xs text-stone-500 dark:text-stone-400">phần</span>
-                        </div>
+                        <SharesStepper
+                          name={participant.name}
+                          value={splitValues[participant.id] ?? "1"}
+                          onChange={(next) =>
+                            form.setValue(
+                              "splitValues",
+                              { ...splitValues, [participant.id]: next },
+                              { shouldValidate: form.formState.isSubmitted },
+                            )
+                          }
+                        />
                       ) : (
                         <MoneyInput
                           value={splitValues[participant.id] ?? ""}
@@ -587,16 +666,13 @@ export function ExpensePanel({
           )}
 
           {splitMode === "amount" && splitParticipantIds.length > 0 && (
-            <p className="mt-2 text-xs text-stone-500 tabular dark:text-stone-400">
-              Đã nhập{" "}
-              {formatMoney(
-                splitParticipantIds.reduce(
-                  (sum, id) => sum + parseMoney(splitValues[id] || ""),
-                  0,
-                ),
-              )}{" "}
-              / {formatMoney(parseMoney(amountValue))}
-            </p>
+            <AmountSplitTotal
+              assigned={splitParticipantIds.reduce(
+                (sum, id) => sum + parseMoney(splitValues[id] || ""),
+                0,
+              )}
+              total={parseMoney(amountValue)}
+            />
           )}
           {form.formState.errors.splitParticipantIds && (
             <p className="mt-1 text-xs text-rose-600 dark:text-rose-400">

@@ -14,6 +14,14 @@
   text-rendering: optimizeLegibility;
 }
 
+/* Chi cho keo doc/ngang: khong pinch-zoom, khong double-tap zoom.
+   Khong dung chu tu gian khi xoay ngang may. */
+html {
+  touch-action: pan-x pan-y;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
 html.dark {
   color-scheme: dark;
   color: #e7e5e4;
@@ -35,6 +43,9 @@ body {
   margin: 0;
 }
 
+/* Co tinh de KHONG layer: `font: inherit` chan moi utility text-* / font-* tren
+   button va input, nho vay input luon >= 16px va iOS Safari khong tu zoom khi focus.
+   Dua vao @layer base se lam text-sm/text-xs song lai tren toan bo button trong app. */
 button,
 input,
 select,
@@ -49,46 +60,58 @@ a,
   touch-action: manipulation;
 }
 
-.field {
-  height: 2.75rem;
-  width: 100%;
-  border-radius: 0.5rem;
-  border: 1px solid #d6d3d1;
-  padding: 0 0.75rem;
-  /* 16px de iOS Safari khong tu dong zoom khi focus input. */
-  font-size: 1rem;
-  outline: none;
-  transition:
-    border-color 160ms ease,
-    box-shadow 160ms ease;
-}
-
-.field:focus {
-  border-color: #7c3aed;
-  box-shadow: 0 0 0 2px #ede9fe;
-}
-
-/* Ve desktop tra lai mat do gon hon. */
-@media (min-width: 640px) {
+/* Nam trong @layer components de utility cua Tailwind (w-32, bg-white, text-lg...)
+   ghi de duoc. CSS khong layer luon thang moi layer, bat ke do uu tien chon.
+   Luu y: vi vay `text-sm` tren .field se lam chu duoi 16px -> iOS Safari tu zoom
+   khi focus. Can chu nho thi dung `sm:text-sm` (chi desktop). */
+@layer components {
   .field {
-    height: 2.5rem;
-    font-size: 0.875rem;
+    height: 2.75rem;
+    width: 100%;
+    border-radius: 0.5rem;
+    border: 1px solid #d6d3d1;
+    padding: 0 0.75rem;
+    /* 16px de iOS Safari khong tu dong zoom khi focus input. */
+    font-size: 1rem;
+    outline: none;
+    transition:
+      border-color 160ms ease,
+      box-shadow 160ms ease;
   }
-}
 
-.dark .field {
-  background: #1c1917;
-  border-color: #44403c;
-  color: #e7e5e4;
-}
+  .field:focus {
+    border-color: #7c3aed;
+    box-shadow: 0 0 0 2px #ede9fe;
+  }
 
-.dark .field::placeholder {
-  color: #78716c;
-}
+  /* Ve desktop tra lai mat do gon hon. Chi ap khi co chuot: iPad rong hon 640px
+     nhung Safari van tu zoom neu chu duoi 16px. */
+  @media (min-width: 640px) {
+    .field {
+      height: 2.5rem;
+    }
+  }
 
-.dark .field:focus {
-  border-color: #7c3aed;
-  box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.35);
+  @media (min-width: 640px) and (hover: hover) and (pointer: fine) {
+    .field {
+      font-size: 0.875rem;
+    }
+  }
+
+  .dark .field {
+    background: #1c1917;
+    border-color: #44403c;
+    color: #e7e5e4;
+  }
+
+  .dark .field::placeholder {
+    color: #78716c;
+  }
+
+  .dark .field:focus {
+    border-color: #7c3aed;
+    box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.35);
+  }
 }
 
 /* Padding an toan cho tai (notch, home indicator). */

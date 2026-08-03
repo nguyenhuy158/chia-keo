@@ -2,7 +2,10 @@
 <html lang="vi">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
     <meta name="theme-color" content="#faf5ff" />
     <link rel="icon" type="image/png" href="/app-icon.png" />
     <link rel="apple-touch-icon" href="/app-icon.png" />
@@ -25,6 +28,21 @@
           if (meta) meta.setAttribute("content", "#0c0a09");
         }
       } catch (e) {}
+    </script>
+    <script>
+      // Chan pinch-zoom + double-tap zoom. iOS Safari bo qua user-scalable=no
+      // nen phai tu huy cac gesture o day.
+      ["gesturestart", "gesturechange", "gestureend"].forEach(function (name) {
+        document.addEventListener(name, function (event) { event.preventDefault(); }, { passive: false });
+      });
+      document.addEventListener(
+        "touchmove",
+        function (event) {
+          // Giu lai swipe 1 ngon (PhotoViewer dung de lat anh), chi chan pinch.
+          if (event.touches.length > 1) event.preventDefault();
+        },
+        { passive: false },
+      );
     </script>
   </head>
   <body>

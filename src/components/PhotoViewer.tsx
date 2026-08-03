@@ -182,7 +182,7 @@ export function PhotoViewer({
               maxLength={PHOTO_CAPTION_MAX_LENGTH}
               autoFocus
               placeholder="Chú thích ảnh"
-              className="h-11 min-w-0 flex-1 rounded-md border border-white/20 bg-white/10 px-3 text-sm text-white placeholder:text-white/40 focus:border-violet-400 focus:outline-none"
+              className="h-11 min-w-0 flex-1 rounded-md border border-white/20 bg-white/10 px-3 text-base text-white placeholder:text-white/40 focus:border-violet-400 focus:outline-none sm:text-sm"
             />
             <ViewerButton label="Lưu chú thích" onClick={handleSaveCaption} disabled={pending}>
               <Check size={20} />

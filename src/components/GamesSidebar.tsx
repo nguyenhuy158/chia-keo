@@ -41,7 +41,7 @@ export function GamesSidebar({ onNavigate }: { onNavigate?: () => void }) {
           <input
             id="game-name"
             {...form.register("name")}
-            className="h-11 min-w-0 flex-1 rounded-md border border-stone-300 bg-white px-3 text-sm text-stone-950 outline-none transition placeholder:text-stone-400 focus:border-violet-600 focus:ring-2 focus:ring-violet-100 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-100 dark:placeholder:text-stone-500 dark:focus:ring-violet-900/40 sm:h-10"
+            className="h-11 min-w-0 flex-1 rounded-md border border-stone-300 bg-white px-3 text-base text-stone-950 sm:text-sm outline-none transition placeholder:text-stone-400 focus:border-violet-600 focus:ring-2 focus:ring-violet-100 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-100 dark:placeholder:text-stone-500 dark:focus:ring-violet-900/40 sm:h-10"
             placeholder="Đà Nẵng 2026"
           />
           <button
