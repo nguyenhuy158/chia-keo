@@ -16,6 +16,7 @@ import {
 import {
   createGame,
   deleteGame,
+  duplicateGame,
   getGameDetailForOwner,
   listGames,
   updateGame,
@@ -62,6 +63,10 @@ gamesRouter.delete("/games/:gameId", (c) =>
     await deleteGame(c.get("repo"), c.get("userId"), c.req.param("gameId"));
     return { ok: true };
   }),
+);
+
+gamesRouter.post("/games/:gameId/duplicate", (c) =>
+  respond(c, () => duplicateGame(c.get("repo"), c.get("userId"), c.req.param("gameId")), 201),
 );
 
 gamesRouter.get("/games/:gameId/summary", (c) =>

@@ -26,6 +26,7 @@ export type GameApiPort = {
     create(input: GameInput): Promise<ApiGameDetail>;
     update(gameId: string, input: GameUpdateInput): Promise<ApiGameDetail>;
     remove(gameId: string): Promise<{ ok: boolean }>;
+    duplicate(gameId: string): Promise<ApiGameDetail>;
   };
   participants: {
     create(gameId: string, input: ParticipantInput): Promise<ApiGameDetail>;

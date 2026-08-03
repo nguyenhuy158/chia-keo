@@ -96,6 +96,57 @@ export async function updateGame(
   return loadGameDetail(repo, { ...game, ...changes });
 }
 
+/** Nhan ban cuoc choi: giu ten, settlementMode, participant + tai khoan nhan.
+ * Khong copy khoan chi/anh - cuoc choi moi bat dau sach. */
+export async function duplicateGame(
+  repo: GameRepository,
+  userId: string,
+  gameId: string,
+): Promise<ApiGameDetail> {
+  const source = await getOwnedGame(repo, gameId, userId);
+  if (!source) throw new NotFoundError();
+
+  const participantRows = await repo.participants.listByGame(source.id);
+  const paymentRows = await repo.paymentProfiles.listByParticipantIds(
+    participantRows.map((row) => row.id),
+  );
+  const paymentByParticipantId = new Map(paymentRows.map((row) => [row.participantId, row]));
+
+  const now = nowIso();
+  const game = {
+    id: createId("game"),
+    ownerUserId: userId,
+    code: createGameCode(),
+    name: `${source.name} (bản sao)`,
+    settlementMode: source.settlementMode,
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  await repo.games.insert(game);
+
+  for (const participant of participantRows) {
+    const payment = paymentByParticipantId.get(participant.id);
+    const participantNow = nowIso();
+    await repo.participants.insert(
+      {
+        id: createId("participant"),
+        gameId: game.id,
+        name: participant.name,
+        createdAt: participantNow,
+        updatedAt: participantNow,
+      },
+      {
+        bankId: payment?.bankId || "",
+        accountNo: payment?.accountNo || "",
+        accountName: payment?.accountName || "",
+      },
+    );
+  }
+
+  return loadGameDetail(repo, game);
+}
+
 export async function deleteGame(
   repo: GameRepository,
   userId: string,

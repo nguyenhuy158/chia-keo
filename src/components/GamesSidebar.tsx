@@ -1,10 +1,11 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Minus, Plus, ReceiptText } from "lucide-react";
+import { Copy, Minus, Plus, ReceiptText } from "lucide-react";
+import type { MouseEvent } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { MAX_QUICK_PARTICIPANTS } from "../../shared/schemas";
-import { useCreateGame, useGames } from "../adapters/react-query/queries";
+import { useCreateGame, useDuplicateGame, useGames } from "../adapters/react-query/queries";
 
 const gameFormSchema = z.object({
   name: z.string().trim().min(1, "Nhập tên cuộc chơi"),
@@ -17,6 +18,15 @@ export function GamesSidebar({ onNavigate }: { onNavigate?: () => void }) {
   const navigate = useNavigate();
   const gamesQuery = useGames();
   const createGame = useCreateGame();
+  const duplicateGame = useDuplicateGame();
+
+  async function handleDuplicate(event: MouseEvent, gameId: string) {
+    event.preventDefault();
+    event.stopPropagation();
+    const detail = await duplicateGame.mutateAsync(gameId);
+    navigate({ to: "/games/$gameId", params: { gameId: detail.id } });
+    onNavigate?.();
+  }
 
   const form = useForm<GameFormValues>({
     resolver: zodResolver(gameFormSchema),
@@ -119,7 +129,7 @@ export function GamesSidebar({ onNavigate }: { onNavigate?: () => void }) {
                 to="/games/$gameId"
                 params={{ gameId: game.id }}
                 onClick={() => onNavigate?.()}
-                className="block w-full rounded-md border border-stone-200 bg-white px-3 py-3 text-left transition hover:bg-stone-50 dark:border-stone-800 dark:bg-stone-900 dark:hover:bg-stone-800"
+                className="relative block w-full rounded-md border border-stone-200 bg-white px-3 py-3 pr-11 text-left transition hover:bg-stone-50 dark:border-stone-800 dark:bg-stone-900 dark:hover:bg-stone-800"
                 activeProps={{
                   className:
                     "border-violet-600 bg-violet-50 dark:border-violet-500 dark:bg-violet-500/15",
@@ -131,6 +141,16 @@ export function GamesSidebar({ onNavigate }: { onNavigate?: () => void }) {
                 <span className="mt-1 block text-xs text-stone-500 dark:text-stone-400">
                   {game.participantCount} người, {game.expenseCount} khoản
                 </span>
+                <button
+                  type="button"
+                  onClick={(event) => handleDuplicate(event, game.id)}
+                  disabled={duplicateGame.isPending}
+                  aria-label="Nhân bản cuộc chơi"
+                  title="Nhân bản"
+                  className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-md text-stone-400 transition hover:bg-stone-200 hover:text-stone-700 disabled:opacity-40 dark:text-stone-500 dark:hover:bg-stone-700 dark:hover:text-stone-200"
+                >
+                  <Copy size={15} />
+                </button>
               </Link>
             ))}
           </div>

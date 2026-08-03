@@ -66,6 +66,18 @@ export function useCreateGame() {
   });
 }
 
+export function useDuplicateGame() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (gameId: string) => getGameApi().games.duplicate(gameId),
+    onSuccess: (detail) => {
+      queryClient.setQueryData(gameKeys.detail(detail.id), detail);
+      queryClient.invalidateQueries({ queryKey: gameKeys.all });
+    },
+  });
+}
+
 export function useDeleteGame() {
   const queryClient = useQueryClient();
 
