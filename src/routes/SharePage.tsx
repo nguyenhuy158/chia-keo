@@ -2,6 +2,7 @@ import { useParams } from "@tanstack/react-router";
 import { Check, ListChecks, Square, Table2 } from "lucide-react";
 import { useState } from "react";
 import type { ApiExpense, ApiParticipant, ApiSummary } from "../../shared/api-types";
+import { CopySummaryButton } from "../components/CopySummaryButton";
 import { GameDashboard } from "../components/GameDashboard";
 import { ThemeToggle } from "../components/theme";
 import { EmptyState, LoadingState } from "../components/ui";
@@ -279,7 +280,19 @@ export function SharePage() {
             {view.name}
           </h1>
         </div>
-        <ThemeToggle />
+        <div className="flex shrink-0 items-center gap-2">
+          <CopySummaryButton
+            input={{
+              code: view.code,
+              name: view.name,
+              participants: view.participants,
+              expenses: view.expenses,
+              summary: view.summary,
+              shareUrl: window.location.href,
+            }}
+          />
+          <ThemeToggle />
+        </div>
       </div>
 
       <div className="grid shrink-0 grid-cols-2 gap-2 rounded-lg bg-stone-100 p-1 dark:bg-stone-900">

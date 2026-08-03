@@ -1,5 +1,5 @@
 import type { ResolvedAiExpense } from "./ai";
-import type { BalanceRow, SettlementRow } from "./split";
+import type { BalanceRow, SettlementRow, SplitShare } from "./split";
 
 export type ApiAiSuggestionResponse = {
   suggestion: ResolvedAiExpense;
@@ -35,6 +35,8 @@ export type ApiExpense = {
   note: string;
   payerParticipantId: string;
   splitParticipantIds: string[];
+  /** So tien thuc te tung nguoi chiu, da tinh ca phan du khi chia le. */
+  shares: SplitShare[];
   createdAt: string;
 };
 

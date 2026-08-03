@@ -74,15 +74,22 @@ async function loadGameData(db: Db, gameId: string): Promise<GameData> {
     };
   });
 
-  const expenses: ApiExpense[] = expenseRows.map((row) => ({
-    id: row.id,
-    title: row.title,
-    amount: row.amount,
-    note: row.note,
-    payerParticipantId: row.payerParticipantId,
-    splitParticipantIds: (splitsByExpenseId.get(row.id) || []).map((split) => split.participantId),
-    createdAt: row.createdAt,
-  }));
+  const expenses: ApiExpense[] = expenseRows.map((row) => {
+    const splits = splitsByExpenseId.get(row.id) || [];
+    return {
+      id: row.id,
+      title: row.title,
+      amount: row.amount,
+      note: row.note,
+      payerParticipantId: row.payerParticipantId,
+      splitParticipantIds: splits.map((split) => split.participantId),
+      shares: splits.map((split) => ({
+        participantId: split.participantId,
+        amount: split.amount,
+      })),
+      createdAt: row.createdAt,
+    };
+  });
 
   const balances = calculateBalances(
     participantIds,

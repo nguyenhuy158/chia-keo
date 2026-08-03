@@ -1,0 +1,138 @@
+import { describe, expect, it } from "vitest";
+import type { ApiExpense, ApiParticipant, ApiSummary } from "./api-types";
+import { allocateAmount, calculateBalances, calculateSettlements } from "./split";
+import { buildSummaryText, formatThousands } from "./summary-text";
+
+const SHARE_URL = "https://chia-keo.test/share/tok3n";
+
+function makeParticipant(id: string, name: string): ApiParticipant {
+  return { id, name, bankId: "", accountNo: "", accountName: "" };
+}
+
+function makeExpense(
+  id: string,
+  title: string,
+  amount: number,
+  payerParticipantId: string,
+  splitParticipantIds: string[],
+): ApiExpense {
+  return {
+    id,
+    title,
+    amount,
+    note: "",
+    payerParticipantId,
+    splitParticipantIds,
+    shares: allocateAmount(amount, splitParticipantIds),
+    createdAt: `2026-08-03T00:00:0${id.length}.000Z`,
+  };
+}
+
+function makeSummary(participants: ApiParticipant[], expenses: ApiExpense[]): ApiSummary {
+  const balances = calculateBalances(
+    participants.map((participant) => participant.id),
+    expenses.map((expense) => ({
+      payerParticipantId: expense.payerParticipantId,
+      amount: expense.amount,
+      shares: expense.shares,
+    })),
+  );
+
+  return {
+    totalExpense: expenses.reduce((total, expense) => total + expense.amount, 0),
+    balances,
+    settlements: calculateSettlements(balances),
+  };
+}
+
+const thu = makeParticipant("p-thu", "Thu");
+const hong = makeParticipant("p-hong", "Hồng");
+const nam = makeParticipant("p-nam", "Nam");
+const participants = [thu, hong, nam];
+
+/** API tra ve khoan chi moi nhat truoc, nen fixture cung xep nguoc thoi gian. */
+const traTac = makeExpense("e-1", "Trà tắc", 17_000, thu.id, [thu.id, hong.id]);
+const sanCau = makeExpense("e-22", "Sân + nước + cầu", 305_000, nam.id, [
+  thu.id,
+  hong.id,
+  nam.id,
+]);
+const bunBo = makeExpense("e-333", "Bún bò", 90_000, thu.id, [thu.id, hong.id]);
+const expenses = [traTac, sanCau, bunBo];
+const summary = makeSummary(participants, expenses);
+
+const input = { code: "ABC123", name: "Cầu lông thứ 7", participants, expenses, summary };
+
+describe("formatThousands", () => {
+  it("bo duoi .000 khi tron nghin", () => {
+    expect(formatThousands(90_000)).toBe("90");
+  });
+
+  it("giu mot chu so thap phan voi tien le", () => {
+    expect(formatThousands(8_500)).toBe("8,5");
+    expect(formatThousands(32_167)).toBe("32,2");
+  });
+
+  it("nhom hang nghin theo kieu Viet Nam", () => {
+    expect(formatThousands(1_043_000)).toBe("1.043");
+  });
+
+  it("tra ve 0 khi khong co tien", () => {
+    expect(formatThousands(0)).toBe("0");
+  });
+});
+
+describe("buildSummaryText", () => {
+  it("liet ke khoan chi theo thu tu cu nhat truoc kem so nguoi chia", () => {
+    const text = buildSummaryText(input);
+
+    expect(text).toContain("CÁC KHOẢN CHI (3 khoản · tổng 412k)");
+    expect(text).toContain("1. Bún bò — 90k · 2 người = 45k · Thu, Hồng · Thu trả");
+    expect(text).toContain("2. Sân + nước + cầu — 305k · 3 người = 101,7k · cả nhóm · Nam trả");
+    expect(text).toContain("3. Trà tắc — 17k · 2 người = 8,5k · Thu, Hồng · Thu trả");
+  });
+
+  it("cong tung phan cua moi nguoi ra dung so phai chiu", () => {
+    const text = buildSummaryText(input);
+
+    expect(text).toContain("- Thu: 45 + 101,7 + 8,5 = 155,2k");
+    expect(text).toContain("- Hồng: 45 + 101,7 + 8,5 = 155,2k");
+    expect(text).toContain("- Nam: 101,7 = 101,7k");
+  });
+
+  it("chi ra ai chuyen cho ai", () => {
+    const text = buildSummaryText(input);
+
+    expect(text).toContain("CẦN CHUYỂN");
+    expect(text).toContain("- Hồng → Nam: 155,2k");
+    expect(text).toContain("- Thu → Nam: 48,2k");
+  });
+
+  it("them link chi tiet khi co shareUrl", () => {
+    expect(buildSummaryText({ ...input, shareUrl: SHARE_URL })).toContain(
+      `Chi tiết: ${SHARE_URL}`,
+    );
+    expect(buildSummaryText(input)).not.toContain("Chi tiết:");
+  });
+
+  it("hien 0k cho nguoi chua dinh khoan nao", () => {
+    const kiet = makeParticipant("p-kiet", "Kiệt");
+    const withKiet = [...participants, kiet];
+    const text = buildSummaryText({
+      ...input,
+      participants: withKiet,
+      summary: makeSummary(withKiet, expenses),
+    });
+
+    expect(text).toContain("- Kiệt: 0k");
+  });
+
+  it("bao chua co khoan chi khi danh sach rong", () => {
+    const emptySummary = makeSummary(participants, []);
+    const text = buildSummaryText({ ...input, expenses: [], summary: emptySummary });
+
+    expect(text).toContain("Chưa có khoản chi nào.");
+    expect(text).not.toContain("CÁC KHOẢN CHI");
+    expect(text).toContain("- Thu: 0k");
+  });
+});

@@ -11,6 +11,7 @@ import {
   X,
 } from "lucide-react";
 import { useState } from "react";
+import { CopySummaryButton } from "../components/CopySummaryButton";
 import { ExpensePanel } from "../components/ExpensePanel";
 import { GameDashboard } from "../components/GameDashboard";
 import { ExpenseFab, type GameSection, MobileGameNav } from "../components/MobileGameNav";
@@ -138,6 +139,22 @@ export function GamePage() {
     />
   );
 
+  const copySummaryAction = (
+    <CopySummaryButton
+      input={{
+        code: game.code,
+        name: game.name,
+        participants: game.participants,
+        expenses: game.expenses,
+        summary: game.summary,
+        shareUrl:
+          shareLink && shareLink.enabled
+            ? `${window.location.origin}/share/${shareLink.token}`
+            : undefined,
+      }}
+    />
+  );
+
   const shareActions = shareLink ? (
     <>
       <button
@@ -254,6 +271,7 @@ export function GamePage() {
         </div>
         {/* Desktop: cac nut hien inline. */}
         <div className="hidden flex-wrap items-center justify-end gap-2 lg:flex">
+          {copySummaryAction}
           {shareActions}
           {deleteAction}
         </div>
@@ -293,6 +311,7 @@ export function GamePage() {
         title="Tùy chọn cuộc chơi"
       >
         <div className="flex flex-col gap-2 pb-2 [&>button]:w-full">
+          {copySummaryAction}
           {shareActions}
           {deleteAction}
         </div>
