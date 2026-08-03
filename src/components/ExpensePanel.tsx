@@ -449,6 +449,7 @@ function handleSplitModeChange(mode: SplitMode) {
   const aiSuggest = useAiSuggestExpense(gameId);
   const aiReceipt = useAiScanReceipt(gameId);
   const [aiOpen, setAiOpen] = useState(false);
+  const [photosOpen, setPhotosOpen] = useState(false);
   const [aiText, setAiText] = useState("");
   const [aiError, setAiError] = useState("");
   const aiPending = aiSuggest.isPending || aiReceipt.isPending;
@@ -918,29 +919,48 @@ function handleSplitModeChange(mode: SplitMode) {
         </div>
 
         <div className={`md:col-span-2 ${kind === "transfer" ? "hidden" : ""}`}>
-          <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-            <p className="text-sm font-medium text-stone-700 dark:text-stone-300">
-              Ảnh hóa đơn{" "}
-              <span className="font-normal text-stone-400 dark:text-stone-500">
-                (không bắt buộc)
-              </span>
-              {editingPhotos.length + stagedFiles.length > 0 &&
-                ` (${editingPhotos.length + stagedFiles.length})`}
-            </p>
-            <PhotoPickerButton
-              label={
-                uploader.pending
-                  ? `Đang tải ${uploader.done + 1}/${uploader.total}`
-                  : "Đính kèm ảnh"
-              }
-              ariaLabel="Đính kèm ảnh hóa đơn"
-              disabled={uploader.pending}
-              onPick={handlePickPhotos}
-              className="border border-stone-300 bg-white text-stone-700 hover:bg-stone-50 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-200 dark:hover:bg-stone-700"
-            >
-              <Paperclip size={15} />
-            </PhotoPickerButton>
-          </div>
+          {(() => {
+            const hasPhotos = editingPhotos.length + stagedFiles.length > 0;
+            const open = photosOpen || hasPhotos;
+            return (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setPhotosOpen((current) => !current)}
+                  aria-expanded={open}
+                  className="mb-2 flex items-center gap-2 rounded-md px-1 py-1 text-sm font-medium text-stone-700 transition hover:bg-stone-100 dark:text-stone-300 dark:hover:bg-stone-800"
+                >
+                  <Paperclip size={15} />
+                  Ảnh hóa đơn
+                  <span className="font-normal text-stone-400 dark:text-stone-500">
+                    (không bắt buộc)
+                  </span>
+                  {hasPhotos && ` (${editingPhotos.length + stagedFiles.length})`}
+                  <ChevronDown
+                    size={15}
+                    className={`text-stone-400 transition ${open ? "rotate-180" : ""}`}
+                  />
+                </button>
+                {open && (
+                  <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                    <PhotoPickerButton
+                      label={
+                        uploader.pending
+                          ? `Đang tải ${uploader.done + 1}/${uploader.total}`
+                          : "Đính kèm ảnh"
+                      }
+                      ariaLabel="Đính kèm ảnh hóa đơn"
+                      disabled={uploader.pending}
+                      onPick={handlePickPhotos}
+                      className="border border-stone-300 bg-white text-stone-700 hover:bg-stone-50 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-200 dark:hover:bg-stone-700"
+                    >
+                      <Paperclip size={15} />
+                    </PhotoPickerButton>
+                  </div>
+                )}
+              </>
+            );
+          })()}
 
           {(editingPhotos.length > 0 || stagedPreviews.length > 0) && (
             <div className="flex flex-wrap gap-2">
