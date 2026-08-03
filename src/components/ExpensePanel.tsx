@@ -426,6 +426,7 @@ function handleSplitModeChange(mode: SplitMode) {
 
   const aiSuggest = useAiSuggestExpense(gameId);
   const aiReceipt = useAiScanReceipt(gameId);
+  const [aiOpen, setAiOpen] = useState(false);
   const [aiText, setAiText] = useState("");
   const [aiError, setAiError] = useState("");
   const aiPending = aiSuggest.isPending || aiReceipt.isPending;
@@ -599,12 +600,28 @@ function handleSplitModeChange(mode: SplitMode) {
         <h3 className="text-lg font-semibold text-stone-950 dark:text-stone-50">Khoản chi</h3>
       </div>
 
-      <div className="mb-4 rounded-md border border-violet-200 bg-violet-50 p-3 dark:border-violet-500/30 dark:bg-violet-500/10">
-        <div className="flex items-center gap-2 text-sm font-medium text-violet-800 dark:text-violet-300">
+      <div className="mb-4">
+        <button
+          type="button"
+          onClick={() => setAiOpen((current) => !current)}
+          aria-expanded={aiOpen}
+          className="flex items-center gap-2 rounded-md px-1 py-1 text-sm font-medium text-violet-700 transition hover:bg-violet-50 dark:text-violet-400 dark:hover:bg-violet-500/10"
+        >
           <Sparkles size={15} />
           Nhập nhanh bằng AI
-        </div>
-        <div className="mt-2 flex flex-wrap gap-2">
+          <span className="font-normal text-stone-400 dark:text-stone-500">(tùy chọn)</span>
+          <ChevronDown
+            size={15}
+            className={`text-stone-400 transition ${aiOpen ? "rotate-180" : ""}`}
+          />
+        </button>
+      </div>
+      <div
+        className={`mb-4 rounded-md border border-violet-200 bg-violet-50 p-3 dark:border-violet-500/30 dark:bg-violet-500/10 ${
+          aiOpen ? "" : "hidden"
+        }`}
+      >
+        <div className="flex flex-wrap gap-2">
           <input
             value={aiText}
             onChange={(event) => setAiText(event.target.value)}
