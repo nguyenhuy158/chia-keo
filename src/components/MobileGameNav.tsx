@@ -1,12 +1,13 @@
-import { ListChecks, Plus, QrCode, Users, Wallet } from "lucide-react";
+import { Images, ListChecks, Plus, QrCode, Users, Wallet } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useMobileShell } from "./mobile-shell";
 
-export type GameSection = "people" | "expenses" | "summary";
+export type GameSection = "people" | "expenses" | "photos" | "summary";
 
 const SECTIONS: { id: GameSection; label: string; icon: LucideIcon }[] = [
   { id: "people", label: "Người", icon: Users },
   { id: "expenses", label: "Chi", icon: Wallet },
+  { id: "photos", label: "Ảnh", icon: Images },
   { id: "summary", label: "Tổng kết", icon: QrCode },
 ];
 
@@ -21,7 +22,7 @@ export function MobileGameNav({ active, onChange }: MobileGameNavProps) {
 
   return (
     <nav className="safe-bottom fixed inset-x-0 bottom-0 z-40 border-t border-stone-200 bg-white/95 backdrop-blur dark:border-stone-800 dark:bg-stone-900/95 lg:hidden">
-      <div className="mx-auto grid max-w-md grid-cols-4">
+      <div className="mx-auto grid max-w-md grid-cols-5">
         <button
           type="button"
           onClick={() => shell?.openGames()}

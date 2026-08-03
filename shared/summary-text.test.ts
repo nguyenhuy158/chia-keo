@@ -18,12 +18,17 @@ function makeExpense(
 ): ApiExpense {
   return {
     id,
+    kind: "expense",
     title,
     amount,
     note: "",
     payerParticipantId,
+    splitMode: "equal",
     splitParticipantIds,
-    shares: allocateAmount(amount, splitParticipantIds),
+    splits: allocateAmount(amount, splitParticipantIds).map((share) => ({
+      ...share,
+      weight: null,
+    })),
     createdAt: `2026-08-03T00:00:0${id.length}.000Z`,
   };
 }
@@ -34,7 +39,7 @@ function makeSummary(participants: ApiParticipant[], expenses: ApiExpense[]): Ap
     expenses.map((expense) => ({
       payerParticipantId: expense.payerParticipantId,
       amount: expense.amount,
-      shares: expense.shares,
+      shares: expense.splits,
     })),
   );
 

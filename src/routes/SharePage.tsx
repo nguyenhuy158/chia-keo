@@ -1,15 +1,16 @@
 import { useParams } from "@tanstack/react-router";
-import { Check, ListChecks, Square, Table2 } from "lucide-react";
+import { Check, Images, ListChecks, Square, Table2 } from "lucide-react";
 import { useState } from "react";
 import type { ApiExpense, ApiParticipant, ApiSummary } from "../../shared/api-types";
 import { CopyMenu } from "../components/CopyMenu";
 import { GameDashboard } from "../components/GameDashboard";
+import { SharePhotoGallery } from "../components/SharePhotoGallery";
 import { ThemeToggle } from "../components/theme";
 import { EmptyState, LoadingState } from "../components/ui";
-import { formatMoney } from "../lib/money";
-import { useShareView } from "../lib/queries";
+import { formatMoney } from "../core/domain/money";
+import { useShareView } from "../adapters/react-query/queries";
 
-type ShareTab = "summary" | "matrix";
+type ShareTab = "summary" | "matrix" | "photos";
 
 type ExpenseMatrixProps = {
   participants: ApiParticipant[];
@@ -24,11 +25,15 @@ const STICKY_COUNT_WIDTH = 68;
 const STICKY_SHARE_WIDTH = 86;
 
 function getExpenseShare(expense: ApiExpense) {
-  const splitParticipantIds = new Set(expense.splitParticipantIds);
-  const splitCount = expense.splitParticipantIds.length;
-  const shareAmount = splitCount > 0 ? Math.round(expense.amount / splitCount) : 0;
+  const splitCount = expense.splits.length;
+  const shareByParticipantId = new Map(
+    expense.splits.map((split) => [split.participantId, split.amount]),
+  );
+  // "/nguoi" chi co nghia khi chia deu; mode khac hien thi theo tung o.
+  const shareAmount =
+    expense.splitMode === "equal" && splitCount > 0 ? Math.round(expense.amount / splitCount) : null;
 
-  return { shareAmount, splitCount, splitParticipantIds };
+  return { shareAmount, splitCount, shareByParticipantId };
 }
 
 function formatPlainMoney(value: number) {
@@ -39,6 +44,7 @@ function ExpenseMatrix({ participants, expenses, summary }: ExpenseMatrixProps) 
   const balanceByParticipantId = new Map(
     summary.balances.map((balance) => [balance.participantId, balance]),
   );
+  const visibleExpenses = expenses.filter((expense) => expense.kind !== "transfer");
 
   return (
     <section className="min-h-0 overflow-hidden rounded-lg border border-stone-200 bg-white shadow-sm dark:border-stone-800 dark:bg-stone-900">
@@ -46,17 +52,17 @@ function ExpenseMatrix({ participants, expenses, summary }: ExpenseMatrixProps) 
         <div>
           <h2 className="text-sm font-semibold text-stone-950 dark:text-stone-50">Bảng chia</h2>
           <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">
-            Tick vàng là người tham gia khoản chi.
+            Ô vàng là phần tiền từng người trong khoản chi.
           </p>
         </div>
         <span className="shrink-0 text-xs font-semibold text-stone-500 tabular dark:text-stone-400">
-          {expenses.length} khoản
+          {visibleExpenses.length} khoản
         </span>
       </div>
 
       <div className="max-h-[calc(100vh-13rem)] space-y-3 overflow-auto p-3 md:hidden">
-        {expenses.map((expense) => {
-          const { shareAmount, splitCount, splitParticipantIds } = getExpenseShare(expense);
+        {visibleExpenses.map((expense) => {
+          const { shareAmount, splitCount, shareByParticipantId } = getExpenseShare(expense);
 
           return (
             <article
@@ -82,14 +88,15 @@ function ExpenseMatrix({ participants, expenses, summary }: ExpenseMatrixProps) 
                 <div className="rounded-md bg-stone-50 px-2 py-2 dark:bg-stone-950">
                   <p className="font-medium text-stone-500 dark:text-stone-400">/người</p>
                   <p className="mt-1 font-semibold tabular text-stone-950 dark:text-stone-50">
-                    {formatPlainMoney(shareAmount)}
+                    {shareAmount === null ? "Tùy chỉnh" : formatPlainMoney(shareAmount)}
                   </p>
                 </div>
               </div>
 
               <div className="mt-3 grid grid-cols-2 gap-2">
                 {participants.map((participant) => {
-                  const isIncluded = splitParticipantIds.has(participant.id);
+                  const share = shareByParticipantId.get(participant.id);
+                  const isIncluded = share !== undefined;
 
                   return (
                     <span
@@ -102,6 +109,9 @@ function ExpenseMatrix({ participants, expenses, summary }: ExpenseMatrixProps) 
                     >
                       {isIncluded ? <Check size={14} /> : <Square size={14} />}
                       <span className="truncate">{participant.name}</span>
+                      {isIncluded && (
+                        <span className="ml-auto shrink-0 tabular">{formatPlainMoney(share)}</span>
+                      )}
                     </span>
                   );
                 })}
@@ -172,8 +182,8 @@ function ExpenseMatrix({ participants, expenses, summary }: ExpenseMatrixProps) 
             </tr>
           </thead>
           <tbody>
-            {expenses.map((expense) => {
-              const { shareAmount, splitCount, splitParticipantIds } = getExpenseShare(expense);
+            {visibleExpenses.map((expense) => {
+              const { shareAmount, splitCount, shareByParticipantId } = getExpenseShare(expense);
 
               return (
                 <tr key={expense.id}>
@@ -211,10 +221,11 @@ function ExpenseMatrix({ participants, expenses, summary }: ExpenseMatrixProps) 
                       minWidth: STICKY_SHARE_WIDTH,
                     }}
                   >
-                    {formatPlainMoney(shareAmount)}
+                    {shareAmount === null ? "—" : formatPlainMoney(shareAmount)}
                   </td>
                   {participants.map((participant) => {
-                    const isIncluded = splitParticipantIds.has(participant.id);
+                    const share = shareByParticipantId.get(participant.id);
+                    const isIncluded = share !== undefined;
                     return (
                       <td
                         key={participant.id}
@@ -224,9 +235,15 @@ function ExpenseMatrix({ participants, expenses, summary }: ExpenseMatrixProps) 
                             : "bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300"
                         }`}
                       >
-                        <span className="inline-flex h-7 w-7 items-center justify-center rounded-md">
-                          {isIncluded ? <Check size={24} /> : <Square size={24} />}
-                        </span>
+                        {isIncluded ? (
+                          <span className="inline-flex h-7 items-center justify-center text-sm font-semibold tabular">
+                            {formatPlainMoney(share)}
+                          </span>
+                        ) : (
+                          <span className="inline-flex h-7 w-7 items-center justify-center rounded-md">
+                            <Square size={24} />
+                          </span>
+                        )}
                       </td>
                     );
                   })}
@@ -269,6 +286,7 @@ export function SharePage() {
   const tabs: Array<{ id: ShareTab; label: string; icon: typeof ListChecks }> = [
     { id: "summary", label: "Tổng kết", icon: ListChecks },
     { id: "matrix", label: "Bảng chia", icon: Table2 },
+    { id: "photos", label: "Ảnh", icon: Images },
   ];
 
   return (
@@ -296,7 +314,7 @@ export function SharePage() {
         </div>
       </div>
 
-      <div className="grid shrink-0 grid-cols-2 gap-2 rounded-lg bg-stone-100 p-1 dark:bg-stone-900">
+      <div className="grid shrink-0 grid-cols-3 gap-2 rounded-lg bg-stone-100 p-1 dark:bg-stone-900">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -319,15 +337,22 @@ export function SharePage() {
       </div>
 
       <div className="min-h-0 flex-1 overflow-auto">
-        {activeTab === "summary" ? (
+        {activeTab === "photos" ? (
+          <div className="mx-auto max-w-2xl pb-4">
+            <SharePhotoGallery token={token} expenses={view.expenses} />
+          </div>
+        ) : activeTab === "summary" ? (
           <div className="mx-auto max-w-2xl space-y-5 pb-4">
             <GameDashboard
               code={view.code}
               name={view.name}
               participants={view.participants}
-              expenseCount={view.expenses.length}
+              expenseCount={
+                view.expenses.filter((expense) => expense.kind !== "transfer").length
+              }
               summary={view.summary}
               settlementMode={view.settlementMode}
+              expenses={view.expenses}
             />
 
             <section className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm dark:border-stone-800 dark:bg-stone-900">
@@ -336,7 +361,9 @@ export function SharePage() {
               </h3>
               <div className="mt-4 space-y-2">
                 {view.expenses.length > 0 ? (
-                  view.expenses.map((expense) => {
+                  view.expenses
+                    .filter((expense) => expense.kind !== "transfer")
+                    .map((expense) => {
                     const payer = participantById.get(expense.payerParticipantId);
                     return (
                       <div

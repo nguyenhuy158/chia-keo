@@ -105,9 +105,13 @@ export const expenses = sqliteTable(
     payerParticipantId: text("payer_participant_id")
       .notNull()
       .references(() => participants.id, { onDelete: "cascade" }),
+    // "expense": khoan chi thuong; "transfer": ghi nhan tra no giua hai nguoi.
+    kind: text("kind").notNull().default("expense"),
     title: text("title").notNull(),
     amount: integer("amount").notNull(),
     note: text("note").notNull().default(""),
+    // "equal": chia deu; "shares": theo so phan; "amount": so tien cu the.
+    splitMode: text("split_mode").notNull().default("equal"),
     createdAt: text("created_at").notNull(),
     updatedAt: text("updated_at").notNull(),
   },
@@ -125,10 +129,36 @@ export const expenseSplits = sqliteTable(
       .notNull()
       .references(() => participants.id, { onDelete: "cascade" }),
     amount: integer("amount").notNull(),
+    // So phan khi expense chia theo mode "shares"; null cho cac mode khac.
+    weight: integer("weight"),
   },
   (table) => [
     index("expense_splits_expense_id_idx").on(table.expenseId),
     uniqueIndex("expense_splits_expense_participant_idx").on(table.expenseId, table.participantId),
+  ],
+);
+
+export const gamePhotos = sqliteTable(
+  "game_photos",
+  {
+    id: text("id").primaryKey(),
+    gameId: text("game_id")
+      .notNull()
+      .references(() => games.id, { onDelete: "cascade" }),
+    // Anh gan vao mot khoan chi (hoa don); null la anh chung cua cuoc chia.
+    expenseId: text("expense_id").references(() => expenses.id, { onDelete: "set null" }),
+    caption: text("caption").notNull().default(""),
+    mimeType: text("mime_type").notNull(),
+    width: integer("width").notNull(),
+    height: integer("height").notNull(),
+    // Base64 anh goc da nen o trinh duyet va ban thu nho cho luoi anh.
+    data: text("data").notNull(),
+    thumbData: text("thumb_data").notNull(),
+    createdAt: text("created_at").notNull(),
+  },
+  (table) => [
+    index("game_photos_game_id_idx").on(table.gameId),
+    index("game_photos_expense_id_idx").on(table.expenseId),
   ],
 );
 

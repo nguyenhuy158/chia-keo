@@ -11,36 +11,54 @@ Ung dung chia tien nhom cho cac buoi an, di choi, du lich hoac nhom chi tieu nho
   - Tao nhieu cuoc choi.
   - Them nguoi tham gia va thong tin ngan hang.
   - Ghi khoan chi, nguoi tra tien, danh sach nguoi cung chia.
+  - Chia deu, chia theo so phan (weights) hoac nhap so tien cu the tung nguoi.
+  - Ghi nhan tra no (reimbursement): danh dau mot khoan chuyen la "da tra",
+    balance hai ben tu cap nhat, khong tinh vao tong chi.
   - Dùng Gemini để gợi ý khoản chi từ câu nhập nhanh hoặc ảnh hóa đơn.
+  - Album ảnh cho từng cuộc chia (giống Tricount): thêm nhiều ảnh một lượt,
+    đính kèm ảnh hóa đơn vào khoản chi, xem toàn màn hình (lướt, chú thích,
+    tải về, xóa) và xem lại qua link share.
   - Lưu mẫu chi tiêu, xuất báo cáo text và xem thống kê nhanh.
 - Tinh `da tra`, `phan chiu`, `con lai`.
-- Sinh danh sach nguoi can chuyen tien ve chu cuoc choi.
+- Toi gian cong no peer-to-peer: ghep nguoi am voi nguoi duong de so lan
+  chuyen khoan it nhat (khong bat buoc chuyen ve chu cuoc choi).
   - Tạo link share dạng chỉ xem hoặc cho nhập thêm khoản chi qua `/share/:token`.
   - Tao VietQR bang `img.vietqr.io` neu nguoi nhan co du thong tin ngan hang.
 
 ## Kiến trúc hiện tại
 
-Project đang áp dụng hexagonal architecture dạng nhẹ cho frontend.
+Project áp dụng hexagonal architecture (ports & adapters) cho cả frontend lẫn
+worker, domain kernel dùng chung nằm ở `shared/`.
 
 ```text
+shared/              # Domain thuần dùng chung: split, schema, ai, DTO
 src/
   core/
-    domain/          # Type, rule tính tiền, tiền tệ, phân loại, schema
-    application/     # Use case điều phối domain
-    ports/           # Interface để adapter implement khi cần
+    domain/          # Rule thuần chỉ FE dùng (money)
+    ports/           # GameApiPort (backend), QrProviderPort (QR)
+    container.ts     # DI tối giản, main.tsx cắm adapter vào
   adapters/
-    browser/         # fetch API, DiceBear avatar, VietQR
-  lib/               # Compatibility re-export cho import cũ
-  App.tsx            # Presentation layer
+    browser/         # fetch API, VietQR, Better Auth client, theme, nén ảnh
+    react-query/     # Hook React Query bọc GameApiPort, upload ảnh
+  components/ routes/  # Presentation
+worker/src/
+  core/
+    ports/           # GameRepository (DB), AiProvider (AI)
+    application/     # Use case: games, participants, expenses, share, ai
+  adapters/
+    d1/              # Drizzle schema + repository cho Cloudflare D1
+    gemini/          # Gemini adapter cho AiProvider
+  routes/            # Hono routes mỏng: parse -> use case -> JSON
 ```
 
 Quy tắc chính:
 
-- `src/core` không import `fetch`, DiceBear, VietQR, React UI hoặc browser API.
-- Logic tính toán và validate nằm trong `src/core/domain`.
-- Use case phối hợp nhiều rule nằm trong `src/core/application`.
-- Code phụ thuộc browser/service ngoài nằm trong `src/adapters/browser`.
-- UI chỉ gọi core/adapters qua entrypoint rõ ràng, không tự chứa business rule phức tạp.
+- `core` không import adapter, không gọi `fetch`/driver DB/SDK ngoài.
+- Business rule thuần ở `shared/` (dùng chung) hoặc `core/domain`.
+- Nghiệp vụ backend ở `worker/src/core/application`, thao tác dữ liệu đi qua
+  port `GameRepository`; route Hono chỉ parse input và map lỗi sang HTTP.
+- Muốn thay DB/AI/QR/HTTP client: viết adapter mới implement port tương ứng,
+  cắm ở composition root (`src/main.tsx`, `worker/src/lib/require-user.ts`).
 
 Xem thêm: `docs/architecture.md`.
 
@@ -103,14 +121,16 @@ Nguoi tham gia trong mot cuoc choi.
 
 ### `expenses`
 
-Khoan da chi.
+Khoan da chi hoac khoan tra no.
 
 - `id`
 - `game_id`
 - `payer_participant_id`
+- `kind` (`expense` | `transfer`)
 - `title`
 - `amount`
 - `note`
+- `split_mode` (`equal` | `shares` | `amount`)
 - `created_at`
 - `updated_at`
 
@@ -122,6 +142,25 @@ Danh sach nguoi phai chiu mot khoan chi.
 - `expense_id`
 - `participant_id`
 - `amount`
+- `weight` (so phan khi `split_mode = shares`, null cho mode khac)
+
+### `game_photos`
+
+Anh cua mot cuoc chia (album chung hoac anh hoa don cua mot khoan chi).
+
+- `id`
+- `game_id`
+- `expense_id` (null neu la anh chung cua cuoc chia)
+- `caption`
+- `mime_type`
+- `width`, `height`
+- `data` (base64 anh goc, canh dai toi da 1600px)
+- `thumb_data` (base64 anh thu nho cho luoi anh)
+- `created_at`
+
+Anh duoc nen ngay o trinh duyet truoc khi gui len (JPEG, ha dan chat luong cho
+den khi du nho), moi cuoc chia gioi han 60 anh de khong lam phinh D1. Danh sach
+anh chi tra `thumb_data`; anh goc chi tai khi mo che do xem toan man hinh.
 
 ### `share_links`
 
@@ -149,12 +188,16 @@ Thong tin nhan tien cua chu cuoc choi.
 
 ## Luong tinh tien
 
-Voi moi khoan chi:
+Voi moi khoan chi, phan chiu cua tung nguoi phu thuoc `split_mode`:
 
-1. Lay `amount`.
-2. Lay danh sach nguoi duoc tick trong `expense_splits`.
-3. Chia `amount / so nguoi duoc tick`.
-4. Neu so tien le, phan du duoc cong lan luot cho cac nguoi dau danh sach de tong split luon bang tong tien goc.
+- `equal`: chia `amount / so nguoi duoc tick`; so tien le duoc cong lan luot
+  cho cac nguoi dau danh sach de tong split luon bang tong tien goc.
+- `shares`: chia theo so phan (`weight`) cua tung nguoi, phan du xu ly nhu tren.
+- `amount`: nhap so tien cu the tung nguoi, tong cac phan phai bang `amount`.
+
+Khoan tra no (`kind = transfer`) duoc luu nhu mot khoan chi ma nguoi nhan
+chiu 100%: nguoi tra tang `paid`, nguoi nhan tang `owed`, nen balance hai ben
+tu can bang lai. Transfer khong tinh vao `totalExpense`.
 
 Voi moi nguoi:
 
@@ -168,11 +211,14 @@ Y nghia balance:
 - `balance < 0`: phai chuyen them.
 - `balance = 0`: da can bang.
 
-Sau khi co balance o V1:
+Sau khi co balance, tinh danh sach chuyen khoan toi uu (peer-to-peer):
 
-1. Tao danh sach nguoi co `balance < 0`.
-2. Moi nguoi trong danh sach chuyen so tien `abs(balance)` ve tai khoan chu cuoc choi.
-3. QR VietQR lay tu `payment_profiles` cua cuoc choi.
+1. Ghep nguoi co `balance < 0` voi nguoi co `balance > 0` theo so tien giam dan,
+   moi lan chuyen `min` cua hai ben cho den khi can bang het (toi da `n - 1`
+   giao dich).
+2. Tren UI chu cuoc choi co the bam "Đã trả" tren tung dong de ghi nhan
+   khoan do thanh mot transfer.
+3. QR VietQR lay tu `payment_profiles` cua nguoi nhan (neu du thong tin).
 
 ## API de xuat
 
@@ -188,9 +234,17 @@ Sau khi co balance o V1:
 - `POST /games/:gameId/expenses`
 - `PATCH /expenses/:expenseId`
 - `DELETE /expenses/:expenseId`
+- `POST /games/:gameId/transfers`
+- `GET /games/:gameId/photos`
+- `POST /games/:gameId/photos`
+- `GET /photos/:photoId` (kem anh goc)
+- `PATCH /photos/:photoId` (chu thich, gan/go khoi khoan chi)
+- `DELETE /photos/:photoId`
 - `GET /games/:gameId/summary`
 - `POST /games/:gameId/share-links`
 - `GET /share/:token`
+- `GET /share/:token/photos`
+- `GET /share/:token/photos/:photoId`
 - `POST /api/ai/expense`
 - `POST /api/ai/receipt`
 - `PUT /api/share/:token` khi link share có quyền edit

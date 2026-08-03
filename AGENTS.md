@@ -2,16 +2,74 @@
 
 ## Project Structure & Module Organization
 
-This is a React + Vite + TypeScript application using a lightweight hexagonal
-architecture. The app entry point is `src/main.tsx`, which renders
-`src/App.tsx`. Domain types and pure business rules live under
-`src/core/domain/`. Application use cases live under `src/core/application/`.
-Ports live under `src/core/ports/`. Browser-dependent implementations such as
-fetch API calls, DiceBear avatar generation, and VietQR helpers live under
-`src/adapters/browser/`. The `src/lib/` folder is a compatibility
-re-export layer for older imports; do not add new source logic there. Global
-styles and Tailwind CSS import live in `src/styles.css`. The static HTML shell
-is `index.html`.
+This is a React + Vite + TypeScript frontend plus a Hono Cloudflare Worker
+backend, both structured as hexagons (ports & adapters) around a shared pure
+domain kernel in `shared/` (split math, zod schemas, AI normalization, DTOs).
+
+Frontend: entry point `src/main.tsx` is the composition root that plugs
+adapters into ports via `src/core/container.ts`. Pure FE-only rules live in
+`src/core/domain/`, port interfaces in `src/core/ports/` (GameApiPort,
+QrProviderPort). Implementations live in `src/adapters/browser/` (fetch API,
+VietQR, Better Auth client, theme) and `src/adapters/react-query/` (React
+Query hooks over GameApiPort). UI lives in `src/components/` and
+`src/routes/`. Global styles live in `src/styles.css`; the HTML shell is
+`index.html`.
+
+Worker: port interfaces in `worker/src/core/ports/` (GameRepository,
+AiProvider), use cases and policies in `worker/src/core/application/`,
+implementations in `worker/src/adapters/d1/` (drizzle schema + repository)
+and `worker/src/adapters/gemini/`. Hono routes in `worker/src/routes/` are
+thin driving adapters. See `docs/architecture.md` for dependency rules.
+
+Folder structure:
+
+```text
+shared/                        # Pure domain kernel shared by FE + worker (no IO)
+  split.ts                     #   Split math, balances, settlements, computeSplitRows
+  schemas.ts                   #   Zod input schemas + domain constants
+  ai.ts                        #   AI suggestion normalization/resolution (pure)
+  photos.ts                    #   Photo helpers (counts, viewer index, data URI)
+  api-types.ts                 #   DTOs exchanged between FE and worker
+  rate-limit.ts                #   Pure rate-limit logic
+  vietqr.ts                    #   VietQR URL building (worker proxies QR too)
+  summary-text.ts              #   Summary document for copy-as-text/image
+
+src/                           # Frontend hexagon
+  core/
+    domain/money.ts            #   VND format/parse (FE-only pure rules)
+    ports/game-api.ts          #   Backend API port
+    ports/qr-provider.ts       #   Payment QR port
+    container.ts               #   Minimal DI: provide*/get* per port
+  adapters/
+    browser/http-game-api.ts   #   fetch adapter for GameApiPort
+    browser/vietqr.ts          #   VietQR adapter for QrProviderPort
+    browser/auth-client.ts     #   Better Auth client
+    browser/theme.ts           #   localStorage + matchMedia theme persistence
+    browser/image.ts           #   Canvas photo compression before upload
+    browser/clipboard.ts       #   Clipboard write with execCommand fallback
+    browser/summary-image.ts   #   Draw the summary card to canvas -> PNG
+    react-query/queries.ts     #   React Query hooks over GameApiPort
+    react-query/photo-upload.ts#   Compress + upload photos with progress
+  components/  routes/         #   Presentation (React)
+  main.tsx                     #   Composition root: plugs adapters into ports
+
+worker/src/                    # Backend hexagon (Hono on Cloudflare Worker)
+  core/
+    ports/game-repository.ts   #   Storage port (row types + interface)
+    ports/ai-provider.ts       #   AI JSON-generation port
+    application/               #   Use cases + policies (ownership, realloc, ...)
+  adapters/
+    d1/schema.ts               #   Drizzle schema (drizzle-kit source)
+    d1/game-repository.ts      #   D1/drizzle adapter for GameRepository
+    gemini/gemini.ts           #   Gemini adapter for AiProvider
+  routes/                      #   Thin HTTP adapters: parse -> use case -> JSON
+  lib/                         #   Small infra: http helpers, ids, require-user
+  auth.ts  env.ts  index.ts    #   Better Auth, Env type, app + middleware
+
+functions/api/[[path]].ts      # Cloudflare Pages shim delegating /api/* to the worker
+drizzle/                       # Generated D1 migrations
+e2e/ui-smoke.mjs               # Playwright smoke suite (pnpm e2e)
+```
 
 ## Build, Test, and Development Commands
 
@@ -37,21 +95,25 @@ Split complex logic into small, named functions with one clear responsibility.
 
 Hexagonal boundaries:
 
-- Put pure rules, calculations, parsing, and schema validation in
-  `src/core/domain/`.
-- Put use cases that coordinate domain rules in `src/core/application/`.
-- Put browser/service implementations in `src/adapters/browser/`.
-- Keep `fetch`, `window`, `document`, DiceBear, VietQR, and UI
-  libraries out of `src/core/`.
-- Keep `src/lib/` as re-export compatibility only.
+- Put pure rules, calculations, parsing, and schema validation shared by FE
+  and worker in `shared/`; FE-only pure rules in `src/core/domain/`.
+- Put backend business logic in `worker/src/core/application/`; data access
+  goes through the `GameRepository` port, never inline SQL in routes.
+- Put browser/service implementations in `src/adapters/*`; put DB/AI
+  implementations in `worker/src/adapters/*`.
+- Keep `fetch`, `window`, `document`, drizzle, VietQR, and UI libraries out
+  of every `core/` and out of `shared/`.
+- New swappable dependencies get a port in `core/ports/` plus an adapter,
+  wired at the composition root (`src/main.tsx` or
+  `worker/src/lib/require-user.ts`).
 
 ## Testing Guidelines
 
 Tests use Vitest. Prefer colocated test files beside the related module, for
-example `src/core/domain/split.test.ts` for pure logic or component tests beside
-the related component. Existing `src/lib/*.test.ts` files may stay while `src/lib`
-is kept as a compatibility layer. Prioritize coverage for settlement math,
-storage behavior, share snapshots, and QR payload generation.
+example `shared/split.test.ts` for shared domain math,
+`src/core/domain/money.test.ts` for FE domain rules, or
+`src/adapters/browser/vietqr.test.ts` for adapter logic. Prioritize coverage
+for settlement math, split policies, and QR payload generation.
 
 ## Commit & Pull Request Guidelines
 

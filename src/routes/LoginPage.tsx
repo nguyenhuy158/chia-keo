@@ -4,7 +4,7 @@ import { WalletCards } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { authClient, usernameToEmail } from "../lib/auth-client";
+import { authClient, usernameToEmail } from "../adapters/browser/auth-client";
 import { ThemeToggle } from "../components/theme";
 import { Field, LoadingState } from "../components/ui";
 

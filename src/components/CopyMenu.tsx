@@ -10,8 +10,8 @@ import {
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { buildSummaryText, type SummaryTextInput } from "../../shared/summary-text";
-import { copyImage, copyText, downloadBlob } from "../lib/clipboard";
-import { buildSummaryImageFileName, renderSummaryImage } from "../lib/summary-image";
+import { copyImage, copyText, downloadBlob } from "../adapters/browser/clipboard";
+import { buildSummaryImageFileName, renderSummaryImage } from "../adapters/browser/summary-image";
 import { useToast } from "./Toast";
 
 const MENU_WIDTH = 268;

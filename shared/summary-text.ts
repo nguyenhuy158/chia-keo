@@ -57,10 +57,11 @@ function formatShortMoney(value: number) {
 
 /**
  * Expense list tu API sap xep moi nhat truoc; doc bang chu thi de theo doi hon
- * khi di tu khoan cu nhat.
+ * khi di tu khoan cu nhat. Khoan tra no (kind "transfer") da phan anh vao
+ * balance nen khong liet ke chung voi cac khoan chi.
  */
-function toChronologicalOrder(expenses: ApiExpense[]) {
-  return [...expenses].reverse();
+function toListedExpenses(expenses: ApiExpense[]) {
+  return expenses.filter((expense) => expense.kind !== "transfer").reverse();
 }
 
 function buildExpenseLines(
@@ -69,17 +70,19 @@ function buildExpenseLines(
   participantCount: number,
 ) {
   return expenses.map((expense, index) => {
-    const splitCount = expense.splitParticipantIds.length;
+    const splitCount = expense.splits.length;
     const perPerson = splitCount > 0 ? expense.amount / splitCount : 0;
     const payerName = nameById.get(expense.payerParticipantId) || UNKNOWN_NAME;
     const isWholeGroup = splitCount > 0 && splitCount === participantCount;
     const who = isWholeGroup
       ? "cả nhóm"
-      : expense.splitParticipantIds.map((id) => nameById.get(id) || UNKNOWN_NAME).join(", ");
+      : expense.splits.map((split) => nameById.get(split.participantId) || UNKNOWN_NAME).join(", ");
 
+    const perPersonLabel =
+      expense.splitMode === "equal" ? formatShortMoney(perPerson) : "chia tùy chỉnh";
     const parts = [
       `${index + 1}. ${expense.title} — ${formatShortMoney(expense.amount)}`,
-      `${splitCount} người = ${formatShortMoney(perPerson)}`,
+      `${splitCount} người = ${perPersonLabel}`,
     ];
     if (who) parts.push(who);
     parts.push(`${payerName} trả`);
@@ -100,7 +103,7 @@ function buildPersonLines(
   return participants.map((participant) => {
     const terms: string[] = [];
     for (const expense of expenses) {
-      const share = expense.shares.find((row) => row.participantId === participant.id);
+      const share = expense.splits.find((row) => row.participantId === participant.id);
       if (share && share.amount > 0) terms.push(formatThousands(share.amount));
     }
 
@@ -144,7 +147,7 @@ function buildHostSection(
 
 export function buildSummaryDocument(input: SummaryTextInput): SummaryDocument {
   const { code, name, participants, summary, shareUrl } = input;
-  const expenses = toChronologicalOrder(input.expenses);
+  const expenses = toListedExpenses(input.expenses);
   const nameById = new Map(participants.map((participant) => [participant.id, participant.name]));
 
   const sections: SummarySection[] = [

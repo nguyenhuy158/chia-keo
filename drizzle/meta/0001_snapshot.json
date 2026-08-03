@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "a6ed456e-aedf-40fc-8b95-4796b6c24c01",
+  "id": "c92dfe2b-71eb-49ff-9c01-aaebf8eb53bf",
   "prevId": "cc41dfa9-08b3-431e-ac60-20fec75ce2b2",
   "tables": {
     "account": {
@@ -157,6 +157,13 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
+        },
+        "weight": {
+          "name": "weight",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
         }
       },
       "indexes": {
@@ -232,6 +239,14 @@
           "notNull": true,
           "autoincrement": false
         },
+        "kind": {
+          "name": "kind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'expense'"
+        },
         "title": {
           "name": "title",
           "type": "text",
@@ -253,6 +268,14 @@
           "notNull": true,
           "autoincrement": false,
           "default": "''"
+        },
+        "split_mode": {
+          "name": "split_mode",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'equal'"
         },
         "created_at": {
           "name": "created_at",
@@ -340,14 +363,6 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
-        },
-        "settlement_mode": {
-          "name": "settlement_mode",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "'p2p'"
         },
         "created_at": {
           "name": "created_at",

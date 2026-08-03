@@ -1,6 +1,26 @@
+export type SplitMode = "equal" | "shares" | "amount";
+
 export type SplitShare = {
   participantId: string;
   amount: number;
+};
+
+export type WeightedShare = {
+  participantId: string;
+  weight: number;
+};
+
+/** Mot dong split day du de luu: weight chi co nghia voi mode "shares". */
+export type ComputedSplit = {
+  participantId: string;
+  amount: number;
+  weight: number | null;
+};
+
+/** Gia tri nhap cho mode "shares" (so phan) hoac "amount" (so tien). */
+export type SplitValueInput = {
+  participantId: string;
+  value: number;
 };
 
 export type ExpenseInput = {
@@ -22,6 +42,8 @@ export type SettlementRow = {
   amount: number;
 };
 
+export const MAX_SPLIT_WEIGHT = 1000;
+
 /**
  * Chia `amount` cho danh sach nguoi tham gia. Phan du (neu tien le) duoc cong
  * lan luot cho cac nguoi dau danh sach de tong split luon bang tong tien goc.
@@ -35,6 +57,69 @@ export function allocateAmount(amount: number, participantIds: string[]): SplitS
   return participantIds.map((participantId, index) => ({
     participantId,
     amount: base + (index < remainder ? 1 : 0),
+  }));
+}
+
+/**
+ * Chia `amount` theo trong so (so phan) cua tung nguoi. Phan du sau khi lay
+ * phan nguyen duoc cong lan luot cho cac nguoi dau danh sach, cung quy uoc
+ * voi `allocateAmount` de tong split luon bang tong tien goc.
+ */
+export function allocateByWeights(amount: number, entries: WeightedShare[]): SplitShare[] {
+  const validEntries = entries.filter((entry) => entry.weight > 0);
+  if (validEntries.length === 0) return [];
+
+  // Dung BigInt cho phep nhan de khong tran so khi amount va weight deu lon
+  // (vi du chia lai theo ty le so tien cu).
+  const totalWeight = validEntries.reduce((sum, entry) => sum + entry.weight, 0);
+  const shares = validEntries.map((entry) => ({
+    participantId: entry.participantId,
+    amount: Number((BigInt(amount) * BigInt(entry.weight)) / BigInt(totalWeight)),
+  }));
+
+  let remainder = amount - shares.reduce((sum, share) => sum + share.amount, 0);
+  for (let index = 0; remainder > 0; index = (index + 1) % shares.length) {
+    shares[index].amount += 1;
+    remainder -= 1;
+  }
+
+  return shares;
+}
+
+/**
+ * Tinh danh sach dong split day du theo mode. Tra ve null khi input khong hop
+ * le: khong co ai chia, trung nguoi, so phan qua lon, hoac tong tien tuy chinh
+ * khong khop tong khoan chi.
+ */
+export function computeSplitRows(
+  amount: number,
+  mode: SplitMode,
+  participantIds: string[],
+  splits: SplitValueInput[],
+): ComputedSplit[] | null {
+  if (mode === "equal") {
+    const ids = [...new Set(participantIds)];
+    if (ids.length === 0) return null;
+    return allocateAmount(amount, ids).map((share) => ({ ...share, weight: null }));
+  }
+
+  if (splits.length === 0) return null;
+  if (new Set(splits.map((split) => split.participantId)).size !== splits.length) return null;
+
+  if (mode === "shares") {
+    if (splits.some((split) => split.value > MAX_SPLIT_WEIGHT)) return null;
+    return allocateByWeights(
+      amount,
+      splits.map((split) => ({ participantId: split.participantId, weight: split.value })),
+    ).map((share, index) => ({ ...share, weight: splits[index].value }));
+  }
+
+  const total = splits.reduce((sum, split) => sum + split.value, 0);
+  if (total !== amount) return null;
+  return splits.map((split) => ({
+    participantId: split.participantId,
+    amount: split.value,
+    weight: null,
   }));
 }
 

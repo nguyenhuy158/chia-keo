@@ -1,5 +1,3 @@
-import { asc, desc, eq, inArray } from "drizzle-orm";
-import { drizzle } from "drizzle-orm/d1";
 import type {
   ApiExpense,
   ApiGameDetail,
@@ -7,10 +5,10 @@ import type {
   ApiShareLink,
   ApiShareView,
   ApiSummary,
-} from "../../../shared/api-types";
-import { DEFAULT_SETTLEMENT_MODE, settlementModeSchema } from "../../../shared/schemas";
-import { calculateBalances, calculateSettlements } from "../../../shared/split";
-import * as schema from "../db/schema";
+} from "../../../../shared/api-types";
+import { DEFAULT_SETTLEMENT_MODE, settlementModeSchema } from "../../../../shared/schemas";
+import { calculateBalances, calculateSettlements } from "../../../../shared/split";
+import type { GameRepository, GameRow } from "../ports/game-repository";
 
 /** Cot trong DB la TEXT tu do, ep ve mot gia tri hop le truoc khi tra ve. */
 function toSettlementMode(value: string) {
@@ -18,50 +16,21 @@ function toSettlementMode(value: string) {
   return parsed.success ? parsed.data : DEFAULT_SETTLEMENT_MODE;
 }
 
-export type Db = ReturnType<typeof drizzle<typeof schema>>;
-
-export function createDb(d1: D1Database): Db {
-  return drizzle(d1, { schema });
-}
-
-type GameRow = typeof schema.games.$inferSelect;
-
 type GameData = {
   participants: ApiParticipant[];
   expenses: ApiExpense[];
   summary: ApiSummary;
 };
 
-async function loadGameData(db: Db, gameId: string): Promise<GameData> {
-  const participantRows = await db
-    .select()
-    .from(schema.participants)
-    .where(eq(schema.participants.gameId, gameId))
-    .orderBy(asc(schema.participants.createdAt));
-
+async function loadGameData(repo: GameRepository, gameId: string): Promise<GameData> {
+  const participantRows = await repo.participants.listByGame(gameId);
   const participantIds = participantRows.map((row) => row.id);
 
-  const paymentRows = participantIds.length
-    ? await db
-        .select()
-        .from(schema.paymentProfiles)
-        .where(inArray(schema.paymentProfiles.participantId, participantIds))
-    : [];
+  const paymentRows = await repo.paymentProfiles.listByParticipantIds(participantIds);
   const paymentByParticipantId = new Map(paymentRows.map((row) => [row.participantId, row]));
 
-  const expenseRows = await db
-    .select()
-    .from(schema.expenses)
-    .where(eq(schema.expenses.gameId, gameId))
-    .orderBy(desc(schema.expenses.createdAt));
-
-  const expenseIds = expenseRows.map((row) => row.id);
-  const splitRows = expenseIds.length
-    ? await db
-        .select()
-        .from(schema.expenseSplits)
-        .where(inArray(schema.expenseSplits.expenseId, expenseIds))
-    : [];
+  const expenseRows = await repo.expenses.listByGame(gameId);
+  const splitRows = await repo.splits.listByExpenseIds(expenseRows.map((row) => row.id));
 
   const splitsByExpenseId = new Map<string, typeof splitRows>();
   for (const split of splitRows) {
@@ -85,14 +54,18 @@ async function loadGameData(db: Db, gameId: string): Promise<GameData> {
     const splits = splitsByExpenseId.get(row.id) || [];
     return {
       id: row.id,
+      kind: row.kind === "transfer" ? "transfer" : "expense",
       title: row.title,
       amount: row.amount,
       note: row.note,
       payerParticipantId: row.payerParticipantId,
+      splitMode:
+        row.splitMode === "shares" || row.splitMode === "amount" ? row.splitMode : "equal",
       splitParticipantIds: splits.map((split) => split.participantId),
-      shares: splits.map((split) => ({
+      splits: splits.map((split) => ({
         participantId: split.participantId,
         amount: split.amount,
+        weight: split.weight,
       })),
       createdAt: row.createdAt,
     };
@@ -110,8 +83,12 @@ async function loadGameData(db: Db, gameId: string): Promise<GameData> {
     })),
   );
 
+  // Khoan tra no (kind = "transfer") van tinh vao balance nhung khong cong
+  // vao tong chi cua nhom.
   const summary: ApiSummary = {
-    totalExpense: expenseRows.reduce((total, row) => total + row.amount, 0),
+    totalExpense: expenseRows
+      .filter((row) => row.kind !== "transfer")
+      .reduce((total, row) => total + row.amount, 0),
     balances,
     settlements: calculateSettlements(balances),
   };
@@ -119,22 +96,21 @@ async function loadGameData(db: Db, gameId: string): Promise<GameData> {
   return { participants, expenses, summary };
 }
 
-export async function loadShareLink(db: Db, gameId: string): Promise<ApiShareLink | null> {
-  const rows = await db
-    .select()
-    .from(schema.shareLinks)
-    .where(eq(schema.shareLinks.gameId, gameId))
-    .orderBy(desc(schema.shareLinks.createdAt))
-    .limit(1);
-
-  const link = rows[0];
+export async function loadShareLink(
+  repo: GameRepository,
+  gameId: string,
+): Promise<ApiShareLink | null> {
+  const link = await repo.shareLinks.getLatestByGame(gameId);
   return link ? { token: link.token, enabled: link.enabled } : null;
 }
 
-export async function loadGameDetail(db: Db, game: GameRow): Promise<ApiGameDetail> {
+export async function loadGameDetail(
+  repo: GameRepository,
+  game: GameRow,
+): Promise<ApiGameDetail> {
   const [data, shareLink] = await Promise.all([
-    loadGameData(db, game.id),
-    loadShareLink(db, game.id),
+    loadGameData(repo, game.id),
+    loadShareLink(repo, game.id),
   ]);
 
   return {
@@ -148,8 +124,8 @@ export async function loadGameDetail(db: Db, game: GameRow): Promise<ApiGameDeta
   };
 }
 
-export async function loadShareView(db: Db, game: GameRow): Promise<ApiShareView> {
-  const data = await loadGameData(db, game.id);
+export async function loadShareView(repo: GameRepository, game: GameRow): Promise<ApiShareView> {
+  const data = await loadGameData(repo, game.id);
 
   return {
     code: game.code,
@@ -159,14 +135,9 @@ export async function loadShareView(db: Db, game: GameRow): Promise<ApiShareView
   };
 }
 
-export async function loadOwnedGame(db: Db, gameId: string, userId: string) {
-  const rows = await db
-    .select()
-    .from(schema.games)
-    .where(eq(schema.games.id, gameId))
-    .limit(1);
-
-  const game = rows[0];
+/** Policy so huu: chi chu cuoc choi duoc thao tac. */
+export async function getOwnedGame(repo: GameRepository, gameId: string, userId: string) {
+  const game = await repo.games.getById(gameId);
   if (!game || game.ownerUserId !== userId) return null;
   return game;
 }

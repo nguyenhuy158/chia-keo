@@ -1,16 +1,37 @@
-import type { ApiParticipant, ApiSummary } from "../../shared/api-types";
+import { HandCoins, Trash2 } from "lucide-react";
+import type {
+  ApiExpense,
+  ApiParticipant,
+  ApiSummary,
+} from "../../shared/api-types";
 import type { SettlementMode } from "../../shared/schemas";
-import { calculateHostTransfers, pickHostParticipantId } from "../../shared/split";
-import { formatMoney } from "../lib/money";
-import { buildVietQrUrl, canBuildVietQr } from "../lib/vietqr";
+import {
+  calculateHostTransfers,
+  pickHostParticipantId,
+  type SettlementRow,
+} from "../../shared/split";
+import { getQrProvider } from "../core/container";
+import { formatMoney } from "../core/domain/money";
 import { BalancePill, Metric } from "./ui";
 
 /** QR chung cua host khong gan san so tien vi moi nguoi chuyen mot muc khac. */
 const QR_AMOUNT_FREE = 0;
 
-const MODE_OPTIONS: Array<{ value: SettlementMode; label: string; hint: string }> = [
-  { value: "p2p", label: "Nhiều chiều", hint: "Chuyển thẳng giữa từng cặp, ít lượt nhất" },
-  { value: "host", label: "Gom 1 người", hint: "Ai cũng chuyển về một đầu mối, chỉ một QR" },
+const MODE_OPTIONS: Array<{
+  value: SettlementMode;
+  label: string;
+  hint: string;
+}> = [
+  {
+    value: "p2p",
+    label: "Nhiều chiều",
+    hint: "Chuyển thẳng giữa từng cặp, ít lượt nhất",
+  },
+  {
+    value: "host",
+    label: "Gom 1 người",
+    hint: "Ai cũng chuyển về một đầu mối, chỉ một QR",
+  },
   { value: "off", label: "Tắt", hint: "Không hiện phần chuyển khoản" },
 ];
 
@@ -21,43 +42,16 @@ type GameDashboardProps = {
   expenseCount: number;
   summary: ApiSummary;
   settlementMode: SettlementMode;
+  /** Cac khoan cua game; dung de liet ke lich su tra no (kind "transfer"). */
+  expenses?: ApiExpense[];
   showHeader?: boolean;
   /** Chi truyen o trang chu cuoc choi; trang share xem thi bo trong. */
   onSettlementModeChange?: (mode: SettlementMode) => void;
+  /** Co mat thi moi dong chuyen khoan toi uu co nut ghi nhan da tra. */
+  onSettle?: (settlement: SettlementRow) => void;
+  onRemoveTransfer?: (expenseId: string) => void;
+  settlePending?: boolean;
 };
-
-function SettlementCard({
-  title,
-  amount,
-  payee,
-  code,
-  qrAmount,
-  note,
-}: {
-  title: string;
-  amount: number;
-  payee?: ApiParticipant;
-  code: string;
-  qrAmount: number;
-  note?: string;
-}) {
-  return (
-    <div className="rounded-md border border-stone-200 p-3 dark:border-stone-800">
-      <p className="text-sm font-semibold text-stone-950 dark:text-stone-50">{title}</p>
-      <p className="mt-1 text-sm font-bold text-violet-700 tabular dark:text-violet-400">
-        {formatMoney(amount)}
-      </p>
-      {note && <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">{note}</p>}
-      {payee && canBuildVietQr(payee) && (
-        <img
-          className="mt-3 w-full rounded-md border border-stone-200 bg-white dark:border-stone-700"
-          src={buildVietQrUrl(payee, qrAmount, code)}
-          alt={`QR nhận tiền của ${payee.name}`}
-        />
-      )}
-    </div>
-  );
-}
 
 export function GameDashboard({
   code,
@@ -66,24 +60,37 @@ export function GameDashboard({
   expenseCount,
   summary,
   settlementMode,
+  expenses = [],
   showHeader = false,
   onSettlementModeChange,
+  onSettle,
+  onRemoveTransfer,
+  settlePending = false,
 }: GameDashboardProps) {
-  const participantById = new Map(participants.map((participant) => [participant.id, participant]));
-  const canEditMode = Boolean(onSettlementModeChange);
-  const hostId = settlementMode === "host" ? pickHostParticipantId(summary.balances) : "";
-  const host = hostId ? participantById.get(hostId) : undefined;
-  const hostTransfers = host ? calculateHostTransfers(summary.balances, hostId) : [];
+  const participantById = new Map(
+    participants.map((participant) => [participant.id, participant]),
+  );
+  const transfers = expenses.filter((expense) => expense.kind === "transfer");
+  const qr = getQrProvider();
 
-  const settlementTitle =
-    settlementMode === "host" && host ? `Gom về ${host.name}` : "Chuyển khoản tối ưu";
+  const canEditMode = Boolean(onSettlementModeChange);
+  const hostId =
+    settlementMode === "host" ? pickHostParticipantId(summary.balances) : "";
+  const host = hostId ? participantById.get(hostId) : undefined;
+  const hostTransfers = host
+    ? calculateHostTransfers(summary.balances, hostId)
+    : [];
 
   return (
     <aside className="space-y-5">
       {showHeader && (
         <section className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm dark:border-stone-800 dark:bg-stone-900">
-          <p className="text-sm font-medium text-violet-600 dark:text-violet-400">{code}</p>
-          <h1 className="mt-1 text-2xl font-semibold text-stone-950 dark:text-stone-50">{name}</h1>
+          <p className="text-sm font-medium text-violet-600 dark:text-violet-400">
+            {code}
+          </p>
+          <h1 className="mt-1 text-2xl font-semibold text-stone-950 dark:text-stone-50">
+            {name}
+          </h1>
         </section>
       )}
 
@@ -94,7 +101,9 @@ export function GameDashboard({
       </section>
 
       <section className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm dark:border-stone-800 dark:bg-stone-900">
-        <h3 className="text-lg font-semibold text-stone-950 dark:text-stone-50">Cân bằng</h3>
+        <h3 className="text-lg font-semibold text-stone-950 dark:text-stone-50">
+          Cân bằng
+        </h3>
         <div className="mt-4 space-y-3">
           {summary.balances.length > 0 ? (
             summary.balances.map((row) => {
@@ -120,7 +129,9 @@ export function GameDashboard({
               );
             })
           ) : (
-            <p className="text-sm text-stone-500 dark:text-stone-400">Chưa có người tham gia.</p>
+            <p className="text-sm text-stone-500 dark:text-stone-400">
+              Chưa có người tham gia.
+            </p>
           )}
         </div>
       </section>
@@ -128,7 +139,9 @@ export function GameDashboard({
       {(canEditMode || settlementMode !== "off") && (
         <section className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm dark:border-stone-800 dark:bg-stone-900">
           <h3 className="text-lg font-semibold text-stone-950 dark:text-stone-50">
-            {settlementTitle}
+            {settlementMode === "host" && host
+              ? `Gom về ${host.name}`
+              : "Chuyển khoản tối ưu"}
           </h3>
 
           {canEditMode && (
@@ -155,110 +168,188 @@ export function GameDashboard({
           <div className="mt-4 space-y-3">
             {settlementMode === "off" ? (
               <p className="text-sm text-stone-500 dark:text-stone-400">
-                Đang tắt. Bảng tổng kết và ảnh cũng sẽ không có phần chuyển khoản.
+                Đang tắt. Bảng tổng kết và ảnh cũng sẽ không có phần chuyển
+                khoản.
               </p>
             ) : settlementMode === "host" ? (
-              <HostSettlements
-                code={code}
-                host={host}
-                transfers={hostTransfers}
-                participantById={participantById}
-              />
+              host && hostTransfers.length > 0 ? (
+                <>
+                  <div className="rounded-md border border-stone-200 p-3 dark:border-stone-800">
+                    <p className="text-sm font-semibold text-stone-950 dark:text-stone-50">
+                      Chuyển cho {host.name}
+                    </p>
+                    <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">
+                      Quét rồi tự nhập số tiền của mình
+                    </p>
+                    {qr.canBuild(host) && (
+                      <img
+                        className="mt-3 w-full rounded-md border border-stone-200 bg-white dark:border-stone-700"
+                        src={qr.buildUrl(host, QR_AMOUNT_FREE, code)}
+                        alt={`QR nhận tiền của ${host.name}`}
+                      />
+                    )}
+                  </div>
+
+                  {hostTransfers.map((transfer) => {
+                    const participant = participantById.get(
+                      transfer.participantId,
+                    );
+                    if (!participant) return null;
+
+                    return (
+                      <div
+                        key={transfer.participantId}
+                        className="flex items-center justify-between gap-3 rounded-md border border-stone-200 p-3 dark:border-stone-800"
+                      >
+                        <p className="min-w-0 truncate text-sm font-medium text-stone-950 dark:text-stone-50">
+                          {transfer.toHost
+                            ? `${participant.name} → ${host.name}`
+                            : `${host.name} trả lại ${participant.name}`}
+                        </p>
+                        <div className="flex shrink-0 items-center gap-2">
+                          <span className="text-sm font-bold text-violet-700 tabular dark:text-violet-400">
+                            {formatMoney(transfer.amount)}
+                          </span>
+                          {onSettle && (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                onSettle(
+                                  transfer.toHost
+                                    ? {
+                                        fromParticipantId: participant.id,
+                                        toParticipantId: host.id,
+                                        amount: transfer.amount,
+                                      }
+                                    : {
+                                        fromParticipantId: host.id,
+                                        toParticipantId: participant.id,
+                                        amount: transfer.amount,
+                                      },
+                                )
+                              }
+                              disabled={settlePending}
+                              className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-md border border-emerald-300 bg-emerald-50 px-2.5 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 dark:border-emerald-500/40 dark:bg-emerald-500/10 dark:text-emerald-300 dark:hover:bg-emerald-500/20"
+                              title="Ghi nhận khoản này đã được chuyển"
+                            >
+                              <HandCoins size={14} />
+                              Đã trả
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </>
+              ) : (
+                <p className="text-sm text-stone-500 dark:text-stone-400">
+                  {transfers.length > 0
+                    ? "Mọi người đã cân bằng, không còn ai nợ ai."
+                    : "Thêm khoản chi để tính tiền."}
+                </p>
+              )
+            ) : summary.settlements.length > 0 ? (
+              summary.settlements.map((settlement) => {
+                const from = participantById.get(settlement.fromParticipantId);
+                const to = participantById.get(settlement.toParticipantId);
+                if (!from || !to) return null;
+
+                return (
+                  <div
+                    key={`${settlement.fromParticipantId}-${settlement.toParticipantId}-${settlement.amount}`}
+                    className="rounded-md border border-stone-200 p-3 dark:border-stone-800"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-stone-950 dark:text-stone-50">
+                          {from.name} trả {to.name}
+                        </p>
+                        <p className="mt-1 text-sm font-bold text-violet-700 tabular dark:text-violet-400">
+                          {formatMoney(settlement.amount)}
+                        </p>
+                      </div>
+                      {onSettle && (
+                        <button
+                          type="button"
+                          onClick={() => onSettle(settlement)}
+                          disabled={settlePending}
+                          className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-md border border-emerald-300 bg-emerald-50 px-2.5 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 dark:border-emerald-500/40 dark:bg-emerald-500/10 dark:text-emerald-300 dark:hover:bg-emerald-500/20"
+                          title="Ghi nhận khoản này đã được chuyển"
+                        >
+                          <HandCoins size={14} />
+                          Đã trả
+                        </button>
+                      )}
+                    </div>
+                    {qr.canBuild(to) && (
+                      <img
+                        className="mt-3 w-full rounded-md border border-stone-200 bg-white dark:border-stone-700"
+                        src={qr.buildUrl(to, settlement.amount, code)}
+                        alt={`QR nhận tiền của ${to.name}`}
+                      />
+                    )}
+                  </div>
+                );
+              })
             ) : (
-              <PeerSettlements
-                code={code}
-                summary={summary}
-                participantById={participantById}
-              />
+              <p className="text-sm text-stone-500 dark:text-stone-400">
+                {transfers.length > 0
+                  ? "Mọi người đã cân bằng, không còn ai nợ ai."
+                  : "Thêm khoản chi để tính tiền."}
+              </p>
             )}
           </div>
         </section>
       )}
-    </aside>
-  );
-}
 
-function PeerSettlements({
-  code,
-  summary,
-  participantById,
-}: {
-  code: string;
-  summary: ApiSummary;
-  participantById: Map<string, ApiParticipant>;
-}) {
-  if (summary.settlements.length === 0) {
-    return <p className="text-sm text-stone-500 dark:text-stone-400">Thêm khoản chi để tính tiền.</p>;
-  }
+      {transfers.length > 0 && (
+        <section className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm dark:border-stone-800 dark:bg-stone-900">
+          <h3 className="text-lg font-semibold text-stone-950 dark:text-stone-50">
+            Đã trả nợ
+          </h3>
+          <div className="mt-4 space-y-2">
+            {transfers.map((transfer) => {
+              const from = participantById.get(transfer.payerParticipantId);
+              const to = participantById.get(
+                transfer.splits[0]?.participantId || "",
+              );
 
-  return (
-    <>
-      {summary.settlements.map((settlement) => {
-        const from = participantById.get(settlement.fromParticipantId);
-        const to = participantById.get(settlement.toParticipantId);
-        if (!from || !to) return null;
-
-        return (
-          <SettlementCard
-            key={`${settlement.fromParticipantId}-${settlement.toParticipantId}-${settlement.amount}`}
-            title={`${from.name} trả ${to.name}`}
-            amount={settlement.amount}
-            payee={to}
-            code={code}
-            qrAmount={settlement.amount}
-          />
-        );
-      })}
-    </>
-  );
-}
-
-function HostSettlements({
-  code,
-  host,
-  transfers,
-  participantById,
-}: {
-  code: string;
-  host: ApiParticipant | undefined;
-  transfers: ReturnType<typeof calculateHostTransfers>;
-  participantById: Map<string, ApiParticipant>;
-}) {
-  if (!host || transfers.length === 0) {
-    return <p className="text-sm text-stone-500 dark:text-stone-400">Thêm khoản chi để tính tiền.</p>;
-  }
-
-  return (
-    <>
-      <SettlementCard
-        title={`Chuyển cho ${host.name}`}
-        amount={transfers.filter((row) => row.toHost).reduce((total, row) => total + row.amount, 0)}
-        payee={host}
-        code={code}
-        qrAmount={QR_AMOUNT_FREE}
-        note="Quét rồi tự nhập số tiền của mình"
-      />
-
-      {transfers.map((transfer) => {
-        const participant = participantById.get(transfer.participantId);
-        if (!participant) return null;
-
-        return (
-          <div
-            key={transfer.participantId}
-            className="flex items-center justify-between gap-3 rounded-md border border-stone-200 p-3 dark:border-stone-800"
-          >
-            <p className="min-w-0 truncate text-sm font-medium text-stone-950 dark:text-stone-50">
-              {transfer.toHost
-                ? `${participant.name} → ${host.name}`
-                : `${host.name} trả lại ${participant.name}`}
-            </p>
-            <span className="shrink-0 text-sm font-bold text-violet-700 tabular dark:text-violet-400">
-              {formatMoney(transfer.amount)}
-            </span>
+              return (
+                <div
+                  key={transfer.id}
+                  className="flex items-center justify-between gap-3 rounded-md border border-stone-200 p-3 dark:border-stone-800"
+                >
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium text-stone-950 dark:text-stone-50">
+                      {from?.name || "Không rõ"} đã trả {to?.name || "Không rõ"}
+                    </p>
+                    {transfer.note && (
+                      <p className="mt-0.5 truncate text-xs text-stone-500 dark:text-stone-400">
+                        {transfer.note}
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex shrink-0 items-center gap-1">
+                    <span className="text-sm font-semibold text-emerald-700 tabular dark:text-emerald-400">
+                      {formatMoney(transfer.amount)}
+                    </span>
+                    {onRemoveTransfer && (
+                      <button
+                        type="button"
+                        onClick={() => onRemoveTransfer(transfer.id)}
+                        className="inline-flex h-9 w-9 items-center justify-center rounded-md text-rose-600 transition hover:bg-rose-50 active:bg-rose-100 dark:text-rose-400 dark:hover:bg-rose-500/10 dark:active:bg-rose-500/20"
+                        aria-label="Xóa khoản trả nợ"
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
           </div>
-        );
-      })}
-    </>
+        </section>
+      )}
+    </aside>
   );
 }

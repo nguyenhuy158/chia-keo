@@ -3,7 +3,7 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { Plus, ReceiptText } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { useCreateGame, useGames } from "../lib/queries";
+import { useCreateGame, useGames } from "../adapters/react-query/queries";
 
 const gameFormSchema = z.object({
   name: z.string().trim().min(1, "Nhập tên cuộc chơi"),

@@ -6,7 +6,7 @@ import { MobileShellContext } from "../components/mobile-shell";
 import { Drawer } from "../components/overlays";
 import { ThemeToggle } from "../components/theme";
 import { LoadingState } from "../components/ui";
-import { authClient } from "../lib/auth-client";
+import { authClient } from "../adapters/browser/auth-client";
 
 export function AppLayout() {
   const navigate = useNavigate();

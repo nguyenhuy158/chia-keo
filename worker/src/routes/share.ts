@@ -1,26 +1,26 @@
-import { eq } from "drizzle-orm";
 import { Hono } from "hono";
-import * as schema from "../db/schema";
+import { createD1GameRepository } from "../adapters/d1/game-repository";
+import { getSharedPhoto, listSharedPhotos } from "../core/application/photos";
+import { getShareViewByToken } from "../core/application/share-links";
 import type { Env } from "../env";
-import { createDb, loadShareView } from "../lib/game-data";
+import { respond } from "../lib/http";
 
 export const shareRouter = new Hono<{ Bindings: Env }>();
 
-shareRouter.get("/share/:token", async (c) => {
-  const db = createDb(c.env.DB);
+shareRouter.get("/share/:token", (c) =>
+  respond(c, () => getShareViewByToken(createD1GameRepository(c.env.DB), c.req.param("token"))),
+);
 
-  const rows = await db
-    .select({ link: schema.shareLinks, game: schema.games })
-    .from(schema.shareLinks)
-    .innerJoin(schema.games, eq(schema.games.id, schema.shareLinks.gameId))
-    .where(eq(schema.shareLinks.token, c.req.param("token")))
-    .limit(1);
+shareRouter.get("/share/:token/photos", (c) =>
+  respond(c, () => listSharedPhotos(createD1GameRepository(c.env.DB), c.req.param("token"))),
+);
 
-  const row = rows[0];
-  const expired = Boolean(row?.link.expiresAt && row.link.expiresAt < new Date().toISOString());
-  if (!row || !row.link.enabled || expired) {
-    return c.json({ error: "not_found" }, 404);
-  }
-
-  return c.json(await loadShareView(db, row.game));
-});
+shareRouter.get("/share/:token/photos/:photoId", (c) =>
+  respond(c, () =>
+    getSharedPhoto(
+      createD1GameRepository(c.env.DB),
+      c.req.param("token"),
+      c.req.param("photoId"),
+    ),
+  ),
+);

@@ -1,12 +1,12 @@
-import type { ApiParticipant } from "../../shared/api-types";
+import type { ApiParticipant } from "../../../shared/api-types";
 import {
   buildSummaryDocument,
   formatThousands,
   type SummaryDocument,
   type SummaryTextInput,
-} from "../../shared/summary-text";
-import { buildVietQrProxyPath, canBuildVietQr, getVietQrBankLabel } from "../../shared/vietqr";
-import { API_BASE } from "./api";
+} from "../../../shared/summary-text";
+import { buildVietQrProxyPath, canBuildVietQr, getVietQrBankLabel } from "../../../shared/vietqr";
+import { API_BASE } from "./http-game-api";
 
 const IMAGE_MIME = "image/png";
 /** Ve o do phan giai gap doi cho net tren man hinh retina va khi zoom. */

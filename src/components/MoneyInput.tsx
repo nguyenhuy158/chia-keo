@@ -15,6 +15,7 @@ type MoneyInputProps = {
   id?: string;
   name?: string;
   className?: string;
+  "aria-label"?: string;
 };
 
 /**
@@ -22,7 +23,7 @@ type MoneyInputProps = {
  * Gia tri tra ra la chuoi da format; dung parseMoney de lay so nguyen khi luu.
  */
 export const MoneyInput = forwardRef<HTMLInputElement, MoneyInputProps>(function MoneyInput(
-  { value, onChange, onBlur, placeholder, id, name, className = "" },
+  { value, onChange, onBlur, placeholder, id, name, className = "", "aria-label": ariaLabel },
   ref,
 ) {
   return (
@@ -30,6 +31,7 @@ export const MoneyInput = forwardRef<HTMLInputElement, MoneyInputProps>(function
       ref={ref}
       id={id}
       name={name}
+      aria-label={ariaLabel}
       className={`field tabular ${className}`}
       inputMode="numeric"
       autoComplete="off"

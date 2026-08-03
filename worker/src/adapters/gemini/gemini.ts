@@ -1,13 +1,16 @@
-import type { Env } from "../env";
+import type { AiContentPart, AiJsonResult, AiProvider } from "../../core/ports/ai-provider";
+import type { Env } from "../../env";
 
 const DEFAULT_GEMINI_MODEL = "gemini-2.0-flash";
 const GEMINI_TEMPERATURE = 0.2;
 
-export type GeminiPart = { text: string } | { inlineData: { mimeType: string; data: string } };
+export type GeminiPart = AiContentPart;
 
-export type GeminiResult =
-  | { ok: true; json: unknown }
-  | { ok: false; error: string };
+export type GeminiResult = AiJsonResult;
+
+export function createGeminiAiProvider(env: Env): AiProvider {
+  return { generateJson: (parts) => generateGeminiJson(env, parts) };
+}
 
 function extractJson(text: string): unknown {
   const cleanText = text

@@ -1,6 +1,6 @@
 import type { ResolvedAiExpense } from "./ai";
 import type { SettlementMode } from "./schemas";
-import type { BalanceRow, SettlementRow, SplitShare } from "./split";
+import type { BalanceRow, SettlementRow, SplitMode } from "./split";
 
 export type ApiAiSuggestionResponse = {
   suggestion: ResolvedAiExpense;
@@ -29,16 +29,41 @@ export type ApiParticipant = {
   accountName: string;
 };
 
+export type ApiExpenseSplit = {
+  participantId: string;
+  amount: number;
+  weight: number | null;
+};
+
 export type ApiExpense = {
   id: string;
+  kind: "expense" | "transfer";
   title: string;
   amount: number;
   note: string;
   payerParticipantId: string;
+  splitMode: SplitMode;
   splitParticipantIds: string[];
-  /** So tien thuc te tung nguoi chiu, da tinh ca phan du khi chia le. */
-  shares: SplitShare[];
+  splits: ApiExpenseSplit[];
   createdAt: string;
+};
+
+/** Anh cua cuoc chia, chi kem ban thu nho de luoi anh tai nhanh. */
+export type ApiPhoto = {
+  id: string;
+  expenseId: string | null;
+  caption: string;
+  mimeType: string;
+  width: number;
+  height: number;
+  /** Base64 anh thu nho. */
+  thumbData: string;
+  createdAt: string;
+};
+
+/** Anh kem du lieu goc, chi tra khi mo xem toan man hinh. */
+export type ApiPhotoDetail = ApiPhoto & {
+  data: string;
 };
 
 export type ApiShareLink = {

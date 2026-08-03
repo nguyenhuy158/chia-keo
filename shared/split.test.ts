@@ -1,8 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
   allocateAmount,
+  allocateByWeights,
   calculateBalances,
   calculateSettlements,
+  computeSplitRows,
+  MAX_SPLIT_WEIGHT,
   type ExpenseInput,
 } from "./split";
 
@@ -33,6 +36,132 @@ describe("allocateAmount", () => {
 
   it("tra ve mang rong khi khong co nguoi chia", () => {
     expect(allocateAmount(100, [])).toEqual([]);
+  });
+});
+
+describe("allocateByWeights", () => {
+  it("chia theo ty le so phan", () => {
+    expect(
+      allocateByWeights(400, [
+        { participantId: "a", weight: 1 },
+        { participantId: "b", weight: 3 },
+      ]),
+    ).toEqual([
+      { participantId: "a", amount: 100 },
+      { participantId: "b", amount: 300 },
+    ]);
+  });
+
+  it("trong so bang nhau cho ket qua nhu allocateAmount", () => {
+    const ids = ["a", "b", "c"];
+    expect(allocateByWeights(100, ids.map((id) => ({ participantId: id, weight: 1 })))).toEqual(
+      allocateAmount(100, ids),
+    );
+  });
+
+  it("cong phan du lan luot cho nguoi dau danh sach", () => {
+    expect(
+      allocateByWeights(101, [
+        { participantId: "a", weight: 1 },
+        { participantId: "b", weight: 1 },
+        { participantId: "c", weight: 1 },
+      ]),
+    ).toEqual([
+      { participantId: "a", amount: 34 },
+      { participantId: "b", amount: 34 },
+      { participantId: "c", amount: 33 },
+    ]);
+  });
+
+  it("tong split luon bang tong tien goc voi trong so bat ky", () => {
+    const entries = [
+      { participantId: "a", weight: 3 },
+      { participantId: "b", weight: 7 },
+      { participantId: "c", weight: 11 },
+      { participantId: "d", weight: 1 },
+    ];
+    for (const amount of [1, 99, 1000, 123457, 999999999]) {
+      const total = allocateByWeights(amount, entries).reduce(
+        (sum, share) => sum + share.amount,
+        0,
+      );
+      expect(total).toBe(amount);
+    }
+  });
+
+  it("bo qua nguoi co trong so 0 va khong tran so voi trong so lon", () => {
+    const shares = allocateByWeights(1_000_000_000_000, [
+      { participantId: "a", weight: 999_999_999_999 },
+      { participantId: "b", weight: 1 },
+      { participantId: "c", weight: 0 },
+    ]);
+    expect(shares.map((share) => share.participantId)).toEqual(["a", "b"]);
+    expect(shares.reduce((sum, share) => sum + share.amount, 0)).toBe(1_000_000_000_000);
+  });
+
+  it("tra ve mang rong khi khong co trong so hop le", () => {
+    expect(allocateByWeights(100, [])).toEqual([]);
+    expect(allocateByWeights(100, [{ participantId: "a", weight: 0 }])).toEqual([]);
+  });
+});
+
+describe("computeSplitRows", () => {
+  it("mode equal chia deu, khong luu weight", () => {
+    expect(computeSplitRows(300, "equal", ["a", "b", "c"], [])).toEqual([
+      { participantId: "a", amount: 100, weight: null },
+      { participantId: "b", amount: 100, weight: null },
+      { participantId: "c", amount: 100, weight: null },
+    ]);
+  });
+
+  it("mode shares chia theo so phan va luu weight", () => {
+    expect(
+      computeSplitRows(400, "shares", [], [
+        { participantId: "a", value: 1 },
+        { participantId: "b", value: 3 },
+      ]),
+    ).toEqual([
+      { participantId: "a", amount: 100, weight: 1 },
+      { participantId: "b", amount: 300, weight: 3 },
+    ]);
+  });
+
+  it("mode amount giu nguyen so tien nhap", () => {
+    expect(
+      computeSplitRows(90, "amount", [], [
+        { participantId: "a", value: 30 },
+        { participantId: "b", value: 60 },
+      ]),
+    ).toEqual([
+      { participantId: "a", amount: 30, weight: null },
+      { participantId: "b", amount: 60, weight: null },
+    ]);
+  });
+
+  it("tra ve null cho input khong hop le", () => {
+    // Khong co ai chia
+    expect(computeSplitRows(100, "equal", [], [])).toBeNull();
+    expect(computeSplitRows(100, "shares", [], [])).toBeNull();
+    // Trung nguoi
+    expect(
+      computeSplitRows(100, "amount", [], [
+        { participantId: "a", value: 50 },
+        { participantId: "a", value: 50 },
+      ]),
+    ).toBeNull();
+    // So phan qua lon
+    expect(
+      computeSplitRows(100, "shares", [], [
+        { participantId: "a", value: MAX_SPLIT_WEIGHT + 1 },
+      ]),
+    ).toBeNull();
+    // Tong tien tuy chinh lech tong khoan chi
+    expect(
+      computeSplitRows(100, "amount", [], [
+        { participantId: "a", value: 30 },
+        { participantId: "b", value: 60 },
+      ]),
+    ).toBeNull();
   });
 });
 
@@ -75,6 +204,21 @@ describe("calculateBalances", () => {
     expect(calculateBalances(["a"], expenses)).toEqual([
       { participantId: "a", paid: 0, owed: 0, balance: 0 },
     ]);
+  });
+
+  it("khoan tra no (mot nguoi nhan toan bo) can bang lai cong no", () => {
+    // b no a 100 sau khoan chi dau; b tra no 100 -> ca hai ve 0.
+    const expenses: ExpenseInput[] = [
+      { payerParticipantId: "a", amount: 200, shares: allocateAmount(200, ["a", "b"]) },
+      { payerParticipantId: "b", amount: 100, shares: [{ participantId: "a", amount: 100 }] },
+    ];
+
+    const balances = calculateBalances(["a", "b"], expenses);
+    expect(balances).toEqual([
+      { participantId: "a", paid: 200, owed: 200, balance: 0 },
+      { participantId: "b", paid: 100, owed: 100, balance: 0 },
+    ]);
+    expect(calculateSettlements(balances)).toEqual([]);
   });
 
   it("tong balance cua ca nhom bang 0", () => {
