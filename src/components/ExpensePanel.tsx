@@ -22,10 +22,11 @@ import { allocateAmount, allocateByWeights } from "../../shared/split";
 import {
   DEFAULT_EXPENSE_TITLE,
   DEFAULT_INCOME_TITLE,
+  DEFAULT_TRANSFER_TITLE,
   MAX_SPLIT_WEIGHT,
   type ExpenseInput,
-  type ExpenseKindInput,
   type SplitMode,
+  type TransferInput,
 } from "../../shared/schemas";
 import { formatMoney, parseMoney } from "../core/domain/money";
 import { usePhotoUploader } from "../adapters/react-query/photo-upload";
@@ -41,18 +42,35 @@ function parseWeight(value: string | undefined) {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
 }
 
+type FormKind = "expense" | "income" | "transfer";
+
 const expenseFormSchema = z
   .object({
-    kind: z.enum(["expense", "income"]),
+    kind: z.enum(["expense", "income", "transfer"]),
     title: z.string().trim(),
     amount: z.string().refine((value) => parseMoney(value) > 0, "Nhập số tiền hợp lệ"),
     payerId: z.string().min(1, "Chọn người trả"),
+    // Chi dung khi kind = "transfer": nguoi nhan tien.
+    toId: z.string(),
     splitMode: z.enum(["equal", "shares", "amount"]),
     splitParticipantIds: z.array(z.string()).min(1, "Chọn ít nhất một người cùng chia"),
     // Gia tri nhap theo tung nguoi: so phan (shares) hoac so tien (amount).
     splitValues: z.record(z.string(), z.string()),
   })
   .superRefine((values, ctx) => {
+    if (values.kind === "transfer") {
+      if (!values.toId) {
+        ctx.addIssue({ code: "custom", path: ["toId"], message: "Chọn người nhận" });
+      } else if (values.toId === values.payerId) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["toId"],
+          message: "Người nhận phải khác người trả",
+        });
+      }
+      return;
+    }
+
     if (values.splitMode === "shares") {
       const tooBig = values.splitParticipantIds.some(
         (id) => parseWeight(values.splitValues[id]) > MAX_SPLIT_WEIGHT,
@@ -120,6 +138,7 @@ type ExpensePanelProps = {
   onAdd: (input: ExpenseInput) => Promise<ApiGameDetail>;
   onUpdate: (expenseId: string, input: Partial<ExpenseInput>) => Promise<unknown>;
   onRemove: (expenseId: string) => void;
+  onAddTransfer: (input: TransferInput) => Promise<unknown>;
 };
 
 const AI_ERROR_MESSAGES: Record<string, string> = {
@@ -312,6 +331,7 @@ export function ExpensePanel({
   onAdd,
   onUpdate,
   onRemove,
+  onAddTransfer,
 }: ExpensePanelProps) {
   const participantById = new Map(participants.map((participant) => [participant.id, participant]));
 
@@ -322,6 +342,7 @@ export function ExpensePanel({
       title: "",
       amount: "",
       payerId: participants[0]?.id || "",
+      toId: "",
       splitMode: "equal",
       splitParticipantIds: participants.map((participant) => participant.id),
       splitValues: {},
@@ -331,6 +352,7 @@ export function ExpensePanel({
   const splitParticipantIds = form.watch("splitParticipantIds");
   const kind = form.watch("kind");
   const payerId = form.watch("payerId");
+  const toId = form.watch("toId");
   const splitMode = form.watch("splitMode");
   const splitValues = form.watch("splitValues");
   const amountValue = form.watch("amount");
@@ -530,6 +552,7 @@ function handleSplitModeChange(mode: SplitMode) {
       title: expense.title,
       amount: String(expense.amount),
       payerId: expense.payerParticipantId,
+      toId: "",
       splitMode: expense.splitMode,
       splitParticipantIds: expense.splitParticipantIds,
       splitValues: values,
@@ -544,6 +567,7 @@ function handleSplitModeChange(mode: SplitMode) {
       title: "",
       amount: "",
       payerId: participants[0]?.id || "",
+      toId: "",
       splitMode: "equal",
       splitParticipantIds: participants.map((participant) => participant.id),
       splitValues: {},
@@ -551,6 +575,26 @@ function handleSplitModeChange(mode: SplitMode) {
   }
 
   const handleSubmit = form.handleSubmit(async (values) => {
+    if (values.kind === "transfer") {
+      await onAddTransfer({
+        fromParticipantId: values.payerId,
+        toParticipantId: values.toId,
+        amount: parseMoney(values.amount),
+        note: values.title || DEFAULT_TRANSFER_TITLE,
+      });
+      form.reset({
+        kind: "transfer",
+        title: "",
+        amount: "",
+        payerId: values.payerId,
+        toId: "",
+        splitMode: values.splitMode,
+        splitParticipantIds: values.splitParticipantIds,
+        splitValues: {},
+      });
+      return;
+    }
+
     const input: ExpenseInput = {
       kind: values.kind,
       title: values.title || (values.kind === "income" ? DEFAULT_INCOME_TITLE : DEFAULT_EXPENSE_TITLE),
@@ -587,6 +631,7 @@ function handleSplitModeChange(mode: SplitMode) {
       title: "",
       amount: "",
       payerId: values.payerId,
+      toId: "",
       splitMode: values.splitMode,
       splitParticipantIds: values.splitParticipantIds,
       splitValues: {},
@@ -671,24 +716,30 @@ function handleSplitModeChange(mode: SplitMode) {
 
       <form onSubmit={handleSubmit} className="grid gap-3 md:grid-cols-2">
         <div className="flex rounded-md bg-stone-100 p-0.5 dark:bg-stone-800 md:col-span-2">
-          {(["expense", "income"] as ExpenseKindInput[]).map((option) => (
+          {(["expense", "income", "transfer"] as FormKind[]).map((option) => (
             <button
               key={option}
               type="button"
-              onClick={() => form.setValue("kind", option)}
-              className={`flex-1 rounded px-2.5 py-2 text-sm font-semibold transition ${
+              onClick={() => {
+                if (editingExpenseId) return;
+                form.setValue("kind", option);
+              }}
+              disabled={Boolean(editingExpenseId)}
+              className={`flex-1 rounded px-2.5 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-40 ${
                 kind === option
                   ? option === "income"
                     ? "bg-white text-emerald-700 shadow-sm dark:bg-stone-900 dark:text-emerald-400"
-                    : "bg-white text-violet-700 shadow-sm dark:bg-stone-900 dark:text-violet-300"
+                    : option === "transfer"
+                      ? "bg-white text-sky-700 shadow-sm dark:bg-stone-900 dark:text-sky-400"
+                      : "bg-white text-violet-700 shadow-sm dark:bg-stone-900 dark:text-violet-300"
                   : "text-stone-600 hover:text-stone-950 dark:text-stone-400 dark:hover:text-stone-100"
               }`}
             >
-              {option === "income" ? "Khoản thu" : "Khoản chi"}
+              {option === "income" ? "Khoản thu" : option === "transfer" ? "Trả nợ" : "Khoản chi"}
             </button>
           ))}
         </div>
-        <Field label="Nội dung">
+        <Field label={kind === "transfer" ? "Nội dung (không bắt buộc)" : "Nội dung"}>
           <input
             {...form.register("title")}
             className="field"
@@ -709,7 +760,10 @@ function handleSplitModeChange(mode: SplitMode) {
             )}
           />
         </Field>
-        <Field label="Người trả" error={form.formState.errors.payerId?.message}>
+        <Field
+          label={kind === "transfer" ? "Người trả (chuyển đi)" : "Người trả"}
+          error={form.formState.errors.payerId?.message}
+        >
           <ParticipantSelect
             participants={participants}
             value={payerId}
@@ -717,7 +771,17 @@ function handleSplitModeChange(mode: SplitMode) {
             ariaLabel="Chọn người trả"
           />
         </Field>
-        <div className="md:col-span-2">
+        {kind === "transfer" && (
+          <Field label="Người nhận" error={form.formState.errors.toId?.message}>
+            <ParticipantSelect
+              participants={participants.filter((participant) => participant.id !== payerId)}
+              value={toId}
+              onChange={(id) => form.setValue("toId", id, { shouldValidate: form.formState.isSubmitted })}
+              ariaLabel="Chọn người nhận"
+            />
+          </Field>
+        )}
+        <div className={`md:col-span-2 ${kind === "transfer" ? "hidden" : ""}`}>
           <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
             {/* Nut chon tat ca dat canh nhan, khong ep vao segmented control keo
                 nguoi dung tuong la tab thu 4. */}
@@ -853,7 +917,7 @@ function handleSplitModeChange(mode: SplitMode) {
           )}
         </div>
 
-        <div className="md:col-span-2">
+        <div className={`md:col-span-2 ${kind === "transfer" ? "hidden" : ""}`}>
           <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
             <p className="text-sm font-medium text-stone-700 dark:text-stone-300">
               Ảnh hóa đơn{" "}
@@ -936,7 +1000,9 @@ function handleSplitModeChange(mode: SplitMode) {
                 : "Lưu khoản chi"
               : kind === "income"
                 ? "Thêm khoản thu"
-                : "Thêm khoản chi"}
+                : kind === "transfer"
+                  ? "Ghi nhận trả nợ"
+                  : "Thêm khoản chi"}
           </button>
           {editingExpenseId && (
             <button

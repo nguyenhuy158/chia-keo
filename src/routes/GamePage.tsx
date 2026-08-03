@@ -119,6 +119,7 @@ export function GamePage() {
       onAdd={(input) => addExpense.mutateAsync(input)}
       onUpdate={(expenseId, input) => updateExpense.mutateAsync({ expenseId, input })}
       onRemove={(expenseId) => removeExpense.mutate(expenseId)}
+      onAddTransfer={(input) => addTransfer.mutateAsync(input)}
     />
   );
 
