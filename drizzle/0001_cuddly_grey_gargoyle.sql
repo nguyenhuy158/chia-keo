@@ -1,0 +1,1 @@
+ALTER TABLE `games` ADD `settlement_mode` text DEFAULT 'p2p' NOT NULL;

@@ -159,6 +159,17 @@ describe("buildSummaryText", () => {
     expect(text).toContain("- Thu trả lại Nam: 36,7k");
   });
 
+  it("bo han phan chuyen tien o che do off", () => {
+    const text = buildSummaryText({ ...input, settlementMode: "off" });
+
+    expect(text).not.toContain("CẦN CHUYỂN");
+    expect(text).not.toContain("GOM VỀ");
+    expect(text).not.toContain("→");
+    // Cac phan con lai van nguyen.
+    expect(text).toContain("CÁC KHOẢN CHI");
+    expect(text).toContain("- Thu: 45 + 101,7 + 8,5 = 155,2k");
+  });
+
   it("bao chua co khoan chi khi danh sach rong", () => {
     const emptySummary = makeSummary(participants, []);
     const text = buildSummaryText({ ...input, expenses: [], summary: emptySummary });

@@ -1,5 +1,8 @@
 import type { ApiExpense, ApiParticipant, ApiSummary } from "./api-types";
+import type { SettlementMode } from "./schemas";
 import { calculateHostTransfers, pickHostParticipantId } from "./split";
+
+export type { SettlementMode };
 
 const THOUSAND = 1000;
 const SHORT_MONEY_FRACTION_DIGITS = 1;
@@ -9,12 +12,6 @@ const EMPTY_EXPENSES_LINE = "Chưa có khoản chi nào.";
 const shortMoneyFormat = new Intl.NumberFormat("vi-VN", {
   maximumFractionDigits: SHORT_MONEY_FRACTION_DIGITS,
 });
-
-/**
- * "p2p": chuyen truc tiep giua tung cap, it luot chuyen nhat.
- * "host": moi nguoi chuyen ve mot dau moi, chi can mot QR.
- */
-export type SettlementMode = "p2p" | "host";
 
 export type SummaryTextInput = {
   code: string;
@@ -180,7 +177,7 @@ export function buildSummaryDocument(input: SummaryTextInput): SummaryDocument {
       sections.push(host.section);
       hostParticipantId = host.hostParticipantId;
     }
-  } else {
+  } else if (input.settlementMode !== "off") {
     const settlementLines = buildSettlementLines(summary, nameById);
     if (settlementLines.length > 0) {
       sections.push({ id: "settlements", heading: "CẦN CHUYỂN", lines: settlementLines });

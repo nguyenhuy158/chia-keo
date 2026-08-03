@@ -288,6 +288,7 @@ export function SharePage() {
               participants: view.participants,
               expenses: view.expenses,
               summary: view.summary,
+              settlementMode: view.settlementMode,
               shareUrl: window.location.href,
             }}
           />
@@ -326,6 +327,7 @@ export function SharePage() {
               participants={view.participants}
               expenseCount={view.expenses.length}
               summary={view.summary}
+              settlementMode={view.settlementMode}
             />
 
             <section className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm dark:border-stone-800 dark:bg-stone-900">

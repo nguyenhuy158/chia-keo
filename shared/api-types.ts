@@ -1,4 +1,5 @@
 import type { ResolvedAiExpense } from "./ai";
+import type { SettlementMode } from "./schemas";
 import type { BalanceRow, SettlementRow, SplitShare } from "./split";
 
 export type ApiAiSuggestionResponse = {
@@ -55,6 +56,7 @@ export type ApiGameDetail = {
   id: string;
   code: string;
   name: string;
+  settlementMode: SettlementMode;
   createdAt: string;
   participants: ApiParticipant[];
   expenses: ApiExpense[];
@@ -65,6 +67,7 @@ export type ApiGameDetail = {
 export type ApiShareView = {
   code: string;
   name: string;
+  settlementMode: SettlementMode;
   participants: ApiParticipant[];
   expenses: ApiExpense[];
   summary: ApiSummary;

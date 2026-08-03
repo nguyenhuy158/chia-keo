@@ -1,6 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ApiGameDetail } from "../../shared/api-types";
-import type { ExpenseInput, GameInput, ParticipantInput } from "../../shared/schemas";
+import type {
+  ExpenseInput,
+  GameInput,
+  ParticipantInput,
+  SettlementMode,
+} from "../../shared/schemas";
 import { api } from "./api";
 
 export const gameKeys = {
@@ -102,7 +107,13 @@ export function useRemoveExpense() {
 }
 
 export function useRenameGame(gameId: string) {
-  return useGameDetailMutation((name: string) => api.games.rename(gameId, { name }));
+  return useGameDetailMutation((name: string) => api.games.update(gameId, { name }));
+}
+
+export function useSetSettlementMode(gameId: string) {
+  return useGameDetailMutation((settlementMode: SettlementMode) =>
+    api.games.update(gameId, { settlementMode }),
+  );
 }
 
 export function useAiSuggestExpense(gameId: string) {

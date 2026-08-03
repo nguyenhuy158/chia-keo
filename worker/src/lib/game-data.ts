@@ -8,8 +8,15 @@ import type {
   ApiShareView,
   ApiSummary,
 } from "../../../shared/api-types";
+import { DEFAULT_SETTLEMENT_MODE, settlementModeSchema } from "../../../shared/schemas";
 import { calculateBalances, calculateSettlements } from "../../../shared/split";
 import * as schema from "../db/schema";
+
+/** Cot trong DB la TEXT tu do, ep ve mot gia tri hop le truoc khi tra ve. */
+function toSettlementMode(value: string) {
+  const parsed = settlementModeSchema.safeParse(value);
+  return parsed.success ? parsed.data : DEFAULT_SETTLEMENT_MODE;
+}
 
 export type Db = ReturnType<typeof drizzle<typeof schema>>;
 
@@ -134,6 +141,7 @@ export async function loadGameDetail(db: Db, game: GameRow): Promise<ApiGameDeta
     id: game.id,
     code: game.code,
     name: game.name,
+    settlementMode: toSettlementMode(game.settlementMode),
     createdAt: game.createdAt,
     shareLink,
     ...data,
@@ -146,6 +154,7 @@ export async function loadShareView(db: Db, game: GameRow): Promise<ApiShareView
   return {
     code: game.code,
     name: game.name,
+    settlementMode: toSettlementMode(game.settlementMode),
     ...data,
   };
 }

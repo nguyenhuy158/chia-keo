@@ -4,6 +4,7 @@ import type { ApiGame } from "../../../shared/api-types";
 import {
   expenseInputSchema,
   gameInputSchema,
+  gameUpdateSchema,
   participantInputSchema,
   shareLinkInputSchema,
 } from "../../../shared/schemas";
@@ -170,6 +171,7 @@ gamesRouter.post("/games", async (c) => {
     ownerUserId: c.get("userId"),
     code: createGameCode(),
     name: input.name,
+    settlementMode: input.settlementMode,
     createdAt: now,
     updatedAt: now,
   };
@@ -188,19 +190,26 @@ gamesRouter.get("/games/:gameId", async (c) => {
 });
 
 gamesRouter.patch("/games/:gameId", async (c) => {
-  const input = await readJson(c, gameInputSchema);
+  const input = await readJson(c, gameUpdateSchema);
   if (!input) return invalidInput(c);
 
   const db = c.get("db");
   const game = await loadOwnedGame(db, c.req.param("gameId"), c.get("userId"));
   if (!game) return notFound(c);
 
+  const changes = {
+    ...(input.name === undefined ? {} : { name: input.name }),
+    ...(input.settlementMode === undefined ? {} : { settlementMode: input.settlementMode }),
+  };
+
+  if (Object.keys(changes).length === 0) return invalidInput(c);
+
   await db
     .update(schema.games)
-    .set({ name: input.name, updatedAt: nowIso() })
+    .set({ ...changes, updatedAt: nowIso() })
     .where(eq(schema.games.id, game.id));
 
-  return c.json(await loadGameDetail(db, { ...game, name: input.name }));
+  return c.json(await loadGameDetail(db, { ...game, ...changes }));
 });
 
 gamesRouter.delete("/games/:gameId", async (c) => {
