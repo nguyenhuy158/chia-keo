@@ -18,7 +18,7 @@ import { z } from "zod";
 import type { ResolvedAiExpense } from "../../shared/ai";
 import type { ApiExpense, ApiGameDetail, ApiParticipant, ApiPhoto } from "../../shared/api-types";
 import { countPhotosByExpenseId, filterPhotosByExpenseId, toDataUrl } from "../../shared/photos";
-import { allocateAmount } from "../../shared/split";
+import { allocateAmount, allocateByWeights } from "../../shared/split";
 import {
   DEFAULT_EXPENSE_TITLE,
   DEFAULT_INCOME_TITLE,
@@ -30,7 +30,7 @@ import {
 import { formatMoney, parseMoney } from "../core/domain/money";
 import { usePhotoUploader } from "../adapters/react-query/photo-upload";
 import { useAiScanReceipt, useAiSuggestExpense } from "../adapters/react-query/queries";
-import { MoneyInput } from "./MoneyInput";
+import { formatMoneyInput, MoneyInput } from "./MoneyInput";
 import { PhotoPickerButton } from "./PhotoPanel";
 import { Field } from "./ui";
 import { usePhotoViewer } from "./use-photo-viewer";
@@ -385,6 +385,17 @@ export function ExpensePanel({
   const allSelected =
     participants.length > 0 && splitParticipantIds.length === participants.length;
 
+  /** Xem truoc so tien tung nguoi phai tra o mode "Theo phần", theo ti le so phan. */
+  const sharesPreviewById = useMemo(() => {
+    if (splitMode !== "shares") return new Map<string, number>();
+    const total = parseMoney(amountValue);
+    const shares = allocateByWeights(
+      total,
+      splitParticipantIds.map((id) => ({ participantId: id, weight: parseWeight(splitValues[id]) })),
+    );
+    return new Map(shares.map((share) => [share.participantId, share.amount]));
+  }, [splitMode, amountValue, splitParticipantIds, splitValues]);
+
 function handleSplitModeChange(mode: SplitMode) {
     form.setValue("splitMode", mode, { shouldValidate: form.formState.isSubmitted });
   }
@@ -407,7 +418,7 @@ function handleSplitModeChange(mode: SplitMode) {
     const shares = allocateAmount(total, splitParticipantIds);
     const nextValues = { ...splitValues };
     for (const share of shares) {
-      nextValues[share.participantId] = String(share.amount);
+      nextValues[share.participantId] = formatMoneyInput(String(share.amount));
     }
     form.setValue("splitValues", nextValues);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -767,17 +778,22 @@ function handleSplitModeChange(mode: SplitMode) {
                     </button>
                     {checked &&
                       (splitMode === "shares" ? (
-                        <SharesStepper
-                          name={participant.name}
-                          value={splitValues[participant.id] ?? "1"}
-                          onChange={(next) =>
-                            form.setValue(
-                              "splitValues",
-                              { ...splitValues, [participant.id]: next },
-                              { shouldValidate: form.formState.isSubmitted },
-                            )
-                          }
-                        />
+                        <div className="flex items-center gap-2">
+                          <SharesStepper
+                            name={participant.name}
+                            value={splitValues[participant.id] ?? "1"}
+                            onChange={(next) =>
+                              form.setValue(
+                                "splitValues",
+                                { ...splitValues, [participant.id]: next },
+                                { shouldValidate: form.formState.isSubmitted },
+                              )
+                            }
+                          />
+                          <span className="tabular text-xs text-stone-500 dark:text-stone-400">
+                            ≈ {formatMoney(sharesPreviewById.get(participant.id) || 0)}
+                          </span>
+                        </div>
                       ) : (
                         <MoneyInput
                           value={splitValues[participant.id] ?? ""}
@@ -823,7 +839,10 @@ function handleSplitModeChange(mode: SplitMode) {
         <div className="md:col-span-2">
           <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
             <p className="text-sm font-medium text-stone-700 dark:text-stone-300">
-              Ảnh hóa đơn
+              Ảnh hóa đơn{" "}
+              <span className="font-normal text-stone-400 dark:text-stone-500">
+                (không bắt buộc)
+              </span>
               {editingPhotos.length + stagedFiles.length > 0 &&
                 ` (${editingPhotos.length + stagedFiles.length})`}
             </p>
