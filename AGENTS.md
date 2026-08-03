@@ -21,6 +21,49 @@ implementations in `worker/src/adapters/d1/` (drizzle schema + repository)
 and `worker/src/adapters/gemini/`. Hono routes in `worker/src/routes/` are
 thin driving adapters. See `docs/architecture.md` for dependency rules.
 
+Folder structure:
+
+```text
+shared/                        # Pure domain kernel shared by FE + worker (no IO)
+  split.ts                     #   Split math, balances, settlements, computeSplitRows
+  schemas.ts                   #   Zod input schemas + domain constants
+  ai.ts                        #   AI suggestion normalization/resolution (pure)
+  api-types.ts                 #   DTOs exchanged between FE and worker
+  rate-limit.ts                #   Pure rate-limit logic
+
+src/                           # Frontend hexagon
+  core/
+    domain/money.ts            #   VND format/parse (FE-only pure rules)
+    ports/game-api.ts          #   Backend API port
+    ports/qr-provider.ts       #   Payment QR port
+    container.ts               #   Minimal DI: provide*/get* per port
+  adapters/
+    browser/http-game-api.ts   #   fetch adapter for GameApiPort
+    browser/vietqr.ts          #   VietQR adapter for QrProviderPort
+    browser/auth-client.ts     #   Better Auth client
+    browser/theme.ts           #   localStorage + matchMedia theme persistence
+    react-query/queries.ts     #   React Query hooks over GameApiPort
+  components/  routes/         #   Presentation (React)
+  main.tsx                     #   Composition root: plugs adapters into ports
+
+worker/src/                    # Backend hexagon (Hono on Cloudflare Worker)
+  core/
+    ports/game-repository.ts   #   Storage port (row types + interface)
+    ports/ai-provider.ts       #   AI JSON-generation port
+    application/               #   Use cases + policies (ownership, realloc, ...)
+  adapters/
+    d1/schema.ts               #   Drizzle schema (drizzle-kit source)
+    d1/game-repository.ts      #   D1/drizzle adapter for GameRepository
+    gemini/gemini.ts           #   Gemini adapter for AiProvider
+  routes/                      #   Thin HTTP adapters: parse -> use case -> JSON
+  lib/                         #   Small infra: http helpers, ids, require-user
+  auth.ts  env.ts  index.ts    #   Better Auth, Env type, app + middleware
+
+functions/api/[[path]].ts      # Cloudflare Pages shim delegating /api/* to the worker
+drizzle/                       # Generated D1 migrations
+e2e/ui-smoke.mjs               # Playwright smoke suite (pnpm e2e)
+```
+
 ## Build, Test, and Development Commands
 
 - `pnpm install`: install project dependencies.
