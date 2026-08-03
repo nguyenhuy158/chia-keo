@@ -1,5 +1,9 @@
 # Copy thanh .dev.vars de chay wrangler dev local.
 BETTER_AUTH_SECRET=dev-secret-thay-bang-chuoi-ngau-nhien-du-dai
+# Bat dang nhap Google. Redirect URI phai dang ky trong Google Cloud Console:
+# http://localhost:8788/api/auth/callback/google
+# GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com
+# GOOGLE_CLIENT_SECRET=your-client-secret
 # Bat tinh nang AI (goi y khoan chi + quet hoa don). Khong co thi /api/ai/* tra 400.
 # GEMINI_API_KEY=your-key
 # GEMINI_MODEL=gemini-2.0-flash
