@@ -1,8 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
+  VIETQR_ACCOUNT_PATTERN,
   VIETQR_BANK_OPTIONS,
+  buildVietQrProxyPath,
   buildVietQrUrl,
   canBuildVietQr,
+  getVietQrBankLabel,
   getVietQrPaymentIssue,
   resolveVietQrBankId,
 } from "./vietqr";
@@ -66,5 +69,44 @@ describe("buildVietQrUrl", () => {
     const addInfo = new URL(url).searchParams.get("addInfo");
 
     expect(addInfo).toMatch(/^[a-zA-Z0-9 ]*$/);
+  });
+});
+
+describe("getVietQrBankLabel", () => {
+  it("trả về tên ngân hàng không kèm mã trong ngoặc", () => {
+    expect(getVietQrBankLabel("VCB")).toBe("Vietcombank");
+    expect(getVietQrBankLabel("MBB")).toBe("MB Bank");
+  });
+
+  it("giữ nguyên giá trị nhập khi không nhận ra mã", () => {
+    expect(getVietQrBankLabel("khong-co")).toBe("khong-co");
+  });
+});
+
+describe("buildVietQrProxyPath", () => {
+  it("trỏ về API của mình với mã ngân hàng đã chuẩn hóa", () => {
+    const path = buildVietQrProxyPath({ ...fullPayment, bankId: "MBB" }, 148_800, "ABC123");
+    const params = new URLSearchParams(path.split("?")[1]);
+
+    expect(path.startsWith("/api/qr?")).toBe(true);
+    expect(params.get("bank")).toBe("MB");
+    expect(params.get("account")).toBe("0123456789");
+    expect(params.get("amount")).toBe("148800");
+    expect(params.get("code")).toBe("ABC123");
+  });
+
+  it("làm tròn số tiền lẻ vì VietQR chỉ nhận số nguyên", () => {
+    const path = buildVietQrProxyPath(fullPayment, 148_800.6, "ABC123");
+
+    expect(new URLSearchParams(path.split("?")[1]).get("amount")).toBe("148801");
+  });
+});
+
+describe("VIETQR_ACCOUNT_PATTERN", () => {
+  it("nhận số tài khoản chữ và số, chặn ký tự lạ", () => {
+    expect(VIETQR_ACCOUNT_PATTERN.test("0123456789")).toBe(true);
+    expect(VIETQR_ACCOUNT_PATTERN.test("VN12345678")).toBe(true);
+    expect(VIETQR_ACCOUNT_PATTERN.test("012")).toBe(false);
+    expect(VIETQR_ACCOUNT_PATTERN.test("0123/../456")).toBe(false);
   });
 });

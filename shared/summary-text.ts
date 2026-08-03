@@ -19,7 +19,10 @@ export type SummaryTextInput = {
   shareUrl?: string;
 };
 
+export type SummarySectionId = "expenses" | "people" | "settlements";
+
 export type SummarySection = {
+  id: SummarySectionId;
   heading: string;
   lines: string[];
 };
@@ -116,6 +119,7 @@ export function buildSummaryDocument(input: SummaryTextInput): SummaryDocument {
 
   const sections: SummarySection[] = [
     {
+      id: "expenses",
       heading:
         expenses.length > 0
           ? `CÁC KHOẢN CHI (${expenses.length} khoản · tổng ${formatShortMoney(summary.totalExpense)})`
@@ -129,6 +133,7 @@ export function buildSummaryDocument(input: SummaryTextInput): SummaryDocument {
 
   if (participants.length > 0) {
     sections.push({
+      id: "people",
       heading: "TỪNG NGƯỜI",
       lines: buildPersonLines(participants, expenses, summary),
     });
@@ -136,7 +141,7 @@ export function buildSummaryDocument(input: SummaryTextInput): SummaryDocument {
 
   const settlementLines = buildSettlementLines(summary, nameById);
   if (settlementLines.length > 0) {
-    sections.push({ heading: "CẦN CHUYỂN", lines: settlementLines });
+    sections.push({ id: "settlements", heading: "CẦN CHUYỂN", lines: settlementLines });
   }
 
   return {

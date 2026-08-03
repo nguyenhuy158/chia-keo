@@ -5,6 +5,7 @@ import type { Env } from "./env";
 import { rateLimitPost } from "./lib/rate-limit-middleware";
 import { aiRouter } from "./routes/ai";
 import { gamesRouter } from "./routes/games";
+import { qrRouter } from "./routes/qr";
 import { shareRouter } from "./routes/share";
 
 // Chan brute-force login/dang ky va spam tao game/link share (theo IP).
@@ -52,6 +53,7 @@ app.on(["GET", "POST"], `${AUTH_BASE_PATH}/*`, (c) =>
   createAuth(c.env, c.req.url).handler(c.req.raw),
 );
 
+app.route("/api", qrRouter);
 app.route("/api", shareRouter);
 app.route("/api", aiRouter);
 app.route("/api", gamesRouter);
