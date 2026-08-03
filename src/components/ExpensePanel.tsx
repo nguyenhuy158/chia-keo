@@ -17,6 +17,7 @@ import { z } from "zod";
 import type { ResolvedAiExpense } from "../../shared/ai";
 import type { ApiExpense, ApiGameDetail, ApiParticipant, ApiPhoto } from "../../shared/api-types";
 import { countPhotosByExpenseId, filterPhotosByExpenseId, toDataUrl } from "../../shared/photos";
+import { allocateAmount } from "../../shared/split";
 import {
   DEFAULT_EXPENSE_TITLE,
   DEFAULT_INCOME_TITLE,
@@ -307,6 +308,25 @@ export function ExpensePanel({
 
   const allSelected =
     participants.length > 0 && splitParticipantIds.length === participants.length;
+
+  /**
+   * Chuyen sang mode "Số tiền": dien san chia deu theo so tien hien tai lam
+   * moc khoi diem, thay vi de trong bat nguoi dung tu go tung phan tu 0.
+   */
+  function handleSplitModeChange(mode: SplitMode) {
+    if (mode === "amount") {
+      const total = parseMoney(form.getValues("amount"));
+      if (total > 0 && splitParticipantIds.length > 0) {
+        const shares = allocateAmount(total, splitParticipantIds);
+        const nextValues = { ...splitValues };
+        for (const share of shares) {
+          nextValues[share.participantId] = String(share.amount);
+        }
+        form.setValue("splitValues", nextValues);
+      }
+    }
+    form.setValue("splitMode", mode, { shouldValidate: form.formState.isSubmitted });
+  }
 
   const aiSuggest = useAiSuggestExpense(gameId);
   const aiReceipt = useAiScanReceipt(gameId);
@@ -607,11 +627,7 @@ export function ExpensePanel({
                   <button
                     key={option.id}
                     type="button"
-                    onClick={() =>
-                      form.setValue("splitMode", option.id, {
-                        shouldValidate: form.formState.isSubmitted,
-                      })
-                    }
+                    onClick={() => handleSplitModeChange(option.id)}
                     className={`rounded px-2.5 py-1.5 text-xs font-semibold transition ${
                       splitMode === option.id
                         ? "bg-white text-violet-700 shadow-sm dark:bg-stone-900 dark:text-violet-300"
