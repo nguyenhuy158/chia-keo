@@ -1,6 +1,6 @@
 import type { ResolvedAiExpense } from "./ai";
 import type { SettlementMode } from "./schemas";
-import type { BalanceRow, SettlementRow, SplitMode } from "./split";
+import type { BalanceRow, ExpenseKind, SettlementRow, SplitMode } from "./split";
 
 export type ApiAiSuggestionResponse = {
   suggestion: ResolvedAiExpense;
@@ -37,7 +37,7 @@ export type ApiExpenseSplit = {
 
 export type ApiExpense = {
   id: string;
-  kind: "expense" | "transfer";
+  kind: ExpenseKind;
   title: string;
   amount: number;
   note: string;

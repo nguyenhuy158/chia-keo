@@ -1,6 +1,9 @@
 import type { ApiGame, ApiGameDetail } from "../../../../shared/api-types";
 import type { GameInput, GameUpdateInput } from "../../../../shared/schemas";
-import { DEFAULT_SETTLEMENT_MODE } from "../../../../shared/schemas";
+import {
+  DEFAULT_SETTLEMENT_MODE,
+  QUICK_PARTICIPANT_PREFIX,
+} from "../../../../shared/schemas";
 import { createGameCode, createId, nowIso } from "../../lib/ids";
 import type { GameChanges, GameRepository } from "../ports/game-repository";
 import { InvalidInputError, NotFoundError } from "./errors";
@@ -42,6 +45,24 @@ export async function createGame(
   };
 
   await repo.games.insert(game);
+
+  // Tao san "Người 1", "Người 2"... de vao viec ngay; sua ten sau bang cach
+  // sua participant binh thuong. participantCount = 0 thi bo qua (hanh vi cu).
+  const quickCount = input.participantCount ?? 0;
+  for (let index = 1; index <= quickCount; index += 1) {
+    const participantNow = nowIso();
+    await repo.participants.insert(
+      {
+        id: createId("participant"),
+        gameId: game.id,
+        name: `${QUICK_PARTICIPANT_PREFIX} ${index}`,
+        createdAt: participantNow,
+        updatedAt: participantNow,
+      },
+      { bankId: "", accountNo: "", accountName: "" },
+    );
+  }
+
   return loadGameDetail(repo, game);
 }
 

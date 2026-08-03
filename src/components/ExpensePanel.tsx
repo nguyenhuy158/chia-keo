@@ -19,8 +19,10 @@ import type { ApiExpense, ApiGameDetail, ApiParticipant, ApiPhoto } from "../../
 import { countPhotosByExpenseId, filterPhotosByExpenseId, toDataUrl } from "../../shared/photos";
 import {
   DEFAULT_EXPENSE_TITLE,
+  DEFAULT_INCOME_TITLE,
   MAX_SPLIT_WEIGHT,
   type ExpenseInput,
+  type ExpenseKindInput,
   type SplitMode,
 } from "../../shared/schemas";
 import { formatMoney, parseMoney } from "../core/domain/money";
@@ -39,6 +41,7 @@ function parseWeight(value: string | undefined) {
 
 const expenseFormSchema = z
   .object({
+    kind: z.enum(["expense", "income"]),
     title: z.string().trim(),
     amount: z.string().refine((value) => parseMoney(value) > 0, "Nhập số tiền hợp lệ"),
     payerId: z.string().min(1, "Chọn người trả"),
@@ -238,6 +241,7 @@ export function ExpensePanel({
   const form = useForm<ExpenseFormValues>({
     resolver: zodResolver(expenseFormSchema),
     defaultValues: {
+      kind: "expense",
       title: "",
       amount: "",
       payerId: participants[0]?.id || "",
@@ -248,6 +252,7 @@ export function ExpensePanel({
   });
 
   const splitParticipantIds = form.watch("splitParticipantIds");
+  const kind = form.watch("kind");
   const payerId = form.watch("payerId");
   const splitMode = form.watch("splitMode");
   const splitValues = form.watch("splitValues");
@@ -404,6 +409,7 @@ export function ExpensePanel({
         expense.splitMode === "shares" ? String(split.weight || 1) : String(split.amount);
     }
     form.reset({
+      kind: expense.kind === "income" ? "income" : "expense",
       title: expense.title,
       amount: String(expense.amount),
       payerId: expense.payerParticipantId,
@@ -417,6 +423,7 @@ export function ExpensePanel({
     setEditingExpenseId("");
     setStagedFiles([]);
     form.reset({
+      kind: "expense",
       title: "",
       amount: "",
       payerId: participants[0]?.id || "",
@@ -428,7 +435,8 @@ export function ExpensePanel({
 
   const handleSubmit = form.handleSubmit(async (values) => {
     const input: ExpenseInput = {
-      title: values.title || DEFAULT_EXPENSE_TITLE,
+      kind: values.kind,
+      title: values.title || (values.kind === "income" ? DEFAULT_INCOME_TITLE : DEFAULT_EXPENSE_TITLE),
       amount: parseMoney(values.amount),
       note: "",
       payerParticipantId: values.payerId,
@@ -458,6 +466,7 @@ export function ExpensePanel({
     }
     setStagedFiles([]);
     form.reset({
+      kind: values.kind,
       title: "",
       amount: "",
       payerId: values.payerId,
@@ -528,8 +537,30 @@ export function ExpensePanel({
       </div>
 
       <form onSubmit={handleSubmit} className="grid gap-3 md:grid-cols-2">
+        <div className="flex rounded-md bg-stone-100 p-0.5 dark:bg-stone-800 md:col-span-2">
+          {(["expense", "income"] as ExpenseKindInput[]).map((option) => (
+            <button
+              key={option}
+              type="button"
+              onClick={() => form.setValue("kind", option)}
+              className={`flex-1 rounded px-2.5 py-2 text-sm font-semibold transition ${
+                kind === option
+                  ? option === "income"
+                    ? "bg-white text-emerald-700 shadow-sm dark:bg-stone-900 dark:text-emerald-400"
+                    : "bg-white text-violet-700 shadow-sm dark:bg-stone-900 dark:text-violet-300"
+                  : "text-stone-600 hover:text-stone-950 dark:text-stone-400 dark:hover:text-stone-100"
+              }`}
+            >
+              {option === "income" ? "Khoản thu" : "Khoản chi"}
+            </button>
+          ))}
+        </div>
         <Field label="Nội dung">
-          <input {...form.register("title")} className="field" placeholder="Ăn tối" />
+          <input
+            {...form.register("title")}
+            className="field"
+            placeholder={kind === "income" ? "Hoàn tiền" : "Ăn tối"}
+          />
         </Field>
         <Field label="Số tiền" error={form.formState.errors.amount?.message}>
           <Controller
@@ -760,7 +791,13 @@ export function ExpensePanel({
             className="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-violet-600 px-4 text-sm font-semibold text-white transition hover:bg-violet-700 active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-stone-300 dark:disabled:bg-stone-700"
           >
             {editingExpenseId ? <Check size={17} /> : <Plus size={17} />}
-            {editingExpenseId ? "Lưu khoản chi" : "Thêm khoản chi"}
+            {editingExpenseId
+              ? kind === "income"
+                ? "Lưu khoản thu"
+                : "Lưu khoản chi"
+              : kind === "income"
+                ? "Thêm khoản thu"
+                : "Thêm khoản chi"}
           </button>
           {editingExpenseId && (
             <button
@@ -796,15 +833,28 @@ export function ExpensePanel({
                 <div className="min-w-0">
                   <p className="truncate text-sm font-semibold text-stone-950 dark:text-stone-50">
                     {expense.title}
+                    {expense.kind === "income" && (
+                      <span className="ml-1.5 rounded bg-emerald-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400">
+                        Thu
+                      </span>
+                    )}
                   </p>
                   <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">
-                    {payer?.name || "Không rõ"} trả, chia {expense.splitParticipantIds.length} người
+                    {payer?.name || "Không rõ"} {expense.kind === "income" ? "nhận" : "trả"}, chia{" "}
+                    {expense.splitParticipantIds.length} người
                     {SPLIT_MODE_BADGES[expense.splitMode] &&
                       ` · ${SPLIT_MODE_BADGES[expense.splitMode]}`}
                   </p>
                 </div>
                 <div className="flex shrink-0 items-center gap-1">
-                  <span className="text-sm font-semibold text-stone-950 tabular dark:text-stone-50">
+                  <span
+                    className={`text-sm font-semibold tabular ${
+                      expense.kind === "income"
+                        ? "text-emerald-700 dark:text-emerald-400"
+                        : "text-stone-950 dark:text-stone-50"
+                    }`}
+                  >
+                    {expense.kind === "income" ? "+" : ""}
                     {formatMoney(expense.amount)}
                   </span>
                   <button

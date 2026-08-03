@@ -235,6 +235,29 @@ describe("calculateBalances", () => {
     );
     expect(totalBalance).toBe(0);
   });
+
+  it("khoan thu (income) dao nguoc dau: nguoi nhan giu tien, nguoi duoc chia bot no", () => {
+    // a chi 300 chia deu 3 nguoi -> moi nguoi no a 100.
+    // Sau do nhom nhan hoan tien 90, a giu tien, chia deu 3 nguoi -> moi nguoi bot 30 no.
+    const expenses: ExpenseInput[] = [
+      { payerParticipantId: "a", amount: 300, shares: allocateAmount(300, ["a", "b", "c"]) },
+      {
+        payerParticipantId: "a",
+        amount: 90,
+        shares: allocateAmount(90, ["a", "b", "c"]),
+        kind: "income",
+      },
+    ];
+
+    const balances = calculateBalances(["a", "b", "c"], expenses);
+    expect(balances).toEqual([
+      { participantId: "a", paid: 210, owed: 70, balance: 140 },
+      { participantId: "b", paid: 0, owed: 70, balance: -70 },
+      { participantId: "c", paid: 0, owed: 70, balance: -70 },
+    ]);
+    const totalBalance = balances.reduce((sum, row) => sum + row.balance, 0);
+    expect(totalBalance).toBe(0);
+  });
 });
 
 describe("calculateSettlements", () => {

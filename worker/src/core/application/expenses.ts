@@ -1,7 +1,9 @@
 import type { ApiGameDetail } from "../../../../shared/api-types";
 import {
   DEFAULT_TRANSFER_TITLE,
+  defaultTitleForKind,
   type ExpenseInput,
+  type ExpenseKindInput,
   type TransferInput,
 } from "../../../../shared/schemas";
 import {
@@ -61,13 +63,14 @@ export async function addExpense(
 
   const now = nowIso();
   const expenseId = createId("expense");
+  const kind = input.kind ?? "expense";
 
   await repo.expenses.insert({
     id: expenseId,
     gameId: game.id,
     payerParticipantId: input.payerParticipantId,
-    kind: "expense",
-    title: input.title,
+    kind,
+    title: input.title || defaultTitleForKind(kind),
     amount: input.amount,
     note: input.note,
     splitMode: input.splitMode,
@@ -116,8 +119,14 @@ export async function updateExpense(
   const payerParticipantId = input.payerParticipantId ?? row.expense.payerParticipantId;
   await assertMembers(repo, row.game.id, payerParticipantId, rows);
 
+  // Doi qua lai giua chi va thu duoc; "transfer" da bi chan o tren.
+  const storedKind: ExpenseKindInput = row.expense.kind === "income" ? "income" : "expense";
+  const kind = input.kind ?? storedKind;
+  const title = input.title ?? row.expense.title;
+
   await repo.expenses.update(row.expense.id, {
-    title: input.title ?? row.expense.title,
+    kind,
+    title: title || defaultTitleForKind(kind),
     note: input.note ?? row.expense.note,
     amount,
     payerParticipantId,

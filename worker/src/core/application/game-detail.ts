@@ -54,7 +54,7 @@ async function loadGameData(repo: GameRepository, gameId: string): Promise<GameD
     const splits = splitsByExpenseId.get(row.id) || [];
     return {
       id: row.id,
-      kind: row.kind === "transfer" ? "transfer" : "expense",
+      kind: row.kind === "transfer" || row.kind === "income" ? row.kind : "expense",
       title: row.title,
       amount: row.amount,
       note: row.note,
@@ -76,6 +76,7 @@ async function loadGameData(repo: GameRepository, gameId: string): Promise<GameD
     expenseRows.map((row) => ({
       payerParticipantId: row.payerParticipantId,
       amount: row.amount,
+      kind: row.kind === "income" ? "income" : row.kind === "transfer" ? "transfer" : "expense",
       shares: (splitsByExpenseId.get(row.id) || []).map((split) => ({
         participantId: split.participantId,
         amount: split.amount,
@@ -83,12 +84,16 @@ async function loadGameData(repo: GameRepository, gameId: string): Promise<GameD
     })),
   );
 
-  // Khoan tra no (kind = "transfer") van tinh vao balance nhung khong cong
-  // vao tong chi cua nhom.
+  // Khoan tra no (kind = "transfer") khong tinh vao tong chi cua nhom.
+  // Khoan thu (kind = "income") tru vao tong chi: phan anh dung so tien
+  // nhom thuc su da tieu (vd. hoan tien lam giam tong chi thuc te).
+  const totalExpense = expenseRows.reduce((total, row) => {
+    if (row.kind === "transfer") return total;
+    return row.kind === "income" ? total - row.amount : total + row.amount;
+  }, 0);
+
   const summary: ApiSummary = {
-    totalExpense: expenseRows
-      .filter((row) => row.kind !== "transfer")
-      .reduce((total, row) => total + row.amount, 0),
+    totalExpense,
     balances,
     settlements: calculateSettlements(balances),
   };

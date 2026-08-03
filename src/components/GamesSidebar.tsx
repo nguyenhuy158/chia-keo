@@ -1,12 +1,14 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Plus, ReceiptText } from "lucide-react";
+import { Minus, Plus, ReceiptText } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { MAX_QUICK_PARTICIPANTS } from "../../shared/schemas";
 import { useCreateGame, useGames } from "../adapters/react-query/queries";
 
 const gameFormSchema = z.object({
   name: z.string().trim().min(1, "Nhập tên cuộc chơi"),
+  participantCount: z.number().int().min(0).max(MAX_QUICK_PARTICIPANTS),
 });
 
 type GameFormValues = z.infer<typeof gameFormSchema>;
@@ -18,12 +20,20 @@ export function GamesSidebar({ onNavigate }: { onNavigate?: () => void }) {
 
   const form = useForm<GameFormValues>({
     resolver: zodResolver(gameFormSchema),
-    defaultValues: { name: "" },
+    defaultValues: { name: "", participantCount: 0 },
   });
+  const participantCount = form.watch("participantCount");
+
+  function stepParticipantCount(delta: number) {
+    form.setValue(
+      "participantCount",
+      Math.min(MAX_QUICK_PARTICIPANTS, Math.max(0, participantCount + delta)),
+    );
+  }
 
   const handleCreate = form.handleSubmit(async (values) => {
     const detail = await createGame.mutateAsync(values);
-    form.reset({ name: "" });
+    form.reset({ name: "", participantCount: 0 });
     navigate({ to: "/games/$gameId", params: { gameId: detail.id } });
     onNavigate?.();
   });
@@ -52,6 +62,40 @@ export function GamesSidebar({ onNavigate }: { onNavigate?: () => void }) {
           >
             <Plus size={18} />
           </button>
+        </div>
+
+        {/* Tao san N nguoi "Người 1", "Người 2"... de vao viec ngay, sua ten
+            sau. 0 nguoi thi khong tao ai (hanh vi cu, tu them tay). */}
+        <div className="mt-2 flex items-center gap-2">
+          <span className="text-xs text-stone-500 dark:text-stone-400">Tạo sẵn số người</span>
+          <div className="flex h-9 items-center overflow-hidden rounded-lg border border-stone-300 dark:border-stone-700">
+            <button
+              type="button"
+              onClick={() => stepParticipantCount(-1)}
+              disabled={participantCount <= 0}
+              aria-label="Giảm số người tạo sẵn"
+              className="flex h-full w-9 items-center justify-center text-stone-600 transition hover:bg-stone-100 active:bg-stone-200 disabled:opacity-30 disabled:hover:bg-transparent dark:text-stone-300 dark:hover:bg-stone-700 dark:active:bg-stone-600"
+            >
+              <Minus size={14} />
+            </button>
+            <span className="tabular w-8 text-center text-sm font-medium text-stone-900 dark:text-stone-100">
+              {participantCount}
+            </span>
+            <button
+              type="button"
+              onClick={() => stepParticipantCount(1)}
+              disabled={participantCount >= MAX_QUICK_PARTICIPANTS}
+              aria-label="Tăng số người tạo sẵn"
+              className="flex h-full w-9 items-center justify-center text-stone-600 transition hover:bg-stone-100 active:bg-stone-200 disabled:opacity-30 disabled:hover:bg-transparent dark:text-stone-300 dark:hover:bg-stone-700 dark:active:bg-stone-600"
+            >
+              <Plus size={14} />
+            </button>
+          </div>
+          {participantCount > 0 && (
+            <span className="text-xs text-stone-400 dark:text-stone-500">
+              “Người 1”…“Người {participantCount}”
+            </span>
+          )}
         </div>
         {form.formState.errors.name && (
           <p className="mt-1 text-xs text-rose-600 dark:text-rose-400">

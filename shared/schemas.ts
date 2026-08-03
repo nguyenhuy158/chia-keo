@@ -8,7 +8,11 @@ export const MAX_EXPENSE_AMOUNT = 1_000_000_000_000;
 // Hang so domain nam o shared/split.ts, re-export de cho import cu.
 export { MAX_SPLIT_WEIGHT } from "./split";
 export const DEFAULT_EXPENSE_TITLE = "Khoản chi";
+export const DEFAULT_INCOME_TITLE = "Khoản thu";
 export const DEFAULT_TRANSFER_TITLE = "Trả nợ";
+/** So nguoi toi da tao nhanh khi mo cuoc choi ("Người 1", "Người 2"...). */
+export const MAX_QUICK_PARTICIPANTS = 30;
+export const QUICK_PARTICIPANT_PREFIX = "Người";
 
 export const PHOTO_CAPTION_MAX_LENGTH = 140;
 export const MAX_PHOTOS_PER_GAME = 60;
@@ -37,9 +41,15 @@ export const settlementModeSchema = z.enum(SETTLEMENT_MODES);
 export const gameInputSchema = z.object({
   name: z.string().trim().min(1).max(GAME_NAME_MAX_LENGTH),
   settlementMode: settlementModeSchema.default(DEFAULT_SETTLEMENT_MODE),
+  /**
+   * Tao san bay nhieu nguoi ten mac dinh de vao viec ngay, sua ten sau.
+   * 0 la khong tao ai (hanh vi cu).
+   */
+  participantCount: z.number().int().min(0).max(MAX_QUICK_PARTICIPANTS).default(0),
 });
 
-export const gameUpdateSchema = gameInputSchema.partial();
+// participantCount chi co nghia luc tao, bo khoi schema sua de khong nhan cho vui.
+export const gameUpdateSchema = gameInputSchema.omit({ participantCount: true }).partial();
 
 export const participantInputSchema = z.object({
   name: z.string().trim().min(1).max(PARTICIPANT_NAME_MAX_LENGTH),
@@ -59,13 +69,16 @@ export const expenseSplitInputSchema = z.object({
   value: z.number().int().positive().max(MAX_EXPENSE_AMOUNT),
 });
 
+/**
+ * Loai ban ghi nguoi dung tu tao. "transfer" khong co o day vi tra no di qua
+ * endpoint rieng (/transfers) voi payload khac.
+ */
+export const expenseKindSchema = z.enum(["expense", "income"]);
+
 export const expenseInputSchema = z.object({
-  title: z
-    .string()
-    .trim()
-    .max(EXPENSE_TITLE_MAX_LENGTH)
-    .default("")
-    .transform((value) => value || DEFAULT_EXPENSE_TITLE),
+  kind: expenseKindSchema.default("expense"),
+  // Bo trong thi application dien ten mac dinh theo `kind`.
+  title: z.string().trim().max(EXPENSE_TITLE_MAX_LENGTH).default(""),
   amount: z.number().int().positive().max(MAX_EXPENSE_AMOUNT),
   note: z.string().trim().max(EXPENSE_NOTE_MAX_LENGTH).default(""),
   payerParticipantId: z.string().min(1),
@@ -110,7 +123,13 @@ export const photoUpdateSchema = z.object({
   expenseId: z.string().min(1).nullable().optional(),
 });
 
+/** Ten mac dinh khi nguoi dung khong nhap noi dung. */
+export function defaultTitleForKind(kind: "expense" | "income") {
+  return kind === "income" ? DEFAULT_INCOME_TITLE : DEFAULT_EXPENSE_TITLE;
+}
+
 export type SettlementMode = z.infer<typeof settlementModeSchema>;
+export type ExpenseKindInput = z.infer<typeof expenseKindSchema>;
 // z.input chu khong phai z.infer: phia goi API duoc bo qua field co default.
 export type GameInput = z.input<typeof gameInputSchema>;
 export type GameUpdateInput = z.input<typeof gameUpdateSchema>;

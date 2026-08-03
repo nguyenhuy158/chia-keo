@@ -23,10 +23,30 @@ export type SplitValueInput = {
   value: number;
 };
 
+/**
+ * Ba loai ban ghi tien, giong Tricount:
+ * - "expense": ai do ung tien, nhung nguoi trong split no lai
+ * - "income": nhom nhan tien (hoan tien, thuong, ban do...), lam giam so no
+ * - "transfer": mot nguoi tra no cho mot nguoi khac
+ */
+export const EXPENSE_KINDS = ["expense", "income", "transfer"] as const;
+export type ExpenseKind = (typeof EXPENSE_KINDS)[number];
+
+/**
+ * Dau cua mot ban ghi khi vao balance. "income" la khoan chi dao nguoc: nguoi
+ * nhan giu tien cua nhom (paid am), nhung nguoi duoc chia bot no (owed am).
+ * Nho lam dau o day, moi ham chia tien ben tren van chi lam viec voi so duong.
+ */
+export function kindSign(kind: ExpenseKind | undefined) {
+  return kind === "income" ? -1 : 1;
+}
+
 export type ExpenseInput = {
   payerParticipantId: string;
   amount: number;
   shares: SplitShare[];
+  /** Bo trong hieu la "expense" (goi cu chi co mot loai). */
+  kind?: ExpenseKind;
 };
 
 export type BalanceRow = {
@@ -139,12 +159,13 @@ export function calculateBalances(
     const payer = byId.get(expense.payerParticipantId);
     if (!payer || expense.shares.length === 0) continue;
 
-    payer.paid += expense.amount;
+    const sign = kindSign(expense.kind);
+    payer.paid += sign * expense.amount;
 
     for (const share of expense.shares) {
       const participant = byId.get(share.participantId);
       if (participant) {
-        participant.owed += share.amount;
+        participant.owed += sign * share.amount;
       }
     }
   }
