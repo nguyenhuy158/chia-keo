@@ -11,10 +11,14 @@ Ung dung chia tien nhom cho cac buoi an, di choi, du lich hoac nhom chi tieu nho
   - Tao nhieu cuoc choi.
   - Them nguoi tham gia va thong tin ngan hang.
   - Ghi khoan chi, nguoi tra tien, danh sach nguoi cung chia.
+  - Chia deu, chia theo so phan (weights) hoac nhap so tien cu the tung nguoi.
+  - Ghi nhan tra no (reimbursement): danh dau mot khoan chuyen la "da tra",
+    balance hai ben tu cap nhat, khong tinh vao tong chi.
   - Dùng Gemini để gợi ý khoản chi từ câu nhập nhanh hoặc ảnh hóa đơn.
   - Lưu mẫu chi tiêu, xuất báo cáo text và xem thống kê nhanh.
 - Tinh `da tra`, `phan chiu`, `con lai`.
-- Sinh danh sach nguoi can chuyen tien ve chu cuoc choi.
+- Toi gian cong no peer-to-peer: ghep nguoi am voi nguoi duong de so lan
+  chuyen khoan it nhat (khong bat buoc chuyen ve chu cuoc choi).
   - Tạo link share dạng chỉ xem hoặc cho nhập thêm khoản chi qua `/share/:token`.
   - Tao VietQR bang `img.vietqr.io` neu nguoi nhan co du thong tin ngan hang.
 
@@ -103,14 +107,16 @@ Nguoi tham gia trong mot cuoc choi.
 
 ### `expenses`
 
-Khoan da chi.
+Khoan da chi hoac khoan tra no.
 
 - `id`
 - `game_id`
 - `payer_participant_id`
+- `kind` (`expense` | `transfer`)
 - `title`
 - `amount`
 - `note`
+- `split_mode` (`equal` | `shares` | `amount`)
 - `created_at`
 - `updated_at`
 
@@ -122,6 +128,7 @@ Danh sach nguoi phai chiu mot khoan chi.
 - `expense_id`
 - `participant_id`
 - `amount`
+- `weight` (so phan khi `split_mode = shares`, null cho mode khac)
 
 ### `share_links`
 
@@ -149,12 +156,16 @@ Thong tin nhan tien cua chu cuoc choi.
 
 ## Luong tinh tien
 
-Voi moi khoan chi:
+Voi moi khoan chi, phan chiu cua tung nguoi phu thuoc `split_mode`:
 
-1. Lay `amount`.
-2. Lay danh sach nguoi duoc tick trong `expense_splits`.
-3. Chia `amount / so nguoi duoc tick`.
-4. Neu so tien le, phan du duoc cong lan luot cho cac nguoi dau danh sach de tong split luon bang tong tien goc.
+- `equal`: chia `amount / so nguoi duoc tick`; so tien le duoc cong lan luot
+  cho cac nguoi dau danh sach de tong split luon bang tong tien goc.
+- `shares`: chia theo so phan (`weight`) cua tung nguoi, phan du xu ly nhu tren.
+- `amount`: nhap so tien cu the tung nguoi, tong cac phan phai bang `amount`.
+
+Khoan tra no (`kind = transfer`) duoc luu nhu mot khoan chi ma nguoi nhan
+chiu 100%: nguoi tra tang `paid`, nguoi nhan tang `owed`, nen balance hai ben
+tu can bang lai. Transfer khong tinh vao `totalExpense`.
 
 Voi moi nguoi:
 
@@ -168,11 +179,14 @@ Y nghia balance:
 - `balance < 0`: phai chuyen them.
 - `balance = 0`: da can bang.
 
-Sau khi co balance o V1:
+Sau khi co balance, tinh danh sach chuyen khoan toi uu (peer-to-peer):
 
-1. Tao danh sach nguoi co `balance < 0`.
-2. Moi nguoi trong danh sach chuyen so tien `abs(balance)` ve tai khoan chu cuoc choi.
-3. QR VietQR lay tu `payment_profiles` cua cuoc choi.
+1. Ghep nguoi co `balance < 0` voi nguoi co `balance > 0` theo so tien giam dan,
+   moi lan chuyen `min` cua hai ben cho den khi can bang het (toi da `n - 1`
+   giao dich).
+2. Tren UI chu cuoc choi co the bam "Đã trả" tren tung dong de ghi nhan
+   khoan do thanh mot transfer.
+3. QR VietQR lay tu `payment_profiles` cua nguoi nhan (neu du thong tin).
 
 ## API de xuat
 
@@ -188,6 +202,7 @@ Sau khi co balance o V1:
 - `POST /games/:gameId/expenses`
 - `PATCH /expenses/:expenseId`
 - `DELETE /expenses/:expenseId`
+- `POST /games/:gameId/transfers`
 - `GET /games/:gameId/summary`
 - `POST /games/:gameId/share-links`
 - `GET /share/:token`

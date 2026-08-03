@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ApiGameDetail } from "../../shared/api-types";
-import type { ExpenseInput, GameInput, ParticipantInput } from "../../shared/schemas";
+import type { ExpenseInput, GameInput, ParticipantInput, TransferInput } from "../../shared/schemas";
 import { api } from "./api";
 
 export const gameKeys = {
@@ -99,6 +99,10 @@ export function useUpdateExpense() {
 
 export function useRemoveExpense() {
   return useGameDetailMutation((expenseId: string) => api.expenses.remove(expenseId));
+}
+
+export function useAddTransfer(gameId: string) {
+  return useGameDetailMutation((input: TransferInput) => api.transfers.create(gameId, input));
 }
 
 export function useRenameGame(gameId: string) {

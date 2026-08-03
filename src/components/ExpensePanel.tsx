@@ -5,20 +5,88 @@ import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 import type { ResolvedAiExpense } from "../../shared/ai";
 import type { ApiExpense, ApiParticipant } from "../../shared/api-types";
-import { DEFAULT_EXPENSE_TITLE, type ExpenseInput } from "../../shared/schemas";
+import {
+  DEFAULT_EXPENSE_TITLE,
+  MAX_SPLIT_WEIGHT,
+  type ExpenseInput,
+  type SplitMode,
+} from "../../shared/schemas";
 import { formatMoney, parseMoney } from "../lib/money";
 import { useAiScanReceipt, useAiSuggestExpense } from "../lib/queries";
 import { MoneyInput } from "./MoneyInput";
 import { Field } from "./ui";
 
-const expenseFormSchema = z.object({
-  title: z.string().trim(),
-  amount: z.string().refine((value) => parseMoney(value) > 0, "Nhập số tiền hợp lệ"),
-  payerId: z.string().min(1, "Chọn người trả"),
-  splitParticipantIds: z.array(z.string()).min(1, "Chọn ít nhất một người cùng chia"),
-});
+/** Doc so phan tu o nhap cua mode "shares"; bo trong hieu la 1 phan. */
+function parseWeight(value: string | undefined) {
+  const parsed = Number.parseInt((value || "").trim(), 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
+}
+
+const expenseFormSchema = z
+  .object({
+    title: z.string().trim(),
+    amount: z.string().refine((value) => parseMoney(value) > 0, "Nhập số tiền hợp lệ"),
+    payerId: z.string().min(1, "Chọn người trả"),
+    splitMode: z.enum(["equal", "shares", "amount"]),
+    splitParticipantIds: z.array(z.string()).min(1, "Chọn ít nhất một người cùng chia"),
+    // Gia tri nhap theo tung nguoi: so phan (shares) hoac so tien (amount).
+    splitValues: z.record(z.string(), z.string()),
+  })
+  .superRefine((values, ctx) => {
+    if (values.splitMode === "shares") {
+      const tooBig = values.splitParticipantIds.some(
+        (id) => parseWeight(values.splitValues[id]) > MAX_SPLIT_WEIGHT,
+      );
+      if (tooBig) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["splitValues"],
+          message: `Số phần tối đa là ${MAX_SPLIT_WEIGHT}`,
+        });
+      }
+    }
+
+    if (values.splitMode === "amount") {
+      const hasEmpty = values.splitParticipantIds.some(
+        (id) => parseMoney(values.splitValues[id] || "") <= 0,
+      );
+      if (hasEmpty) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["splitValues"],
+          message: "Mỗi người được chọn phải có phần lớn hơn 0",
+        });
+        return;
+      }
+
+      const assigned = values.splitParticipantIds.reduce(
+        (sum, id) => sum + parseMoney(values.splitValues[id] || ""),
+        0,
+      );
+      const total = parseMoney(values.amount);
+      if (assigned !== total) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["splitValues"],
+          message: `Tổng các phần (${formatMoney(assigned)}) phải bằng số tiền (${formatMoney(total)})`,
+        });
+      }
+    }
+  });
 
 type ExpenseFormValues = z.infer<typeof expenseFormSchema>;
+
+const SPLIT_MODE_OPTIONS: Array<{ id: SplitMode; label: string }> = [
+  { id: "equal", label: "Chia đều" },
+  { id: "shares", label: "Theo phần" },
+  { id: "amount", label: "Số tiền" },
+];
+
+const SPLIT_MODE_BADGES: Record<SplitMode, string> = {
+  equal: "",
+  shares: "theo phần",
+  amount: "số tiền riêng",
+};
 
 type ExpensePanelProps = {
   gameId: string;
@@ -65,12 +133,17 @@ export function ExpensePanel({
       title: "",
       amount: "",
       payerId: participants[0]?.id || "",
+      splitMode: "equal",
       splitParticipantIds: participants.map((participant) => participant.id),
+      splitValues: {},
     },
   });
 
   const splitParticipantIds = form.watch("splitParticipantIds");
   const payerId = form.watch("payerId");
+  const splitMode = form.watch("splitMode");
+  const splitValues = form.watch("splitValues");
+  const amountValue = form.watch("amount");
 
   // Dong bo form khi danh sach nguoi tham gia thay doi: nguoi moi duoc tu dong
   // them vao danh sach chia, nguoi bi xoa duoc go khoi form.
@@ -133,6 +206,7 @@ export function ExpensePanel({
     if (suggestion.amount > 0) form.setValue("amount", String(suggestion.amount));
     if (suggestion.payerParticipantId) form.setValue("payerId", suggestion.payerParticipantId);
     if (suggestion.splitParticipantIds.length > 0) {
+      form.setValue("splitMode", "equal");
       form.setValue("splitParticipantIds", suggestion.splitParticipantIds);
     }
   }
@@ -173,11 +247,18 @@ export function ExpensePanel({
 
   function startEditExpense(expense: ApiExpense) {
     setEditingExpenseId(expense.id);
+    const values: Record<string, string> = {};
+    for (const split of expense.splits) {
+      values[split.participantId] =
+        expense.splitMode === "shares" ? String(split.weight || 1) : String(split.amount);
+    }
     form.reset({
       title: expense.title,
       amount: String(expense.amount),
       payerId: expense.payerParticipantId,
+      splitMode: expense.splitMode,
       splitParticipantIds: expense.splitParticipantIds,
+      splitValues: values,
     });
   }
 
@@ -187,17 +268,30 @@ export function ExpensePanel({
       title: "",
       amount: "",
       payerId: participants[0]?.id || "",
+      splitMode: "equal",
       splitParticipantIds: participants.map((participant) => participant.id),
+      splitValues: {},
     });
   }
 
   const handleSubmit = form.handleSubmit(async (values) => {
-    const input = {
+    const input: ExpenseInput = {
       title: values.title || DEFAULT_EXPENSE_TITLE,
       amount: parseMoney(values.amount),
       note: "",
       payerParticipantId: values.payerId,
-      splitParticipantIds: values.splitParticipantIds,
+      splitMode: values.splitMode,
+      splitParticipantIds: values.splitMode === "equal" ? values.splitParticipantIds : [],
+      splits:
+        values.splitMode === "equal"
+          ? []
+          : values.splitParticipantIds.map((participantId) => ({
+              participantId,
+              value:
+                values.splitMode === "shares"
+                  ? parseWeight(values.splitValues[participantId])
+                  : parseMoney(values.splitValues[participantId] || ""),
+            })),
     };
 
     if (editingExpenseId) {
@@ -210,7 +304,9 @@ export function ExpensePanel({
       title: "",
       amount: "",
       payerId: values.payerId,
+      splitMode: values.splitMode,
       splitParticipantIds: values.splitParticipantIds,
+      splitValues: {},
     });
   });
 
@@ -301,41 +397,141 @@ export function ExpensePanel({
             ))}
           </select>
         </Field>
-        <div>
-          <div className="mb-2 flex items-center justify-between gap-2">
+        <div className="md:col-span-2">
+          <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
             <p className="text-sm font-medium text-stone-700 dark:text-stone-300">Chia cho ai</p>
-            {participants.length > 1 && (
-              <button
-                type="button"
-                onClick={() => setAllSplit(!allSelected)}
-                className="rounded-md px-2 py-1 text-xs font-semibold text-violet-700 transition hover:bg-violet-50 active:bg-violet-100 dark:text-violet-400 dark:hover:bg-violet-500/10 dark:active:bg-violet-500/20"
-              >
-                {allSelected ? "Bỏ chọn" : "Chọn tất cả"}
-              </button>
-            )}
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {participants.map((participant) => {
-              const checked = splitParticipantIds.includes(participant.id);
-              return (
+            <div className="flex items-center gap-2">
+              <div className="flex rounded-md bg-stone-100 p-0.5 dark:bg-stone-800">
+                {SPLIT_MODE_OPTIONS.map((option) => (
+                  <button
+                    key={option.id}
+                    type="button"
+                    onClick={() =>
+                      form.setValue("splitMode", option.id, {
+                        shouldValidate: form.formState.isSubmitted,
+                      })
+                    }
+                    className={`rounded px-2.5 py-1.5 text-xs font-semibold transition ${
+                      splitMode === option.id
+                        ? "bg-white text-violet-700 shadow-sm dark:bg-stone-900 dark:text-violet-300"
+                        : "text-stone-600 hover:text-stone-950 dark:text-stone-400 dark:hover:text-stone-100"
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+              {participants.length > 1 && (
                 <button
-                  key={participant.id}
                   type="button"
-                  onClick={() => toggleSplit(participant.id)}
-                  className={`min-h-11 rounded-md border px-3 text-sm font-medium transition active:scale-95 ${
-                    checked
-                      ? "border-violet-600 bg-violet-50 text-violet-800 dark:border-violet-500 dark:bg-violet-500/15 dark:text-violet-300"
-                      : "border-stone-300 bg-white text-stone-600 hover:bg-stone-50 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-300 dark:hover:bg-stone-700"
-                  }`}
+                  onClick={() => setAllSplit(!allSelected)}
+                  className="rounded-md px-2 py-1 text-xs font-semibold text-violet-700 transition hover:bg-violet-50 active:bg-violet-100 dark:text-violet-400 dark:hover:bg-violet-500/10 dark:active:bg-violet-500/20"
                 >
-                  {participant.name}
+                  {allSelected ? "Bỏ chọn" : "Chọn tất cả"}
                 </button>
-              );
-            })}
+              )}
+            </div>
           </div>
+
+          {splitMode === "equal" ? (
+            <div className="flex flex-wrap gap-2">
+              {participants.map((participant) => {
+                const checked = splitParticipantIds.includes(participant.id);
+                return (
+                  <button
+                    key={participant.id}
+                    type="button"
+                    onClick={() => toggleSplit(participant.id)}
+                    className={`min-h-11 rounded-md border px-3 text-sm font-medium transition active:scale-95 ${
+                      checked
+                        ? "border-violet-600 bg-violet-50 text-violet-800 dark:border-violet-500 dark:bg-violet-500/15 dark:text-violet-300"
+                        : "border-stone-300 bg-white text-stone-600 hover:bg-stone-50 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-300 dark:hover:bg-stone-700"
+                    }`}
+                  >
+                    {participant.name}
+                  </button>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {participants.map((participant) => {
+                const checked = splitParticipantIds.includes(participant.id);
+                return (
+                  <div key={participant.id} className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => toggleSplit(participant.id)}
+                      className={`min-h-11 min-w-0 flex-1 truncate rounded-md border px-3 text-left text-sm font-medium transition active:scale-[0.99] ${
+                        checked
+                          ? "border-violet-600 bg-violet-50 text-violet-800 dark:border-violet-500 dark:bg-violet-500/15 dark:text-violet-300"
+                          : "border-stone-300 bg-white text-stone-600 hover:bg-stone-50 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-300 dark:hover:bg-stone-700"
+                      }`}
+                    >
+                      {participant.name}
+                    </button>
+                    {checked &&
+                      (splitMode === "shares" ? (
+                        <div className="flex shrink-0 items-center gap-1.5">
+                          <input
+                            type="number"
+                            min={1}
+                            max={MAX_SPLIT_WEIGHT}
+                            inputMode="numeric"
+                            value={splitValues[participant.id] ?? "1"}
+                            onChange={(event) =>
+                              form.setValue(
+                                "splitValues",
+                                { ...splitValues, [participant.id]: event.target.value },
+                                { shouldValidate: form.formState.isSubmitted },
+                              )
+                            }
+                            className="field w-20 text-right"
+                            aria-label={`Số phần của ${participant.name}`}
+                          />
+                          <span className="text-xs text-stone-500 dark:text-stone-400">phần</span>
+                        </div>
+                      ) : (
+                        <MoneyInput
+                          value={splitValues[participant.id] ?? ""}
+                          onChange={(value) =>
+                            form.setValue(
+                              "splitValues",
+                              { ...splitValues, [participant.id]: value },
+                              { shouldValidate: form.formState.isSubmitted },
+                            )
+                          }
+                          placeholder="0"
+                          className="w-32 shrink-0 text-right"
+                          aria-label={`Phần tiền của ${participant.name}`}
+                        />
+                      ))}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {splitMode === "amount" && splitParticipantIds.length > 0 && (
+            <p className="mt-2 text-xs text-stone-500 tabular dark:text-stone-400">
+              Đã nhập{" "}
+              {formatMoney(
+                splitParticipantIds.reduce(
+                  (sum, id) => sum + parseMoney(splitValues[id] || ""),
+                  0,
+                ),
+              )}{" "}
+              / {formatMoney(parseMoney(amountValue))}
+            </p>
+          )}
           {form.formState.errors.splitParticipantIds && (
             <p className="mt-1 text-xs text-rose-600 dark:text-rose-400">
               {form.formState.errors.splitParticipantIds.message}
+            </p>
+          )}
+          {form.formState.errors.splitValues && (
+            <p className="mt-1 text-xs text-rose-600 dark:text-rose-400">
+              {(form.formState.errors.splitValues as { message?: string }).message}
             </p>
           )}
         </div>
@@ -361,7 +557,9 @@ export function ExpensePanel({
       </form>
 
       <div className="mt-5 space-y-2">
-        {expenses.map((expense) => {
+        {expenses
+          .filter((expense) => expense.kind !== "transfer")
+          .map((expense) => {
           const payer = participantById.get(expense.payerParticipantId);
           const isEditing = expense.id === editingExpenseId;
           return (
@@ -380,6 +578,8 @@ export function ExpensePanel({
                   </p>
                   <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">
                     {payer?.name || "Không rõ"} trả, chia {expense.splitParticipantIds.length} người
+                    {SPLIT_MODE_BADGES[expense.splitMode] &&
+                      ` · ${SPLIT_MODE_BADGES[expense.splitMode]}`}
                   </p>
                 </div>
                 <div className="flex shrink-0 items-center gap-1">

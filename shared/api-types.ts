@@ -1,5 +1,5 @@
 import type { ResolvedAiExpense } from "./ai";
-import type { BalanceRow, SettlementRow } from "./split";
+import type { BalanceRow, SettlementRow, SplitMode } from "./split";
 
 export type ApiAiSuggestionResponse = {
   suggestion: ResolvedAiExpense;
@@ -28,13 +28,22 @@ export type ApiParticipant = {
   accountName: string;
 };
 
+export type ApiExpenseSplit = {
+  participantId: string;
+  amount: number;
+  weight: number | null;
+};
+
 export type ApiExpense = {
   id: string;
+  kind: "expense" | "transfer";
   title: string;
   amount: number;
   note: string;
   payerParticipantId: string;
+  splitMode: SplitMode;
   splitParticipantIds: string[];
+  splits: ApiExpenseSplit[];
   createdAt: string;
 };
 

@@ -1,6 +1,13 @@
+export type SplitMode = "equal" | "shares" | "amount";
+
 export type SplitShare = {
   participantId: string;
   amount: number;
+};
+
+export type WeightedShare = {
+  participantId: string;
+  weight: number;
 };
 
 export type ExpenseInput = {
@@ -36,6 +43,32 @@ export function allocateAmount(amount: number, participantIds: string[]): SplitS
     participantId,
     amount: base + (index < remainder ? 1 : 0),
   }));
+}
+
+/**
+ * Chia `amount` theo trong so (so phan) cua tung nguoi. Phan du sau khi lay
+ * phan nguyen duoc cong lan luot cho cac nguoi dau danh sach, cung quy uoc
+ * voi `allocateAmount` de tong split luon bang tong tien goc.
+ */
+export function allocateByWeights(amount: number, entries: WeightedShare[]): SplitShare[] {
+  const validEntries = entries.filter((entry) => entry.weight > 0);
+  if (validEntries.length === 0) return [];
+
+  // Dung BigInt cho phep nhan de khong tran so khi amount va weight deu lon
+  // (vi du chia lai theo ty le so tien cu).
+  const totalWeight = validEntries.reduce((sum, entry) => sum + entry.weight, 0);
+  const shares = validEntries.map((entry) => ({
+    participantId: entry.participantId,
+    amount: Number((BigInt(amount) * BigInt(entry.weight)) / BigInt(totalWeight)),
+  }));
+
+  let remainder = amount - shares.reduce((sum, share) => sum + share.amount, 0);
+  for (let index = 0; remainder > 0; index = (index + 1) % shares.length) {
+    shares[index].amount += 1;
+    remainder -= 1;
+  }
+
+  return shares;
 }
 
 export function calculateBalances(

@@ -1,13 +1,18 @@
-import { eq, inArray, sql } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import type { ApiGame } from "../../../shared/api-types";
 import {
+  DEFAULT_TRANSFER_TITLE,
   expenseInputSchema,
   gameInputSchema,
+  MAX_SPLIT_WEIGHT,
   participantInputSchema,
   shareLinkInputSchema,
+  transferInputSchema,
+  type ExpenseSplitInput,
+  type SplitMode,
 } from "../../../shared/schemas";
-import { allocateAmount } from "../../../shared/split";
+import { allocateAmount, allocateByWeights } from "../../../shared/split";
 import * as schema from "../db/schema";
 import { loadGameDetail, loadOwnedGame, type Db } from "../lib/game-data";
 import { invalidInput, notFound, readJson } from "../lib/http";
@@ -25,25 +30,60 @@ async function loadGameParticipantIds(db: Db, gameId: string) {
   return new Set(rows.map((row) => row.id));
 }
 
+type SplitRow = {
+  participantId: string;
+  amount: number;
+  weight: number | null;
+};
+
 /**
- * Xoa splits cu va ghi lai splits moi cho mot khoan chi. Thu tu participantIds
- * quyet dinh ai nhan phan du khi so tien le.
+ * Tinh danh sach dong split theo mode. Tra ve null khi input khong hop le:
+ * khong co ai chia, trung nguoi, so phan qua lon, hoac tong tien tuy chinh
+ * khong khop tong khoan chi.
  */
-async function writeExpenseSplits(
-  db: Db,
-  expenseId: string,
+function computeSplitRows(
   amount: number,
+  mode: SplitMode,
   participantIds: string[],
-) {
+  splits: ExpenseSplitInput[],
+): SplitRow[] | null {
+  if (mode === "equal") {
+    const ids = [...new Set(participantIds)];
+    if (ids.length === 0) return null;
+    return allocateAmount(amount, ids).map((share) => ({ ...share, weight: null }));
+  }
+
+  if (splits.length === 0) return null;
+  if (new Set(splits.map((split) => split.participantId)).size !== splits.length) return null;
+
+  if (mode === "shares") {
+    if (splits.some((split) => split.value > MAX_SPLIT_WEIGHT)) return null;
+    return allocateByWeights(
+      amount,
+      splits.map((split) => ({ participantId: split.participantId, weight: split.value })),
+    ).map((share, index) => ({ ...share, weight: splits[index].value }));
+  }
+
+  const total = splits.reduce((sum, split) => sum + split.value, 0);
+  if (total !== amount) return null;
+  return splits.map((split) => ({
+    participantId: split.participantId,
+    amount: split.value,
+    weight: null,
+  }));
+}
+
+/** Xoa splits cu va ghi lai splits moi cho mot khoan chi. */
+async function writeExpenseSplits(db: Db, expenseId: string, rows: SplitRow[]) {
   await db.delete(schema.expenseSplits).where(eq(schema.expenseSplits.expenseId, expenseId));
-  const shares = allocateAmount(amount, participantIds);
-  if (shares.length > 0) {
+  if (rows.length > 0) {
     await db.insert(schema.expenseSplits).values(
-      shares.map((share) => ({
+      rows.map((row) => ({
         id: createId("split"),
         expenseId,
-        participantId: share.participantId,
-        amount: share.amount,
+        participantId: row.participantId,
+        amount: row.amount,
+        weight: row.weight,
       })),
     );
   }
@@ -51,7 +91,8 @@ async function writeExpenseSplits(
 
 /**
  * Sau khi mot participant bi xoa, chia lai cac khoan chi bi anh huong cho
- * nhung nguoi con lai; khoan chi khong con ai chiu thi xoa luon.
+ * nhung nguoi con lai theo dung mode cu (mode "amount" chia lai theo ty le
+ * phan cu); khoan chi khong con ai chiu thi xoa luon.
  */
 async function reallocateExpenses(db: Db, expenseIds: string[]) {
   for (const expenseId of expenseIds) {
@@ -64,7 +105,11 @@ async function reallocateExpenses(db: Db, expenseIds: string[]) {
     if (!expense) continue;
 
     const splitRows = await db
-      .select({ participantId: schema.expenseSplits.participantId })
+      .select({
+        participantId: schema.expenseSplits.participantId,
+        amount: schema.expenseSplits.amount,
+        weight: schema.expenseSplits.weight,
+      })
       .from(schema.expenseSplits)
       .innerJoin(
         schema.participants,
@@ -73,11 +118,42 @@ async function reallocateExpenses(db: Db, expenseIds: string[]) {
       .where(eq(schema.expenseSplits.expenseId, expenseId))
       .orderBy(schema.participants.createdAt);
 
-    const participantIds = splitRows.map((row) => row.participantId);
-    if (participantIds.length === 0) {
+    if (splitRows.length === 0) {
       await db.delete(schema.expenses).where(eq(schema.expenses.id, expenseId));
+      continue;
+    }
+
+    // Khoan tra no chi co mot nguoi nhan: nguoi nhan con thi giu nguyen.
+    if (expense.kind === "transfer") continue;
+
+    let rows: SplitRow[] | null = null;
+    if (expense.splitMode === "shares") {
+      rows = computeSplitRows(
+        expense.amount,
+        "shares",
+        [],
+        splitRows.map((row) => ({ participantId: row.participantId, value: row.weight || 1 })),
+      );
+    } else if (expense.splitMode === "amount") {
+      // Tong phan con lai khong con khop tong tien, chia lai theo ty le cu.
+      rows = allocateByWeights(
+        expense.amount,
+        splitRows.map((row) => ({ participantId: row.participantId, weight: row.amount })),
+      ).map((share) => ({ ...share, weight: null }));
+      if (rows.length === 0) rows = null;
     } else {
-      await writeExpenseSplits(db, expenseId, expense.amount, participantIds);
+      rows = computeSplitRows(
+        expense.amount,
+        "equal",
+        splitRows.map((row) => row.participantId),
+        [],
+      );
+    }
+
+    if (rows) {
+      await writeExpenseSplits(db, expenseId, rows);
+    } else {
+      await db.delete(schema.expenses).where(eq(schema.expenses.id, expenseId));
     }
   }
 }
@@ -140,7 +216,7 @@ gamesRouter.get("/games", async (c) => {
           value: sql<number>`count(*)`,
         })
         .from(schema.expenses)
-        .where(inArray(schema.expenses.gameId, gameIds))
+        .where(and(inArray(schema.expenses.gameId, gameIds), eq(schema.expenses.kind, "expense")))
         .groupBy(schema.expenses.gameId)
     : [];
 
@@ -321,11 +397,13 @@ gamesRouter.post("/games/:gameId/expenses", async (c) => {
   const game = await loadOwnedGame(db, c.req.param("gameId"), c.get("userId"));
   if (!game) return notFound(c);
 
+  const rows = computeSplitRows(input.amount, input.splitMode, input.splitParticipantIds, input.splits);
+  if (!rows) return invalidInput(c);
+
   const participantIds = await loadGameParticipantIds(db, game.id);
-  const splitParticipantIds = [...new Set(input.splitParticipantIds)];
   const validMembers =
     participantIds.has(input.payerParticipantId) &&
-    splitParticipantIds.every((id) => participantIds.has(id));
+    rows.every((row) => participantIds.has(row.participantId));
   if (!validMembers) return invalidInput(c);
 
   const now = nowIso();
@@ -338,10 +416,11 @@ gamesRouter.post("/games/:gameId/expenses", async (c) => {
     title: input.title,
     amount: input.amount,
     note: input.note,
+    splitMode: input.splitMode,
     createdAt: now,
     updatedAt: now,
   });
-  await writeExpenseSplits(db, expenseId, input.amount, splitParticipantIds);
+  await writeExpenseSplits(db, expenseId, rows);
 
   return c.json(await loadGameDetail(db, game), 201);
 });
@@ -353,24 +432,45 @@ gamesRouter.patch("/expenses/:expenseId", async (c) => {
   const db = c.get("db");
   const row = await loadOwnedExpense(db, c.req.param("expenseId"), c.get("userId"));
   if (!row) return notFound(c);
+  // Khoan tra no chi cho phep xoa roi ghi lai, khong sua truc tiep.
+  if (row.expense.kind === "transfer") return invalidInput(c);
 
   const participantIds = await loadGameParticipantIds(db, row.game.id);
 
   const currentSplits = await db
-    .select({ participantId: schema.expenseSplits.participantId })
+    .select({
+      participantId: schema.expenseSplits.participantId,
+      amount: schema.expenseSplits.amount,
+      weight: schema.expenseSplits.weight,
+    })
     .from(schema.expenseSplits)
     .where(eq(schema.expenseSplits.expenseId, row.expense.id));
 
   const amount = input.amount ?? row.expense.amount;
-  const splitParticipantIds = [
-    ...new Set(input.splitParticipantIds ?? currentSplits.map((split) => split.participantId)),
-  ];
+  const storedMode: SplitMode =
+    row.expense.splitMode === "shares" || row.expense.splitMode === "amount"
+      ? row.expense.splitMode
+      : "equal";
+  const splitMode = input.splitMode ?? storedMode;
+
+  // Khong gui splits moi thi dung lai splits dang luu; mode "amount" ma doi
+  // tong tien nhung khong gui splits se bi computeSplitRows chan vi lech tong.
+  const splitParticipantIds =
+    input.splitParticipantIds ?? currentSplits.map((split) => split.participantId);
+  const splits =
+    input.splits ??
+    currentSplits.map((split) => ({
+      participantId: split.participantId,
+      value: splitMode === "shares" ? split.weight || 1 : split.amount,
+    }));
+
+  const rows = computeSplitRows(amount, splitMode, splitParticipantIds, splits);
+  if (!rows) return invalidInput(c);
 
   const payerParticipantId = input.payerParticipantId ?? row.expense.payerParticipantId;
   const validMembers =
     participantIds.has(payerParticipantId) &&
-    splitParticipantIds.length > 0 &&
-    splitParticipantIds.every((id) => participantIds.has(id));
+    rows.every((splitRow) => participantIds.has(splitRow.participantId));
   if (!validMembers) return invalidInput(c);
 
   await db
@@ -380,12 +480,54 @@ gamesRouter.patch("/expenses/:expenseId", async (c) => {
       note: input.note ?? row.expense.note,
       amount,
       payerParticipantId,
+      splitMode,
       updatedAt: nowIso(),
     })
     .where(eq(schema.expenses.id, row.expense.id));
-  await writeExpenseSplits(db, row.expense.id, amount, splitParticipantIds);
+  await writeExpenseSplits(db, row.expense.id, rows);
 
   return c.json(await loadGameDetail(db, row.game));
+});
+
+gamesRouter.post("/games/:gameId/transfers", async (c) => {
+  const input = await readJson(c, transferInputSchema);
+  if (!input) return invalidInput(c);
+
+  const db = c.get("db");
+  const game = await loadOwnedGame(db, c.req.param("gameId"), c.get("userId"));
+  if (!game) return notFound(c);
+
+  const participantIds = await loadGameParticipantIds(db, game.id);
+  if (!participantIds.has(input.fromParticipantId) || !participantIds.has(input.toParticipantId)) {
+    return invalidInput(c);
+  }
+
+  const now = nowIso();
+  const expenseId = createId("expense");
+
+  // Tra no duoc luu nhu mot khoan chi kind "transfer": nguoi tra la payer,
+  // nguoi nhan chiu toan bo -> balance hai ben tu can bang lai.
+  await db.insert(schema.expenses).values({
+    id: expenseId,
+    gameId: game.id,
+    payerParticipantId: input.fromParticipantId,
+    kind: "transfer",
+    title: DEFAULT_TRANSFER_TITLE,
+    amount: input.amount,
+    note: input.note,
+    splitMode: "amount",
+    createdAt: now,
+    updatedAt: now,
+  });
+  await db.insert(schema.expenseSplits).values({
+    id: createId("split"),
+    expenseId,
+    participantId: input.toParticipantId,
+    amount: input.amount,
+    weight: null,
+  });
+
+  return c.json(await loadGameDetail(db, game), 201);
 });
 
 gamesRouter.delete("/expenses/:expenseId", async (c) => {

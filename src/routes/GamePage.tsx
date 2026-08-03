@@ -18,9 +18,11 @@ import { ParticipantPanel } from "../components/ParticipantPanel";
 import { BottomSheet } from "../components/overlays";
 import { useToast } from "../components/Toast";
 import { EmptyState, LoadingState } from "../components/ui";
+import { formatMoney } from "../lib/money";
 import {
   useAddExpense,
   useAddParticipant,
+  useAddTransfer,
   useDeleteGame,
   useGame,
   useRemoveExpense,
@@ -46,6 +48,7 @@ export function GamePage() {
   const addExpense = useAddExpense(gameId);
   const updateExpense = useUpdateExpense();
   const removeExpense = useRemoveExpense();
+  const addTransfer = useAddTransfer(gameId);
   const renameGame = useRenameGame(gameId);
   const rotateShareLink = useRotateShareLink(gameId);
   const setShareLinkEnabled = useSetShareLinkEnabled(gameId);
@@ -128,13 +131,38 @@ export function GamePage() {
     />
   );
 
+  const participantNameById = new Map(
+    game.participants.map((participant) => [participant.id, participant.name]),
+  );
+
   const dashboard = (
     <GameDashboard
       code={game.code}
       name={game.name}
       participants={game.participants}
-      expenseCount={game.expenses.length}
+      expenseCount={game.expenses.filter((expense) => expense.kind !== "transfer").length}
       summary={game.summary}
+      expenses={game.expenses}
+      onSettle={async (settlement) => {
+        const fromName = participantNameById.get(settlement.fromParticipantId) || "Không rõ";
+        const toName = participantNameById.get(settlement.toParticipantId) || "Không rõ";
+        if (
+          !window.confirm(
+            `Ghi nhận ${fromName} đã trả ${toName} ${formatMoney(settlement.amount)}?`,
+          )
+        ) {
+          return;
+        }
+        await addTransfer.mutateAsync({
+          fromParticipantId: settlement.fromParticipantId,
+          toParticipantId: settlement.toParticipantId,
+          amount: settlement.amount,
+          note: "",
+        });
+        toast("Đã ghi nhận trả nợ");
+      }}
+      onRemoveTransfer={(expenseId) => removeExpense.mutate(expenseId)}
+      settlePending={addTransfer.isPending}
     />
   );
 

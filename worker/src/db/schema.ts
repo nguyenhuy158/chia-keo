@@ -103,9 +103,13 @@ export const expenses = sqliteTable(
     payerParticipantId: text("payer_participant_id")
       .notNull()
       .references(() => participants.id, { onDelete: "cascade" }),
+    // "expense": khoan chi thuong; "transfer": ghi nhan tra no giua hai nguoi.
+    kind: text("kind").notNull().default("expense"),
     title: text("title").notNull(),
     amount: integer("amount").notNull(),
     note: text("note").notNull().default(""),
+    // "equal": chia deu; "shares": theo so phan; "amount": so tien cu the.
+    splitMode: text("split_mode").notNull().default("equal"),
     createdAt: text("created_at").notNull(),
     updatedAt: text("updated_at").notNull(),
   },
@@ -123,6 +127,8 @@ export const expenseSplits = sqliteTable(
       .notNull()
       .references(() => participants.id, { onDelete: "cascade" }),
     amount: integer("amount").notNull(),
+    // So phan khi expense chia theo mode "shares"; null cho cac mode khac.
+    weight: integer("weight"),
   },
   (table) => [
     index("expense_splits_expense_id_idx").on(table.expenseId),

@@ -5,7 +5,7 @@ import type {
   ApiGameDetail,
   ApiShareView,
 } from "../../shared/api-types";
-import type { ExpenseInput, GameInput, ParticipantInput } from "../../shared/schemas";
+import type { ExpenseInput, GameInput, ParticipantInput, TransferInput } from "../../shared/schemas";
 
 export const API_BASE = import.meta.env.VITE_API_URL || "";
 
@@ -62,6 +62,10 @@ export const api = {
     update: (expenseId: string, input: Partial<ExpenseInput>) =>
       patch<ApiGameDetail>(`/api/expenses/${expenseId}`, input),
     remove: (expenseId: string) => destroy<ApiGameDetail>(`/api/expenses/${expenseId}`),
+  },
+  transfers: {
+    create: (gameId: string, input: TransferInput) =>
+      post<ApiGameDetail>(`/api/games/${gameId}/transfers`, input),
   },
   shareLinks: {
     rotate: (gameId: string) => post<ApiGameDetail>(`/api/games/${gameId}/share-links`),
