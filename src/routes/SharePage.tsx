@@ -2,7 +2,7 @@ import { useParams } from "@tanstack/react-router";
 import { Check, ListChecks, Square, Table2 } from "lucide-react";
 import { useState } from "react";
 import type { ApiExpense, ApiParticipant, ApiSummary } from "../../shared/api-types";
-import { CopySummaryButton } from "../components/CopySummaryButton";
+import { CopyMenu } from "../components/CopyMenu";
 import { GameDashboard } from "../components/GameDashboard";
 import { ThemeToggle } from "../components/theme";
 import { EmptyState, LoadingState } from "../components/ui";
@@ -281,7 +281,7 @@ export function SharePage() {
           </h1>
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          <CopySummaryButton
+          <CopyMenu
             input={{
               code: view.code,
               name: view.name,

@@ -3,6 +3,7 @@ import type { ApiExpense, ApiParticipant, ApiSummary } from "./api-types";
 const THOUSAND = 1000;
 const SHORT_MONEY_FRACTION_DIGITS = 1;
 const UNKNOWN_NAME = "Không rõ";
+const EMPTY_EXPENSES_LINE = "Chưa có khoản chi nào.";
 
 const shortMoneyFormat = new Intl.NumberFormat("vi-VN", {
   maximumFractionDigits: SHORT_MONEY_FRACTION_DIGITS,
@@ -16,6 +17,22 @@ export type SummaryTextInput = {
   summary: ApiSummary;
   /** Link xem chi tiet, bo qua neu cuoc choi chua bat share. */
   shareUrl?: string;
+};
+
+export type SummarySection = {
+  heading: string;
+  lines: string[];
+};
+
+/**
+ * Ban tom tat da tach san thanh tung phan, de text va anh cung dung mot noi
+ * dung nhung render theo cach rieng.
+ */
+export type SummaryDocument = {
+  title: string;
+  subtitle: string;
+  sections: SummarySection[];
+  footer?: string;
 };
 
 /** 90000 -> "90", 8500 -> "8,5", 1043000 -> "1.043". Don vi nghin dong. */
@@ -92,36 +109,56 @@ function buildSettlementLines(summary: ApiSummary, nameById: Map<string, string>
   });
 }
 
+export function buildSummaryDocument(input: SummaryTextInput): SummaryDocument {
+  const { code, name, participants, summary, shareUrl } = input;
+  const expenses = toChronologicalOrder(input.expenses);
+  const nameById = new Map(participants.map((participant) => [participant.id, participant.name]));
+
+  const sections: SummarySection[] = [
+    {
+      heading:
+        expenses.length > 0
+          ? `CÁC KHOẢN CHI (${expenses.length} khoản · tổng ${formatShortMoney(summary.totalExpense)})`
+          : "CÁC KHOẢN CHI",
+      lines:
+        expenses.length > 0
+          ? buildExpenseLines(expenses, nameById, participants.length)
+          : [EMPTY_EXPENSES_LINE],
+    },
+  ];
+
+  if (participants.length > 0) {
+    sections.push({
+      heading: "TỪNG NGƯỜI",
+      lines: buildPersonLines(participants, expenses, summary),
+    });
+  }
+
+  const settlementLines = buildSettlementLines(summary, nameById);
+  if (settlementLines.length > 0) {
+    sections.push({ heading: "CẦN CHUYỂN", lines: settlementLines });
+  }
+
+  return {
+    title: name,
+    subtitle: code,
+    sections,
+    footer: shareUrl ? `Chi tiết: ${shareUrl}` : undefined,
+  };
+}
+
 /**
  * Dung ban tom tat dang text de dan thang vao Zalo/Messenger: liet ke tung
  * khoan chi kem so nguoi chia, roi den phan cua tung nguoi va link xem chi tiet.
  */
 export function buildSummaryText(input: SummaryTextInput): string {
-  const { code, name, participants, summary, shareUrl } = input;
-  const expenses = toChronologicalOrder(input.expenses);
-  const nameById = new Map(participants.map((participant) => [participant.id, participant.name]));
+  const doc = buildSummaryDocument(input);
 
-  const blocks: string[] = [`${name} · ${code}`];
-
-  if (expenses.length > 0) {
-    const header = `CÁC KHOẢN CHI (${expenses.length} khoản · tổng ${formatShortMoney(summary.totalExpense)})`;
-    blocks.push(
-      [header, ...buildExpenseLines(expenses, nameById, participants.length)].join("\n"),
-    );
-  } else {
-    blocks.push("Chưa có khoản chi nào.");
+  const blocks = [`${doc.title} · ${doc.subtitle}`];
+  for (const section of doc.sections) {
+    blocks.push([section.heading, ...section.lines].join("\n"));
   }
-
-  if (participants.length > 0) {
-    blocks.push(["TỪNG NGƯỜI", ...buildPersonLines(participants, expenses, summary)].join("\n"));
-  }
-
-  const settlementLines = buildSettlementLines(summary, nameById);
-  if (settlementLines.length > 0) {
-    blocks.push(["CẦN CHUYỂN", ...settlementLines].join("\n"));
-  }
-
-  if (shareUrl) blocks.push(`Chi tiết: ${shareUrl}`);
+  if (doc.footer) blocks.push(doc.footer);
 
   return blocks.join("\n\n");
 }

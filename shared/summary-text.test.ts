@@ -132,7 +132,7 @@ describe("buildSummaryText", () => {
     const text = buildSummaryText({ ...input, expenses: [], summary: emptySummary });
 
     expect(text).toContain("Chưa có khoản chi nào.");
-    expect(text).not.toContain("CÁC KHOẢN CHI");
+    expect(text).not.toContain("khoản · tổng");
     expect(text).toContain("- Thu: 0k");
   });
 });

@@ -1,7 +1,6 @@
 import { useNavigate, useParams } from "@tanstack/react-router";
 import {
   Check,
-  Copy,
   Link as LinkIcon,
   MoreHorizontal,
   Pencil,
@@ -11,7 +10,7 @@ import {
   X,
 } from "lucide-react";
 import { useState } from "react";
-import { CopySummaryButton } from "../components/CopySummaryButton";
+import { CopyMenu } from "../components/CopyMenu";
 import { ExpensePanel } from "../components/ExpensePanel";
 import { GameDashboard } from "../components/GameDashboard";
 import { ExpenseFab, type GameSection, MobileGameNav } from "../components/MobileGameNav";
@@ -52,7 +51,6 @@ export function GamePage() {
   const setShareLinkEnabled = useSetShareLinkEnabled(gameId);
   const deleteGame = useDeleteGame();
 
-  const [copiedShare, setCopiedShare] = useState(false);
   const [nameDraft, setNameDraft] = useState<string | null>(null);
   const [activeSection, setActiveSection] = useState<GameSection>("expenses");
   const [actionsOpen, setActionsOpen] = useState(false);
@@ -72,20 +70,6 @@ export function GamePage() {
 
   const game = gameQuery.data;
   const shareLink = game.shareLink;
-
-  async function handleCopyShareLink() {
-    if (!shareLink) return;
-
-    const shareUrl = `${window.location.origin}/share/${shareLink.token}`;
-    try {
-      await navigator.clipboard?.writeText(shareUrl);
-      setCopiedShare(true);
-      toast("Đã sao chép link chia sẻ");
-      window.setTimeout(() => setCopiedShare(false), COPY_FEEDBACK_MS);
-    } catch {
-      toast("Không sao chép được link", "error");
-    }
-  }
 
   async function handleDeleteGame() {
     if (!window.confirm(`Xóa cuộc chơi "${game.name}"?`)) return;
@@ -139,8 +123,8 @@ export function GamePage() {
     />
   );
 
-  const copySummaryAction = (
-    <CopySummaryButton
+  const copyAction = (
+    <CopyMenu
       input={{
         code: game.code,
         name: game.name,
@@ -157,15 +141,6 @@ export function GamePage() {
 
   const shareActions = shareLink ? (
     <>
-      <button
-        type="button"
-        onClick={handleCopyShareLink}
-        disabled={!shareLink.enabled}
-        className="inline-flex h-11 items-center justify-center gap-2 rounded-md border border-stone-300 bg-white px-3 text-sm font-medium text-stone-700 transition hover:bg-stone-50 disabled:cursor-not-allowed disabled:text-stone-400 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-200 dark:hover:bg-stone-800 dark:disabled:text-stone-600"
-      >
-        {copiedShare ? <Copy size={16} /> : <LinkIcon size={16} />}
-        {copiedShare ? "Đã copy" : shareLink.enabled ? "Copy link share" : "Link đang tắt"}
-      </button>
       <button
         type="button"
         onClick={() => setShareLinkEnabled.mutate(!shareLink.enabled)}
@@ -271,7 +246,7 @@ export function GamePage() {
         </div>
         {/* Desktop: cac nut hien inline. */}
         <div className="hidden flex-wrap items-center justify-end gap-2 lg:flex">
-          {copySummaryAction}
+          {copyAction}
           {shareActions}
           {deleteAction}
         </div>
@@ -311,7 +286,7 @@ export function GamePage() {
         title="Tùy chọn cuộc chơi"
       >
         <div className="flex flex-col gap-2 pb-2 [&>button]:w-full">
-          {copySummaryAction}
+          {copyAction}
           {shareActions}
           {deleteAction}
         </div>
