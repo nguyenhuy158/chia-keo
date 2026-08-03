@@ -1,6 +1,11 @@
 import type { Context } from "hono";
 import type { z } from "zod";
-import { AiProviderError, InvalidInputError, NotFoundError } from "../core/application/errors";
+import {
+  AiProviderError,
+  BadRequestError,
+  InvalidInputError,
+  NotFoundError,
+} from "../core/application/errors";
 
 export async function readJson<Schema extends z.ZodType>(
   c: Context,
@@ -11,8 +16,12 @@ export async function readJson<Schema extends z.ZodType>(
   return result.success ? result.data : null;
 }
 
+export function badRequest(c: Context, error: string) {
+  return c.json({ error }, 400);
+}
+
 export function invalidInput(c: Context) {
-  return c.json({ error: "invalid_input" }, 400);
+  return badRequest(c, "invalid_input");
 }
 
 export function notFound(c: Context) {
@@ -39,6 +48,7 @@ export async function respond<T>(
   } catch (error) {
     if (error instanceof NotFoundError) return notFound(c);
     if (error instanceof InvalidInputError) return invalidInput(c);
+    if (error instanceof BadRequestError) return badRequest(c, error.code);
     if (error instanceof AiProviderError) {
       return c.json({ error: error.code }, AI_ERROR_STATUS[error.code] || 502);
     }

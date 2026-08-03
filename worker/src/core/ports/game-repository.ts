@@ -53,6 +53,21 @@ export type ShareLinkRow = {
   expiresAt: string | null;
 };
 
+/** Anh o dang danh sach: khong kem du lieu anh goc. */
+export type PhotoRow = {
+  id: string;
+  gameId: string;
+  expenseId: string | null;
+  caption: string;
+  mimeType: string;
+  width: number;
+  height: number;
+  thumbData: string;
+  createdAt: string;
+};
+
+export type PhotoDetailRow = PhotoRow & { data: string };
+
 export type NewSplitRow = {
   id: string;
   expenseId: string;
@@ -117,6 +132,21 @@ export type GameRepository = {
      */
     listLiveByExpense(expenseId: string): Promise<ExpenseSplitRow[]>;
     replace(expenseId: string, rows: NewSplitRow[]): Promise<void>;
+  };
+  photos: {
+    /** Anh cua mot cuoc chia, moi nhat truoc; khong kem du lieu anh goc. */
+    listByGame(gameId: string): Promise<PhotoRow[]>;
+    countByGame(gameId: string): Promise<number>;
+    getById(photoId: string): Promise<PhotoRow | null>;
+    getWithGame(photoId: string): Promise<{ photo: PhotoRow; game: GameRow } | null>;
+    /** Anh kem du lieu goc, chi dung khi mo xem toan man hinh. */
+    getDetail(photoId: string): Promise<PhotoDetailRow | null>;
+    insert(row: PhotoDetailRow): Promise<void>;
+    update(
+      photoId: string,
+      fields: Partial<Pick<PhotoRow, "caption" | "expenseId">>,
+    ): Promise<void>;
+    delete(photoId: string): Promise<void>;
   };
   shareLinks: {
     getLatestByGame(gameId: string): Promise<ShareLinkRow | null>;

@@ -28,6 +28,7 @@ shared/                        # Pure domain kernel shared by FE + worker (no IO
   split.ts                     #   Split math, balances, settlements, computeSplitRows
   schemas.ts                   #   Zod input schemas + domain constants
   ai.ts                        #   AI suggestion normalization/resolution (pure)
+  photos.ts                    #   Photo helpers (counts, viewer index, data URI)
   api-types.ts                 #   DTOs exchanged between FE and worker
   rate-limit.ts                #   Pure rate-limit logic
 
@@ -42,7 +43,9 @@ src/                           # Frontend hexagon
     browser/vietqr.ts          #   VietQR adapter for QrProviderPort
     browser/auth-client.ts     #   Better Auth client
     browser/theme.ts           #   localStorage + matchMedia theme persistence
+    browser/image.ts           #   Canvas photo compression before upload
     react-query/queries.ts     #   React Query hooks over GameApiPort
+    react-query/photo-upload.ts#   Compress + upload photos with progress
   components/  routes/         #   Presentation (React)
   main.tsx                     #   Composition root: plugs adapters into ports
 

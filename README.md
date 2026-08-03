@@ -15,6 +15,9 @@ Ung dung chia tien nhom cho cac buoi an, di choi, du lich hoac nhom chi tieu nho
   - Ghi nhan tra no (reimbursement): danh dau mot khoan chuyen la "da tra",
     balance hai ben tu cap nhat, khong tinh vao tong chi.
   - Dùng Gemini để gợi ý khoản chi từ câu nhập nhanh hoặc ảnh hóa đơn.
+  - Album ảnh cho từng cuộc chia (giống Tricount): thêm nhiều ảnh một lượt,
+    đính kèm ảnh hóa đơn vào khoản chi, xem toàn màn hình (lướt, chú thích,
+    tải về, xóa) và xem lại qua link share.
   - Lưu mẫu chi tiêu, xuất báo cáo text và xem thống kê nhanh.
 - Tinh `da tra`, `phan chiu`, `con lai`.
 - Toi gian cong no peer-to-peer: ghep nguoi am voi nguoi duong de so lan
@@ -35,8 +38,8 @@ src/
     ports/           # GameApiPort (backend), QrProviderPort (QR)
     container.ts     # DI tối giản, main.tsx cắm adapter vào
   adapters/
-    browser/         # fetch API, VietQR, Better Auth client, theme
-    react-query/     # Hook React Query bọc GameApiPort
+    browser/         # fetch API, VietQR, Better Auth client, theme, nén ảnh
+    react-query/     # Hook React Query bọc GameApiPort, upload ảnh
   components/ routes/  # Presentation
 worker/src/
   core/
@@ -141,6 +144,24 @@ Danh sach nguoi phai chiu mot khoan chi.
 - `amount`
 - `weight` (so phan khi `split_mode = shares`, null cho mode khac)
 
+### `game_photos`
+
+Anh cua mot cuoc chia (album chung hoac anh hoa don cua mot khoan chi).
+
+- `id`
+- `game_id`
+- `expense_id` (null neu la anh chung cua cuoc chia)
+- `caption`
+- `mime_type`
+- `width`, `height`
+- `data` (base64 anh goc, canh dai toi da 1600px)
+- `thumb_data` (base64 anh thu nho cho luoi anh)
+- `created_at`
+
+Anh duoc nen ngay o trinh duyet truoc khi gui len (JPEG, ha dan chat luong cho
+den khi du nho), moi cuoc chia gioi han 60 anh de khong lam phinh D1. Danh sach
+anh chi tra `thumb_data`; anh goc chi tai khi mo che do xem toan man hinh.
+
 ### `share_links`
 
 Token public read-only.
@@ -214,9 +235,16 @@ Sau khi co balance, tinh danh sach chuyen khoan toi uu (peer-to-peer):
 - `PATCH /expenses/:expenseId`
 - `DELETE /expenses/:expenseId`
 - `POST /games/:gameId/transfers`
+- `GET /games/:gameId/photos`
+- `POST /games/:gameId/photos`
+- `GET /photos/:photoId` (kem anh goc)
+- `PATCH /photos/:photoId` (chu thich, gan/go khoi khoan chi)
+- `DELETE /photos/:photoId`
 - `GET /games/:gameId/summary`
 - `POST /games/:gameId/share-links`
 - `GET /share/:token`
+- `GET /share/:token/photos`
+- `GET /share/:token/photos/:photoId`
 - `POST /api/ai/expense`
 - `POST /api/ai/receipt`
 - `PUT /api/share/:token` khi link share có quyền edit

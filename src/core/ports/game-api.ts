@@ -5,12 +5,16 @@ import type {
   ApiAiSuggestionResponse,
   ApiGame,
   ApiGameDetail,
+  ApiPhoto,
+  ApiPhotoDetail,
   ApiShareView,
 } from "../../../shared/api-types";
 import type {
   ExpenseInput,
   GameInput,
   ParticipantInput,
+  PhotoInput,
+  PhotoUpdateInput,
   TransferInput,
 } from "../../../shared/schemas";
 
@@ -39,8 +43,19 @@ export type GameApiPort = {
     rotate(gameId: string): Promise<ApiGameDetail>;
     setEnabled(gameId: string, enabled: boolean): Promise<ApiGameDetail>;
   };
+  photos: {
+    /** Danh sach anh cua cuoc chia, chi kem ban thu nho. */
+    list(gameId: string): Promise<ApiPhoto[]>;
+    /** Anh kem du lieu goc, dung khi mo xem toan man hinh. */
+    detail(photoId: string): Promise<ApiPhotoDetail>;
+    create(gameId: string, input: PhotoInput): Promise<ApiPhoto>;
+    update(photoId: string, input: PhotoUpdateInput): Promise<ApiPhoto>;
+    remove(photoId: string): Promise<{ ok: boolean }>;
+  };
   share: {
     view(token: string): Promise<ApiShareView>;
+    photos(token: string): Promise<ApiPhoto[]>;
+    photo(token: string, photoId: string): Promise<ApiPhotoDetail>;
   };
   ai: {
     suggestExpense(gameId: string, text: string): Promise<ApiAiSuggestionResponse>;

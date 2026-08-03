@@ -8,6 +8,8 @@ import type {
   GameRow,
   NewSplitRow,
   ParticipantRow,
+  PhotoDetailRow,
+  PhotoRow,
   PaymentProfileRow,
   ShareLinkRow,
 } from "../../core/ports/game-repository";
@@ -42,8 +44,23 @@ async function countBy(
   return new Map(rows.map((row) => [row.gameId, row.value]));
 }
 
+/** Cot cua mot anh khi khong can du lieu anh goc (cot `data` rat nang). */
+const PHOTO_COLUMNS = {
+  id: schema.gamePhotos.id,
+  gameId: schema.gamePhotos.gameId,
+  expenseId: schema.gamePhotos.expenseId,
+  caption: schema.gamePhotos.caption,
+  mimeType: schema.gamePhotos.mimeType,
+  width: schema.gamePhotos.width,
+  height: schema.gamePhotos.height,
+  thumbData: schema.gamePhotos.thumbData,
+  createdAt: schema.gamePhotos.createdAt,
+};
+
 export function createD1GameRepository(d1: D1Database): GameRepository {
   const db = createDb(d1);
+
+  const selectPhotos = () => db.select(PHOTO_COLUMNS).from(schema.gamePhotos);
 
   return {
     games: {
@@ -242,6 +259,48 @@ export function createD1GameRepository(d1: D1Database): GameRepository {
         if (rows.length > 0) {
           await db.insert(schema.expenseSplits).values(rows);
         }
+      },
+    },
+
+    photos: {
+      listByGame: (gameId) => selectPhotos().where(eq(schema.gamePhotos.gameId, gameId))
+        .orderBy(desc(schema.gamePhotos.createdAt)),
+      async countByGame(gameId) {
+        const rows = await db
+          .select({ value: sql<number>`count(*)` })
+          .from(schema.gamePhotos)
+          .where(eq(schema.gamePhotos.gameId, gameId));
+        return rows[0]?.value || 0;
+      },
+      async getById(photoId): Promise<PhotoRow | null> {
+        const rows = await selectPhotos().where(eq(schema.gamePhotos.id, photoId)).limit(1);
+        return rows[0] || null;
+      },
+      async getWithGame(photoId) {
+        const rows = await db
+          .select({ photo: PHOTO_COLUMNS, game: schema.games })
+          .from(schema.gamePhotos)
+          .innerJoin(schema.games, eq(schema.games.id, schema.gamePhotos.gameId))
+          .where(eq(schema.gamePhotos.id, photoId))
+          .limit(1);
+        return rows[0] || null;
+      },
+      async getDetail(photoId): Promise<PhotoDetailRow | null> {
+        const rows = await db
+          .select({ ...PHOTO_COLUMNS, data: schema.gamePhotos.data })
+          .from(schema.gamePhotos)
+          .where(eq(schema.gamePhotos.id, photoId))
+          .limit(1);
+        return rows[0] || null;
+      },
+      async insert(row) {
+        await db.insert(schema.gamePhotos).values(row);
+      },
+      async update(photoId, fields) {
+        await db.update(schema.gamePhotos).set(fields).where(eq(schema.gamePhotos.id, photoId));
+      },
+      async delete(photoId) {
+        await db.delete(schema.gamePhotos).where(eq(schema.gamePhotos.id, photoId));
       },
     },
 

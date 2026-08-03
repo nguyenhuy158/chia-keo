@@ -13,6 +13,7 @@ import {
 import { useState } from "react";
 import { ExpensePanel } from "../components/ExpensePanel";
 import { GameDashboard } from "../components/GameDashboard";
+import { PhotoPanel } from "../components/PhotoPanel";
 import { ExpenseFab, type GameSection, MobileGameNav } from "../components/MobileGameNav";
 import { ParticipantPanel } from "../components/ParticipantPanel";
 import { BottomSheet } from "../components/overlays";
@@ -25,6 +26,7 @@ import {
   useAddTransfer,
   useDeleteGame,
   useGame,
+  usePhotos,
   useRemoveExpense,
   useRemoveParticipant,
   useRenameGame,
@@ -41,6 +43,7 @@ export function GamePage() {
   const navigate = useNavigate();
   const toast = useToast();
   const gameQuery = useGame(gameId);
+  const photosQuery = usePhotos(gameId);
 
   const addParticipant = useAddParticipant(gameId);
   const removeParticipant = useRemoveParticipant();
@@ -119,15 +122,27 @@ export function GamePage() {
     />
   );
 
+  const photos = photosQuery.data || [];
+
   const expensePanel = (
     <ExpensePanel
       gameId={game.id}
       participants={game.participants}
       expenses={game.expenses}
+      photos={photos}
       pending={addExpense.isPending || updateExpense.isPending}
       onAdd={(input) => addExpense.mutateAsync(input)}
       onUpdate={(expenseId, input) => updateExpense.mutateAsync({ expenseId, input })}
       onRemove={(expenseId) => removeExpense.mutate(expenseId)}
+    />
+  );
+
+  const photoPanel = (
+    <PhotoPanel
+      gameId={game.id}
+      photos={photos}
+      expenses={game.expenses}
+      loading={photosQuery.isPending}
     />
   );
 
@@ -301,6 +316,7 @@ export function GamePage() {
         <div className="space-y-5">
           {participantPanel}
           {expensePanel}
+          {photoPanel}
         </div>
         {dashboard}
       </div>
@@ -309,10 +325,14 @@ export function GamePage() {
       <div className="space-y-5 pb-28 lg:hidden">
         {activeSection === "people" && participantPanel}
         {activeSection === "expenses" && expensePanel}
+        {activeSection === "photos" && photoPanel}
         {activeSection === "summary" && dashboard}
       </div>
 
-      {activeSection !== "expenses" && <ExpenseFab onClick={() => setActiveSection("expenses")} />}
+      {/* Tab anh co nut them anh rieng nen khong hien FAB khoan chi. */}
+      {activeSection !== "expenses" && activeSection !== "photos" && (
+        <ExpenseFab onClick={() => setActiveSection("expenses")} />
+      )}
       <MobileGameNav active={activeSection} onChange={setActiveSection} />
 
       <BottomSheet

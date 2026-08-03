@@ -96,6 +96,10 @@ a,
   padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
 }
 
+.safe-top {
+  padding-top: calc(0.5rem + env(safe-area-inset-top));
+}
+
 @keyframes overlay-in {
   from {
     opacity: 0;

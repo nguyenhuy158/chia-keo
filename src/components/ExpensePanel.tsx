@@ -1,10 +1,21 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Banknote, Check, ImagePlus, Pencil, Plus, Sparkles, Trash2 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import {
+  Banknote,
+  Check,
+  ImagePlus,
+  Paperclip,
+  Pencil,
+  Plus,
+  Sparkles,
+  Trash2,
+  X,
+} from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 import type { ResolvedAiExpense } from "../../shared/ai";
-import type { ApiExpense, ApiParticipant } from "../../shared/api-types";
+import type { ApiExpense, ApiGameDetail, ApiParticipant, ApiPhoto } from "../../shared/api-types";
+import { countPhotosByExpenseId, filterPhotosByExpenseId, toDataUrl } from "../../shared/photos";
 import {
   DEFAULT_EXPENSE_TITLE,
   MAX_SPLIT_WEIGHT,
@@ -12,9 +23,12 @@ import {
   type SplitMode,
 } from "../../shared/schemas";
 import { formatMoney, parseMoney } from "../core/domain/money";
+import { usePhotoUploader } from "../adapters/react-query/photo-upload";
 import { useAiScanReceipt, useAiSuggestExpense } from "../adapters/react-query/queries";
 import { MoneyInput } from "./MoneyInput";
+import { PhotoPickerButton } from "./PhotoPanel";
 import { Field } from "./ui";
+import { usePhotoViewer } from "./use-photo-viewer";
 
 /** Doc so phan tu o nhap cua mode "shares"; bo trong hieu la 1 phan. */
 function parseWeight(value: string | undefined) {
@@ -88,12 +102,16 @@ const SPLIT_MODE_BADGES: Record<SplitMode, string> = {
   amount: "số tiền riêng",
 };
 
+/** So anh hien thi truc tiep tren mot dong khoan chi. */
+const EXPENSE_THUMB_LIMIT = 3;
+
 type ExpensePanelProps = {
   gameId: string;
   participants: ApiParticipant[];
   expenses: ApiExpense[];
+  photos: ApiPhoto[];
   pending: boolean;
-  onAdd: (input: ExpenseInput) => Promise<unknown>;
+  onAdd: (input: ExpenseInput) => Promise<ApiGameDetail>;
   onUpdate: (expenseId: string, input: Partial<ExpenseInput>) => Promise<unknown>;
   onRemove: (expenseId: string) => void;
 };
@@ -103,6 +121,12 @@ const AI_ERROR_MESSAGES: Record<string, string> = {
   gemini_invalid_response: "AI trả dữ liệu không hợp lệ, thử lại với câu rõ hơn.",
   gemini_request_failed: "Gọi AI thất bại, thử lại sau.",
 };
+
+/** Khoan chi vua duoc them: id chua xuat hien trong danh sach truoc do. */
+function findCreatedExpense(detail: ApiGameDetail, previous: ApiExpense[]) {
+  const previousIds = new Set(previous.map((expense) => expense.id));
+  return detail.expenses.find((expense) => !previousIds.has(expense.id));
+}
 
 function readFileAsBase64(file: File) {
   return new Promise<string>((resolve, reject) => {
@@ -120,6 +144,7 @@ export function ExpensePanel({
   gameId,
   participants,
   expenses,
+  photos,
   pending,
   onAdd,
   onUpdate,
@@ -230,6 +255,49 @@ export function ExpensePanel({
     }
   }
 
+  const [editingExpenseId, setEditingExpenseId] = useState("");
+
+  // Anh dinh kem: khoan chi da luu thi tai len ngay, khoan chi moi thi giu tam
+  // trong form roi tai len sau khi co id.
+  const uploader = usePhotoUploader(gameId);
+  const [stagedFiles, setStagedFiles] = useState<File[]>([]);
+  const stagedPreviews = useMemo(
+    () => stagedFiles.map((file) => URL.createObjectURL(file)),
+    [stagedFiles],
+  );
+  useEffect(() => {
+    return () => stagedPreviews.forEach((url) => URL.revokeObjectURL(url));
+  }, [stagedPreviews]);
+
+  const photoCountByExpenseId = countPhotosByExpenseId(photos);
+  const expenseTitleById = new Map(expenses.map((expense) => [expense.id, expense.title]));
+  const [photoExpenseId, setPhotoExpenseId] = useState("");
+  const viewerPhotos = photoExpenseId ? filterPhotosByExpenseId(photos, photoExpenseId) : [];
+  const photoViewer = usePhotoViewer(gameId, viewerPhotos, expenseTitleById);
+  const editingPhotos = editingExpenseId
+    ? filterPhotosByExpenseId(photos, editingExpenseId)
+    : [];
+
+  function openExpensePhotos(expenseId: string, index: number) {
+    setPhotoExpenseId(expenseId);
+    photoViewer.open(index);
+  }
+
+  /** Anh chon khi dang sua duoc gan ngay; khi them moi thi cho luu xong. */
+  async function handlePickPhotos(files: File[]) {
+    if (files.length === 0) return;
+
+    if (editingExpenseId) {
+      await uploader.upload(files, { expenseId: editingExpenseId });
+      return;
+    }
+    setStagedFiles((current) => [...current, ...files]);
+  }
+
+  function removeStagedFile(index: number) {
+    setStagedFiles((current) => current.filter((_, position) => position !== index));
+  }
+
   async function handleAiReceipt(file: File | undefined) {
     if (!file || aiPending) return;
 
@@ -238,12 +306,12 @@ export function ExpensePanel({
       const data = await readFileAsBase64(file);
       const { suggestion } = await aiReceipt.mutateAsync({ mimeType: file.type, data });
       applyAiSuggestion(suggestion);
+      // Giu lai anh hoa don vua quet lam anh dinh kem cua khoan chi.
+      await handlePickPhotos([file]);
     } catch (error) {
       setAiError(toAiErrorMessage(error));
     }
   }
-
-  const [editingExpenseId, setEditingExpenseId] = useState("");
 
   function startEditExpense(expense: ApiExpense) {
     setEditingExpenseId(expense.id);
@@ -264,6 +332,7 @@ export function ExpensePanel({
 
   function cancelEditExpense() {
     setEditingExpenseId("");
+    setStagedFiles([]);
     form.reset({
       title: "",
       amount: "",
@@ -298,8 +367,13 @@ export function ExpensePanel({
       await onUpdate(editingExpenseId, input);
       setEditingExpenseId("");
     } else {
-      await onAdd(input);
+      const detail = await onAdd(input);
+      const created = findCreatedExpense(detail, expenses);
+      if (created && stagedFiles.length > 0) {
+        await uploader.upload(stagedFiles, { expenseId: created.id });
+      }
     }
+    setStagedFiles([]);
     form.reset({
       title: "",
       amount: "",
@@ -535,6 +609,74 @@ export function ExpensePanel({
             </p>
           )}
         </div>
+
+        <div className="md:col-span-2">
+          <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+            <p className="text-sm font-medium text-stone-700 dark:text-stone-300">
+              Ảnh hóa đơn
+              {editingPhotos.length + stagedFiles.length > 0 &&
+                ` (${editingPhotos.length + stagedFiles.length})`}
+            </p>
+            <PhotoPickerButton
+              label={
+                uploader.pending
+                  ? `Đang tải ${uploader.done + 1}/${uploader.total}`
+                  : "Đính kèm ảnh"
+              }
+              ariaLabel="Đính kèm ảnh hóa đơn"
+              disabled={uploader.pending}
+              onPick={handlePickPhotos}
+              className="border border-stone-300 bg-white text-stone-700 hover:bg-stone-50 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-200 dark:hover:bg-stone-700"
+            >
+              <Paperclip size={15} />
+            </PhotoPickerButton>
+          </div>
+
+          {(editingPhotos.length > 0 || stagedPreviews.length > 0) && (
+            <div className="flex flex-wrap gap-2">
+              {editingPhotos.map((photo, index) => (
+                <button
+                  key={photo.id}
+                  type="button"
+                  onClick={() => openExpensePhotos(editingExpenseId, index)}
+                  className="h-16 w-16 overflow-hidden rounded-md border border-stone-200 transition active:scale-95 dark:border-stone-700"
+                  aria-label={`Xem ảnh ${index + 1}`}
+                >
+                  <img
+                    src={toDataUrl(photo.mimeType, photo.thumbData)}
+                    alt=""
+                    className="h-full w-full object-cover"
+                  />
+                </button>
+              ))}
+              {stagedPreviews.map((url, index) => (
+                <div
+                  key={url}
+                  className="relative h-16 w-16 overflow-hidden rounded-md border border-violet-300 dark:border-violet-500/50"
+                >
+                  <img src={url} alt="" className="h-full w-full object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => removeStagedFile(index)}
+                    aria-label={`Bỏ ảnh đính kèm ${index + 1}`}
+                    className="absolute right-0.5 top-0.5 inline-flex h-6 w-6 items-center justify-center rounded-full bg-stone-950/70 text-white transition active:scale-90"
+                  >
+                    <X size={13} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+          {uploader.error && (
+            <p className="mt-2 text-xs text-rose-600 dark:text-rose-400">{uploader.error}</p>
+          )}
+          {stagedFiles.length > 0 && (
+            <p className="mt-2 text-xs text-stone-500 dark:text-stone-400">
+              Ảnh sẽ được lưu kèm sau khi thêm khoản chi.
+            </p>
+          )}
+        </div>
+
         <div className="flex flex-wrap items-center gap-2 md:col-span-2">
           <button
             type="submit"
@@ -562,6 +704,9 @@ export function ExpensePanel({
           .map((expense) => {
           const payer = participantById.get(expense.payerParticipantId);
           const isEditing = expense.id === editingExpenseId;
+          const attachedPhotos = filterPhotosByExpenseId(photos, expense.id);
+          const hiddenPhotoCount =
+            (photoCountByExpenseId.get(expense.id) || 0) - EXPENSE_THUMB_LIMIT;
           return (
             <div
               key={expense.id}
@@ -604,10 +749,49 @@ export function ExpensePanel({
                   </button>
                 </div>
               </div>
+
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                {attachedPhotos.slice(0, EXPENSE_THUMB_LIMIT).map((photo, index) => (
+                  <button
+                    key={photo.id}
+                    type="button"
+                    onClick={() => openExpensePhotos(expense.id, index)}
+                    className="h-12 w-12 overflow-hidden rounded-md border border-stone-200 transition active:scale-95 dark:border-stone-700"
+                    aria-label={`Xem ảnh của ${expense.title}`}
+                  >
+                    <img
+                      src={toDataUrl(photo.mimeType, photo.thumbData)}
+                      alt=""
+                      loading="lazy"
+                      className="h-full w-full object-cover"
+                    />
+                  </button>
+                ))}
+                {hiddenPhotoCount > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => openExpensePhotos(expense.id, EXPENSE_THUMB_LIMIT)}
+                    className="h-12 w-12 rounded-md border border-stone-200 text-xs font-semibold text-stone-600 transition active:scale-95 dark:border-stone-700 dark:text-stone-300"
+                  >
+                    +{hiddenPhotoCount}
+                  </button>
+                )}
+                <PhotoPickerButton
+                  label={attachedPhotos.length > 0 ? "" : "Thêm ảnh"}
+                  ariaLabel={`Thêm ảnh cho ${expense.title}`}
+                  disabled={uploader.pending}
+                  onPick={(files) => uploader.upload(files, { expenseId: expense.id })}
+                  className="h-12 border border-dashed border-stone-300 text-xs text-stone-500 hover:bg-stone-50 dark:border-stone-700 dark:text-stone-400 dark:hover:bg-stone-800"
+                >
+                  <Paperclip size={14} />
+                </PhotoPickerButton>
+              </div>
             </div>
           );
         })}
       </div>
+
+      {photoViewer.viewer}
     </section>
   );
 }

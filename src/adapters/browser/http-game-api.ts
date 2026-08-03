@@ -61,8 +61,17 @@ export function createHttpGameApi(): GameApiPort {
       rotate: (gameId) => post(`/api/games/${gameId}/share-links`),
       setEnabled: (gameId, enabled) => patch(`/api/games/${gameId}/share-link`, { enabled }),
     },
+    photos: {
+      list: (gameId) => request(`/api/games/${gameId}/photos`),
+      detail: (photoId) => request(`/api/photos/${photoId}`),
+      create: (gameId, input) => post(`/api/games/${gameId}/photos`, input),
+      update: (photoId, input) => patch(`/api/photos/${photoId}`, input),
+      remove: (photoId) => destroy(`/api/photos/${photoId}`),
+    },
     share: {
       view: (token) => request(`/api/share/${token}`),
+      photos: (token) => request(`/api/share/${token}/photos`),
+      photo: (token, photoId) => request(`/api/share/${token}/photos/${photoId}`),
     },
     ai: {
       suggestExpense: (gameId, text) => post(`/api/ai/expense`, { gameId, text }),

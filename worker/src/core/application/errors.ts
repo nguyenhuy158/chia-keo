@@ -12,6 +12,13 @@ export class InvalidInputError extends Error {
   }
 }
 
+/** Loi nghiep vu 400 co ma rieng de client hien thong bao cu the. */
+export class BadRequestError extends Error {
+  constructor(public readonly code: string) {
+    super(code);
+  }
+}
+
 /** Loi tu AI provider; `code` la ma loi de client hien thong bao phu hop. */
 export class AiProviderError extends Error {
   constructor(public readonly code: string) {

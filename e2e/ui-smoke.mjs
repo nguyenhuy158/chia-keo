@@ -6,6 +6,9 @@
 // - PLAYWRIGHT_CHROMIUM_PATH: duong dan chromium co san; bo trong de
 //   playwright-core tu tim (can `npx playwright install chromium` truoc).
 import { chromium } from "playwright-core";
+import { writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 
 const BASE = process.env.E2E_BASE_URL || "http://127.0.0.1:8787";
 const WAIT = { timeout: 15000 };
@@ -16,6 +19,34 @@ let failed = 0;
 function ok(name) {
   passed += 1;
   console.log(`PASS ${name}`);
+}
+
+/**
+ * Tao mot anh JPEG that bang canvas de kiem tra luong nen + upload anh.
+ * Tra ve duong dan file tam.
+ */
+async function createJpegFixture() {
+  const dataUrl = await page.evaluate(() => {
+    const canvas = document.createElement("canvas");
+    canvas.width = 1600;
+    canvas.height = 1000;
+    const context = canvas.getContext("2d");
+    context.fillStyle = "#7c3aed";
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    context.fillStyle = "#ffffff";
+    context.font = "120px sans-serif";
+    context.fillText("HOA DON", 120, 520);
+    return canvas.toDataURL("image/jpeg", 0.9);
+  });
+  const path = join(tmpdir(), `chia-keo-e2e-${process.pid}.jpg`);
+  writeFileSync(path, Buffer.from(dataUrl.split(",")[1], "base64"));
+  return path;
+}
+
+/** O anh thu `index` trong album (khung co huy hieu so luong dang "n/60"). */
+function albumTile(index) {
+  // Layout boc ngoai cung cung la <section>, lay khung trong cung bang .last().
+  return page.locator('section:has(span:text("/60"))').last().locator("button").nth(index);
 }
 
 const browser = await chromium.launch({
@@ -83,6 +114,27 @@ try {
   await page.waitForSelector("text=110.000", WAIT);
   ok("add expense with custom amounts");
 
+  // 6.8 Anh: them vao album, sua chu thich, dinh kem vao khoan chi
+  const jpegPath = await createJpegFixture();
+  await page.setInputFiles('label[aria-label="Thêm ảnh vào album"] input[type="file"]', jpegPath);
+  await page.waitForSelector('span:text-is("1/60")', WAIT);
+  await albumTile(0).click();
+  await page.click('button[aria-label="Sửa chú thích"]');
+  await page.fill('input[placeholder="Chú thích ảnh"]', "Hoa don san");
+  await page.click('button[aria-label="Lưu chú thích"]');
+  await page.waitForSelector("text=Hoa don san", WAIT);
+  await page.click('button[aria-label="Đóng ảnh"]');
+  ok("add photo to album + caption");
+
+  await page.click('button:has-text("Chia đều")');
+  await page.fill('input[placeholder="Ăn tối"]', "Nuoc suoi");
+  await page.fill('input[placeholder="500.000"]', "20000");
+  await page.setInputFiles('label[aria-label="Đính kèm ảnh hóa đơn"] input[type="file"]', jpegPath);
+  await page.click('button[type="submit"]:has-text("Thêm khoản chi")');
+  await page.waitForSelector('button[aria-label="Xem ảnh của Nuoc suoi"]', WAIT);
+  await page.waitForSelector('span:text-is("2/60")', WAIT);
+  ok("attach photo to expense");
+
   // 7. Share link read-only mo duoc khong can dang nhap
   await page.click("text=Tạo link share");
   await page.waitForSelector("text=Copy link share", WAIT);
@@ -95,6 +147,12 @@ try {
   await anonPage.goto(`${BASE}/share/${detail.shareLink.token}`);
   await anonPage.waitForSelector("text=E2E Trip", WAIT);
   await anonPage.waitForSelector("text=Binh trả An", WAIT);
+  await anonPage.click('button:has-text("Ảnh")');
+  await anonPage.waitForSelector("text=Ảnh (2)", WAIT);
+  await anonPage.click('button[aria-label="Hoa don san"]');
+  await anonPage.waitForSelector('button[aria-label="Đóng ảnh"]', WAIT);
+  const deleteCount = await anonPage.locator('button[aria-label="Xóa ảnh"]').count();
+  if (deleteCount !== 0) throw new Error("share view must not allow deleting photos");
   await anonPage.close();
   ok("public share page works without login");
 
@@ -105,6 +163,15 @@ try {
   await page.waitForSelector("text=Binh đã trả An", WAIT);
   await page.waitForSelector("text=Mọi người đã cân bằng", WAIT);
   ok("record settlement as transfer");
+
+  // 7.8 Xoa anh khoi album
+  page.once("dialog", (dialog) => dialog.accept());
+  await albumTile(0).click();
+  await page.click('button[aria-label="Xóa ảnh"]');
+  await page.waitForSelector('span:text-is("1/60")', WAIT);
+  // Xoa xong van con anh khac nen khung xem mo tiep, dong lai truoc khi thoat.
+  await page.click('button[aria-label="Đóng ảnh"]');
+  ok("delete photo");
 
   // 8. Logout
   await page.click("text=Thoát");

@@ -47,6 +47,24 @@ export type ApiExpense = {
   createdAt: string;
 };
 
+/** Anh cua cuoc chia, chi kem ban thu nho de luoi anh tai nhanh. */
+export type ApiPhoto = {
+  id: string;
+  expenseId: string | null;
+  caption: string;
+  mimeType: string;
+  width: number;
+  height: number;
+  /** Base64 anh thu nho. */
+  thumbData: string;
+  createdAt: string;
+};
+
+/** Anh kem du lieu goc, chi tra khi mo xem toan man hinh. */
+export type ApiPhotoDetail = ApiPhoto & {
+  data: string;
+};
+
 export type ApiShareLink = {
   token: string;
   enabled: boolean;

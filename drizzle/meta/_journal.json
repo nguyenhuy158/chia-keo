@@ -15,6 +15,13 @@
       "when": 1785716173902,
       "tag": "0001_lethal_alice",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1785717804015,
+      "tag": "0002_shocking_madrox",
+      "breakpoints": true
     }
   ]
 }

@@ -1,14 +1,15 @@
 import { useParams } from "@tanstack/react-router";
-import { Check, ListChecks, Square, Table2 } from "lucide-react";
+import { Check, Images, ListChecks, Square, Table2 } from "lucide-react";
 import { useState } from "react";
 import type { ApiExpense, ApiParticipant, ApiSummary } from "../../shared/api-types";
 import { GameDashboard } from "../components/GameDashboard";
+import { SharePhotoGallery } from "../components/SharePhotoGallery";
 import { ThemeToggle } from "../components/theme";
 import { EmptyState, LoadingState } from "../components/ui";
 import { formatMoney } from "../core/domain/money";
 import { useShareView } from "../adapters/react-query/queries";
 
-type ShareTab = "summary" | "matrix";
+type ShareTab = "summary" | "matrix" | "photos";
 
 type ExpenseMatrixProps = {
   participants: ApiParticipant[];
@@ -284,6 +285,7 @@ export function SharePage() {
   const tabs: Array<{ id: ShareTab; label: string; icon: typeof ListChecks }> = [
     { id: "summary", label: "Tổng kết", icon: ListChecks },
     { id: "matrix", label: "Bảng chia", icon: Table2 },
+    { id: "photos", label: "Ảnh", icon: Images },
   ];
 
   return (
@@ -298,7 +300,7 @@ export function SharePage() {
         <ThemeToggle />
       </div>
 
-      <div className="grid shrink-0 grid-cols-2 gap-2 rounded-lg bg-stone-100 p-1 dark:bg-stone-900">
+      <div className="grid shrink-0 grid-cols-3 gap-2 rounded-lg bg-stone-100 p-1 dark:bg-stone-900">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -321,7 +323,11 @@ export function SharePage() {
       </div>
 
       <div className="min-h-0 flex-1 overflow-auto">
-        {activeTab === "summary" ? (
+        {activeTab === "photos" ? (
+          <div className="mx-auto max-w-2xl pb-4">
+            <SharePhotoGallery token={token} expenses={view.expenses} />
+          </div>
+        ) : activeTab === "summary" ? (
           <div className="mx-auto max-w-2xl space-y-5 pb-4">
             <GameDashboard
               code={view.code}
