@@ -137,7 +137,7 @@ try {
 
   // 7. Share link read-only mo duoc khong can dang nhap
   await page.click("text=Tạo link share");
-  await page.waitForSelector("text=Copy link share", WAIT);
+  await page.waitForSelector('button:has-text("Đổi link")', WAIT);
   const detail = await page.evaluate(async () => {
     const gameId = location.pathname.split("/").pop();
     const response = await fetch(`/api/games/${gameId}`, { credentials: "include" });
