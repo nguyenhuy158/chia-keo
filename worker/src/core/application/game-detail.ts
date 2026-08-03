@@ -6,7 +6,11 @@ import type {
   ApiShareView,
   ApiSummary,
 } from "../../../../shared/api-types";
-import { DEFAULT_SETTLEMENT_MODE, settlementModeSchema } from "../../../../shared/schemas";
+import {
+  capitalizeName,
+  DEFAULT_SETTLEMENT_MODE,
+  settlementModeSchema,
+} from "../../../../shared/schemas";
 import { calculateBalances, calculateSettlements } from "../../../../shared/split";
 import type { GameRepository, GameRow } from "../ports/game-repository";
 
@@ -43,7 +47,9 @@ async function loadGameData(repo: GameRepository, gameId: string): Promise<GameD
     const payment = paymentByParticipantId.get(row.id);
     return {
       id: row.id,
-      name: row.name,
+      // Ten cu trong DB co the chua viet hoa; chuan hoa luc doc de khong can
+      // migration rieng cho du lieu san co.
+      name: capitalizeName(row.name),
       bankId: payment?.bankId || "",
       accountNo: payment?.accountNo || "",
       accountName: payment?.accountName || "",
