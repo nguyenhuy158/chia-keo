@@ -1,88 +1,91 @@
 # Kiến trúc
 
-Project đang dùng hướng hexagonal nhẹ:
+Project dùng hexagonal architecture (ports & adapters) cho cả frontend và
+worker, với một domain kernel dùng chung ở `shared/`. Mục tiêu: thay được từng
+mảnh (DB, AI provider, QR provider, HTTP client) bằng cách viết một adapter
+mới, không đụng vào business logic.
 
 ```text
-src/
+shared/                      # Domain kernel dùng chung FE + worker (thuần, không IO)
+  split.ts                   #   Rule chia tiền, balance, settlement, computeSplitRows
+  schemas.ts                 #   Zod schema input + hằng số domain
+  ai.ts                      #   Chuẩn hóa/resolve gợi ý AI (thuần)
+  api-types.ts               #   DTO trao đổi giữa FE và worker
+  rate-limit.ts              #   Logic rate limit thuần
+
+src/                         # Hexagon frontend
   core/
-    domain/
-      types.ts
-      split.ts
-      statistics.ts
-      money.ts
-      expense-categories.ts
-      schema.ts
-    application/
-      ai-expense.ts
-      report.ts
-      share-game.ts
-    ports/
-      game-repository.ts
+    domain/money.ts          #   Format/parse VND
+    ports/game-api.ts        #   Port gọi backend
+    ports/qr-provider.ts     #   Port sinh QR chuyển khoản
+    container.ts             #   DI tối giản: provide*/get* cho từng port
   adapters/
-    browser/
-      remote-api.ts
-      avatar.ts
-      vietqr.ts
-  lib/
-    *.ts
-  App.tsx
+    browser/http-game-api.ts #   Adapter fetch cho GameApiPort
+    browser/vietqr.ts        #   Adapter VietQR cho QrProviderPort
+    browser/auth-client.ts   #   Better Auth client (dùng trực tiếp ở UI)
+    browser/theme.ts         #   localStorage + matchMedia cho theme
+    react-query/queries.ts   #   Hook React Query bọc GameApiPort (driving adapter)
+  components/, routes/       #   Presentation
+  main.tsx                   #   Composition root: cắm adapter vào port
+
+worker/src/                  # Hexagon backend
+  core/
+    ports/game-repository.ts #   Port lưu trữ (row types + interface)
+    ports/ai-provider.ts     #   Port model AI sinh JSON
+    application/             #   Use case + policy (ownership, realloc, transfer...)
+      errors.ts              #     NotFound/InvalidInput/AiProvider error
+      game-detail.ts         #     Assembly ApiGameDetail + summary
+      games.ts, participants.ts, expenses.ts, share-links.ts, ai-suggestions.ts
+  adapters/
+    d1/schema.ts             #   Drizzle schema (nguồn cho drizzle-kit)
+    d1/game-repository.ts    #   Adapter D1/drizzle cho GameRepository
+    gemini/gemini.ts         #   Adapter Gemini cho AiProvider
+  routes/                    #   Driving adapter HTTP (Hono): parse -> use case -> JSON
+  lib/                       #   Hạ tầng nhỏ: http helper, ids, require-user, rate limit
+  auth.ts, env.ts, index.ts  #   Better Auth, kiểu Env, app + middleware
 ```
 
-## Vai trò từng lớp
-
-- `src/core/domain`: type và business rule thuần, không phụ thuộc browser hay service ngoài.
-- `src/core/application`: use case điều phối domain, ví dụ encode/decode bản chia sẻ.
-- `src/core/ports`: interface cho các adapter cần cắm vào core.
-- `src/adapters/browser`: implementation phụ thuộc browser/service, `fetch`, DiceBear, VietQR.
-- `src/App.tsx`: presentation layer, chỉ gọi core/adapters qua entrypoint rõ ràng.
-- `src/lib`: lớp compatibility re-export để import cũ và test cũ không gãy ngay.
-
-## Quy tắc phụ thuộc
-
-Chiều phụ thuộc hợp lệ:
+## Chiều phụ thuộc hợp lệ
 
 ```text
-App/UI -> adapters/browser -> core
-App/UI -> core
-src/lib -> core hoặc adapters/browser
+UI/routes -> adapters -> core -> shared
+UI/routes -> core (ports, container, domain)
+worker routes -> application -> ports <- adapters (d1, gemini)
 ```
 
 Không làm:
 
-- `src/core` import từ `src/adapters`.
-- `src/core` import React component hoặc thư viện UI.
-- `src/core` gọi `fetch`, `window`, `document`.
-- Business rule mới đặt trực tiếp trong `src/App.tsx`.
-- Logic mới đặt trong `src/lib`; `src/lib` chỉ re-export.
+- `core` (FE lẫn worker) import từ `adapters`.
+- `core` gọi `fetch`, `window`, `document`, driver DB hay SDK service ngoài.
+- Business rule mới đặt trong component React hoặc route Hono.
+- `shared/` import bất cứ thứ gì ngoài zod (không React, không drizzle).
 
-Khi thêm logic mới:
+## Composition root — nơi cắm adapter
 
-- Tính toán, validate, phân loại: thêm vào `src/core/domain`.
-- Use case kết hợp nhiều rule: thêm vào `src/core/application`.
-- Gọi API, QR, avatar, browser API: thêm vào `src/adapters/browser`.
-- Không đưa `fetch` hoặc thư viện UI vào `src/core`.
+- Frontend: `src/main.tsx` gọi `provideGameApi(createHttpGameApi())` và
+  `provideQrProvider(vietQrProvider)`. Test/offline chỉ cần provide adapter khác.
+- Worker: middleware `requireUser` (worker/src/lib/require-user.ts) tạo
+  `createD1GameRepository(c.env.DB)` gắn vào context; route AI tạo
+  `createGeminiAiProvider(c.env)`.
+
+## Muốn thay một mảnh thì làm gì
+
+| Muốn thay | Viết adapter mới implement | Cắm ở |
+| --- | --- | --- |
+| D1 -> DB khác | `GameRepository` (worker/src/core/ports/game-repository.ts) | `require-user.ts` + `routes/share.ts` |
+| Gemini -> AI khác | `AiProvider` (worker/src/core/ports/ai-provider.ts) | `routes/ai.ts` |
+| VietQR -> QR khác | `QrProviderPort` (src/core/ports/qr-provider.ts) | `src/main.tsx` |
+| fetch -> mock/offline | `GameApiPort` (src/core/ports/game-api.ts) | `src/main.tsx` |
 
 ## Checklist thêm tính năng
 
-1. Xác định phần nào là domain rule.
-2. Đặt domain rule vào `src/core/domain` và viết test thuần nếu có logic tính toán.
-3. Nếu cần điều phối nhiều rule, tạo use case trong `src/core/application`.
-4. Nếu cần browser/service ngoài, tạo adapter trong `src/adapters/browser`.
-5. UI trong `src/App.tsx` chỉ gọi hàm từ core/adapters, không tự xử lý logic lớn.
-6. Chạy `pnpm test` và `pnpm build`.
-
-## Ví dụ mapping hiện tại
-
-| Nhu cầu | File chính |
-| --- | --- |
-| Tính balance chia tiền | `src/core/domain/split.ts` |
-| Format/parse VND | `src/core/domain/money.ts` |
-| Phân loại chi tiêu | `src/core/domain/expense-categories.ts` |
-| Thống kê nhanh | `src/core/domain/statistics.ts` |
-| Validate game từ storage/share | `src/core/domain/schema.ts` |
-| Parse draft khoản chi từ AI | `src/core/application/ai-expense.ts` |
-| Tạo báo cáo text | `src/core/application/report.ts` |
-| Encode/decode share token | `src/core/application/share-game.ts` |
-| Gọi API backend | `src/adapters/browser/remote-api.ts` |
-| Tạo avatar | `src/adapters/browser/avatar.ts` |
-| Tạo VietQR | `src/adapters/browser/vietqr.ts` |
+1. Rule tính toán/validate thuần: thêm vào `shared/` (dùng chung) hoặc
+   `src/core/domain` (chỉ FE) và viết test thuần.
+2. Nghiệp vụ phía backend: thêm use case trong `worker/src/core/application`,
+   khai báo thao tác dữ liệu cần thiết vào port `GameRepository`, implement
+   trong `adapters/d1`.
+3. Route Hono chỉ parse input (zod qua `readJson`), gọi use case qua
+   `respond()` để map lỗi nghiệp vụ sang HTTP status.
+4. Phía FE: gọi API qua hook trong `src/adapters/react-query/queries.ts`
+   (hook lấy `GameApiPort` từ container).
+5. Chạy `pnpm check`, `pnpm test`, `pnpm build`; flow chính chạy `pnpm e2e`.

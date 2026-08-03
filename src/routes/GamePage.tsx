@@ -18,7 +18,7 @@ import { ParticipantPanel } from "../components/ParticipantPanel";
 import { BottomSheet } from "../components/overlays";
 import { useToast } from "../components/Toast";
 import { EmptyState, LoadingState } from "../components/ui";
-import { formatMoney } from "../lib/money";
+import { formatMoney } from "../core/domain/money";
 import {
   useAddExpense,
   useAddParticipant,
@@ -32,7 +32,7 @@ import {
   useSetShareLinkEnabled,
   useUpdateExpense,
   useUpdateParticipant,
-} from "../lib/queries";
+} from "../adapters/react-query/queries";
 
 const COPY_FEEDBACK_MS = 1600;
 

@@ -2,7 +2,7 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { username } from "better-auth/plugins";
 import { drizzle } from "drizzle-orm/d1";
-import * as schema from "./db/schema";
+import * as schema from "./adapters/d1/schema";
 import type { Env } from "./env";
 
 export const AUTH_BASE_PATH = "/api/auth";

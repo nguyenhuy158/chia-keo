@@ -2,16 +2,24 @@
 
 ## Project Structure & Module Organization
 
-This is a React + Vite + TypeScript application using a lightweight hexagonal
-architecture. The app entry point is `src/main.tsx`, which renders
-`src/App.tsx`. Domain types and pure business rules live under
-`src/core/domain/`. Application use cases live under `src/core/application/`.
-Ports live under `src/core/ports/`. Browser-dependent implementations such as
-fetch API calls, DiceBear avatar generation, and VietQR helpers live under
-`src/adapters/browser/`. The `src/lib/` folder is a compatibility
-re-export layer for older imports; do not add new source logic there. Global
-styles and Tailwind CSS import live in `src/styles.css`. The static HTML shell
-is `index.html`.
+This is a React + Vite + TypeScript frontend plus a Hono Cloudflare Worker
+backend, both structured as hexagons (ports & adapters) around a shared pure
+domain kernel in `shared/` (split math, zod schemas, AI normalization, DTOs).
+
+Frontend: entry point `src/main.tsx` is the composition root that plugs
+adapters into ports via `src/core/container.ts`. Pure FE-only rules live in
+`src/core/domain/`, port interfaces in `src/core/ports/` (GameApiPort,
+QrProviderPort). Implementations live in `src/adapters/browser/` (fetch API,
+VietQR, Better Auth client, theme) and `src/adapters/react-query/` (React
+Query hooks over GameApiPort). UI lives in `src/components/` and
+`src/routes/`. Global styles live in `src/styles.css`; the HTML shell is
+`index.html`.
+
+Worker: port interfaces in `worker/src/core/ports/` (GameRepository,
+AiProvider), use cases and policies in `worker/src/core/application/`,
+implementations in `worker/src/adapters/d1/` (drizzle schema + repository)
+and `worker/src/adapters/gemini/`. Hono routes in `worker/src/routes/` are
+thin driving adapters. See `docs/architecture.md` for dependency rules.
 
 ## Build, Test, and Development Commands
 
@@ -37,21 +45,25 @@ Split complex logic into small, named functions with one clear responsibility.
 
 Hexagonal boundaries:
 
-- Put pure rules, calculations, parsing, and schema validation in
-  `src/core/domain/`.
-- Put use cases that coordinate domain rules in `src/core/application/`.
-- Put browser/service implementations in `src/adapters/browser/`.
-- Keep `fetch`, `window`, `document`, DiceBear, VietQR, and UI
-  libraries out of `src/core/`.
-- Keep `src/lib/` as re-export compatibility only.
+- Put pure rules, calculations, parsing, and schema validation shared by FE
+  and worker in `shared/`; FE-only pure rules in `src/core/domain/`.
+- Put backend business logic in `worker/src/core/application/`; data access
+  goes through the `GameRepository` port, never inline SQL in routes.
+- Put browser/service implementations in `src/adapters/*`; put DB/AI
+  implementations in `worker/src/adapters/*`.
+- Keep `fetch`, `window`, `document`, drizzle, VietQR, and UI libraries out
+  of every `core/` and out of `shared/`.
+- New swappable dependencies get a port in `core/ports/` plus an adapter,
+  wired at the composition root (`src/main.tsx` or
+  `worker/src/lib/require-user.ts`).
 
 ## Testing Guidelines
 
 Tests use Vitest. Prefer colocated test files beside the related module, for
-example `src/core/domain/split.test.ts` for pure logic or component tests beside
-the related component. Existing `src/lib/*.test.ts` files may stay while `src/lib`
-is kept as a compatibility layer. Prioritize coverage for settlement math,
-storage behavior, share snapshots, and QR payload generation.
+example `shared/split.test.ts` for shared domain math,
+`src/core/domain/money.test.ts` for FE domain rules, or
+`src/adapters/browser/vietqr.test.ts` for adapter logic. Prioritize coverage
+for settlement math, split policies, and QR payload generation.
 
 ## Commit & Pull Request Guidelines
 

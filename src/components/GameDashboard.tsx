@@ -1,8 +1,8 @@
 import { HandCoins, Trash2 } from "lucide-react";
 import type { ApiExpense, ApiParticipant, ApiSummary } from "../../shared/api-types";
 import type { SettlementRow } from "../../shared/split";
-import { formatMoney } from "../lib/money";
-import { buildVietQrUrl, canBuildVietQr } from "../lib/vietqr";
+import { getQrProvider } from "../core/container";
+import { formatMoney } from "../core/domain/money";
 import { BalancePill, Metric } from "./ui";
 
 type GameDashboardProps = {
@@ -34,6 +34,7 @@ export function GameDashboard({
 }: GameDashboardProps) {
   const participantById = new Map(participants.map((participant) => [participant.id, participant]));
   const transfers = expenses.filter((expense) => expense.kind === "transfer");
+  const qr = getQrProvider();
 
   return (
     <aside className="space-y-5">
@@ -120,10 +121,10 @@ export function GameDashboard({
                       </button>
                     )}
                   </div>
-                  {canBuildVietQr(to) && (
+                  {qr.canBuild(to) && (
                     <img
                       className="mt-3 w-full rounded-md border border-stone-200 bg-white dark:border-stone-700"
-                      src={buildVietQrUrl(to, settlement.amount, code)}
+                      src={qr.buildUrl(to, settlement.amount, code)}
                       alt={`QR nhận tiền của ${to.name}`}
                     />
                   )}

@@ -5,7 +5,8 @@ export const PARTICIPANT_NAME_MAX_LENGTH = 50;
 export const EXPENSE_TITLE_MAX_LENGTH = 100;
 export const EXPENSE_NOTE_MAX_LENGTH = 500;
 export const MAX_EXPENSE_AMOUNT = 1_000_000_000_000;
-export const MAX_SPLIT_WEIGHT = 1000;
+// Hang so domain nam o shared/split.ts, re-export de cho import cu.
+export { MAX_SPLIT_WEIGHT } from "./split";
 export const DEFAULT_EXPENSE_TITLE = "Khoản chi";
 export const DEFAULT_TRANSFER_TITLE = "Trả nợ";
 

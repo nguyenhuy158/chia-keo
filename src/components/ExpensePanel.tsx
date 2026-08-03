@@ -11,8 +11,8 @@ import {
   type ExpenseInput,
   type SplitMode,
 } from "../../shared/schemas";
-import { formatMoney, parseMoney } from "../lib/money";
-import { useAiScanReceipt, useAiSuggestExpense } from "../lib/queries";
+import { formatMoney, parseMoney } from "../core/domain/money";
+import { useAiScanReceipt, useAiSuggestExpense } from "../adapters/react-query/queries";
 import { MoneyInput } from "./MoneyInput";
 import { Field } from "./ui";
 

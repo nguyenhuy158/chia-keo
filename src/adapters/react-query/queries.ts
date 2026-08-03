@@ -1,7 +1,16 @@
+// Driving adapter phia UI: hook React Query bao quanh GameApiPort. Cac hook
+// lay port tu container luc chay nen co the swap adapter (fetch/mock) ma
+// khong dung den file nay.
+
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { ApiGameDetail } from "../../shared/api-types";
-import type { ExpenseInput, GameInput, ParticipantInput, TransferInput } from "../../shared/schemas";
-import { api } from "./api";
+import type { ApiGameDetail } from "../../../shared/api-types";
+import type {
+  ExpenseInput,
+  GameInput,
+  ParticipantInput,
+  TransferInput,
+} from "../../../shared/schemas";
+import { getGameApi } from "../../core/container";
 
 export const gameKeys = {
   all: ["games"] as const,
@@ -10,20 +19,20 @@ export const gameKeys = {
 };
 
 export function useGames() {
-  return useQuery({ queryKey: gameKeys.all, queryFn: api.games.list });
+  return useQuery({ queryKey: gameKeys.all, queryFn: () => getGameApi().games.list() });
 }
 
 export function useGame(gameId: string) {
   return useQuery({
     queryKey: gameKeys.detail(gameId),
-    queryFn: () => api.games.detail(gameId),
+    queryFn: () => getGameApi().games.detail(gameId),
   });
 }
 
 export function useShareView(token: string) {
   return useQuery({
     queryKey: gameKeys.share(token),
-    queryFn: () => api.share.view(token),
+    queryFn: () => getGameApi().share.view(token),
     retry: false,
   });
 }
@@ -32,7 +41,7 @@ export function useCreateGame() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (input: GameInput) => api.games.create(input),
+    mutationFn: (input: GameInput) => getGameApi().games.create(input),
     onSuccess: (detail) => {
       queryClient.setQueryData(gameKeys.detail(detail.id), detail);
       queryClient.invalidateQueries({ queryKey: gameKeys.all });
@@ -44,7 +53,7 @@ export function useDeleteGame() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (gameId: string) => api.games.remove(gameId),
+    mutationFn: (gameId: string) => getGameApi().games.remove(gameId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: gameKeys.all });
     },
@@ -71,60 +80,69 @@ function useGameDetailMutation<TVariables>(
 
 export function useAddParticipant(gameId: string) {
   return useGameDetailMutation((input: ParticipantInput) =>
-    api.participants.create(gameId, input),
+    getGameApi().participants.create(gameId, input),
   );
 }
 
 export function useRemoveParticipant() {
-  return useGameDetailMutation((participantId: string) => api.participants.remove(participantId));
+  return useGameDetailMutation((participantId: string) =>
+    getGameApi().participants.remove(participantId),
+  );
 }
 
 export function useUpdateParticipant() {
   return useGameDetailMutation(
     (variables: { participantId: string; input: Partial<ParticipantInput> }) =>
-      api.participants.update(variables.participantId, variables.input),
+      getGameApi().participants.update(variables.participantId, variables.input),
   );
 }
 
 export function useAddExpense(gameId: string) {
-  return useGameDetailMutation((input: ExpenseInput) => api.expenses.create(gameId, input));
+  return useGameDetailMutation((input: ExpenseInput) =>
+    getGameApi().expenses.create(gameId, input),
+  );
 }
 
 export function useUpdateExpense() {
   return useGameDetailMutation(
     (variables: { expenseId: string; input: Partial<ExpenseInput> }) =>
-      api.expenses.update(variables.expenseId, variables.input),
+      getGameApi().expenses.update(variables.expenseId, variables.input),
   );
 }
 
 export function useRemoveExpense() {
-  return useGameDetailMutation((expenseId: string) => api.expenses.remove(expenseId));
+  return useGameDetailMutation((expenseId: string) => getGameApi().expenses.remove(expenseId));
 }
 
 export function useAddTransfer(gameId: string) {
-  return useGameDetailMutation((input: TransferInput) => api.transfers.create(gameId, input));
+  return useGameDetailMutation((input: TransferInput) =>
+    getGameApi().transfers.create(gameId, input),
+  );
 }
 
 export function useRenameGame(gameId: string) {
-  return useGameDetailMutation((name: string) => api.games.rename(gameId, { name }));
+  return useGameDetailMutation((name: string) => getGameApi().games.rename(gameId, { name }));
 }
 
 export function useAiSuggestExpense(gameId: string) {
   return useMutation({
-    mutationFn: (text: string) => api.ai.suggestExpense(gameId, text),
+    mutationFn: (text: string) => getGameApi().ai.suggestExpense(gameId, text),
   });
 }
 
 export function useAiScanReceipt(gameId: string) {
   return useMutation({
-    mutationFn: (image: { mimeType: string; data: string }) => api.ai.scanReceipt(gameId, image),
+    mutationFn: (image: { mimeType: string; data: string }) =>
+      getGameApi().ai.scanReceipt(gameId, image),
   });
 }
 
 export function useRotateShareLink(gameId: string) {
-  return useGameDetailMutation<void>(() => api.shareLinks.rotate(gameId));
+  return useGameDetailMutation<void>(() => getGameApi().shareLinks.rotate(gameId));
 }
 
 export function useSetShareLinkEnabled(gameId: string) {
-  return useGameDetailMutation((enabled: boolean) => api.shareLinks.setEnabled(gameId, enabled));
+  return useGameDetailMutation((enabled: boolean) =>
+    getGameApi().shareLinks.setEnabled(gameId, enabled),
+  );
 }

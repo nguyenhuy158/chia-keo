@@ -24,27 +24,38 @@ Ung dung chia tien nhom cho cac buoi an, di choi, du lich hoac nhom chi tieu nho
 
 ## Kiến trúc hiện tại
 
-Project đang áp dụng hexagonal architecture dạng nhẹ cho frontend.
+Project áp dụng hexagonal architecture (ports & adapters) cho cả frontend lẫn
+worker, domain kernel dùng chung nằm ở `shared/`.
 
 ```text
+shared/              # Domain thuần dùng chung: split, schema, ai, DTO
 src/
   core/
-    domain/          # Type, rule tính tiền, tiền tệ, phân loại, schema
-    application/     # Use case điều phối domain
-    ports/           # Interface để adapter implement khi cần
+    domain/          # Rule thuần chỉ FE dùng (money)
+    ports/           # GameApiPort (backend), QrProviderPort (QR)
+    container.ts     # DI tối giản, main.tsx cắm adapter vào
   adapters/
-    browser/         # fetch API, DiceBear avatar, VietQR
-  lib/               # Compatibility re-export cho import cũ
-  App.tsx            # Presentation layer
+    browser/         # fetch API, VietQR, Better Auth client, theme
+    react-query/     # Hook React Query bọc GameApiPort
+  components/ routes/  # Presentation
+worker/src/
+  core/
+    ports/           # GameRepository (DB), AiProvider (AI)
+    application/     # Use case: games, participants, expenses, share, ai
+  adapters/
+    d1/              # Drizzle schema + repository cho Cloudflare D1
+    gemini/          # Gemini adapter cho AiProvider
+  routes/            # Hono routes mỏng: parse -> use case -> JSON
 ```
 
 Quy tắc chính:
 
-- `src/core` không import `fetch`, DiceBear, VietQR, React UI hoặc browser API.
-- Logic tính toán và validate nằm trong `src/core/domain`.
-- Use case phối hợp nhiều rule nằm trong `src/core/application`.
-- Code phụ thuộc browser/service ngoài nằm trong `src/adapters/browser`.
-- UI chỉ gọi core/adapters qua entrypoint rõ ràng, không tự chứa business rule phức tạp.
+- `core` không import adapter, không gọi `fetch`/driver DB/SDK ngoài.
+- Business rule thuần ở `shared/` (dùng chung) hoặc `core/domain`.
+- Nghiệp vụ backend ở `worker/src/core/application`, thao tác dữ liệu đi qua
+  port `GameRepository`; route Hono chỉ parse input và map lỗi sang HTTP.
+- Muốn thay DB/AI/QR/HTTP client: viết adapter mới implement port tương ứng,
+  cắm ở composition root (`src/main.tsx`, `worker/src/lib/require-user.ts`).
 
 Xem thêm: `docs/architecture.md`.
 

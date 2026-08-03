@@ -1,4 +1,5 @@
-import type { ApiParticipant } from "../../shared/api-types";
+import type { ApiParticipant } from "../../../shared/api-types";
+import type { QrProviderPort } from "../../core/ports/qr-provider";
 
 export type PaymentInfo = Pick<ApiParticipant, "bankId" | "accountNo" | "accountName">;
 
@@ -113,3 +114,9 @@ export function buildVietQrUrl(payment: PaymentInfo, amount: number, gameCode: s
     content,
   )}&accountName=${accountName}`;
 }
+
+/** Adapter VietQR cho QrProviderPort. */
+export const vietQrProvider: QrProviderPort = {
+  canBuild: canBuildVietQr,
+  buildUrl: buildVietQrUrl,
+};

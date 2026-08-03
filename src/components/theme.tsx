@@ -14,7 +14,7 @@ import {
   resolveTheme,
   storeTheme,
   type ThemeMode,
-} from "../lib/theme";
+} from "../adapters/browser/theme";
 
 type ThemeContextValue = {
   mode: ThemeMode;

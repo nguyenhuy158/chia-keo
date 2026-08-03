@@ -4,6 +4,8 @@ import {
   allocateByWeights,
   calculateBalances,
   calculateSettlements,
+  computeSplitRows,
+  MAX_SPLIT_WEIGHT,
   type ExpenseInput,
 } from "./split";
 
@@ -100,6 +102,66 @@ describe("allocateByWeights", () => {
   it("tra ve mang rong khi khong co trong so hop le", () => {
     expect(allocateByWeights(100, [])).toEqual([]);
     expect(allocateByWeights(100, [{ participantId: "a", weight: 0 }])).toEqual([]);
+  });
+});
+
+describe("computeSplitRows", () => {
+  it("mode equal chia deu, khong luu weight", () => {
+    expect(computeSplitRows(300, "equal", ["a", "b", "c"], [])).toEqual([
+      { participantId: "a", amount: 100, weight: null },
+      { participantId: "b", amount: 100, weight: null },
+      { participantId: "c", amount: 100, weight: null },
+    ]);
+  });
+
+  it("mode shares chia theo so phan va luu weight", () => {
+    expect(
+      computeSplitRows(400, "shares", [], [
+        { participantId: "a", value: 1 },
+        { participantId: "b", value: 3 },
+      ]),
+    ).toEqual([
+      { participantId: "a", amount: 100, weight: 1 },
+      { participantId: "b", amount: 300, weight: 3 },
+    ]);
+  });
+
+  it("mode amount giu nguyen so tien nhap", () => {
+    expect(
+      computeSplitRows(90, "amount", [], [
+        { participantId: "a", value: 30 },
+        { participantId: "b", value: 60 },
+      ]),
+    ).toEqual([
+      { participantId: "a", amount: 30, weight: null },
+      { participantId: "b", amount: 60, weight: null },
+    ]);
+  });
+
+  it("tra ve null cho input khong hop le", () => {
+    // Khong co ai chia
+    expect(computeSplitRows(100, "equal", [], [])).toBeNull();
+    expect(computeSplitRows(100, "shares", [], [])).toBeNull();
+    // Trung nguoi
+    expect(
+      computeSplitRows(100, "amount", [], [
+        { participantId: "a", value: 50 },
+        { participantId: "a", value: 50 },
+      ]),
+    ).toBeNull();
+    // So phan qua lon
+    expect(
+      computeSplitRows(100, "shares", [], [
+        { participantId: "a", value: MAX_SPLIT_WEIGHT + 1 },
+      ]),
+    ).toBeNull();
+    // Tong tien tuy chinh lech tong khoan chi
+    expect(
+      computeSplitRows(100, "amount", [], [
+        { participantId: "a", value: 30 },
+        { participantId: "b", value: 60 },
+      ]),
+    ).toBeNull();
   });
 });
 

@@ -10,6 +10,19 @@ export type WeightedShare = {
   weight: number;
 };
 
+/** Mot dong split day du de luu: weight chi co nghia voi mode "shares". */
+export type ComputedSplit = {
+  participantId: string;
+  amount: number;
+  weight: number | null;
+};
+
+/** Gia tri nhap cho mode "shares" (so phan) hoac "amount" (so tien). */
+export type SplitValueInput = {
+  participantId: string;
+  value: number;
+};
+
 export type ExpenseInput = {
   payerParticipantId: string;
   amount: number;
@@ -28,6 +41,8 @@ export type SettlementRow = {
   toParticipantId: string;
   amount: number;
 };
+
+export const MAX_SPLIT_WEIGHT = 1000;
 
 /**
  * Chia `amount` cho danh sach nguoi tham gia. Phan du (neu tien le) duoc cong
@@ -69,6 +84,43 @@ export function allocateByWeights(amount: number, entries: WeightedShare[]): Spl
   }
 
   return shares;
+}
+
+/**
+ * Tinh danh sach dong split day du theo mode. Tra ve null khi input khong hop
+ * le: khong co ai chia, trung nguoi, so phan qua lon, hoac tong tien tuy chinh
+ * khong khop tong khoan chi.
+ */
+export function computeSplitRows(
+  amount: number,
+  mode: SplitMode,
+  participantIds: string[],
+  splits: SplitValueInput[],
+): ComputedSplit[] | null {
+  if (mode === "equal") {
+    const ids = [...new Set(participantIds)];
+    if (ids.length === 0) return null;
+    return allocateAmount(amount, ids).map((share) => ({ ...share, weight: null }));
+  }
+
+  if (splits.length === 0) return null;
+  if (new Set(splits.map((split) => split.participantId)).size !== splits.length) return null;
+
+  if (mode === "shares") {
+    if (splits.some((split) => split.value > MAX_SPLIT_WEIGHT)) return null;
+    return allocateByWeights(
+      amount,
+      splits.map((split) => ({ participantId: split.participantId, weight: split.value })),
+    ).map((share, index) => ({ ...share, weight: splits[index].value }));
+  }
+
+  const total = splits.reduce((sum, split) => sum + split.value, 0);
+  if (total !== amount) return null;
+  return splits.map((split) => ({
+    participantId: split.participantId,
+    amount: split.value,
+    weight: null,
+  }));
 }
 
 export function calculateBalances(

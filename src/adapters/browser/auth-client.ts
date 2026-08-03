@@ -1,6 +1,6 @@
 import { usernameClient } from "better-auth/client/plugins";
 import { createAuthClient } from "better-auth/react";
-import { API_BASE } from "./api";
+import { API_BASE } from "./http-game-api";
 
 const FAKE_EMAIL_DOMAIN = "chia-keo.local";
 

@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { formatMoney } from "../lib/money";
+import { formatMoney } from "../core/domain/money";
 
 export function PageShell({ children }: { children: ReactNode }) {
   return (

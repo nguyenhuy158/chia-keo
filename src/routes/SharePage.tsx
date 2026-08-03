@@ -5,8 +5,8 @@ import type { ApiExpense, ApiParticipant, ApiSummary } from "../../shared/api-ty
 import { GameDashboard } from "../components/GameDashboard";
 import { ThemeToggle } from "../components/theme";
 import { EmptyState, LoadingState } from "../components/ui";
-import { formatMoney } from "../lib/money";
-import { useShareView } from "../lib/queries";
+import { formatMoney } from "../core/domain/money";
+import { useShareView } from "../adapters/react-query/queries";
 
 type ShareTab = "summary" | "matrix";
 
