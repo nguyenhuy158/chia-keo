@@ -34,7 +34,7 @@ export const PHOTO_MIME_TYPES = ["image/jpeg", "image/png", "image/webp"] as con
  * - "off": khong hien phan chuyen tien
  */
 export const SETTLEMENT_MODES = ["p2p", "host", "off"] as const;
-export const DEFAULT_SETTLEMENT_MODE = "p2p";
+export const DEFAULT_SETTLEMENT_MODE = "host";
 
 export const settlementModeSchema = z.enum(SETTLEMENT_MODES);
 
@@ -51,8 +51,18 @@ export const gameInputSchema = z.object({
 // participantCount chi co nghia luc tao, bo khoi schema sua de khong nhan cho vui.
 export const gameUpdateSchema = gameInputSchema.omit({ participantCount: true }).partial();
 
+/** Viet hoa chu cai dau ten nguoi cho dong bo, khong dong het chu con lai. */
+export function capitalizeName(name: string) {
+  return name ? name.charAt(0).toUpperCase() + name.slice(1) : name;
+}
+
 export const participantInputSchema = z.object({
-  name: z.string().trim().min(1).max(PARTICIPANT_NAME_MAX_LENGTH),
+  name: z
+    .string()
+    .trim()
+    .min(1)
+    .max(PARTICIPANT_NAME_MAX_LENGTH)
+    .transform(capitalizeName),
   bankId: z.string().trim().max(20).default(""),
   accountNo: z.string().trim().max(30).default(""),
   accountName: z.string().trim().max(50).default(""),
