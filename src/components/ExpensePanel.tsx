@@ -2,6 +2,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Banknote,
   Check,
+  ChevronDown,
   ImagePlus,
   Minus,
   Paperclip,
@@ -227,6 +228,81 @@ function SharesStepper({
   );
 }
 
+/**
+ * Select tuy chinh thay <select> goc: <select> tren mobile mo picker cua OS,
+ * khong theo duoc mau/kieu chu cua app va nhin lech tong the.
+ */
+function ParticipantSelect({
+  participants,
+  value,
+  onChange,
+  ariaLabel,
+}: {
+  participants: ApiParticipant[];
+  value: string;
+  onChange: (id: string) => void;
+  ariaLabel: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const selected = participants.find((participant) => participant.id === value);
+
+  useEffect(() => {
+    if (!open) return;
+    function onDocClick(event: MouseEvent) {
+      if (rootRef.current && !rootRef.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", onDocClick);
+    return () => document.removeEventListener("mousedown", onDocClick);
+  }, [open]);
+
+  return (
+    <div ref={rootRef} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((current) => !current)}
+        aria-label={ariaLabel}
+        aria-expanded={open}
+        className="field flex items-center justify-between gap-2 text-left"
+      >
+        <span className="truncate">{selected?.name || "Chọn người"}</span>
+        <ChevronDown
+          size={16}
+          className={`shrink-0 text-stone-400 transition ${open ? "rotate-180" : ""}`}
+        />
+      </button>
+      {open && (
+        <ul className="absolute z-10 mt-1 w-full max-h-60 overflow-auto rounded-md border border-stone-300 bg-white p-1 shadow-lg dark:border-stone-700 dark:bg-stone-800">
+          {participants.map((participant) => {
+            const isSelected = participant.id === value;
+            return (
+              <li key={participant.id}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    onChange(participant.id);
+                    setOpen(false);
+                  }}
+                  className={`flex w-full items-center justify-between gap-2 rounded px-3 py-2.5 text-sm ${
+                    isSelected
+                      ? "bg-violet-50 font-semibold text-violet-800 dark:bg-violet-500/15 dark:text-violet-300"
+                      : "text-stone-700 hover:bg-stone-100 dark:text-stone-200 dark:hover:bg-stone-700"
+                  }`}
+                >
+                  <span className="truncate">{participant.name}</span>
+                  {isSelected && <Check size={14} className="shrink-0" />}
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 export function ExpensePanel({
   gameId,
   participants,
@@ -309,24 +385,33 @@ export function ExpensePanel({
   const allSelected =
     participants.length > 0 && splitParticipantIds.length === participants.length;
 
-  /**
-   * Chuyen sang mode "Số tiền": dien san chia deu theo so tien hien tai lam
-   * moc khoi diem, thay vi de trong bat nguoi dung tu go tung phan tu 0.
-   */
-  function handleSplitModeChange(mode: SplitMode) {
-    if (mode === "amount") {
-      const total = parseMoney(form.getValues("amount"));
-      if (total > 0 && splitParticipantIds.length > 0) {
-        const shares = allocateAmount(total, splitParticipantIds);
-        const nextValues = { ...splitValues };
-        for (const share of shares) {
-          nextValues[share.participantId] = String(share.amount);
-        }
-        form.setValue("splitValues", nextValues);
-      }
-    }
+function handleSplitModeChange(mode: SplitMode) {
     form.setValue("splitMode", mode, { shouldValidate: form.formState.isSubmitted });
   }
+
+  /**
+   * Mode "Số tiền": tu dien chia deu lam moc khoi diem khi chua ai go gi (tong
+   * dang nhap = 0), thay vi bat nguoi dung tu go tung phan tu 0. Chi ap dung
+   * luc con trong de khong ghi de gia tri nguoi dung da sua.
+   */
+  useEffect(() => {
+    if (splitMode !== "amount" || splitParticipantIds.length === 0) return;
+    const total = parseMoney(amountValue);
+    if (total <= 0) return;
+    const assigned = splitParticipantIds.reduce(
+      (sum, id) => sum + parseMoney(splitValues[id] || ""),
+      0,
+    );
+    if (assigned !== 0) return;
+
+    const shares = allocateAmount(total, splitParticipantIds);
+    const nextValues = { ...splitValues };
+    for (const share of shares) {
+      nextValues[share.participantId] = String(share.amount);
+    }
+    form.setValue("splitValues", nextValues);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [splitMode, amountValue, splitParticipantIds]);
 
   const aiSuggest = useAiSuggestExpense(gameId);
   const aiReceipt = useAiScanReceipt(gameId);
@@ -597,13 +682,12 @@ export function ExpensePanel({
           />
         </Field>
         <Field label="Người trả" error={form.formState.errors.payerId?.message}>
-          <select {...form.register("payerId")} value={payerId} className="field">
-            {participants.map((participant) => (
-              <option key={participant.id} value={participant.id}>
-                {participant.name}
-              </option>
-            ))}
-          </select>
+          <ParticipantSelect
+            participants={participants}
+            value={payerId}
+            onChange={(id) => form.setValue("payerId", id, { shouldValidate: form.formState.isSubmitted })}
+            ariaLabel="Chọn người trả"
+          />
         </Field>
         <div className="md:col-span-2">
           <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
@@ -666,11 +750,14 @@ export function ExpensePanel({
               {participants.map((participant) => {
                 const checked = splitParticipantIds.includes(participant.id);
                 return (
-                  <div key={participant.id} className="flex items-center gap-2">
+                  <div
+                    key={participant.id}
+                    className="flex flex-col gap-2 sm:flex-row sm:items-center"
+                  >
                     <button
                       type="button"
                       onClick={() => toggleSplit(participant.id)}
-                      className={`min-h-11 min-w-0 flex-1 truncate rounded-md border px-3 text-left text-sm font-medium transition active:scale-[0.99] ${
+                      className={`min-h-11 w-full min-w-0 truncate rounded-md border px-3 text-left text-sm font-medium transition active:scale-[0.99] sm:flex-1 ${
                         checked
                           ? "border-violet-600 bg-violet-50 text-violet-800 dark:border-violet-500 dark:bg-violet-500/15 dark:text-violet-300"
                           : "border-stone-300 bg-white text-stone-600 hover:bg-stone-50 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-300 dark:hover:bg-stone-700"
@@ -702,7 +789,7 @@ export function ExpensePanel({
                             )
                           }
                           placeholder="0"
-                          className="w-32 shrink-0 text-right"
+                          className="w-full text-right sm:w-32 sm:shrink-0"
                           aria-label={`Phần tiền của ${participant.name}`}
                         />
                       ))}
