@@ -113,13 +113,19 @@ export function getVietQrPaymentIssue(payment: PaymentInfo | undefined) {
   return "";
 }
 
+/**
+ * `amount` <= 0 nghia la QR khong gan san so tien, nguoi quet tu nhap. Dung
+ * cho QR chung cua host khi moi nguoi chuyen ve mot dau moi voi so tien khac
+ * nhau.
+ */
 export function buildVietQrUrl(payment: PaymentInfo, amount: number, gameCode: string) {
   const content = normalizeText(`CHIA KEO ${gameCode}`);
   const bankId = encodeURIComponent(resolveVietQrBankId(payment.bankId));
   const accountNo = encodeURIComponent(payment.accountNo.trim());
   const accountName = encodeURIComponent(payment.accountName.trim());
+  const amountParam = amount > 0 ? `amount=${Math.round(amount)}&` : "";
 
-  return `https://img.vietqr.io/image/${bankId}-${accountNo}-compact2.png?amount=${amount}&addInfo=${encodeURIComponent(
+  return `https://img.vietqr.io/image/${bankId}-${accountNo}-compact2.png?${amountParam}addInfo=${encodeURIComponent(
     content,
   )}&accountName=${accountName}`;
 }

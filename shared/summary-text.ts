@@ -1,4 +1,5 @@
 import type { ApiExpense, ApiParticipant, ApiSummary } from "./api-types";
+import { calculateHostTransfers, pickHostParticipantId } from "./split";
 
 const THOUSAND = 1000;
 const SHORT_MONEY_FRACTION_DIGITS = 1;
@@ -9,6 +10,12 @@ const shortMoneyFormat = new Intl.NumberFormat("vi-VN", {
   maximumFractionDigits: SHORT_MONEY_FRACTION_DIGITS,
 });
 
+/**
+ * "p2p": chuyen truc tiep giua tung cap, it luot chuyen nhat.
+ * "host": moi nguoi chuyen ve mot dau moi, chi can mot QR.
+ */
+export type SettlementMode = "p2p" | "host";
+
 export type SummaryTextInput = {
   code: string;
   name: string;
@@ -17,6 +24,7 @@ export type SummaryTextInput = {
   summary: ApiSummary;
   /** Link xem chi tiet, bo qua neu cuoc choi chua bat share. */
   shareUrl?: string;
+  settlementMode?: SettlementMode;
 };
 
 export type SummarySectionId = "expenses" | "people" | "settlements";
@@ -36,6 +44,8 @@ export type SummaryDocument = {
   subtitle: string;
   sections: SummarySection[];
   footer?: string;
+  /** Chi co o che do "host": nguoi nhan tien, tuc chu nhan cua QR duy nhat. */
+  hostParticipantId?: string;
 };
 
 /** 90000 -> "90", 8500 -> "8,5", 1043000 -> "1.043". Don vi nghin dong. */
@@ -112,6 +122,29 @@ function buildSettlementLines(summary: ApiSummary, nameById: Map<string, string>
   });
 }
 
+function buildHostSection(
+  summary: ApiSummary,
+  nameById: Map<string, string>,
+): { section: SummarySection; hostParticipantId: string } | null {
+  const hostParticipantId = pickHostParticipantId(summary.balances);
+  const transfers = calculateHostTransfers(summary.balances, hostParticipantId);
+  if (!hostParticipantId || transfers.length === 0) return null;
+
+  const hostName = nameById.get(hostParticipantId) || UNKNOWN_NAME;
+  const lines = transfers.map((transfer) => {
+    const name = nameById.get(transfer.participantId) || UNKNOWN_NAME;
+    const amount = formatShortMoney(transfer.amount);
+    return transfer.toHost
+      ? `- ${name} → ${hostName}: ${amount}`
+      : `- ${hostName} trả lại ${name}: ${amount}`;
+  });
+
+  return {
+    hostParticipantId,
+    section: { id: "settlements", heading: `GOM VỀ ${hostName.toUpperCase()}`, lines },
+  };
+}
+
 export function buildSummaryDocument(input: SummaryTextInput): SummaryDocument {
   const { code, name, participants, summary, shareUrl } = input;
   const expenses = toChronologicalOrder(input.expenses);
@@ -139,9 +172,19 @@ export function buildSummaryDocument(input: SummaryTextInput): SummaryDocument {
     });
   }
 
-  const settlementLines = buildSettlementLines(summary, nameById);
-  if (settlementLines.length > 0) {
-    sections.push({ id: "settlements", heading: "CẦN CHUYỂN", lines: settlementLines });
+  let hostParticipantId: string | undefined;
+
+  if (input.settlementMode === "host") {
+    const host = buildHostSection(summary, nameById);
+    if (host) {
+      sections.push(host.section);
+      hostParticipantId = host.hostParticipantId;
+    }
+  } else {
+    const settlementLines = buildSettlementLines(summary, nameById);
+    if (settlementLines.length > 0) {
+      sections.push({ id: "settlements", heading: "CẦN CHUYỂN", lines: settlementLines });
+    }
   }
 
   return {
@@ -149,6 +192,7 @@ export function buildSummaryDocument(input: SummaryTextInput): SummaryDocument {
     subtitle: code,
     sections,
     footer: shareUrl ? `Chi tiết: ${shareUrl}` : undefined,
+    hostParticipantId,
   };
 }
 

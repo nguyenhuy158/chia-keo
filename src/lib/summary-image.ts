@@ -2,13 +2,10 @@ import type { ApiParticipant } from "../../shared/api-types";
 import {
   buildSummaryDocument,
   formatThousands,
+  type SummaryDocument,
   type SummaryTextInput,
 } from "../../shared/summary-text";
-import {
-  buildVietQrProxyPath,
-  canBuildVietQr,
-  getVietQrBankLabel,
-} from "../../shared/vietqr";
+import { buildVietQrProxyPath, canBuildVietQr, getVietQrBankLabel } from "../../shared/vietqr";
 import { API_BASE } from "./api";
 
 const IMAGE_MIME = "image/png";
@@ -22,6 +19,8 @@ const QR_SIZE = 168;
 const QR_TEXT_GAP = 20;
 const QR_BLOCK_GAP = 16;
 const QR_LOAD_TIMEOUT_MS = 8_000;
+/** Truyen 0 cho VietQR de QR khong gan san so tien, nguoi quet tu nhap. */
+const QR_AMOUNT_FREE = 0;
 
 const FONT_STACK = 'system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif';
 
@@ -55,6 +54,7 @@ const STYLE = {
   body: { font: `400 15px ${FONT_STACK}`, color: COLOR.body, lineHeight: 23, gapBefore: 0 },
   qrTitle: { font: `700 18px ${FONT_STACK}`, color: COLOR.title, lineHeight: 26, gapBefore: 0 },
   qrAmount: { font: `700 22px ${FONT_STACK}`, color: COLOR.accent, lineHeight: 32, gapBefore: 0 },
+  qrNote: { font: `600 15px ${FONT_STACK}`, color: COLOR.accent, lineHeight: 24, gapBefore: 0 },
   qrDetail: { font: `400 14px ${FONT_STACK}`, color: COLOR.muted, lineHeight: 21, gapBefore: 0 },
   footer: { font: `400 13px ${FONT_STACK}`, color: COLOR.muted, lineHeight: 20, gapBefore: 24 },
 } satisfies Record<string, TextStyle>;
@@ -65,12 +65,18 @@ type Block = {
   draw: (context: CanvasRenderingContext2D, y: number) => void;
 };
 
-type SettlementQr = {
+type QrLine = readonly [string, TextStyle];
+
+type QrCard = {
   image: HTMLImageElement;
-  title: string;
-  amount: string;
-  bankLine: string;
-  nameLine: string;
+  lines: QrLine[];
+};
+
+type QrCards = {
+  /** QR rieng cho tung dong o che do p2p, khoa la vi tri dong. */
+  byLineIndex: Map<number, QrCard>;
+  /** QR duy nhat cua host o che do gom mot dau moi. */
+  host: QrCard | null;
 };
 
 function loadImage(src: string): Promise<HTMLImageElement | null> {
@@ -91,44 +97,72 @@ function loadImage(src: string): Promise<HTMLImageElement | null> {
   });
 }
 
+async function loadQrImage(payee: ApiParticipant, amount: number, code: string) {
+  if (!canBuildVietQr(payee)) return null;
+  return loadImage(`${API_BASE}${buildVietQrProxyPath(payee, amount, code)}`);
+}
+
+function buildAccountLines(payee: ApiParticipant): QrLine[] {
+  const detail = [getVietQrBankLabel(payee.bankId), payee.accountNo].filter(Boolean).join(" · ");
+  return [
+    [detail, STYLE.qrDetail],
+    [payee.accountName || payee.name, STYLE.qrDetail],
+  ];
+}
+
 /**
- * Tai truoc QR cua tung khoan chuyen tien. Nguoi nhan chua nhap tai khoan hoac
- * anh tai loi thi bo qua, phan do se hien lai bang dong chu nhu cu.
+ * Tai truoc QR cho phan chuyen tien. Nguoi nhan chua nhap tai khoan hoac anh
+ * tai loi thi bo qua, phan do van hien lai bang dong chu nhu cu.
  */
-async function loadSettlementQrs(input: SummaryTextInput): Promise<Map<number, SettlementQr>> {
+async function loadQrCards(input: SummaryTextInput, doc: SummaryDocument): Promise<QrCards> {
   const participantById = new Map<string, ApiParticipant>(
     input.participants.map((participant) => [participant.id, participant]),
   );
 
-  const candidates = input.summary.settlements.map((settlement, index) => {
-    const from = participantById.get(settlement.fromParticipantId);
-    const to = participantById.get(settlement.toParticipantId);
-    return { index, settlement, from, to };
-  });
+  if (doc.hostParticipantId) {
+    const host = participantById.get(doc.hostParticipantId);
+    const image = host ? await loadQrImage(host, QR_AMOUNT_FREE, input.code) : null;
+
+    return {
+      byLineIndex: new Map(),
+      host:
+        image && host
+          ? {
+              image,
+              lines: [
+                [`Chuyển cho ${host.name}`, STYLE.qrTitle],
+                ["Quét rồi tự nhập số tiền", STYLE.qrNote],
+                ...buildAccountLines(host),
+              ],
+            }
+          : null,
+    };
+  }
 
   const loaded = await Promise.all(
-    candidates.map(async ({ index, settlement, from, to }) => {
-      if (!from || !to || !canBuildVietQr(to)) return null;
+    input.summary.settlements.map(async (settlement, index) => {
+      const from = participantById.get(settlement.fromParticipantId);
+      const to = participantById.get(settlement.toParticipantId);
+      if (!from || !to) return null;
 
-      const src = `${API_BASE}${buildVietQrProxyPath(to, settlement.amount, input.code)}`;
-      const image = await loadImage(src);
+      const image = await loadQrImage(to, settlement.amount, input.code);
       if (!image) return null;
 
-      const detail = [getVietQrBankLabel(to.bankId), to.accountNo].filter(Boolean).join(" · ");
       return [
         index,
         {
           image,
-          title: `${from.name} → ${to.name}`,
-          amount: `${formatThousands(settlement.amount)}k`,
-          bankLine: detail,
-          nameLine: to.accountName || to.name,
+          lines: [
+            [`${from.name} → ${to.name}`, STYLE.qrTitle],
+            [`${formatThousands(settlement.amount)}k`, STYLE.qrAmount],
+            ...buildAccountLines(to),
+          ] as QrLine[],
         },
       ] as const;
     }),
   );
 
-  return new Map(loaded.filter((entry) => entry !== null));
+  return { byLineIndex: new Map(loaded.filter((entry) => entry !== null)), host: null };
 }
 
 function wrapText(
@@ -198,8 +232,9 @@ function buildTextBlocks(
   });
 }
 
-function buildQrBlock(qr: SettlementQr): Block {
+function buildQrBlock(card: QrCard): Block {
   const textX = PADDING + QR_SIZE + QR_TEXT_GAP;
+  const textHeight = card.lines.reduce((total, [, style]) => total + style.lineHeight, 0);
 
   return {
     height: QR_SIZE,
@@ -208,15 +243,10 @@ function buildQrBlock(qr: SettlementQr): Block {
       context.strokeStyle = COLOR.qrFrame;
       context.lineWidth = 1;
       context.strokeRect(PADDING + 0.5, y + 0.5, QR_SIZE - 1, QR_SIZE - 1);
-      context.drawImage(qr.image, PADDING, y, QR_SIZE, QR_SIZE);
+      context.drawImage(card.image, PADDING, y, QR_SIZE, QR_SIZE);
 
-      let textY = y + (QR_SIZE - STYLE.qrTitle.lineHeight - STYLE.qrAmount.lineHeight - STYLE.qrDetail.lineHeight * 2) / 2;
-      for (const [text, style] of [
-        [qr.title, STYLE.qrTitle],
-        [qr.amount, STYLE.qrAmount],
-        [qr.bankLine, STYLE.qrDetail],
-        [qr.nameLine, STYLE.qrDetail],
-      ] as const) {
+      let textY = y + (QR_SIZE - textHeight) / 2;
+      for (const [text, style] of card.lines) {
         drawText(context, text, style, textX, textY);
         textY += style.lineHeight;
       }
@@ -225,11 +255,10 @@ function buildQrBlock(qr: SettlementQr): Block {
 }
 
 function buildBlocks(
-  input: SummaryTextInput,
+  doc: SummaryDocument,
   context: CanvasRenderingContext2D,
-  qrByIndex: Map<number, SettlementQr>,
+  qrCards: QrCards,
 ): Block[] {
-  const doc = buildSummaryDocument(input);
   const blocks: Block[] = [
     ...buildTextBlocks(context, doc.title, STYLE.title),
     ...buildTextBlocks(context, doc.subtitle, STYLE.subtitle),
@@ -238,9 +267,13 @@ function buildBlocks(
   for (const section of doc.sections) {
     blocks.push(...buildTextBlocks(context, section.heading, STYLE.heading, { withDivider: true }));
 
+    if (section.id === "settlements" && qrCards.host) {
+      blocks.push(buildQrBlock(qrCards.host));
+    }
+
     section.lines.forEach((line, index) => {
-      const qr = section.id === "settlements" ? qrByIndex.get(index) : undefined;
-      if (qr) blocks.push(buildQrBlock(qr));
+      const card = section.id === "settlements" ? qrCards.byLineIndex.get(index) : undefined;
+      if (card) blocks.push(buildQrBlock(card));
       else blocks.push(...buildTextBlocks(context, line, STYLE.body));
     });
   }
@@ -267,10 +300,11 @@ function createContext(width: number, height: number) {
  * thu vien chup DOM vi noi dung chi la cac dong chu, va tranh them dependency.
  */
 export async function renderSummaryImage(input: SummaryTextInput): Promise<Blob> {
-  const qrByIndex = await loadSettlementQrs(input);
+  const doc = buildSummaryDocument(input);
+  const qrCards = await loadQrCards(input, doc);
 
   const measure = createContext(1, 1);
-  const blocks = buildBlocks(input, measure.context, qrByIndex);
+  const blocks = buildBlocks(doc, measure.context, qrCards);
 
   const contentHeight = blocks.reduce((total, block) => total + block.gapBefore + block.height, 0);
   const cardHeight = ACCENT_BAR_HEIGHT + PADDING * 2 + contentHeight;

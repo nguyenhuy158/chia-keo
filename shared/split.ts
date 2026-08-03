@@ -70,6 +70,44 @@ export function calculateBalances(
   }));
 }
 
+export type HostTransferRow = {
+  participantId: string;
+  amount: number;
+  /** true: nguoi nay chuyen cho host; false: host tra lai nguoi nay. */
+  toHost: boolean;
+};
+
+/**
+ * Chon host la nguoi ung nhieu tien nhat. Hoa thi lay nguoi dung truoc trong
+ * danh sach de ket qua on dinh giua cac lan goi.
+ */
+export function pickHostParticipantId(balances: BalanceRow[]): string {
+  let host: BalanceRow | undefined;
+  for (const row of balances) {
+    if (!host || row.balance > host.balance) host = row;
+  }
+
+  return host?.participantId || "";
+}
+
+/**
+ * Kieu gom mot dau moi: ai con thieu thi chuyen thang cho host, ai ung du thi
+ * host tra lai. Doi lai nhieu luot chuyen hon P2P nhung chi can mot QR.
+ */
+export function calculateHostTransfers(
+  balances: BalanceRow[],
+  hostParticipantId: string,
+): HostTransferRow[] {
+  return balances
+    .filter((row) => row.participantId !== hostParticipantId && row.balance !== 0)
+    .map((row) => ({
+      participantId: row.participantId,
+      amount: Math.abs(row.balance),
+      toHost: row.balance < 0,
+    }))
+    .sort((a, b) => b.amount - a.amount);
+}
+
 /**
  * Ghep nguoi no (balance am) voi nguoi nhan (balance duong) theo so tien giam
  * dan, moi lan chuyen so tien nho hon giua hai ben, den khi can bang het.

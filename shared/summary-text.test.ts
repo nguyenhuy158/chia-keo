@@ -127,6 +127,38 @@ describe("buildSummaryText", () => {
     expect(text).toContain("- Kiệt: 0k");
   });
 
+  it("gom moi nguoi ve mot dau moi o che do host", () => {
+    const text = buildSummaryText({ ...input, settlementMode: "host" });
+
+    // Nam ung 305k nen la nguoi ung nhieu nhat, thanh dau moi nhan tien.
+    expect(text).toContain("GOM VỀ NAM");
+    expect(text).toContain("- Hồng → Nam: 155,2k");
+    expect(text).toContain("- Thu → Nam: 48,2k");
+    expect(text).not.toContain("CẦN CHUYỂN");
+  });
+
+  it("ghi ro chieu tra lai khi host van no nguoi khac", () => {
+    // Thu ung them 500k chia ca nhom nen thanh nguoi ung nhieu nhat, nhung Nam
+    // cung da ung du phan minh nen host phai tra lai Nam.
+    const bigPaidByThu = makeExpense("e-4444", "Thuê sân cả tháng", 500_000, thu.id, [
+      thu.id,
+      hong.id,
+      nam.id,
+    ]);
+    const withBigExpense = [bigPaidByThu, ...expenses];
+
+    const text = buildSummaryText({
+      ...input,
+      expenses: withBigExpense,
+      summary: makeSummary(participants, withBigExpense),
+      settlementMode: "host",
+    });
+
+    expect(text).toContain("GOM VỀ THU");
+    expect(text).toContain("- Hồng → Thu: 321,8k");
+    expect(text).toContain("- Thu trả lại Nam: 36,7k");
+  });
+
   it("bao chua co khoan chi khi danh sach rong", () => {
     const emptySummary = makeSummary(participants, []);
     const text = buildSummaryText({ ...input, expenses: [], summary: emptySummary });

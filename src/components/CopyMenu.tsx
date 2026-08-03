@@ -9,7 +9,11 @@ import {
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { buildSummaryText, type SummaryTextInput } from "../../shared/summary-text";
+import {
+  buildSummaryText,
+  type SettlementMode,
+  type SummaryTextInput,
+} from "../../shared/summary-text";
 import { copyImage, copyText, downloadBlob } from "../lib/clipboard";
 import { buildSummaryImageFileName, renderSummaryImage } from "../lib/summary-image";
 import { useToast } from "./Toast";
@@ -18,7 +22,12 @@ const MENU_WIDTH = 268;
 const MENU_GAP = 6;
 const VIEWPORT_MARGIN = 8;
 /** Uoc luong de biet nen mo len hay xuong; khong can chinh xac tuyet doi. */
-const MENU_HEIGHT_ESTIMATE = 240;
+const MENU_HEIGHT_ESTIMATE = 320;
+
+const MODE_OPTIONS: Array<{ value: SettlementMode; label: string; hint: string }> = [
+  { value: "p2p", label: "Nhiều chiều", hint: "Chuyển thẳng giữa từng cặp, ít lượt nhất" },
+  { value: "host", label: "Gom 1 người", hint: "Ai cũng chuyển về một đầu mối, chỉ một QR" },
+];
 
 const TRIGGER_CLASS =
   "inline-flex h-11 items-center justify-center gap-2 rounded-md border border-stone-300 bg-white px-3 text-sm font-medium text-stone-700 transition hover:bg-stone-50 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-200 dark:hover:bg-stone-800";
@@ -58,8 +67,10 @@ export function CopyMenu({ input, className }: CopyMenuProps) {
   const triggerRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState<MenuPosition | null>(null);
+  const [mode, setMode] = useState<SettlementMode>("p2p");
 
   const open = position !== null;
+  const summaryInput: SummaryTextInput = { ...input, settlementMode: mode };
 
   useEffect(() => {
     if (!open) return;
@@ -90,7 +101,7 @@ export function CopyMenu({ input, className }: CopyMenuProps) {
   }, [open]);
 
   async function copySummaryText() {
-    const ok = await copyText(buildSummaryText(input));
+    const ok = await copyText(buildSummaryText(summaryInput));
     toast(ok ? "Đã sao chép tổng kết" : "Không sao chép được tổng kết", ok ? "success" : "error");
   }
 
@@ -101,7 +112,7 @@ export function CopyMenu({ input, className }: CopyMenuProps) {
   }
 
   async function copySummaryImage() {
-    const blob = renderSummaryImage(input);
+    const blob = renderSummaryImage(summaryInput);
     if (await copyImage(blob)) {
       toast("Đã sao chép ảnh tổng kết");
       return;
@@ -109,7 +120,7 @@ export function CopyMenu({ input, className }: CopyMenuProps) {
 
     // Firefox va vai webview khong cho ghi anh vao clipboard, tai ve cho chac.
     try {
-      downloadBlob(await blob, buildSummaryImageFileName(input));
+      downloadBlob(await blob, buildSummaryImageFileName(summaryInput));
       toast("Trình duyệt không copy được ảnh, đã tải ảnh về máy", "info");
     } catch {
       toast("Không tạo được ảnh tổng kết", "error");
@@ -118,7 +129,7 @@ export function CopyMenu({ input, className }: CopyMenuProps) {
 
   async function saveSummaryImage() {
     try {
-      downloadBlob(await renderSummaryImage(input), buildSummaryImageFileName(input));
+      downloadBlob(await renderSummaryImage(summaryInput), buildSummaryImageFileName(summaryInput));
       toast("Đã tải ảnh tổng kết");
     } catch {
       toast("Không tạo được ảnh tổng kết", "error");
@@ -187,6 +198,30 @@ export function CopyMenu({ input, className }: CopyMenuProps) {
             style={{ position: "fixed", width: MENU_WIDTH, ...position }}
             className="z-[70] overflow-hidden rounded-xl border border-stone-200 bg-white p-1 shadow-xl animate-[overlay-in_120ms_ease] dark:border-stone-700 dark:bg-stone-900"
           >
+            <div className="border-b border-stone-200 px-2 pb-2 pt-1.5 dark:border-stone-800">
+              <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400">
+                Kiểu chuyển tiền
+              </p>
+              <div className="grid grid-cols-2 gap-1">
+                {MODE_OPTIONS.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => setMode(option.value)}
+                    title={option.hint}
+                    aria-pressed={mode === option.value}
+                    className={`rounded-md px-2 py-1.5 text-xs font-semibold transition ${
+                      mode === option.value
+                        ? "bg-violet-600 text-white"
+                        : "bg-stone-100 text-stone-600 hover:bg-stone-200 dark:bg-stone-800 dark:text-stone-300 dark:hover:bg-stone-700"
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {actions.map((action) => {
               const Icon = action.icon;
               return (
