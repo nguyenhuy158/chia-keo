@@ -4,6 +4,7 @@ import {
   formatThousands,
   type SummaryDocument,
   type SummaryTextInput,
+  type SummaryVariant,
 } from "../../../shared/summary-text";
 import { buildVietQrProxyPath, canBuildVietQr, getVietQrBankLabel } from "../../../shared/vietqr";
 import { API_BASE } from "./http-game-api";
@@ -57,6 +58,8 @@ const STYLE = {
   qrNote: { font: `600 15px ${FONT_STACK}`, color: COLOR.accent, lineHeight: 24, gapBefore: 0 },
   qrDetail: { font: `400 14px ${FONT_STACK}`, color: COLOR.muted, lineHeight: 21, gapBefore: 0 },
   footer: { font: `400 13px ${FONT_STACK}`, color: COLOR.muted, lineHeight: 20, gapBefore: 24 },
+  /** Dong nhom trong phan chuyen tien cua ban chi tiet, vi du "Chuyen vao X". */
+  groupLabel: { font: `600 14px ${FONT_STACK}`, color: COLOR.muted, lineHeight: 24, gapBefore: 6 },
 } satisfies Record<string, TextStyle>;
 
 type Block = {
@@ -273,8 +276,15 @@ function buildBlocks(
 
     section.lines.forEach((line, index) => {
       const card = section.id === "settlements" ? qrCards.byLineIndex.get(index) : undefined;
-      if (card) blocks.push(buildQrBlock(card));
-      else blocks.push(...buildTextBlocks(context, line, STYLE.body));
+      if (card) {
+        blocks.push(buildQrBlock(card));
+        return;
+      }
+
+      // Ban chi tiet chen dong nhom ("Chuyen vao X — tong ...:") giua cac dong
+      // chuyen tien; khong danh dau thi no lan vao nhu mot luot chuyen nua.
+      const isGroupLabel = section.id === "settlements" && !line.startsWith("- ");
+      blocks.push(...buildTextBlocks(context, line, isGroupLabel ? STYLE.groupLabel : STYLE.body));
     });
   }
 
@@ -299,8 +309,11 @@ function createContext(width: number, height: number) {
  * Ve ban tom tat ra mot the canvas roi xuat PNG. Lam thu cong thay vi dung
  * thu vien chup DOM vi noi dung chi la cac dong chu, va tranh them dependency.
  */
-export async function renderSummaryImage(input: SummaryTextInput): Promise<Blob> {
-  const doc = buildSummaryDocument(input);
+export async function renderSummaryImage(
+  input: SummaryTextInput,
+  variant: SummaryVariant = "compact",
+): Promise<Blob> {
+  const doc = buildSummaryDocument(input, variant);
   const qrCards = await loadQrCards(input, doc);
 
   const measure = createContext(1, 1);
@@ -332,6 +345,10 @@ export async function renderSummaryImage(input: SummaryTextInput): Promise<Blob>
   });
 }
 
-export function buildSummaryImageFileName(input: SummaryTextInput) {
-  return `chia-keo-${input.code}.png`;
+export function buildSummaryImageFileName(
+  input: SummaryTextInput,
+  variant: SummaryVariant = "compact",
+) {
+  const suffix = variant === "detailed" ? "-chi-tiet" : "";
+  return `chia-keo-${input.code}${suffix}.png`;
 }

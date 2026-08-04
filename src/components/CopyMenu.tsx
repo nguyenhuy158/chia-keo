@@ -4,13 +4,18 @@ import {
   Copy,
   Download,
   Image as ImageIcon,
+  Images,
   Link as LinkIcon,
   ListChecks,
   type LucideIcon,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { buildSummaryText, type SummaryTextInput } from "../../shared/summary-text";
+import {
+  buildSummaryText,
+  type SummaryTextInput,
+  type SummaryVariant,
+} from "../../shared/summary-text";
 import { copyImage, copyText, downloadBlob } from "../adapters/browser/clipboard";
 import { buildSummaryImageFileName, renderSummaryImage } from "../adapters/browser/summary-image";
 import { useToast } from "./Toast";
@@ -19,7 +24,7 @@ const MENU_WIDTH = 268;
 const MENU_GAP = 6;
 const VIEWPORT_MARGIN = 8;
 /** Uoc luong de biet nen mo len hay xuong; khong can chinh xac tuyet doi. */
-const MENU_HEIGHT_ESTIMATE = 300;
+const MENU_HEIGHT_ESTIMATE = 360;
 
 const TRIGGER_CLASS =
   "inline-flex h-11 items-center justify-center gap-2 rounded-md border border-stone-300 bg-white px-3 text-sm font-medium text-stone-700 transition hover:bg-stone-50 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-200 dark:hover:bg-stone-800";
@@ -109,8 +114,8 @@ export function CopyMenu({ input, className }: CopyMenuProps) {
     toast(ok ? "Đã sao chép link" : "Không sao chép được link", ok ? "success" : "error");
   }
 
-  async function copySummaryImage() {
-    const blob = renderSummaryImage(input);
+  async function copySummaryImage(variant: SummaryVariant = "compact") {
+    const blob = renderSummaryImage(input, variant);
     if (await copyImage(blob)) {
       toast("Đã sao chép ảnh tổng kết");
       return;
@@ -118,7 +123,7 @@ export function CopyMenu({ input, className }: CopyMenuProps) {
 
     // Firefox va vai webview khong cho ghi anh vao clipboard, tai ve cho chac.
     try {
-      downloadBlob(await blob, buildSummaryImageFileName(input));
+      downloadBlob(await blob, buildSummaryImageFileName(input, variant));
       toast("Trình duyệt không copy được ảnh, đã tải ảnh về máy", "info");
     } catch {
       toast("Không tạo được ảnh tổng kết", "error");
@@ -154,7 +159,14 @@ export function CopyMenu({ input, className }: CopyMenuProps) {
       label: "Copy ảnh",
       hint: "Ảnh PNG của bảng tổng kết",
       icon: ImageIcon,
-      run: copySummaryImage,
+      run: () => copySummaryImage(),
+    },
+    {
+      id: "image-detailed",
+      label: "Copy ảnh chi tiết",
+      hint: "Ảnh PNG, ghi rõ ai đã ứng",
+      icon: Images,
+      run: () => copySummaryImage("detailed"),
     },
     {
       id: "download",
