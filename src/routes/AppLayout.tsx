@@ -1,5 +1,5 @@
-import { Navigate, Outlet, useNavigate } from "@tanstack/react-router";
-import { LogOut, Menu } from "lucide-react";
+import { Link, Navigate, Outlet, useNavigate } from "@tanstack/react-router";
+import { LogOut, Menu, Settings } from "lucide-react";
 import { useState } from "react";
 import { GamesSidebar } from "../components/GamesSidebar";
 import { MobileShellContext } from "../components/mobile-shell";
@@ -58,6 +58,18 @@ export function AppLayout() {
             <span className="hidden text-sm text-stone-600 dark:text-stone-400 sm:inline">
               {displayName}
             </span>
+            <Link
+              to="/settings"
+              aria-label="Cài đặt"
+              title="Cài đặt"
+              className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-stone-300 bg-white text-stone-700 transition hover:bg-stone-50 active:bg-stone-100 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-200 dark:hover:bg-stone-800 dark:active:bg-stone-700"
+              activeProps={{
+                className:
+                  "border-violet-600 bg-violet-50 text-violet-700 dark:border-violet-500 dark:bg-violet-500/15 dark:text-violet-300",
+              }}
+            >
+              <Settings size={18} />
+            </Link>
             <ThemeToggle />
             <button
               type="button"
@@ -75,7 +87,9 @@ export function AppLayout() {
         <div className="hidden lg:block">
           <GamesSidebar />
         </div>
-        <section>
+        {/* min-w-0: cot grid mac dinh no theo min-content, mot chuoi dai khong
+            ngat duoc (token, lenh CLI) se keo ca trang rong ra neu khong chan. */}
+        <section className="min-w-0">
           <Outlet />
         </section>
       </main>

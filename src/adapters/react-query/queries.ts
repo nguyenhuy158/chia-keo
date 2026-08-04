@@ -7,6 +7,7 @@ import type { ApiGameDetail, ApiPhoto } from "../../../shared/api-types";
 import type {
   ExpenseInput,
   GameInput,
+  McpTokenInput,
   ParticipantInput,
   PhotoInput,
   PhotoUpdateInput,
@@ -256,6 +257,40 @@ export function useRemovePhoto(gameId: string) {
   return useMutation({
     mutationFn: (photoId: string) => getGameApi().photos.remove(photoId).then(() => photoId),
     onSuccess: (photoId) => updateCache((photos) => photos.filter((row) => row.id !== photoId)),
+  });
+}
+
+/** Token MCP khong lien quan den mot cuoc chia nao nen dung khoa rieng. */
+export const mcpTokenKeys = {
+  all: ["mcp-tokens"] as const,
+};
+
+export function useMcpTokens() {
+  return useQuery({
+    queryKey: mcpTokenKeys.all,
+    queryFn: () => getGameApi().mcpTokens.list(),
+  });
+}
+
+export function useCreateMcpToken() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (input: McpTokenInput) => getGameApi().mcpTokens.create(input),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: mcpTokenKeys.all });
+    },
+  });
+}
+
+export function useRevokeMcpToken() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (tokenId: string) => getGameApi().mcpTokens.revoke(tokenId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: mcpTokenKeys.all });
+    },
   });
 }
 

@@ -97,7 +97,7 @@ try {
   ok("add expense");
 
   // 6. Dashboard tinh dung: Binh tra An 50.000 + co QR
-  await page.waitForSelector("text=Binh trả An", WAIT);
+  await page.waitForSelector("text=Binh → An", WAIT);
   const qrCount = await page.locator('img[alt*="QR nhận tiền"]').count();
   if (qrCount !== 1) throw new Error(`expected 1 QR image, got ${qrCount}`);
   ok("settlement + VietQR shown");
@@ -129,6 +129,8 @@ try {
   await page.click('button:has-text("Chia đều")');
   await page.fill('input[placeholder="Ăn tối"]', "Nuoc suoi");
   await page.fill('input[placeholder="500.000"]', "20000");
+  // Khoi "Ảnh hóa đơn" dong san, phai mo ra moi thay o chon file.
+  await page.click('button:has-text("Ảnh hóa đơn")');
   await page.setInputFiles('label[aria-label="Đính kèm ảnh hóa đơn"] input[type="file"]', jpegPath);
   await page.click('button[type="submit"]:has-text("Thêm khoản chi")');
   await page.waitForSelector('button[aria-label="Xem ảnh của Nuoc suoi"]', WAIT);
@@ -146,7 +148,7 @@ try {
   const anonPage = await browser.newPage();
   await anonPage.goto(`${BASE}/share/${detail.shareLink.token}`);
   await anonPage.waitForSelector("text=E2E Trip", WAIT);
-  await anonPage.waitForSelector("text=Binh trả An", WAIT);
+  await anonPage.waitForSelector("text=Binh → An", WAIT);
   await anonPage.click('button:has-text("Ảnh")');
   await anonPage.waitForSelector("text=Ảnh (2)", WAIT);
   await anonPage.click('button[aria-label="Hoa don san"]');
@@ -172,6 +174,73 @@ try {
   // Xoa xong van con anh khac nen khung xem mo tiep, dong lai truoc khi thoat.
   await page.click('button[aria-label="Đóng ảnh"]');
   ok("delete photo");
+
+  // 7.9 Token MCP: tao tu trang cai dat, dung that, roi thu hoi
+  await page.click('a[aria-label="Cài đặt"]');
+  await page.waitForURL("**/settings", WAIT);
+  await page.waitForSelector("text=Chưa có token nào", WAIT);
+  // Bo tick "Đọc bản tổng kết" (mac dinh co) de kiem tra scope duoc ton trong.
+  await page.click("text=Đọc bản tổng kết");
+  await page.fill("#mcp-token-name", "E2E Claude");
+  await page.click('button[type="submit"]:has-text("Tạo token")');
+  await page.waitForSelector("text=Token chỉ hiện lần này", WAIT);
+  const secret = await page.locator("code", { hasText: /^ck_[0-9a-f]{64}$/ }).first().innerText();
+  await page.waitForSelector('text="1/20 chưa thu hồi"', WAIT);
+  ok("create MCP token from settings page");
+
+  const mcp = await page.evaluate(async (token) => {
+    const call = (body) =>
+      fetch("/api/mcp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify(body),
+      }).then((response) => response.json());
+    const tools = await call({ jsonrpc: "2.0", id: 1, method: "tools/list" });
+    const games = await call({
+      jsonrpc: "2.0",
+      id: 2,
+      method: "tools/call",
+      params: { name: "list_games", arguments: {} },
+    });
+    const outOfScope = await call({
+      jsonrpc: "2.0",
+      id: 3,
+      method: "tools/call",
+      params: { name: "get_summary_text", arguments: { game: "E2E" } },
+    });
+    return {
+      tools: tools.result.tools.map((tool) => tool.name),
+      games: games.result.content[0].text,
+      outOfScope: Boolean(outOfScope.result?.isError),
+    };
+  }, secret);
+  // Chi kiem tra theo scope, khong khoa cung danh sach tool.
+  if (!mcp.tools.includes("list_games")) {
+    throw new Error(`token co games:read phai thay list_games, got ${mcp.tools.join(",")}`);
+  }
+  if (mcp.tools.includes("get_summary_text")) {
+    throw new Error("token khong co summary:read khong duoc thay get_summary_text");
+  }
+  if (!mcp.games.includes("E2E Trip")) throw new Error(`list_games thieu game: ${mcp.games}`);
+  if (!mcp.outOfScope) throw new Error("tool ngoai scope phai bi tu choi");
+  ok("MCP token works and stays inside its scopes");
+
+  page.once("dialog", (dialog) => dialog.accept());
+  await page.click('button[aria-label="Thu hồi token"]');
+  await page.waitForSelector("text=Đã thu hồi", WAIT);
+  const statusAfterRevoke = await page.evaluate(
+    (token) =>
+      fetch("/api/mcp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "tools/list" }),
+      }).then((response) => response.status),
+    secret,
+  );
+  if (statusAfterRevoke !== 401) {
+    throw new Error(`token da thu hoi phai tra 401, got ${statusAfterRevoke}`);
+  }
+  ok("revoke MCP token from UI kills it");
 
   // 8. Logout
   await page.click("text=Thoát");

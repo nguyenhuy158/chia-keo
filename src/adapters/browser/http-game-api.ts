@@ -74,6 +74,11 @@ export function createHttpGameApi(): GameApiPort {
       photos: (token) => request(`/api/share/${token}/photos`),
       photo: (token, photoId) => request(`/api/share/${token}/photos/${photoId}`),
     },
+    mcpTokens: {
+      list: () => request(`/api/mcp-tokens`),
+      create: (input) => post(`/api/mcp-tokens`, input),
+      revoke: (tokenId) => destroy(`/api/mcp-tokens/${tokenId}`),
+    },
     ai: {
       suggestExpense: (gameId, text) => post(`/api/ai/expense`, { gameId, text }),
       scanReceipt: (gameId, image) => post(`/api/ai/receipt`, { gameId, image }),

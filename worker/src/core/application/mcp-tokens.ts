@@ -1,3 +1,4 @@
+import type { ApiCreatedMcpToken, ApiMcpToken } from "../../../../shared/api-types";
 import {
   MAX_MCP_TOKENS_PER_USER,
   MCP_SCOPES,
@@ -14,26 +15,6 @@ const TOKEN_BYTES = 32;
 /** So ky tu hien trong danh sach, du de doi chieu ma khong doan ra phan con lai. */
 const VISIBLE_PREFIX_LENGTH = TOKEN_PREFIX.length + 6;
 const MS_PER_DAY = 86_400_000;
-
-/** Token nhu tra ve cho FE: khong bao gio kem hash. */
-export type ApiMcpToken = {
-  id: string;
-  name: string;
-  tokenPrefix: string;
-  scopes: McpScope[];
-  createdAt: string;
-  lastUsedAt: string | null;
-  expiresAt: string | null;
-  revokedAt: string | null;
-  /** Suy ra o server de FE khong phai tu so sanh moc thoi gian. */
-  active: boolean;
-};
-
-export type CreatedMcpToken = {
-  token: ApiMcpToken;
-  /** Ban goc, chi tra ve dung lan tao nay. */
-  secret: string;
-};
 
 export type McpIdentity = {
   tokenId: string;
@@ -99,7 +80,7 @@ export async function createMcpToken(
   repo: GameRepository,
   userId: string,
   input: McpTokenInput,
-): Promise<CreatedMcpToken> {
+): Promise<ApiCreatedMcpToken> {
   const activeCount = await repo.mcpTokens.countActiveByUser(userId);
   if (activeCount >= MAX_MCP_TOKENS_PER_USER) {
     throw new BadRequestError("too_many_mcp_tokens");

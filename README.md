@@ -19,6 +19,7 @@ Ung dung chia tien nhom cho cac buoi an, di choi, du lich hoac nhom chi tieu nho
     đính kèm ảnh hóa đơn vào khoản chi, xem toàn màn hình (lướt, chú thích,
     tải về, xóa) và xem lại qua link share.
   - Lưu mẫu chi tiêu, xuất báo cáo text và xem thống kê nhanh.
+  - Trang Cài đặt (`/settings`) để tạo, xem và thu hồi token MCP cho Claude.
 - Tinh `da tra`, `phan chiu`, `con lai`.
 - Toi gian cong no peer-to-peer: ghep nguoi am voi nguoi duong de so lan
   chuyen khoan it nhat (khong bat buoc chuyen ve chu cuoc choi).
@@ -294,24 +295,23 @@ Tat ca deu chi doc. Muon them tool ghi thi khai bao scope moi o `MCP_SCOPES`
 
 ### Tao token
 
-Chua co UI; tao bang API trong lúc dang dang nhap. Mo devtools console tren
-trang web roi chay:
+Vao **Cài đặt** (icon banh rang tren thanh header, hoac mo truc tiep `/settings`)
+→ khoi *Tạo token mới*: dat ten, tick cac quyen can, chon thoi han (khong het han
+/ 30 ngay / 90 ngay / 1 nam) roi bam **Tạo token**.
 
-```js
-await fetch("/api/mcp-tokens", {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({
-    name: "Claude Code ở máy bàn",
-    scopes: ["games:read", "summary:read"],
-    expiresInDays: null, // hoac so ngay, vd 30
-  }),
-}).then((r) => r.json());
-```
+Sau khi tao, trang hien mot lan duy nhat:
 
-Phan hoi co `secret` — **chi hien dung lan nay**, DB chi luu hash. Xem lai danh
-sach token bang `GET /api/mcp-tokens` (khong bao gio kem secret), thu hoi bang
-`DELETE /api/mcp-tokens/:tokenId`. Toi da 20 token con hieu luc moi user.
+- ban goc cua token (`ck_...`), kem nut copy;
+- lenh `claude mcp add ...` da dien san URL va header, copy la dan chay duoc.
+
+Dong khoi do la khong xem lai duoc nua — DB chi luu SHA-256. Danh sach ben canh
+cho biet tung token dung lan cuoi khi nao, con hieu luc hay khong, va co nut thu
+hoi (thu hoi la client dang dung mat quyen ngay). Toi da 20 token chua thu hoi
+moi user.
+
+Cung ba viec do qua API neu can script: `GET /api/mcp-tokens`,
+`POST /api/mcp-tokens`, `DELETE /api/mcp-tokens/:tokenId` (dung session cookie,
+khong dung bearer token MCP).
 
 ### Gan vao Claude Code
 
@@ -362,7 +362,7 @@ Pages settings:
 - Secret: `BETTER_AUTH_SECRET` (bat buoc); `GEMINI_API_KEY` (tuy chon, bat AI);
   `GEMINI_MODEL` (tuy chon, mac dinh `gemini-2.0-flash`)
 
-Config Worker/Pages nam trong `wrangler.jsonc` (va `wrangler.toml`). Migration D1:
+Config Worker/Pages nam trong `wrangler.toml`. Migration D1:
 
 ```bash
 pnpm db:migrate:remote   # wrangler d1 migrations apply DB --remote
@@ -406,9 +406,10 @@ Worker:
 8. ~~Chot QR: VietQR ngan hang Viet Nam.~~ Xong (`img.vietqr.io`).
 9. ~~Them test cho logic split va settlement.~~ Xong (`pnpm test`).
 10. ~~Cau hinh deploy Cloudflare (khong dung GitHub Actions).~~ Xong.
+11. ~~UI quan ly token MCP (tao/xem/thu hoi) o `/settings`.~~ Xong.
 
-Con lai: rate limit + Turnstile o tang canh, dong bo lai tai lieu kien truc
-(`docs/`) cho khop backend Worker.
+Con lai: Turnstile cho login/public link (rate limit theo IP da co o Worker),
+dong bo lai tai lieu kien truc (`docs/`) cho khop backend Worker.
 
 ## Lenh local
 

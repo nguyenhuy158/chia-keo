@@ -3,8 +3,10 @@
 
 import type {
   ApiAiSuggestionResponse,
+  ApiCreatedMcpToken,
   ApiGame,
   ApiGameDetail,
+  ApiMcpToken,
   ApiPhoto,
   ApiPhotoDetail,
   ApiShareView,
@@ -13,6 +15,7 @@ import type {
   ExpenseInput,
   GameInput,
   GameUpdateInput,
+  McpTokenInput,
   ParticipantInput,
   PhotoInput,
   PhotoUpdateInput,
@@ -58,6 +61,12 @@ export type GameApiPort = {
     view(token: string): Promise<ApiShareView>;
     photos(token: string): Promise<ApiPhoto[]>;
     photo(token: string, photoId: string): Promise<ApiPhotoDetail>;
+  };
+  mcpTokens: {
+    list(): Promise<ApiMcpToken[]>;
+    /** Phan hoi kem `secret` - ban goc chi xuat hien dung lan tao nay. */
+    create(input: McpTokenInput): Promise<ApiCreatedMcpToken>;
+    revoke(tokenId: string): Promise<{ ok: boolean }>;
   };
   ai: {
     suggestExpense(gameId: string, text: string): Promise<ApiAiSuggestionResponse>;

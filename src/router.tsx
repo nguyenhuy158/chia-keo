@@ -9,6 +9,7 @@ import { AppLayout } from "./routes/AppLayout";
 import { GamePage } from "./routes/GamePage";
 import { HomePage } from "./routes/HomePage";
 import { LoginPage } from "./routes/LoginPage";
+import { SettingsPage } from "./routes/SettingsPage";
 import { SharePage } from "./routes/SharePage";
 
 const rootRoute = createRootRoute({
@@ -49,10 +50,16 @@ const gameRoute = createRoute({
   component: GamePage,
 });
 
+const settingsRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: "/settings",
+  component: SettingsPage,
+});
+
 const routeTree = rootRoute.addChildren([
   loginRoute,
   shareRoute,
-  appRoute.addChildren([homeRoute, gameRoute]),
+  appRoute.addChildren([homeRoute, gameRoute, settingsRoute]),
 ]);
 
 export const router = createRouter({ routeTree });
