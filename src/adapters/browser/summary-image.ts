@@ -25,14 +25,21 @@ const QR_AMOUNT_FREE = 0;
 const FONT_LOAD_TIMEOUT_MS = 3_000;
 
 /**
- * Poppins khong co subset vietnamese (Google Fonts chi phuc vu latin,
- * latin-ext, devanagari), nen cac nguyen am co dau kieu "ệ ử ồ ẩ" roi xuong
- * "Be Vietnam Pro" ngay sau. Doi thu tu hai ten nay la doi luon font cua anh.
+ * Dung dung font cua app (xem :root trong styles.css) de anh khong lech mat
+ * chu so voi man hinh. Ca hai font deu co subset vietnamese, nen moi ky tu co
+ * dau deu ra tu cung mot font chu khong bi vay muon lung tung.
  */
-const IMAGE_FONT_FAMILIES = ["Poppins", "Be Vietnam Pro"] as const;
+const IMAGE_FONT_FAMILIES = ["Be Vietnam Pro", "Plus Jakarta Sans"] as const;
 const FONT_WEIGHTS = [400, 600, 700] as const;
+/**
+ * Google Fonts cat font thanh nhieu @font-face theo unicode-range, va
+ * fonts.load chi tai nhung mieng phu duoc chu truyen vao. Khong truyen gi thi
+ * no lay dau cach, tuc chi co subset latin: ky tu co dau se ve bang font khac.
+ * Chuoi nay phai cham vao ca latin, latin-ext lan vietnamese.
+ */
+const FONT_SAMPLE_TEXT = "Aa0 ăâđêôơư ảấầếệồổộớợủứựỳ";
 
-const FONT_STACK = `${IMAGE_FONT_FAMILIES.map((name) => `"${name}"`).join(", ")}, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif`;
+const FONT_STACK = `${IMAGE_FONT_FAMILIES.map((name) => `"${name}"`).join(", ")}, Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif`;
 
 /**
  * Anh luon dung bang mau sang du app dang o dark mode: anh se duoc dan sang
@@ -325,7 +332,7 @@ async function ensureImageFontsReady() {
   if (!fonts?.load) return;
 
   const requests = IMAGE_FONT_FAMILIES.flatMap((name) =>
-    FONT_WEIGHTS.map((weight) => fonts.load(`${weight} 16px "${name}"`)),
+    FONT_WEIGHTS.map((weight) => fonts.load(`${weight} 16px "${name}"`, FONT_SAMPLE_TEXT)),
   );
 
   try {
