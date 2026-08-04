@@ -28,7 +28,7 @@ import {
 } from "../core/application/participants";
 import { rotateShareLink, setShareLinkEnabled } from "../core/application/share-links";
 import { invalidInput, readJson, respond } from "../lib/http";
-import { requireUser, type AuthedEnv } from "../lib/require-user";
+import { protectPaths, type AuthedEnv } from "../lib/require-user";
 
 const participantUpdateSchema = participantInputSchema.partial();
 const expenseUpdateSchema = expenseInputSchema.partial();
@@ -36,7 +36,7 @@ const expenseUpdateSchema = expenseInputSchema.partial();
 // Driving adapter: chi parse HTTP, goi use case va map ket qua/loi ve JSON.
 export const gamesRouter = new Hono<AuthedEnv>();
 
-gamesRouter.use("*", requireUser);
+protectPaths(gamesRouter, "/games", "/games/*", "/participants/*", "/expenses/*");
 
 gamesRouter.get("/games", (c) => respond(c, () => listGames(c.get("repo"), c.get("userId"))));
 

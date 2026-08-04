@@ -6,7 +6,7 @@ import {
   suggestExpenseFromText,
 } from "../core/application/ai-suggestions";
 import { invalidInput, readJson, respond } from "../lib/http";
-import { requireUser, type AuthedEnv } from "../lib/require-user";
+import { protectPaths, type AuthedEnv } from "../lib/require-user";
 
 const AI_TEXT_MAX_LENGTH = 500;
 // Base64 cua anh ~6MB; du cho anh hoa don chup dien thoai da resize.
@@ -27,7 +27,7 @@ const aiReceiptInputSchema = z.object({
 
 export const aiRouter = new Hono<AuthedEnv>();
 
-aiRouter.use("*", requireUser);
+protectPaths(aiRouter, "/ai/*");
 
 aiRouter.post("/ai/expense", async (c) => {
   const input = await readJson(c, aiExpenseInputSchema);

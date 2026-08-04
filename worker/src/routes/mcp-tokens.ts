@@ -6,12 +6,12 @@ import {
   revokeMcpToken,
 } from "../core/application/mcp-tokens";
 import { invalidInput, readJson, respond } from "../lib/http";
-import { requireUser, type AuthedEnv } from "../lib/require-user";
+import { protectPaths, type AuthedEnv } from "../lib/require-user";
 
 /** Quan ly token MCP cua chinh minh; luon can dang nhap bang session. */
 export const mcpTokensRouter = new Hono<AuthedEnv>();
 
-mcpTokensRouter.use("*", requireUser);
+protectPaths(mcpTokensRouter, "/mcp-tokens", "/mcp-tokens/*");
 
 mcpTokensRouter.get("/mcp-tokens", (c) =>
   respond(c, () => listMcpTokens(c.get("repo"), c.get("userId"))),

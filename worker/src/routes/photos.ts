@@ -8,12 +8,12 @@ import {
   updatePhoto,
 } from "../core/application/photos";
 import { invalidInput, readJson, respond } from "../lib/http";
-import { requireUser, type AuthedEnv } from "../lib/require-user";
+import { protectPaths, type AuthedEnv } from "../lib/require-user";
 
 // Driving adapter: chi parse HTTP, goi use case va map ket qua/loi ve JSON.
 export const photosRouter = new Hono<AuthedEnv>();
 
-photosRouter.use("*", requireUser);
+protectPaths(photosRouter, "/games/:gameId/photos", "/photos/*");
 
 photosRouter.get("/games/:gameId/photos", (c) =>
   respond(c, () => listGamePhotos(c.get("repo"), c.get("userId"), c.req.param("gameId"))),
