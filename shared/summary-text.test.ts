@@ -161,7 +161,9 @@ describe("buildSummaryText", () => {
 
     expect(text).toContain("GOM VỀ THU");
     expect(text).toContain("- Hồng → Thu: 321,8k");
-    expect(text).toContain("- Thu trả lại Nam: 36,7k");
+    // Ca hai chieu dung cung mot dau "→" de doc cho nhat quan.
+    expect(text).toContain("- Thu → Nam: 36,7k");
+    expect(text).not.toContain("trả lại");
   });
 
   it("bo han phan chuyen tien o che do off", () => {

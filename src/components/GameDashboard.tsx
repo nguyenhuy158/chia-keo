@@ -204,7 +204,7 @@ export function GameDashboard({
                         <p className="min-w-0 truncate text-sm font-medium text-stone-950 dark:text-stone-50">
                           {transfer.toHost
                             ? `${participant.name} → ${host.name}`
-                            : `${host.name} trả lại ${participant.name}`}
+                            : `${host.name} → ${participant.name}`}
                         </p>
                         <div className="flex shrink-0 items-center gap-2">
                           <span className="text-sm font-bold text-violet-700 tabular dark:text-violet-400">

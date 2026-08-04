@@ -168,7 +168,7 @@ function buildFlatHostLines(
     const amount = formatShortMoney(transfer.amount);
     return transfer.toHost
       ? `- ${name} → ${hostName}: ${amount}`
-      : `- ${hostName} trả lại ${name}: ${amount}`;
+      : `- ${hostName} → ${name}: ${amount}`;
   });
 }
 
