@@ -113,6 +113,29 @@ export const shareLinkInputSchema = z.object({
   enabled: z.boolean(),
 });
 
+export const MCP_TOKEN_NAME_MAX_LENGTH = 60;
+export const MAX_MCP_TOKENS_PER_USER = 20;
+
+/**
+ * Quyen cua mot token MCP, chon luc tao va khong sua duoc sau do (muon quyen
+ * khac thi tao token khac). Moi tool khai bao dung mot scope no can:
+ * - "games:read": xem danh sach va chi tiet cuoc chia cua chinh minh
+ * - "summary:read": lay ban tom tat dang chu (chua ten nguoi va so tien)
+ * - "share:read": doc cuoc chia bat ky qua token trong link share
+ */
+export const MCP_SCOPES = ["games:read", "summary:read", "share:read"] as const;
+
+export const mcpScopeSchema = z.enum(MCP_SCOPES);
+
+export const mcpTokenInputSchema = z.object({
+  /** Nhan de nhan ra token trong danh sach, vd "Claude Code o may ban". */
+  name: z.string().trim().min(1).max(MCP_TOKEN_NAME_MAX_LENGTH),
+  /** Phai chon it nhat mot scope: token khong quyen thi vo nghia. */
+  scopes: z.array(mcpScopeSchema).min(1).max(MCP_SCOPES.length),
+  /** So ngay token con hieu luc; bo trong la khong tu het han. */
+  expiresInDays: z.number().int().min(1).max(3650).nullable().default(null),
+});
+
 const photoDimensionSchema = z.number().int().positive().max(20_000);
 
 export const photoInputSchema = z.object({
@@ -150,3 +173,5 @@ export type SplitMode = z.infer<typeof splitModeSchema>;
 export type TransferInput = z.infer<typeof transferInputSchema>;
 export type PhotoInput = z.infer<typeof photoInputSchema>;
 export type PhotoUpdateInput = z.infer<typeof photoUpdateSchema>;
+export type McpScope = z.infer<typeof mcpScopeSchema>;
+export type McpTokenInput = z.input<typeof mcpTokenInputSchema>;

@@ -173,6 +173,23 @@ Token public read-only.
 - `created_at`
 - `expires_at`
 
+### `mcp_tokens`
+
+Token cho endpoint MCP. Moi user tao duoc nhieu token, moi token mot bo quyen
+rieng chon luc tao. Chi luu hash, ban goc hien dung mot lan roi khong lay lai
+duoc.
+
+- `id`
+- `user_id`
+- `name` — nhan de nhan ra token trong danh sach
+- `token_hash` — SHA-256 hex cua token goc, unique
+- `token_prefix` — vai ky tu dau de doi chieu (`ck_a1b2c3`)
+- `scopes` — cac quyen, phan tach bang dau cach
+- `created_at`
+- `last_used_at`
+- `expires_at` — null la khong tu het han
+- `revoked_at` — null la con hieu luc
+
 ### `payment_profiles`
 
 Thong tin nhan tien cua chu cuoc choi.
@@ -248,6 +265,80 @@ Sau khi co balance, tinh danh sach chuyen khoan toi uu (peer-to-peer):
 - `POST /api/ai/expense`
 - `POST /api/ai/receipt`
 - `PUT /api/share/:token` khi link share có quyền edit
+- `GET /api/mcp-tokens`, `POST /api/mcp-tokens`, `DELETE /api/mcp-tokens/:tokenId`
+- `POST /api/mcp` — endpoint MCP, xem phan duoi
+
+## MCP server
+
+Cho phep Claude (Claude Code, Claude Desktop...) doc du lieu chia tien qua
+[Model Context Protocol]. Endpoint: `POST /api/mcp`, transport **Streamable
+HTTP** o che do stateless — moi POST la mot JSON-RPC message va nhan lai dung
+mot JSON response, khong giu session va khong mo SSE (Pages Functions khong co
+Durable Object de giu state).
+
+[Model Context Protocol]: https://modelcontextprotocol.io
+
+### Tool
+
+Tool nao hien ra phu thuoc quyen cua token dang dung:
+
+| Tool | Quyen can | Tra ve |
+| --- | --- | --- |
+| `list_games` | `games:read` | Danh sach cuoc chia kem ma, so nguoi, so khoan chi |
+| `get_game` | `games:read` | Chi tiet mot cuoc chia (tra theo ma hoac id) |
+| `get_summary_text` | `summary:read` | Ban tom tat dang chu, giong nut Copy trong app |
+| `get_shared_game` | `share:read` | Cuoc chia bat ky qua token trong link share |
+
+Tat ca deu chi doc. Muon them tool ghi thi khai bao scope moi o `MCP_SCOPES`
+(`shared/schemas.ts`) va them tool voi `scope` do trong `worker/src/mcp/tools.ts`.
+
+### Tao token
+
+Chua co UI; tao bang API trong lúc dang dang nhap. Mo devtools console tren
+trang web roi chay:
+
+```js
+await fetch("/api/mcp-tokens", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    name: "Claude Code ở máy bàn",
+    scopes: ["games:read", "summary:read"],
+    expiresInDays: null, // hoac so ngay, vd 30
+  }),
+}).then((r) => r.json());
+```
+
+Phan hoi co `secret` — **chi hien dung lan nay**, DB chi luu hash. Xem lai danh
+sach token bang `GET /api/mcp-tokens` (khong bao gio kem secret), thu hoi bang
+`DELETE /api/mcp-tokens/:tokenId`. Toi da 20 token con hieu luc moi user.
+
+### Gan vao Claude Code
+
+```sh
+claude mcp add --transport http chia-keo https://chiakeo.huyab.click/api/mcp \
+  --header "Authorization: Bearer ck_..."
+```
+
+Kiem tra nhanh khong can client MCP:
+
+```sh
+curl -s https://chiakeo.huyab.click/api/mcp \
+  -H "Authorization: Bearer ck_..." \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | jq
+```
+
+### Bao mat
+
+- Token 32 byte ngau nhien, tien to `ck_`; DB chi giu SHA-256 nen doc duoc
+  database cung khong dung lai duoc token.
+- Moi tool gioi han trong du lieu cua chu token; `get_shared_game` la ngoai le
+  co y — no chi doc duoc cuoc chia da bat link share.
+- Token sai/thu hoi/het han deu tra `401 unauthorized` giong nhau, khong he sai
+  o dau. Tool ngoai quyen thi bao ro thieu scope nao de nguoi dung tao lai token.
+- `/api/mcp` gioi han 120 POST/phut theo IP; `/api/mcp-tokens` dung han muc tao
+  chung 30/phut.
 
 ## Backend & deploy hien tai
 

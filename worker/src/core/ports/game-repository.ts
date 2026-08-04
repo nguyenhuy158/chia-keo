@@ -78,6 +78,21 @@ export type PhotoRow = {
 
 export type PhotoDetailRow = PhotoRow & { data: string };
 
+/** Token MCP nhu luu trong DB: chua hash, khong bao gio co ban token goc. */
+export type McpTokenRow = {
+  id: string;
+  userId: string;
+  name: string;
+  tokenHash: string;
+  tokenPrefix: string;
+  /** Cac scope phan tach bang dau cach. */
+  scopes: string;
+  createdAt: string;
+  lastUsedAt: string | null;
+  expiresAt: string | null;
+  revokedAt: string | null;
+};
+
 export type NewSplitRow = {
   id: string;
   expenseId: string;
@@ -157,6 +172,17 @@ export type GameRepository = {
       fields: Partial<Pick<PhotoRow, "caption" | "expenseId">>,
     ): Promise<void>;
     delete(photoId: string): Promise<void>;
+  };
+  mcpTokens: {
+    /** Token cua mot user, moi nhat truoc; ke ca token da thu hoi. */
+    listByUser(userId: string): Promise<McpTokenRow[]>;
+    countActiveByUser(userId: string): Promise<number>;
+    /** Tra ve ca token da thu hoi/het han: tang tren quyet dinh tu choi. */
+    findByHash(tokenHash: string): Promise<McpTokenRow | null>;
+    insert(row: McpTokenRow): Promise<void>;
+    /** false khi token khong ton tai hoac khong thuoc user nay. */
+    revoke(tokenId: string, userId: string, revokedAt: string): Promise<boolean>;
+    touchLastUsed(tokenId: string, lastUsedAt: string): Promise<void>;
   };
   shareLinks: {
     getLatestByGame(gameId: string): Promise<ShareLinkRow | null>;

@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
 import type {
   ExpenseRow,
@@ -6,6 +6,7 @@ import type {
   ExpenseUpdate,
   GameRepository,
   GameRow,
+  McpTokenRow,
   NewSplitRow,
   ParticipantRow,
   PhotoDetailRow,
@@ -304,6 +305,58 @@ export function createD1GameRepository(d1: D1Database): GameRepository {
       },
       async delete(photoId) {
         await db.delete(schema.gamePhotos).where(eq(schema.gamePhotos.id, photoId));
+      },
+    },
+
+    mcpTokens: {
+      async listByUser(userId): Promise<McpTokenRow[]> {
+        return db
+          .select()
+          .from(schema.mcpTokens)
+          .where(eq(schema.mcpTokens.userId, userId))
+          .orderBy(desc(schema.mcpTokens.createdAt));
+      },
+      async countActiveByUser(userId) {
+        const rows = await db
+          .select({ value: sql<number>`count(*)` })
+          .from(schema.mcpTokens)
+          .where(
+            and(eq(schema.mcpTokens.userId, userId), isNull(schema.mcpTokens.revokedAt)),
+          );
+        return Number(rows[0]?.value || 0);
+      },
+      async findByHash(tokenHash): Promise<McpTokenRow | null> {
+        const rows = await db
+          .select()
+          .from(schema.mcpTokens)
+          .where(eq(schema.mcpTokens.tokenHash, tokenHash))
+          .limit(1);
+        return rows[0] || null;
+      },
+      async insert(row) {
+        await db.insert(schema.mcpTokens).values(row);
+      },
+      async revoke(tokenId, userId, revokedAt) {
+        // Loc ca userId trong WHERE: khong the thu hoi token cua nguoi khac du
+        // co doan dung id. isNull(revokedAt) de lan thu hoi thu hai tra false.
+        const rows = await db
+          .update(schema.mcpTokens)
+          .set({ revokedAt })
+          .where(
+            and(
+              eq(schema.mcpTokens.id, tokenId),
+              eq(schema.mcpTokens.userId, userId),
+              isNull(schema.mcpTokens.revokedAt),
+            ),
+          )
+          .returning({ id: schema.mcpTokens.id });
+        return rows.length > 0;
+      },
+      async touchLastUsed(tokenId, lastUsedAt) {
+        await db
+          .update(schema.mcpTokens)
+          .set({ lastUsedAt })
+          .where(eq(schema.mcpTokens.id, tokenId));
       },
     },
 

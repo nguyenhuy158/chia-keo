@@ -177,6 +177,36 @@ export const shareLinks = sqliteTable(
   (table) => [index("share_links_game_id_idx").on(table.gameId)],
 );
 
+/**
+ * Token cho endpoint MCP. Moi user tao duoc nhieu token, moi token mot bo
+ * scope rieng chon luc tao.
+ *
+ * Chi luu hash: ban goc hien dung mot lan luc tao roi khong lay lai duoc, nen
+ * ke doc duoc database cung khong dung token cua nguoi khac de goi API.
+ */
+export const mcpTokens = sqliteTable(
+  "mcp_tokens",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    /** SHA-256 hex cua token goc. */
+    tokenHash: text("token_hash").notNull().unique(),
+    /** May ky tu dau de nguoi dung doi chieu token trong danh sach. */
+    tokenPrefix: text("token_prefix").notNull(),
+    /** Cac scope, phan tach bang dau cach — xem MCP_SCOPES o shared/schemas.ts. */
+    scopes: text("scopes").notNull(),
+    createdAt: text("created_at").notNull(),
+    /** Lan cuoi token duoc dung, de phat hien token bo quen hoac bi lam dung. */
+    lastUsedAt: text("last_used_at"),
+    expiresAt: text("expires_at"),
+    revokedAt: text("revoked_at"),
+  },
+  (table) => [index("mcp_tokens_user_id_idx").on(table.userId)],
+);
+
 export const paymentProfiles = sqliteTable(
   "payment_profiles",
   {
