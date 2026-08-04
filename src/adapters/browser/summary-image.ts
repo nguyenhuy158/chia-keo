@@ -22,8 +22,17 @@ const QR_BLOCK_GAP = 16;
 const QR_LOAD_TIMEOUT_MS = 8_000;
 /** Truyen 0 cho VietQR de QR khong gan san so tien, nguoi quet tu nhap. */
 const QR_AMOUNT_FREE = 0;
+const FONT_LOAD_TIMEOUT_MS = 3_000;
 
-const FONT_STACK = 'system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif';
+/**
+ * Poppins khong co subset vietnamese (Google Fonts chi phuc vu latin,
+ * latin-ext, devanagari), nen cac nguyen am co dau kieu "ệ ử ồ ẩ" roi xuong
+ * "Be Vietnam Pro" ngay sau. Doi thu tu hai ten nay la doi luon font cua anh.
+ */
+const IMAGE_FONT_FAMILIES = ["Poppins", "Be Vietnam Pro"] as const;
+const FONT_WEIGHTS = [400, 600, 700] as const;
+
+const FONT_STACK = `${IMAGE_FONT_FAMILIES.map((name) => `"${name}"`).join(", ")}, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif`;
 
 /**
  * Anh luon dung bang mau sang du app dang o dark mode: anh se duoc dan sang
@@ -306,6 +315,30 @@ function createContext(width: number, height: number) {
 }
 
 /**
+ * Canvas khong tu tai webfont: font chi duoc fetch khi co the DOM dung den, ma
+ * anh thi ve ngoai DOM. Khong goi fonts.load truoc thi measureText va fillText
+ * am tham roi ve font he thong, anh ra khac han app. Loi hoac cham qua thi bo
+ * qua, anh van ve duoc bang font du phong.
+ */
+async function ensureImageFontsReady() {
+  const fonts = document.fonts;
+  if (!fonts?.load) return;
+
+  const requests = IMAGE_FONT_FAMILIES.flatMap((name) =>
+    FONT_WEIGHTS.map((weight) => fonts.load(`${weight} 16px "${name}"`)),
+  );
+
+  try {
+    await Promise.race([
+      Promise.all(requests),
+      new Promise((resolve) => window.setTimeout(resolve, FONT_LOAD_TIMEOUT_MS)),
+    ]);
+  } catch {
+    // Font tai loi thi van ve tiep, chi la anh dung font du phong.
+  }
+}
+
+/**
  * Ve ban tom tat ra mot the canvas roi xuat PNG. Lam thu cong thay vi dung
  * thu vien chup DOM vi noi dung chi la cac dong chu, va tranh them dependency.
  */
@@ -314,7 +347,8 @@ export async function renderSummaryImage(
   variant: SummaryVariant = "compact",
 ): Promise<Blob> {
   const doc = buildSummaryDocument(input, variant);
-  const qrCards = await loadQrCards(input, doc);
+  // Font phai san sang truoc khi do chu, khong thi wrapText do bang font sai.
+  const [, qrCards] = await Promise.all([ensureImageFontsReady(), loadQrCards(input, doc)]);
 
   const measure = createContext(1, 1);
   const blocks = buildBlocks(doc, measure.context, qrCards);
