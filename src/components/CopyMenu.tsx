@@ -1,4 +1,5 @@
 import {
+  ArrowLeftRight,
   ChevronDown,
   Copy,
   Download,
@@ -18,7 +19,7 @@ const MENU_WIDTH = 268;
 const MENU_GAP = 6;
 const VIEWPORT_MARGIN = 8;
 /** Uoc luong de biet nen mo len hay xuong; khong can chinh xac tuyet doi. */
-const MENU_HEIGHT_ESTIMATE = 240;
+const MENU_HEIGHT_ESTIMATE = 300;
 
 const TRIGGER_CLASS =
   "inline-flex h-11 items-center justify-center gap-2 rounded-md border border-stone-300 bg-white px-3 text-sm font-medium text-stone-700 transition hover:bg-stone-50 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-200 dark:hover:bg-stone-800";
@@ -94,6 +95,14 @@ export function CopyMenu({ input, className }: CopyMenuProps) {
     toast(ok ? "Đã sao chép tổng kết" : "Không sao chép được tổng kết", ok ? "success" : "error");
   }
 
+  async function copyDetailedSummaryText() {
+    const ok = await copyText(buildSummaryText(input, "detailed"));
+    toast(
+      ok ? "Đã sao chép tổng kết chi tiết" : "Không sao chép được tổng kết",
+      ok ? "success" : "error",
+    );
+  }
+
   async function copyShareLink() {
     if (!input.shareUrl) return;
     const ok = await copyText(input.shareUrl);
@@ -132,6 +141,13 @@ export function CopyMenu({ input, className }: CopyMenuProps) {
       hint: "Dạng chữ, dán vào Zalo/Messenger",
       icon: ListChecks,
       run: copySummaryText,
+    },
+    {
+      id: "text-detailed",
+      label: "Copy tổng kết chi tiết",
+      hint: "Ghi rõ ai đã ứng, ai nhận lại",
+      icon: ArrowLeftRight,
+      run: copyDetailedSummaryText,
     },
     {
       id: "image",

@@ -175,6 +175,49 @@ describe("buildSummaryText", () => {
     expect(text).toContain("- Thu: 45 + 101,7 + 8,5 = 155,2k");
   });
 
+  it("ban chi tiet ghi ro ai da ung va ai duoc nhan lai", () => {
+    const text = buildSummaryText({ ...input, settlementMode: "host" }, "detailed");
+
+    expect(text).toContain("TỪNG NGƯỜI (phần phải chịu)");
+    // Nam ung 305k, phai chiu 101,7k nen la nguoi duoc nhan lai chu khong phai tra.
+    expect(text).toContain("- Nam: 101,7 = 101,7k · đã ứng 305k → nhận lại 203,3k");
+    expect(text).toContain("- Hồng: 45 + 101,7 + 8,5 = 155,2k · phải trả 155,2k");
+    // Thu ung 107k nhung van con thieu, phan con lai moi la so phai tra.
+    expect(text).toContain("- Thu: 45 + 101,7 + 8,5 = 155,2k · phải trả 48,2k");
+  });
+
+  it("ban chi tiet tach hai chieu chuyen tien va noi ly do host tra lai", () => {
+    const bigPaidByThu = makeExpense("e-4444", "Thuê sân cả tháng", 500_000, thu.id, [
+      thu.id,
+      hong.id,
+      nam.id,
+    ]);
+    const withBigExpense = [bigPaidByThu, ...expenses];
+
+    const text = buildSummaryText(
+      {
+        ...input,
+        expenses: withBigExpense,
+        summary: makeSummary(participants, withBigExpense),
+        settlementMode: "host",
+      },
+      "detailed",
+    );
+
+    expect(text).toContain("GOM VỀ THU (Thu ứng nhiều nhất, cả nhóm quét 1 QR)");
+    expect(text).toContain("Chuyển vào Thu — tổng 321,8k:");
+    expect(text).toContain("- Hồng → Thu: 321,8k");
+    expect(text).toContain("Thu chuyển ra:");
+    expect(text).toContain("- Thu → Nam: 36,7k (Nam đã ứng 305k)");
+  });
+
+  it("ban compact khong doi gi so voi truoc", () => {
+    const hostInput = { ...input, settlementMode: "host" as const };
+
+    expect(buildSummaryText(hostInput)).toBe(buildSummaryText(hostInput, "compact"));
+    expect(buildSummaryText(hostInput)).not.toContain("đã ứng");
+  });
+
   it("bao chua co khoan chi khi danh sach rong", () => {
     const emptySummary = makeSummary(participants, []);
     const text = buildSummaryText({ ...input, expenses: [], summary: emptySummary });

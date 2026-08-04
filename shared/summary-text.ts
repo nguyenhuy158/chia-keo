@@ -1,8 +1,16 @@
 import type { ApiExpense, ApiParticipant, ApiSummary } from "./api-types";
 import type { SettlementMode } from "./schemas";
-import { calculateHostTransfers, pickHostParticipantId } from "./split";
+import { type BalanceRow, calculateHostTransfers, pickHostParticipantId } from "./split";
 
 export type { SettlementMode };
+
+/**
+ * "compact": ban goc, ngan de dan nhanh.
+ * "detailed": moi nguoi kem so da ung va ket luan nhan lai / phai tra, phan
+ * chuyen tien tach theo chieu. Dai hon nhung khong con canh nguoi ung tien
+ * nhieu nhat lai hien mot con so trong giong het nguoi con no.
+ */
+export type SummaryVariant = "compact" | "detailed";
 
 const THOUSAND = 1000;
 const SHORT_MONEY_FRACTION_DIGITS = 1;
@@ -91,13 +99,29 @@ function buildExpenseLines(
   });
 }
 
+/**
+ * Ket luan cua mot nguoi sau khi tru phan da ung. Thieu cau nay thi con so
+ * "phai chiu" de bi doc thanh "phai chuyen", du nguoi ung tien la nguoi duoc
+ * nhan lai chu khong phai tra them.
+ */
+function describeSettleState(row: BalanceRow | undefined) {
+  if (!row) return "";
+  if (row.balance > 0) {
+    return `đã ứng ${formatShortMoney(row.paid)} → nhận lại ${formatShortMoney(row.balance)}`;
+  }
+  if (row.balance < 0) return `phải trả ${formatShortMoney(-row.balance)}`;
+
+  return row.paid > 0 ? `đã ứng ${formatShortMoney(row.paid)} → vừa đủ` : "";
+}
+
 function buildPersonLines(
   participants: ApiParticipant[],
   expenses: ApiExpense[],
   summary: ApiSummary,
+  variant: SummaryVariant,
 ) {
-  const owedByParticipantId = new Map(
-    summary.balances.map((balance) => [balance.participantId, balance.owed]),
+  const balanceByParticipantId = new Map(
+    summary.balances.map((balance) => [balance.participantId, balance]),
   );
 
   return participants.map((participant) => {
@@ -107,10 +131,18 @@ function buildPersonLines(
       if (share && share.amount > 0) terms.push(formatThousands(share.amount));
     }
 
-    const owed = owedByParticipantId.get(participant.id) || 0;
-    if (terms.length === 0) return `- ${participant.name}: 0k`;
+    const row = balanceByParticipantId.get(participant.id);
+    const owed = row?.owed || 0;
+    const head =
+      terms.length === 0
+        ? `- ${participant.name}: 0k`
+        : `- ${participant.name}: ${terms.join(" + ")} = ${formatShortMoney(owed)}`;
 
-    return `- ${participant.name}: ${terms.join(" + ")} = ${formatShortMoney(owed)}`;
+    if (variant !== "detailed") return head;
+
+    const settleState = describeSettleState(row);
+
+    return settleState ? `${head} · ${settleState}` : head;
   });
 }
 
@@ -122,30 +154,91 @@ function buildSettlementLines(summary: ApiSummary, nameById: Map<string, string>
   });
 }
 
-function buildHostSection(
-  summary: ApiSummary,
+/**
+ * Ban goc: mot danh sach phang, da sort theo so tien giam dan nen dong "host tra
+ * lai" hay chen vao giua nhung dong chuyen vao.
+ */
+function buildFlatHostLines(
+  transfers: ReturnType<typeof calculateHostTransfers>,
+  hostName: string,
   nameById: Map<string, string>,
-): { section: SummarySection; hostParticipantId: string } | null {
-  const hostParticipantId = pickHostParticipantId(summary.balances);
-  const transfers = calculateHostTransfers(summary.balances, hostParticipantId);
-  if (!hostParticipantId || transfers.length === 0) return null;
-
-  const hostName = nameById.get(hostParticipantId) || UNKNOWN_NAME;
-  const lines = transfers.map((transfer) => {
+) {
+  return transfers.map((transfer) => {
     const name = nameById.get(transfer.participantId) || UNKNOWN_NAME;
     const amount = formatShortMoney(transfer.amount);
     return transfer.toHost
       ? `- ${name} → ${hostName}: ${amount}`
       : `- ${hostName} trả lại ${name}: ${amount}`;
   });
+}
+
+/**
+ * Ban chi tiet: tach hai chieu ra hai nhom co tieu de rieng, kem tong tien vao
+ * va ly do host phai tra lai (nguoi do cung da ung tien).
+ */
+function buildGroupedHostLines(
+  transfers: ReturnType<typeof calculateHostTransfers>,
+  hostName: string,
+  nameById: Map<string, string>,
+  paidById: Map<string, number>,
+) {
+  const lines: string[] = [];
+  const incoming = transfers.filter((transfer) => transfer.toHost);
+  const outgoing = transfers.filter((transfer) => !transfer.toHost);
+
+  if (incoming.length > 0) {
+    const total = incoming.reduce((sum, transfer) => sum + transfer.amount, 0);
+    lines.push(`Chuyển vào ${hostName} — tổng ${formatShortMoney(total)}:`);
+    for (const transfer of incoming) {
+      const name = nameById.get(transfer.participantId) || UNKNOWN_NAME;
+      lines.push(`- ${name} → ${hostName}: ${formatShortMoney(transfer.amount)}`);
+    }
+  }
+
+  if (outgoing.length > 0) {
+    lines.push(`${hostName} chuyển ra:`);
+    for (const transfer of outgoing) {
+      const name = nameById.get(transfer.participantId) || UNKNOWN_NAME;
+      const paid = paidById.get(transfer.participantId) || 0;
+      const reason = paid > 0 ? ` (${name} đã ứng ${formatShortMoney(paid)})` : "";
+      lines.push(`- ${hostName} → ${name}: ${formatShortMoney(transfer.amount)}${reason}`);
+    }
+  }
+
+  return lines;
+}
+
+function buildHostSection(
+  summary: ApiSummary,
+  nameById: Map<string, string>,
+  variant: SummaryVariant,
+): { section: SummarySection; hostParticipantId: string } | null {
+  const hostParticipantId = pickHostParticipantId(summary.balances);
+  const transfers = calculateHostTransfers(summary.balances, hostParticipantId);
+  if (!hostParticipantId || transfers.length === 0) return null;
+
+  const hostName = nameById.get(hostParticipantId) || UNKNOWN_NAME;
+  const detailed = variant === "detailed";
+  const paidById = new Map(summary.balances.map((row) => [row.participantId, row.paid]));
 
   return {
     hostParticipantId,
-    section: { id: "settlements", heading: `GOM VỀ ${hostName.toUpperCase()}`, lines },
+    section: {
+      id: "settlements",
+      heading: detailed
+        ? `GOM VỀ ${hostName.toUpperCase()} (${hostName} ứng nhiều nhất, cả nhóm quét 1 QR)`
+        : `GOM VỀ ${hostName.toUpperCase()}`,
+      lines: detailed
+        ? buildGroupedHostLines(transfers, hostName, nameById, paidById)
+        : buildFlatHostLines(transfers, hostName, nameById),
+    },
   };
 }
 
-export function buildSummaryDocument(input: SummaryTextInput): SummaryDocument {
+export function buildSummaryDocument(
+  input: SummaryTextInput,
+  variant: SummaryVariant = "compact",
+): SummaryDocument {
   const { code, name, participants, summary, shareUrl } = input;
   const expenses = toListedExpenses(input.expenses);
   const nameById = new Map(participants.map((participant) => [participant.id, participant.name]));
@@ -167,15 +260,15 @@ export function buildSummaryDocument(input: SummaryTextInput): SummaryDocument {
   if (participants.length > 0) {
     sections.push({
       id: "people",
-      heading: "TỪNG NGƯỜI",
-      lines: buildPersonLines(participants, expenses, summary),
+      heading: variant === "detailed" ? "TỪNG NGƯỜI (phần phải chịu)" : "TỪNG NGƯỜI",
+      lines: buildPersonLines(participants, expenses, summary, variant),
     });
   }
 
   let hostParticipantId: string | undefined;
 
   if (input.settlementMode === "host") {
-    const host = buildHostSection(summary, nameById);
+    const host = buildHostSection(summary, nameById, variant);
     if (host) {
       sections.push(host.section);
       hostParticipantId = host.hostParticipantId;
@@ -200,8 +293,11 @@ export function buildSummaryDocument(input: SummaryTextInput): SummaryDocument {
  * Dung ban tom tat dang text de dan thang vao Zalo/Messenger: liet ke tung
  * khoan chi kem so nguoi chia, roi den phan cua tung nguoi va link xem chi tiet.
  */
-export function buildSummaryText(input: SummaryTextInput): string {
-  const doc = buildSummaryDocument(input);
+export function buildSummaryText(
+  input: SummaryTextInput,
+  variant: SummaryVariant = "compact",
+): string {
+  const doc = buildSummaryDocument(input, variant);
 
   const blocks = [`${doc.title} · ${doc.subtitle}`];
   for (const section of doc.sections) {
