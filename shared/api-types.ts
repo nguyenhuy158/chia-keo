@@ -1,5 +1,5 @@
 import type { ResolvedAiExpense } from "./ai";
-import type { SettlementMode } from "./schemas";
+import type { McpScope, SettlementMode } from "./schemas";
 import type { BalanceRow, ExpenseKind, SettlementRow, SplitMode } from "./split";
 
 export type ApiAiSuggestionResponse = {
@@ -96,6 +96,56 @@ export type ApiShareView = {
   participants: ApiParticipant[];
   expenses: ApiExpense[];
   summary: ApiSummary;
+};
+
+/** Phan cua mot nguoi trong mot cuoc chia, khi gop nhieu cuoc lai. */
+export type ApiCrossGamePersonGame = {
+  code: string;
+  name: string;
+  balance: number;
+};
+
+export type ApiCrossGamePerson = {
+  /** Doi chieu nguoi giua cac cuoc bang ten — khong co thuc the "nguoi" toan cuc. */
+  name: string;
+  paid: number;
+  owed: number;
+  /** paid - owed gop tat ca cuoc: duong la duoc nhan lai, am la con phai tra. */
+  net: number;
+  games: ApiCrossGamePersonGame[];
+};
+
+/** So du gop cua nhieu cuoc chia, kem mot bo chuyen tien duy nhat cho tat ca. */
+export type ApiCrossGameBalances = {
+  games: { code: string; name: string }[];
+  /** So cuoc bi bo bot vi vuot tran; 0 la da tinh het. */
+  omittedGameCount: number;
+  totalExpense: number;
+  people: ApiCrossGamePerson[];
+  settlements: { from: string; to: string; amount: number }[];
+  /** Ten chi thay o mot cuoc: co the la go ten khac nhau nen khong gop duoc. */
+  namesInOneGameOnly: string[];
+};
+
+/** Token MCP nhu tra ve cho client: khong bao gio kem hash hay ban goc. */
+export type ApiMcpToken = {
+  id: string;
+  name: string;
+  /** Vai ky tu dau cua token goc, du de doi chieu voi config da luu. */
+  tokenPrefix: string;
+  scopes: McpScope[];
+  createdAt: string;
+  lastUsedAt: string | null;
+  expiresAt: string | null;
+  revokedAt: string | null;
+  /** Suy ra o server de FE khong phai tu so sanh moc thoi gian. */
+  active: boolean;
+};
+
+export type ApiCreatedMcpToken = {
+  token: ApiMcpToken;
+  /** Ban goc, chi tra ve dung lan tao nay. */
+  secret: string;
 };
 
 export type ApiError = {

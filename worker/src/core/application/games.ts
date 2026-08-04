@@ -28,6 +28,19 @@ export async function listGames(repo: GameRepository, userId: string): Promise<A
   }));
 }
 
+/**
+ * Dò cuộc chia theo mã hoặc id trong một danh sách đã tải. Nhận cả hai vì
+ * người dùng (và model) thường chỉ thấy mã in trên thẻ tóm tắt chứ không biết
+ * id; mã đối chiếu không phân biệt hoa thường.
+ */
+export function findGameByRef<T extends { id: string; code: string }>(
+  games: T[],
+  ref: string,
+): T | undefined {
+  const wanted = ref.trim().toLowerCase();
+  return games.find((game) => game.id === ref.trim() || game.code.toLowerCase() === wanted);
+}
+
 export async function createGame(
   repo: GameRepository,
   userId: string,

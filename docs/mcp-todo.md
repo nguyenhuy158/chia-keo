@@ -58,13 +58,19 @@ theo dõi riêng.
   chia nhau hạn mức, mà token bị lộ cũng không chặn riêng được. Key theo
   `tokenId` sau khi authenticate xong.
 
-- [ ] **Tool tổng hợp nhiều cuộc** — ví dụ `get_balances_across_games`
+- [x] **Tool tổng hợp nhiều cuộc** — `get_balances_across_games`
 
-  "Tổng cộng Nam còn nợ tôi bao nhiêu" hiện phải gọi `get_game` từng cuộc rồi
-  để model tự cộng — chậm và dễ sai số. Cộng sẵn ở server thì chắc chắn đúng.
+  Gộp số dư nhiều cuộc theo từng người rồi tính một bộ chuyển tiền duy nhất.
+  Trước đây phải gọi `get_game` từng cuộc rồi để model tự cộng — chậm và dễ sai.
 
-  Cần chốt trước: đối chiếu người theo tên (tên trùng giữa các cuộc) hay bắt
-  người dùng chỉ rõ?
+  Chốt: **đối chiếu người theo tên**, chuẩn hoá hoa/thường và khoảng trắng
+  nhưng *không* bỏ dấu — "Hương" và "Huong" có thể là hai người khác nhau thật,
+  gộp sai thì ra số tiền sai chứ không chỉ hiển thị xấu. Bù lại, output có
+  `namesInOneGameOnly` để người đọc tự nghi ngờ chỗ gõ tên lệch.
+
+  Chặn ở `MAX_CROSS_GAME_GAMES = 8`: mỗi cuộc tốn 3 truy vấn D1 và Workers giới
+  hạn subrequest mỗi request (50 ở gói miễn phí). Bỏ trống `games` thì lấy 8
+  cuộc gần nhất và báo `omittedGameCount`, không lặng lẽ cắt.
 
 ## Việc lớn — chỉ làm nếu cần
 

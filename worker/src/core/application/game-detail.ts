@@ -11,8 +11,14 @@ import {
   DEFAULT_SETTLEMENT_MODE,
   settlementModeSchema,
 } from "../../../../shared/schemas";
+import type { ExpenseInput, ExpenseKind } from "../../../../shared/split";
 import { calculateBalances, calculateSettlements } from "../../../../shared/split";
-import type { GameRepository, GameRow } from "../ports/game-repository";
+import type {
+  ExpenseRow,
+  ExpenseSplitRow,
+  GameRepository,
+  GameRow,
+} from "../ports/game-repository";
 
 /** Cot trong DB la TEXT tu do, ep ve mot gia tri hop le truoc khi tra ve. */
 function toSettlementMode(value: string) {
@@ -26,6 +32,53 @@ type GameData = {
   summary: ApiSummary;
 };
 
+/**
+ * Khoan tra no (kind = "transfer") khong tinh vao tong chi cua nhom.
+ * Khoan thu (kind = "income") tru vao tong chi: phan anh dung so tien nhom
+ * thuc su da tieu (vd. hoan tien lam giam tong chi thuc te).
+ */
+export function sumTotalExpense(expenseRows: ExpenseRow[]) {
+  return expenseRows.reduce((total, row) => {
+    if (row.kind === "transfer") return total;
+    return row.kind === "income" ? total - row.amount : total + row.amount;
+  }, 0);
+}
+
+/** Ep kind tu cot TEXT tu do ve mot gia tri hop le. */
+function toExpenseKind(value: string): ExpenseKind {
+  return value === "income" ? "income" : value === "transfer" ? "transfer" : "expense";
+}
+
+/**
+ * Doi row trong DB thanh input cho `calculateBalances`. Tach ra de duong tinh
+ * balance gon (cross-game) dung chung dung quy uoc voi duong day du.
+ */
+export function toExpenseInputs(
+  expenseRows: ExpenseRow[],
+  splitsByExpenseId: Map<string, ExpenseSplitRow[]>,
+): ExpenseInput[] {
+  return expenseRows.map((row) => ({
+    payerParticipantId: row.payerParticipantId,
+    amount: row.amount,
+    kind: toExpenseKind(row.kind),
+    shares: (splitsByExpenseId.get(row.id) || []).map((split) => ({
+      participantId: split.participantId,
+      amount: split.amount,
+    })),
+  }));
+}
+
+export function groupSplitsByExpenseId(splitRows: ExpenseSplitRow[]) {
+  const splitsByExpenseId = new Map<string, ExpenseSplitRow[]>();
+  for (const split of splitRows) {
+    const list = splitsByExpenseId.get(split.expenseId) || [];
+    list.push(split);
+    splitsByExpenseId.set(split.expenseId, list);
+  }
+
+  return splitsByExpenseId;
+}
+
 async function loadGameData(repo: GameRepository, gameId: string): Promise<GameData> {
   const participantRows = await repo.participants.listByGame(gameId);
   const participantIds = participantRows.map((row) => row.id);
@@ -36,12 +89,7 @@ async function loadGameData(repo: GameRepository, gameId: string): Promise<GameD
   const expenseRows = await repo.expenses.listByGame(gameId);
   const splitRows = await repo.splits.listByExpenseIds(expenseRows.map((row) => row.id));
 
-  const splitsByExpenseId = new Map<string, typeof splitRows>();
-  for (const split of splitRows) {
-    const list = splitsByExpenseId.get(split.expenseId) || [];
-    list.push(split);
-    splitsByExpenseId.set(split.expenseId, list);
-  }
+  const splitsByExpenseId = groupSplitsByExpenseId(splitRows);
 
   const participants: ApiParticipant[] = participantRows.map((row) => {
     const payment = paymentByParticipantId.get(row.id);
@@ -60,7 +108,7 @@ async function loadGameData(repo: GameRepository, gameId: string): Promise<GameD
     const splits = splitsByExpenseId.get(row.id) || [];
     return {
       id: row.id,
-      kind: row.kind === "transfer" || row.kind === "income" ? row.kind : "expense",
+      kind: toExpenseKind(row.kind),
       title: row.title,
       amount: row.amount,
       note: row.note,
@@ -79,27 +127,11 @@ async function loadGameData(repo: GameRepository, gameId: string): Promise<GameD
 
   const balances = calculateBalances(
     participantIds,
-    expenseRows.map((row) => ({
-      payerParticipantId: row.payerParticipantId,
-      amount: row.amount,
-      kind: row.kind === "income" ? "income" : row.kind === "transfer" ? "transfer" : "expense",
-      shares: (splitsByExpenseId.get(row.id) || []).map((split) => ({
-        participantId: split.participantId,
-        amount: split.amount,
-      })),
-    })),
+    toExpenseInputs(expenseRows, splitsByExpenseId),
   );
 
-  // Khoan tra no (kind = "transfer") khong tinh vao tong chi cua nhom.
-  // Khoan thu (kind = "income") tru vao tong chi: phan anh dung so tien
-  // nhom thuc su da tieu (vd. hoan tien lam giam tong chi thuc te).
-  const totalExpense = expenseRows.reduce((total, row) => {
-    if (row.kind === "transfer") return total;
-    return row.kind === "income" ? total - row.amount : total + row.amount;
-  }, 0);
-
   const summary: ApiSummary = {
-    totalExpense,
+    totalExpense: sumTotalExpense(expenseRows),
     balances,
     settlements: calculateSettlements(balances),
   };

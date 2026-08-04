@@ -1,11 +1,15 @@
-import type { ApiGameDetail, ApiShareView } from "../../../shared/api-types";
+import type { ApiGame, ApiGameDetail, ApiShareView } from "../../../shared/api-types";
 import type { McpScope } from "../../../shared/schemas";
 import {
   buildSummaryText,
   type SummaryTextInput,
   type SummaryVariant,
 } from "../../../shared/summary-text";
-import { getGameDetailForOwner, listGames } from "../core/application/games";
+import {
+  getBalancesAcrossGames,
+  MAX_CROSS_GAME_GAMES,
+} from "../core/application/cross-game-balances";
+import { findGameByRef, getGameDetailForOwner, listGames } from "../core/application/games";
 import { getShareViewByToken } from "../core/application/share-links";
 import type { GameRepository } from "../core/ports/game-repository";
 import type { McpTool } from "./protocol";
@@ -57,17 +61,45 @@ function readVariant(args: Record<string, unknown>): SummaryVariant {
  */
 async function loadGame(context: McpContext, ref: string): Promise<ApiGameDetail> {
   const games = await listGames(context.repo, context.userId);
-  const wanted = ref.toLowerCase();
-  const match = games.find(
-    (game) => game.id === ref || game.code.toLowerCase() === wanted,
-  );
-
-  if (!match) {
-    const known = games.map((game) => game.code).join(", ") || "(chưa có cuộc chia nào)";
-    throw new Error(`Không tìm thấy cuộc chia "${ref}". Các mã đang có: ${known}`);
-  }
+  const match = findGameByRef(games, ref);
+  if (!match) throw new Error(describeMissingGame(games, ref));
 
   return getGameDetailForOwner(context.repo, context.userId, match.id);
+}
+
+/** Kem danh sach ma dang co: model doan lai duoc thay vi bao "khong tim thay". */
+function describeMissingGame(games: ApiGame[], ref: string) {
+  const known = games.map((game) => game.code).join(", ") || "(chưa có cuộc chia nào)";
+  return `Không tìm thấy cuộc chia "${ref}". Các mã đang có: ${known}`;
+}
+
+/** Doi danh sach ma/id thanh gameId, bao loi model doc duoc neu co ma sai. */
+async function resolveGameIds(context: McpContext, refs: string[]) {
+  const games = await listGames(context.repo, context.userId);
+
+  return refs.map((ref) => {
+    const match = findGameByRef(games, ref);
+    if (!match) throw new Error(describeMissingGame(games, ref));
+    return match.id;
+  });
+}
+
+function readGameRefs(args: Record<string, unknown>): string[] {
+  const value = args.games;
+  if (value === undefined) return [];
+
+  if (!Array.isArray(value) || value.some((ref) => typeof ref !== "string")) {
+    throw new Error('"games" phải là mảng mã cuộc chia, ví dụ ["DSKVUF", "QZDHUD"]');
+  }
+
+  const refs = (value as string[]).map((ref) => ref.trim()).filter((ref) => ref !== "");
+  if (refs.length > MAX_CROSS_GAME_GAMES) {
+    throw new Error(
+      `Gộp tối đa ${MAX_CROSS_GAME_GAMES} cuộc chia một lượt, đang truyền ${refs.length}.`,
+    );
+  }
+
+  return refs;
 }
 
 function toSummaryInput(
@@ -134,6 +166,39 @@ export const mcpTools: McpTool<McpContext, McpScope>[] = [
     run: async (args, context) => {
       const game = await loadGame(context, readString(args, "game"));
       return buildSummaryText(toSummaryInput(game, context.appOrigin), readVariant(args));
+    },
+  },
+  {
+    name: "get_balances_across_games",
+    title: "Số dư gộp nhiều cuộc chia",
+    description:
+      "Gộp số dư của nhiều cuộc chia lại theo từng người, rồi tính một bộ chuyển tiền " +
+      "duy nhất để tất toán tất cả một lượt. Dùng khi cần biết tổng cộng ai còn nợ ai " +
+      "qua nhiều cuộc, thay vì gọi get_game từng cuộc rồi tự cộng. " +
+      `Bỏ trống "games" thì lấy ${MAX_CROSS_GAME_GAMES} cuộc gần nhất. ` +
+      "Người được đối chiếu giữa các cuộc bằng tên, nên chỉ gộp những cuộc mà cùng nhóm " +
+      "người đó thật sự muốn tất toán chung — gộp hai nhóm không liên quan thì con số " +
+      "vẫn ra nhưng vô nghĩa.",
+    scope: "games:read",
+    inputSchema: {
+      type: "object",
+      properties: {
+        games: {
+          type: "array",
+          items: { type: "string" },
+          maxItems: MAX_CROSS_GAME_GAMES,
+          description:
+            'Mã (hoặc id) các cuộc chia cần gộp, ví dụ ["DSKVUF", "QZDHUD"]. ' +
+            `Bỏ trống = ${MAX_CROSS_GAME_GAMES} cuộc gần nhất.`,
+        },
+      },
+      additionalProperties: false,
+    },
+    run: async (args, context) => {
+      const refs = readGameRefs(args);
+      return getBalancesAcrossGames(context.repo, context.userId, {
+        gameIds: refs.length > 0 ? await resolveGameIds(context, refs) : undefined,
+      });
     },
   },
   {

@@ -60,6 +60,55 @@ const splitRows: ExpenseSplitRow[] = allocateAmount(
   weight: null,
 }));
 
+/**
+ * Cuoc chia thu hai, chi bat khi test can gop nhieu cuoc. "Huy" va "Hường" co o
+ * ca hai cuoc de kiem tra viec doi chieu nguoi theo ten; "Hồng" va "Nam" moi
+ * nguoi chi o mot cuoc.
+ */
+export const secondGame: GameRow = {
+  id: "game_2",
+  ownerUserId: OWNER,
+  code: "QZDHUD",
+  name: "cầu lông",
+  settlementMode: "host",
+  createdAt: "2026-08-03T00:00:00.000Z",
+  updatedAt: "2026-08-03T00:00:00.000Z",
+};
+
+export const secondParticipants: ParticipantRow[] = ["Huy", "Hường", "Nam"].map(
+  (name, index) => ({
+    id: `q${index}`,
+    gameId: secondGame.id,
+    name,
+    createdAt: secondGame.createdAt,
+    updatedAt: secondGame.createdAt,
+  }),
+);
+
+/** Huy ung 300k, chia deu ba nguoi: Huy +200k, Hường -100k, Nam -100k. */
+const secondExpenseRow: ExpenseRow = {
+  id: "e1",
+  gameId: secondGame.id,
+  payerParticipantId: "q0",
+  kind: "expense",
+  title: "Sân",
+  amount: 300_000,
+  note: "",
+  splitMode: "equal",
+  createdAt: secondGame.createdAt,
+  updatedAt: secondGame.createdAt,
+};
+
+const secondSplitRows: ExpenseSplitRow[] = allocateAmount(
+  secondExpenseRow.amount,
+  secondParticipants.map((row) => row.id),
+).map((share) => ({
+  expenseId: secondExpenseRow.id,
+  participantId: share.participantId,
+  amount: share.amount,
+  weight: null,
+}));
+
 export const shareLink: ShareLinkRow = {
   gameId: game.id,
   token: "tok3n",
@@ -73,10 +122,16 @@ export const shareLink: ShareLinkRow = {
  * de test do luon neu tool bat dau cham vao cho khong mong doi.
  */
 export function fakeRepo(
-  overrides: { shareLink?: ShareLinkRow | null; tokens?: McpTokenRow[] } = {},
+  overrides: {
+    shareLink?: ShareLinkRow | null;
+    tokens?: McpTokenRow[];
+    /** Bat cuoc chia thu hai; mac dinh tat de test cu thay dung mot cuoc. */
+    twoGames?: boolean;
+  } = {},
 ): GameRepository {
   const link = overrides.shareLink === undefined ? shareLink : overrides.shareLink;
   const tokens = overrides.tokens || [];
+  const games = overrides.twoGames ? [game, secondGame] : [game];
   const unused = (name: string) => () => {
     throw new Error(`Tool MCP không được gọi ${name}`);
   };
@@ -105,16 +160,26 @@ export function fakeRepo(
       },
     },
     games: {
-      listByOwner: async (userId) => (userId === OWNER ? [game] : []),
-      countParticipants: async () => new Map([[game.id, participants.length]]),
-      countExpenses: async () => new Map([[game.id, 1]]),
-      getById: async (gameId) => (gameId === game.id ? game : null),
+      // Moi nhat truoc, giong adapter D1 that (order by createdAt desc).
+      listByOwner: async (userId) => (userId === OWNER ? games : []),
+      countParticipants: async () =>
+        new Map([
+          [game.id, participants.length],
+          [secondGame.id, secondParticipants.length],
+        ]),
+      countExpenses: async () =>
+        new Map([
+          [game.id, 1],
+          [secondGame.id, 1],
+        ]),
+      getById: async (gameId) => games.find((row) => row.id === gameId) || null,
       insert: unused("games.insert"),
       update: unused("games.update"),
       delete: unused("games.delete"),
     },
     participants: {
-      listByGame: async () => participants,
+      listByGame: async (gameId) =>
+        gameId === secondGame.id ? secondParticipants : participants,
       listIdsByGame: unused("participants.listIdsByGame"),
       getWithGame: unused("participants.getWithGame"),
       insert: unused("participants.insert"),
@@ -124,7 +189,8 @@ export function fakeRepo(
     },
     paymentProfiles: { listByParticipantIds: async () => [] },
     expenses: {
-      listByGame: async () => [expenseRow],
+      listByGame: async (gameId) =>
+        gameId === secondGame.id ? [secondExpenseRow] : [expenseRow],
       getById: unused("expenses.getById"),
       getWithGame: unused("expenses.getWithGame"),
       insert: unused("expenses.insert"),
@@ -133,7 +199,10 @@ export function fakeRepo(
       listIdsSplitWith: unused("expenses.listIdsSplitWith"),
     },
     splits: {
-      listByExpenseIds: async () => splitRows,
+      listByExpenseIds: async (expenseIds) =>
+        [...splitRows, ...secondSplitRows].filter((row) =>
+          expenseIds.includes(row.expenseId),
+        ),
       listByExpense: unused("splits.listByExpense"),
       listLiveByExpense: unused("splits.listLiveByExpense"),
       replace: unused("splits.replace"),

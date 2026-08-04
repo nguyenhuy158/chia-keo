@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
+import type { ApiCrossGameBalances } from "../../../shared/api-types";
 import { MCP_SCOPES, type McpScope } from "../../../shared/schemas";
+import { MAX_CROSS_GAME_GAMES } from "../core/application/cross-game-balances";
 import { ALL_SCOPES, APP_ORIGIN, fakeRepo, OWNER, shareLink } from "./fixtures";
 import { handleMcpMessage, JSON_RPC_ERROR, MCP_PROTOCOL_VERSION } from "./protocol";
 import { mcpTools, type McpContext } from "./tools";
@@ -89,6 +91,7 @@ describe("MCP protocol", () => {
       "list_games",
       "get_game",
       "get_summary_text",
+      "get_balances_across_games",
       "get_shared_game",
     ]);
     for (const tool of tools) expect(tool.inputSchema).toBeTruthy();
@@ -254,5 +257,130 @@ describe("MCP tools", () => {
   it("bao thieu tham so bat buoc", async () => {
     expect((await callTool("get_game", {})).isError).toBe(true);
     expect((await callTool("get_shared_game", {})).isError).toBe(true);
+  });
+});
+
+/**
+ * Hai cuoc trong fixture, chia deu ca hai:
+ * - DSKVUF: Hồng ứng 300k → Huy -100k, Hường -100k, Hồng +200k
+ * - QZDHUD: Huy  ứng 300k → Huy +200k, Hường -100k, Nam  -100k
+ *
+ * Gộp lại: Hồng +200k, Huy +100k, Nam -100k, Hường -200k (tổng = 0).
+ */
+describe("get_balances_across_games", () => {
+  const twoGames = () => makeContext({ repo: fakeRepo({ twoGames: true }) });
+
+  function balances(args: Record<string, unknown> = {}, context = twoGames()) {
+    return callTool("get_balances_across_games", args, { context }).then((result) =>
+      parsed<ApiCrossGameBalances>(result),
+    );
+  }
+
+  it("gop so du cua tung nguoi theo ten qua nhieu cuoc", async () => {
+    const result = await balances();
+
+    expect(result.people.map((person) => [person.name, person.net])).toEqual([
+      ["Hồng", 200_000],
+      ["Huy", 100_000],
+      ["Nam", -100_000],
+      ["Hường", -200_000],
+    ]);
+  });
+
+  it("tong so du gop luon bang 0 nen khong that thoat tien", async () => {
+    const result = await balances();
+    expect(result.people.reduce((sum, person) => sum + person.net, 0)).toBe(0);
+  });
+
+  it("cong tong chi cua moi cuoc duoc gop", async () => {
+    expect((await balances()).totalExpense).toBe(600_000);
+  });
+
+  it("tra mot bo chuyen tien duy nhat cho tat ca cac cuoc", async () => {
+    const result = await balances();
+
+    expect(result.settlements).toEqual([
+      { from: "Hường", to: "Hồng", amount: 200_000 },
+      { from: "Nam", to: "Huy", amount: 100_000 },
+    ]);
+  });
+
+  it("ghi ro nguoi do gop tu nhung cuoc nao", async () => {
+    const result = await balances();
+    const huy = result.people.find((person) => person.name === "Huy");
+
+    expect(huy?.games).toEqual([
+      { code: "DSKVUF", name: "ăn chơi 4/8", balance: -100_000 },
+      { code: "QZDHUD", name: "cầu lông", balance: 200_000 },
+    ]);
+  });
+
+  it("chi ra ten chi thay o mot cuoc, de nghi ngo go ten khac nhau", async () => {
+    const result = await balances();
+    expect(result.namesInOneGameOnly.sort()).toEqual(["Hồng", "Nam"]);
+  });
+
+  it("gioi han duoc bang ma cuoc chia", async () => {
+    const result = await balances({ games: ["QZDHUD"] });
+
+    expect(result.games).toEqual([{ code: "QZDHUD", name: "cầu lông" }]);
+    expect(result.totalExpense).toBe(300_000);
+    // Chi mot cuoc thi khong the suy ra gi tu "chi thay o mot cuoc".
+    expect(result.namesInOneGameOnly).toEqual([]);
+  });
+
+  it("truyen trung ma khong lam so tien nhan doi", async () => {
+    const result = await balances({ games: ["QZDHUD", "qzdhud"] });
+
+    expect(result.games).toHaveLength(1);
+    expect(result.totalExpense).toBe(300_000);
+  });
+
+  it("bo trong thi lay het va bao khong bo cuoc nao", async () => {
+    const result = await balances();
+
+    expect(result.games.map((game) => game.code)).toEqual(["DSKVUF", "QZDHUD"]);
+    expect(result.omittedGameCount).toBe(0);
+  });
+
+  it("bao ma nao dang co khi tra sai ma", async () => {
+    const result = await callTool(
+      "get_balances_across_games",
+      { games: ["KHONGCO"] },
+      { context: twoGames() },
+    );
+
+    expect(result.isError).toBe(true);
+    expect(result.content[0].text).toContain("DSKVUF");
+  });
+
+  it("chan khi gop qua nhieu cuoc mot luot", async () => {
+    const refs = Array.from({ length: MAX_CROSS_GAME_GAMES + 1 }, () => "DSKVUF");
+    const result = await callTool(
+      "get_balances_across_games",
+      { games: refs },
+      { context: twoGames() },
+    );
+
+    expect(result.isError).toBe(true);
+    expect(result.content[0].text).toContain(String(MAX_CROSS_GAME_GAMES));
+  });
+
+  it("bao loi khi games khong phai mang chuoi", async () => {
+    const context = twoGames();
+    const call = (games: unknown) =>
+      callTool("get_balances_across_games", { games }, { context });
+
+    expect((await call("DSKVUF")).isError).toBe(true);
+    expect((await call([1])).isError).toBe(true);
+  });
+
+  it("nguoi khac khong gop duoc du lieu cua chu", async () => {
+    const context = makeContext({ repo: fakeRepo({ twoGames: true }), userId: "user-khac" });
+    const result = await balances({}, context);
+
+    expect(result.games).toEqual([]);
+    expect(result.people).toEqual([]);
+    expect(result.totalExpense).toBe(0);
   });
 });
