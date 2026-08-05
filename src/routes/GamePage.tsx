@@ -16,6 +16,7 @@ import { GameDashboard } from "../components/GameDashboard";
 import { PhotoPanel } from "../components/PhotoPanel";
 import { ExpenseFab, type GameSection, MobileGameNav } from "../components/MobileGameNav";
 import { ParticipantPanel } from "../components/ParticipantPanel";
+import { SummaryImageCard } from "../components/SummaryImageCard";
 import { BottomSheet } from "../components/overlays";
 import { useToast } from "../components/Toast";
 import { EmptyState, LoadingState } from "../components/ui";
@@ -173,6 +174,24 @@ export function GamePage() {
     />
   );
 
+  const summaryImageCard = (
+    <SummaryImageCard
+      input={{
+        code: game.code,
+        name: game.name,
+        participants: game.participants,
+        expenses: game.expenses,
+        summary: game.summary,
+        settlementMode: game.settlementMode,
+        settlementHostId: game.settlementHostId,
+        shareUrl:
+          shareLink && shareLink.enabled
+            ? `${window.location.origin}/share/${shareLink.token}`
+            : undefined,
+      }}
+    />
+  );
+
   const copyAction = (
     <CopyMenu
       input={{
@@ -320,7 +339,10 @@ export function GamePage() {
           {expensePanel}
           {photoPanel}
         </div>
-        {dashboard}
+        <div className="space-y-5">
+          {dashboard}
+          {summaryImageCard}
+        </div>
       </div>
 
       {/* Mobile layout: mot phan mot man hinh, dieu huong bang bottom nav. */}
@@ -329,6 +351,7 @@ export function GamePage() {
         {activeSection === "expenses" && expensePanel}
         {activeSection === "photos" && photoPanel}
         {activeSection === "summary" && dashboard}
+        {activeSection === "summary" && summaryImageCard}
         {activeSection === "summary" && (
           <div className="rounded-lg border border-stone-200 bg-white p-3 shadow-sm dark:border-stone-800 dark:bg-stone-900 [&>button]:w-full">
             {copyAction}

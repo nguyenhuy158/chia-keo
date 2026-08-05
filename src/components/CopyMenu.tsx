@@ -18,11 +18,8 @@ import {
 } from "../../shared/summary-text";
 import { copyImage, copyText, downloadBlob } from "../adapters/browser/clipboard";
 import { buildSummaryImageFileName, renderSummaryImage } from "../adapters/browser/summary-image";
-import {
-  getStoredSummaryImageBackgroundId,
-  storeSummaryImageBackgroundId,
-  SUMMARY_IMAGE_BACKGROUNDS,
-} from "../adapters/browser/summary-image-backgrounds";
+import { SummaryBackgroundPicker } from "./SummaryBackgroundPicker";
+import { useSummaryImageBackground } from "./use-summary-image-background";
 import { useToast } from "./Toast";
 
 const MENU_WIDTH = 268;
@@ -69,8 +66,7 @@ export function CopyMenu({ input, className }: CopyMenuProps) {
   const triggerRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState<MenuPosition | null>(null);
-  // Doc localStorage mot lan luc mount: nen da chon van con sau khi tai lai trang.
-  const [backgroundId, setBackgroundId] = useState(getStoredSummaryImageBackgroundId);
+  const [backgroundId, chooseBackground] = useSummaryImageBackground();
 
   const open = position !== null;
 
@@ -119,11 +115,6 @@ export function CopyMenu({ input, className }: CopyMenuProps) {
     if (!input.shareUrl) return;
     const ok = await copyText(input.shareUrl);
     toast(ok ? "Đã sao chép link" : "Không sao chép được link", ok ? "success" : "error");
-  }
-
-  function chooseBackground(id: string) {
-    setBackgroundId(id);
-    storeSummaryImageBackgroundId(id);
   }
 
   async function copySummaryImage(variant: SummaryVariant = "compact") {
@@ -202,10 +193,6 @@ export function CopyMenu({ input, className }: CopyMenuProps) {
     });
   }
 
-  const selectedBackground =
-    SUMMARY_IMAGE_BACKGROUNDS.find((background) => background.id === backgroundId) ||
-    SUMMARY_IMAGE_BACKGROUNDS[0];
-
   async function handleSelect(action: MenuAction) {
     setPosition(null);
     await action.run();
@@ -235,32 +222,7 @@ export function CopyMenu({ input, className }: CopyMenuProps) {
             className="z-[70] overflow-hidden rounded-xl border border-stone-200 bg-white p-1 shadow-xl animate-[overlay-in_120ms_ease] dark:border-stone-700 dark:bg-stone-900"
           >
             <div className="border-b border-stone-200 px-3 pb-2.5 pt-2 dark:border-stone-700">
-              <p className="text-xs font-medium text-stone-500 dark:text-stone-400">
-                Nền ảnh · {selectedBackground.label}
-              </p>
-              <div className="mt-2 flex items-center gap-1.5">
-                {SUMMARY_IMAGE_BACKGROUNDS.map((background) => {
-                  const selected = background.id === backgroundId;
-                  return (
-                    <button
-                      key={background.id}
-                      type="button"
-                      onClick={() => chooseBackground(background.id)}
-                      title={`${background.label} — ${background.hint}`}
-                      aria-label={`Nền ${background.label}`}
-                      aria-pressed={selected}
-                      style={{ background: background.preview }}
-                      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md border text-[13px] leading-none transition ${
-                        selected
-                          ? "border-violet-500 ring-2 ring-violet-500/40"
-                          : "border-stone-300 hover:border-stone-400 dark:border-stone-600"
-                      }`}
-                    >
-                      {background.previewEmoji}
-                    </button>
-                  );
-                })}
-              </div>
+              <SummaryBackgroundPicker value={backgroundId} onChange={chooseBackground} />
             </div>
 
             {actions.map((action) => {
