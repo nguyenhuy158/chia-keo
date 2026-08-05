@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
+import { BUILD_INFO } from "../../shared/build-info";
 import { AUTH_BASE_PATH, createAuth, getTrustedOrigins } from "./auth";
 import type { Env } from "./env";
 import { rateLimitPost } from "./lib/rate-limit-middleware";
@@ -34,6 +35,9 @@ app.use("/api/*", (c, next) => {
     maxAge: 600,
   })(c, next);
 });
+
+// Code dang chay tren server nay, de kiem nhanh xem deploy da len chua.
+app.get("/api/version", (c) => c.json(BUILD_INFO));
 
 app.get("/api/health", async (c) => {
   // Kiem tra D1 da chay migration chua de chan doan nhanh loi 500 khi login.

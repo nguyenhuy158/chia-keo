@@ -39,8 +39,11 @@ export type McpTool<Context, Scope extends string = string> = {
   name: string;
   title: string;
   description: string;
-  /** Scope token phai co moi goi duoc tool nay. */
-  scope: Scope;
+  /**
+   * Scope token phai co moi goi duoc tool nay. Bo trong = moi token deu goi
+   * duoc; chi dung cho tool khong doc du lieu cua ai (vd. version cua server).
+   */
+  scope?: Scope;
   /** JSON Schema cho tham so; de trong object rong neu tool khong nhan gi. */
   inputSchema: Record<string, unknown>;
   run(args: Record<string, unknown>, context: Context): Promise<unknown>;
@@ -113,7 +116,7 @@ async function callTool<Context>(
 
   // Noi ro thieu scope nao thay vi bao "khong co tool": ten tool khong phai bi
   // mat, con nguoi dung thi can biet phai tao lai token voi quyen gi.
-  if (!scopes.includes(tool.scope)) {
+  if (tool.scope && !scopes.includes(tool.scope)) {
     return toolFailure(
       id,
       `Token này không có quyền "${tool.scope}" nên không gọi được ${tool.name}. ` +
@@ -187,7 +190,9 @@ export async function handleMcpMessage<Context>(
       // Chi liet ke tool trong quyen: model khong nhin thay thu no khong duoc
       // goi, nen khong lang phi luot goi vao tool chac chan bi tu choi.
       return ok(requestId, {
-        tools: tools.filter((tool) => scopes.includes(tool.scope)).map(describeTool),
+        tools: tools
+          .filter((tool) => !tool.scope || scopes.includes(tool.scope))
+          .map(describeTool),
       });
 
     case "tools/call":

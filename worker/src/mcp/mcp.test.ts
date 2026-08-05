@@ -88,6 +88,7 @@ describe("MCP protocol", () => {
     const { tools } = response?.result as { tools: { name: string; inputSchema: unknown }[] };
 
     expect(tools.map((tool) => tool.name)).toEqual([
+      "get_version",
       "list_games",
       "get_game",
       "get_summary_text",
@@ -104,7 +105,8 @@ describe("MCP protocol", () => {
     );
     const { tools } = response?.result as { tools: { name: string }[] };
 
-    expect(tools.map((tool) => tool.name)).toEqual(["get_shared_game"]);
+    // get_version khong doi scope nen luon co mat.
+    expect(tools.map((tool) => tool.name)).toEqual(["get_version", "get_shared_game"]);
   });
 
   it("chan tool ngoai quyen va noi ro thieu scope nao", async () => {
@@ -123,13 +125,27 @@ describe("MCP protocol", () => {
     expect(result.content[0].text).toContain("games:read");
   });
 
-  it("token khong scope nao thi khong thay tool nao", async () => {
+  it("token khong scope nao chi thay tool khong can quyen", async () => {
     const response = await send({ jsonrpc: "2.0", id: 1, method: "tools/list" }, { scopes: [] });
-    expect((response?.result as { tools: unknown[] }).tools).toEqual([]);
+    const { tools } = response?.result as { tools: { name: string }[] };
+
+    expect(tools.map((tool) => tool.name)).toEqual(["get_version"]);
   });
 
-  it("moi tool khai bao mot scope nam trong danh sach da biet", () => {
-    for (const tool of mcpTools) expect(MCP_SCOPES).toContain(tool.scope);
+  it("moi tool doc du lieu khai bao mot scope nam trong danh sach da biet", () => {
+    for (const tool of mcpTools) {
+      if (tool.name === "get_version") continue;
+      expect(MCP_SCOPES).toContain(tool.scope);
+    }
+  });
+
+  it("get_version tra commit dang chay, khong can scope nao", async () => {
+    const result = await callTool("get_version", {}, { scopes: [] });
+    const info = parsed<{ commit: string; shortCommit: string; appOrigin: string }>(result);
+
+    expect(result.isError).toBeFalsy();
+    expect(info.shortCommit).toBe(info.commit.slice(0, 7));
+    expect(info.appOrigin).toBe(APP_ORIGIN);
   });
 
   it("bao method khong ho tro thay vi im lang", async () => {

@@ -1,4 +1,5 @@
 import type { ApiGame, ApiGameDetail, ApiShareView } from "../../../shared/api-types";
+import { BUILD_INFO } from "../../../shared/build-info";
 import type { McpScope } from "../../../shared/schemas";
 import {
   buildSummaryText,
@@ -124,6 +125,20 @@ function toSummaryInput(
 }
 
 export const mcpTools: McpTool<McpContext, McpScope>[] = [
+  {
+    name: "get_version",
+    title: "Version đang deploy",
+    description:
+      "Commit mà website đang chạy: sha ngắn, tiêu đề commit, ngày commit, nhánh và thời điểm " +
+      "build. Dùng để kiểm tra nhanh xem một thay đổi đã lên production chưa, hoặc khi kết quả " +
+      "trên web khác với code đang đọc dưới máy. Không cần quyền gì, mọi token đều gọi được.",
+    // Khong khai bao scope: day la thong tin ve server, khong phai du lieu cua ai.
+    inputSchema: { type: "object", properties: {}, additionalProperties: false },
+    run: async (_args, context) => ({
+      ...BUILD_INFO,
+      appOrigin: context.appOrigin,
+    }),
+  },
   {
     name: "list_games",
     title: "Danh sách cuộc chia",

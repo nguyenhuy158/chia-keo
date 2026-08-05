@@ -33,6 +33,7 @@ shared/                        # Pure domain kernel shared by FE + worker (no IO
   rate-limit.ts                #   Pure rate-limit logic
   vietqr.ts                    #   VietQR URL building (worker proxies QR too)
   summary-text.ts              #   Summary document for copy-as-text/image
+  build-info.ts                #   Deployed commit (generated at build; GET /api/version)
 
 src/                           # Frontend hexagon
   core/

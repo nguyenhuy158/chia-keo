@@ -9,6 +9,9 @@ dist/
 # TypeScript
 *.tsbuildinfo
 
+# Dau vet build sinh tu git moi lan build (scripts/build-info.mjs)
+shared/build-info.generated.ts
+
 # Environment files
 .env*
 

@@ -141,7 +141,11 @@ describe("handleMcpHttpRequest", () => {
     );
     const body = (await response.json()) as { result: { tools: { name: string }[] } };
 
-    expect(body.result.tools.map((tool) => tool.name)).toEqual(["get_shared_game"]);
+    // get_version khong doi quyen nen token nao cung thay.
+    expect(body.result.tools.map((tool) => tool.name)).toEqual([
+      "get_version",
+      "get_shared_game",
+    ]);
   });
 
   it("hai token cua hai user doc du lieu cua chinh minh", async () => {

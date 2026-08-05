@@ -1,6 +1,7 @@
 # MCP — việc còn lại
 
-Trạng thái: MCP server đã chạy trên prod (`POST /api/mcp`), 4 tool chỉ đọc,
+Trạng thái: MCP server đã chạy trên prod (`POST /api/mcp`), 5 tool chỉ đọc
+(`get_version` không đòi scope, các tool đọc dữ liệu thì có),
 token bearer `ck_...` quản lý qua `/api/mcp-tokens`. Test đã phủ protocol,
 transport và token. Danh sách dưới là phần làm cho hoàn thiện hơn, xếp theo
 giá trị trên công sức.
