@@ -1,7 +1,7 @@
 // Port cho tang luu tru. Adapter (D1/drizzle hoac DB khac) chi can implement
 // interface nay; core khong biet gi ve SQL hay driver ben duoi.
 
-import type { ContactSourceRow } from "../../../../shared/contacts";
+import type { ContactBookRow, ContactSourceRow } from "../../../../shared/contacts";
 import type { SettlementMode } from "../../../../shared/schemas";
 
 export type GameRow = {
@@ -201,6 +201,20 @@ export type GameRepository = {
     /** false khi token khong ton tai hoac khong thuoc user nay. */
     revoke(tokenId: string, userId: string, revokedAt: string): Promise<boolean>;
     touchLastUsed(tokenId: string, lastUsedAt: string): Promise<void>;
+  };
+  contacts: {
+    listByOwner(userId: string): Promise<ContactBookRow[]>;
+    getOwned(contactId: string, userId: string): Promise<ContactBookRow | null>;
+    /** Cung nameKey thi ghi de dong cu: danh ba khong duoc co hai "Hồng". */
+    upsert(row: ContactBookRow & { ownerUserId: string; nameKey: string; createdAt: string }): Promise<void>;
+    update(
+      contactId: string,
+      fields: Partial<Pick<ContactBookRow, "name" | "bankId" | "accountNo" | "accountName">> & {
+        nameKey?: string;
+      },
+      updatedAt: string,
+    ): Promise<void>;
+    delete(contactId: string): Promise<void>;
   };
   gameEvents: {
     /** Lich su cua mot cuoc chia, moi nhat truoc. */

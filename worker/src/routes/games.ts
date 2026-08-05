@@ -1,5 +1,7 @@
 import { Hono } from "hono";
 import {
+  contactInputSchema,
+  contactUpdateSchema,
   expenseInputSchema,
   gameInputSchema,
   gameUpdateSchema,
@@ -22,7 +24,12 @@ import {
   listGames,
   updateGame,
 } from "../core/application/games";
-import { listContacts } from "../core/application/contacts";
+import {
+  createContact,
+  deleteContact,
+  listContacts,
+  updateContact,
+} from "../core/application/contacts";
 import { listGameEvents, undoGameEvent } from "../core/application/game-events";
 import {
   addParticipant,
@@ -48,9 +55,30 @@ protectPaths(
   "/expenses/*",
   "/events/*",
   "/contacts",
+  "/contacts/*",
 );
 
 gamesRouter.get("/contacts", (c) => respond(c, () => listContacts(c.get("repo"), c.get("userId"))));
+
+gamesRouter.post("/contacts", async (c) => {
+  const input = await readJson(c, contactInputSchema);
+  if (!input) return invalidInput(c);
+
+  return respond(c, () => createContact(c.get("repo"), c.get("userId"), input), 201);
+});
+
+gamesRouter.patch("/contacts/:contactId", async (c) => {
+  const input = await readJson(c, contactUpdateSchema);
+  if (!input) return invalidInput(c);
+
+  return respond(c, () =>
+    updateContact(c.get("repo"), c.get("userId"), c.req.param("contactId"), input),
+  );
+});
+
+gamesRouter.delete("/contacts/:contactId", (c) =>
+  respond(c, () => deleteContact(c.get("repo"), c.get("userId"), c.req.param("contactId"))),
+);
 
 gamesRouter.get("/games", (c) => respond(c, () => listGames(c.get("repo"), c.get("userId"))));
 

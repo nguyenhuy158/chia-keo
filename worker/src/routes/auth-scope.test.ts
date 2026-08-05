@@ -22,7 +22,7 @@ const PROTECTED_ROUTERS: [string, Hono<never>][] = [
 const PUBLIC_PATHS = ["/api/share/tok", "/api/share/tok/photos", "/api/qr", "/api/health"];
 
 /** Route can dang nhap: khong co session phai bi chan tu middleware. */
-const GUARDED_PATHS = ["/api/games", "/api/contacts"];
+const GUARDED_PATHS = ["/api/games", "/api/contacts", "/api/contacts/abc"];
 
 describe("pham vi cua requireUser", () => {
   for (const path of GUARDED_PATHS) {

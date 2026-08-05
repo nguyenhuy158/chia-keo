@@ -91,6 +91,28 @@ export const participantInputSchema = z.object({
 });
 
 /**
+ * Mot dong danh ba. Cung field voi participant nhung khong dung chung schema:
+ * participant thuoc mot cuoc chia, danh ba thuoc tai khoan — hai thu doi doc
+ * lap nhau nen gop schema se rang buoc sai cho.
+ */
+export const contactInputSchema = z.object({
+  name: z.string().trim().min(1).max(PARTICIPANT_NAME_MAX_LENGTH).transform(capitalizeName),
+  bankId: z.string().trim().max(20).default(""),
+  accountNo: z.string().trim().max(30).default(""),
+  accountName: z.string().trim().max(50).default(""),
+});
+
+/** Sua danh ba: khong dung .partial() de khong keo theo .default() — xem gameUpdateSchema. */
+export const contactUpdateSchema = z
+  .object({
+    name: z.string().trim().min(1).max(PARTICIPANT_NAME_MAX_LENGTH).transform(capitalizeName),
+    bankId: z.string().trim().max(20),
+    accountNo: z.string().trim().max(30),
+    accountName: z.string().trim().max(50),
+  })
+  .partial();
+
+/**
  * Them nhieu nguoi mot luot (chon tu danh ba). Gui mot request thay vi N
  * request: FE khong phai xu ly ca "them duoc 3/5 nguoi roi loi".
  */
@@ -198,6 +220,8 @@ export type GameInput = z.input<typeof gameInputSchema>;
 export type GameUpdateInput = z.input<typeof gameUpdateSchema>;
 export type ParticipantInput = z.infer<typeof participantInputSchema>;
 export type ParticipantBatchInput = z.infer<typeof participantBatchInputSchema>;
+export type ContactInput = z.infer<typeof contactInputSchema>;
+export type ContactUpdateInput = z.infer<typeof contactUpdateSchema>;
 export type ExpenseInput = z.infer<typeof expenseInputSchema>;
 export type ExpenseSplitInput = z.infer<typeof expenseSplitInputSchema>;
 export type SplitMode = z.infer<typeof splitModeSchema>;

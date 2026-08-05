@@ -389,6 +389,73 @@ export function createD1GameRepository(d1: D1Database): GameRepository {
       },
     },
 
+    contacts: {
+      async listByOwner(userId) {
+        return db
+          .select({
+            id: schema.contacts.id,
+            name: schema.contacts.name,
+            bankId: schema.contacts.bankId,
+            accountNo: schema.contacts.accountNo,
+            accountName: schema.contacts.accountName,
+            updatedAt: schema.contacts.updatedAt,
+          })
+          .from(schema.contacts)
+          .where(eq(schema.contacts.ownerUserId, userId))
+          .orderBy(asc(schema.contacts.name));
+      },
+      async getOwned(contactId, userId) {
+        const rows = await db
+          .select({
+            id: schema.contacts.id,
+            name: schema.contacts.name,
+            bankId: schema.contacts.bankId,
+            accountNo: schema.contacts.accountNo,
+            accountName: schema.contacts.accountName,
+            updatedAt: schema.contacts.updatedAt,
+          })
+          .from(schema.contacts)
+          .where(and(eq(schema.contacts.id, contactId), eq(schema.contacts.ownerUserId, userId)))
+          .limit(1);
+        return rows[0] || null;
+      },
+      async upsert(row) {
+        await db
+          .insert(schema.contacts)
+          .values({
+            id: row.id,
+            ownerUserId: row.ownerUserId,
+            name: row.name,
+            nameKey: row.nameKey,
+            bankId: row.bankId,
+            accountNo: row.accountNo,
+            accountName: row.accountName,
+            createdAt: row.createdAt,
+            updatedAt: row.updatedAt,
+          })
+          // Them lai nguoi da co trong danh ba la y muon cap nhat, khong phai loi.
+          .onConflictDoUpdate({
+            target: [schema.contacts.ownerUserId, schema.contacts.nameKey],
+            set: {
+              name: row.name,
+              bankId: row.bankId,
+              accountNo: row.accountNo,
+              accountName: row.accountName,
+              updatedAt: row.updatedAt,
+            },
+          });
+      },
+      async update(contactId, fields, updatedAt) {
+        await db
+          .update(schema.contacts)
+          .set({ ...fields, updatedAt })
+          .where(eq(schema.contacts.id, contactId));
+      },
+      async delete(contactId) {
+        await db.delete(schema.contacts).where(eq(schema.contacts.id, contactId));
+      },
+    },
+
     gameEvents: {
       async listByGame(gameId, limit) {
         return db

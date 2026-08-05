@@ -165,6 +165,34 @@ export const gamePhotos = sqliteTable(
 );
 
 /**
+ * Danh ba nguoi quen do user tu nhap. Khac voi danh sach suy ra tu lich su
+ * (shared/contacts.ts): o day luu duoc nguoi chua tham gia cuoc chia nao, va
+ * sua/xoa duoc. Hai nguon duoc gop luc doc, ban tu nhap thang.
+ */
+export const contacts = sqliteTable(
+  "contacts",
+  {
+    id: text("id").primaryKey(),
+    ownerUserId: text("owner_user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    /**
+     * Ten da chuan hoa (normalizeContactName). Co cot rieng vi SQLite khong
+     * co unique index phan biet dau tieng Viet theo y minh — chuan hoa o code
+     * roi luu lai la cach duy nhat chan duoc "Hồng" va "hồng " thanh hai dong.
+     */
+    nameKey: text("name_key").notNull(),
+    bankId: text("bank_id").notNull().default(""),
+    accountNo: text("account_no").notNull().default(""),
+    accountName: text("account_name").notNull().default(""),
+    createdAt: text("created_at").notNull(),
+    updatedAt: text("updated_at").notNull(),
+  },
+  (table) => [uniqueIndex("contacts_owner_name_key_idx").on(table.ownerUserId, table.nameKey)],
+);
+
+/**
  * Lich su thao tac cua mot cuoc chia. `payload` la JSON anh chup luc thao tac
  * xay ra — xem shared/game-events.ts; cau chu hien cho nguoi dung sinh luc doc
  * chu khong luu o day.

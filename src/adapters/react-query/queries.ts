@@ -4,7 +4,10 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ApiGameDetail, ApiPhoto } from "../../../shared/api-types";
+import type { Contact } from "../../../shared/contacts";
 import type {
+  ContactInput,
+  ContactUpdateInput,
   ExpenseInput,
   GameInput,
   McpTokenInput,
@@ -71,6 +74,37 @@ export function useContacts() {
     queryFn: () => getGameApi().contacts.list(),
     select: (data) => data.contacts,
   });
+}
+
+/**
+ * Cac mutation danh ba tra ve luon danh sach da gop, nen ghi thang vao cache:
+ * khoi mot vong invalidate + fetch lai cho moi lan sua mot dong.
+ */
+function useContactMutation<TVariables>(
+  mutationFn: (variables: TVariables) => Promise<{ contacts: Contact[] }>,
+) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn,
+    onSuccess: (data) => {
+      queryClient.setQueryData(contactKeys.all, data);
+    },
+  });
+}
+
+export function useCreateContact() {
+  return useContactMutation((input: ContactInput) => getGameApi().contacts.create(input));
+}
+
+export function useUpdateContact() {
+  return useContactMutation((variables: { contactId: string; input: ContactUpdateInput }) =>
+    getGameApi().contacts.update(variables.contactId, variables.input),
+  );
+}
+
+export function useDeleteContact() {
+  return useContactMutation((contactId: string) => getGameApi().contacts.remove(contactId));
 }
 
 export function useGameEvents(gameId: string, enabled: boolean) {

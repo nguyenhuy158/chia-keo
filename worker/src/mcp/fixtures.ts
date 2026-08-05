@@ -191,6 +191,13 @@ export function fakeRepo(
       delete: unused("participants.delete"),
     },
     paymentProfiles: { listByParticipantIds: async () => [] },
+    contacts: {
+      listByOwner: async () => [],
+      getOwned: unused("contacts.getOwned"),
+      upsert: unused("contacts.upsert"),
+      update: unused("contacts.update"),
+      delete: unused("contacts.delete"),
+    },
     gameEvents: {
       listByGame: async () => [],
       getWithGame: unused("gameEvents.getWithGame"),

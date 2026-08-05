@@ -51,6 +51,9 @@ export function createHttpGameApi(): GameApiPort {
     },
     contacts: {
       list: () => request(`/api/contacts`),
+      create: (input) => post(`/api/contacts`, input),
+      update: (contactId, input) => patch(`/api/contacts/${contactId}`, input),
+      remove: (contactId) => destroy(`/api/contacts/${contactId}`),
     },
     participants: {
       create: (gameId, input) => post(`/api/games/${gameId}/participants`, input),

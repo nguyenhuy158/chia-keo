@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { buildContacts, type ContactSourceRow, normalizeContactName } from "./contacts";
+import {
+  buildContacts,
+  type ContactSourceRow,
+  mergeContacts,
+  normalizeContactName,
+} from "./contacts";
 
 function row(overrides: Partial<ContactSourceRow> & { name: string }): ContactSourceRow {
   return {
@@ -99,5 +104,66 @@ describe("buildContacts", () => {
 
   it("khong co ai thi tra danh sach rong", () => {
     expect(buildContacts([])).toEqual([]);
+  });
+});
+
+describe("mergeContacts", () => {
+  const book = [
+    {
+      id: "c1",
+      name: "Hồng",
+      bankId: "TCB",
+      accountNo: "9999",
+      accountName: "NGUYEN THI HONG",
+      updatedAt: "2026-06-01T00:00:00.000Z",
+    },
+  ];
+
+  it("ban tu nhap thang thong tin suy ra tu lich su", () => {
+    const derived = buildContacts([
+      row({ name: "Hồng", gameId: "g1", bankId: "VCB", accountNo: "0123" }),
+    ]);
+
+    const merged = mergeContacts(book, derived);
+
+    expect(merged).toHaveLength(1);
+    expect(merged[0]).toMatchObject({
+      name: "Hồng",
+      bankId: "TCB",
+      accountNo: "9999",
+      source: "book",
+      id: "c1",
+    });
+  });
+
+  it("giu so cuoc chia tu lich su vi bang danh ba khong biet", () => {
+    const derived = buildContacts([
+      row({ name: "Hồng", gameId: "g1" }),
+      row({ name: "Hồng", gameId: "g2" }),
+    ]);
+
+    expect(mergeContacts(book, derived)[0].gameCount).toBe(2);
+  });
+
+  it("nguoi moi nhap chua di cuoc nao van co trong danh sach", () => {
+    const merged = mergeContacts(book, []);
+
+    expect(merged[0]).toMatchObject({ name: "Hồng", gameCount: 0, source: "book" });
+    expect(merged[0].lastUsedAt).toBe("2026-06-01T00:00:00.000Z");
+  });
+
+  it("nguoi chi co trong lich su giu source history va khong co id", () => {
+    const derived = buildContacts([row({ name: "Kiệt", gameId: "g1" })]);
+
+    const merged = mergeContacts(book, derived);
+    const kiet = merged.find((contact) => contact.name === "Kiệt");
+
+    expect(kiet).toMatchObject({ source: "history", id: null });
+  });
+
+  it("gop theo ten da chuan hoa, khong tao hai dong cho cung mot nguoi", () => {
+    const derived = buildContacts([row({ name: "hồng ", gameId: "g1" })]);
+
+    expect(mergeContacts(book, derived)).toHaveLength(1);
   });
 });

@@ -14,6 +14,8 @@ import type {
 import type { Contact } from "../../../shared/contacts";
 import type { ApiGameEvent } from "../../../shared/game-events";
 import type {
+  ContactInput,
+  ContactUpdateInput,
   ExpenseInput,
   GameInput,
   GameUpdateInput,
@@ -41,8 +43,12 @@ export type GameApiPort = {
     undo(eventId: string): Promise<ApiGameDetail>;
   };
   contacts: {
-    /** Nguoi quen suy ra tu cac cuoc chia da tao, nguoi hay di cung len truoc. */
+    /** Danh ba tu nhap gop voi nguoi suy ra tu cac cuoc chia da tao. */
     list(): Promise<{ contacts: Contact[] }>;
+    /** Ten da co trong danh ba thi cap nhat dong do, khong tao dong thu hai. */
+    create(input: ContactInput): Promise<{ contacts: Contact[] }>;
+    update(contactId: string, input: ContactUpdateInput): Promise<{ contacts: Contact[] }>;
+    remove(contactId: string): Promise<{ contacts: Contact[] }>;
   };
   participants: {
     create(gameId: string, input: ParticipantInput): Promise<ApiGameDetail>;

@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { MAX_QUICK_PARTICIPANTS } from "../../shared/schemas";
 import { useCreateGame, useDuplicateGame, useGames } from "../adapters/react-query/queries";
+import { ContactBookCard } from "./ContactBookCard";
 
 const gameFormSchema = z.object({
   name: z.string().trim().min(1, "Nhập tên cuộc chơi"),
@@ -113,6 +114,8 @@ export function GamesSidebar({ onNavigate }: { onNavigate?: () => void }) {
           </p>
         )}
       </form>
+
+      <ContactBookCard />
 
       <section className="rounded-lg border border-stone-200 bg-white p-3 shadow-sm dark:border-stone-800 dark:bg-stone-900">
         <div className="mb-2 flex items-center gap-2 px-1 text-sm font-semibold text-stone-800 dark:text-stone-200">
