@@ -1,12 +1,14 @@
 # TODO: UI/UX cần tối ưu
 
-Ghi lại lúc: 2026-08-05. Chưa cái nào được làm — đây là backlog để chọn dần,
-không phải cam kết.
+Ghi lại lúc: 2026-08-05.
 
-## 1. Skeleton loader thay chữ "Đang tải..."
-Hiện các panel (ExpensePanel, PhotoPanel, GamesSidebar...) khi pending chỉ
-hiện dòng chữ xám. Thay bằng khung xám nhấp nháy đúng hình dạng nội dung sắp
-hiện (card, dòng list) — cảm giác nhanh hơn dù thời gian chờ y hệt.
+## 1. ~~Skeleton loader thay chữ "Đang tải..."~~ — Đã làm (2026-08-05)
+`Skeleton`/`SkeletonCard`/`SkeletonListRow`/`SkeletonPhotoGrid` trong
+`src/components/ui.tsx`, dùng ở GamesSidebar, TrashCard, ContactBookCard,
+HistoryPanel, McpTokenPanel, PhotoPanel, SharePhotoGallery. Còn giữ nguyên
+`LoadingState` chữ cho các trang full-page (GamePage, SharePage) và cho label
+tiến trình upload ảnh thật ("Đang tải 2/5") — hai chỗ đó không phải khung chờ
+ban đầu nên không cần mô phỏng hình dạng.
 
 ## 2. Sidebar nhớ trạng thái gấp/mở
 `ContactBookCard` và `TrashCard` giờ có 4 card trong sidebar, mỗi lần load lại

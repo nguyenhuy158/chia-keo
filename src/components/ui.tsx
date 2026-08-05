@@ -26,6 +26,58 @@ export function LoadingState({ label = "Đang tải..." }: { label?: string }) {
   );
 }
 
+/** Khoi xam nhap nhay — vien gach cho Skeleton* ben duoi, it khi dung truc tiep. */
+export function Skeleton({ className = "" }: { className?: string }) {
+  return (
+    <div
+      aria-hidden="true"
+      className={`animate-pulse rounded-md bg-stone-200 dark:bg-stone-800 ${className}`}
+    />
+  );
+}
+
+/**
+ * Khung cho mot dong trong danh sach co vien (GamesSidebar, TrashCard,
+ * McpTokenPanel): tieu de + dong phu, dung hinh dang voi item that thay vi
+ * chu "Đang tải..." de cam giac nhanh hon du thoi gian cho nhu nhau.
+ */
+export function SkeletonCard() {
+  return (
+    <div className="rounded-md border border-stone-200 p-3 dark:border-stone-800">
+      <Skeleton className="h-4 w-2/3" />
+      <Skeleton className="mt-2 h-3 w-1/3" />
+    </div>
+  );
+}
+
+/**
+ * Khung cho mot dong trong danh sach khong vien, ngan cach bang duong ke
+ * (ContactBookCard, HistoryPanel). `icon` them mot khoi tron ben trai, dung
+ * cho danh sach co icon nhu HistoryPanel.
+ */
+export function SkeletonListRow({ icon = false }: { icon?: boolean }) {
+  return (
+    <div className="flex items-center gap-3 py-2.5">
+      {icon && <Skeleton className="h-8 w-8 shrink-0 rounded-full" />}
+      <div className="min-w-0 flex-1 space-y-1.5">
+        <Skeleton className="h-3.5 w-2/3" />
+        <Skeleton className="h-3 w-1/3" />
+      </div>
+    </div>
+  );
+}
+
+/** Luoi o vuong cho anh dang tai — dung so cot voi PhotoGrid that. */
+export function SkeletonPhotoGrid({ count = 6 }: { count?: number }) {
+  return (
+    <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+      {Array.from({ length: count }, (_unused, index) => (
+        <Skeleton key={index} className="aspect-square rounded-md" />
+      ))}
+    </div>
+  );
+}
+
 export function Field({
   label,
   error,

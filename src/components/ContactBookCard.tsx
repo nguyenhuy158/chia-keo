@@ -11,6 +11,7 @@ import { getVietQrBankLabel } from "../adapters/browser/vietqr";
 import { BankSelect } from "./BankSelect";
 import { useConfirm } from "./ConfirmDialog";
 import { useToast } from "./Toast";
+import { SkeletonListRow } from "./ui";
 
 type Draft = { name: string; bankId: string; accountNo: string; accountName: string };
 
@@ -243,7 +244,11 @@ export function ContactBookCard() {
       )}
 
       {contactsQuery.isPending ? (
-        <p className="px-1 py-3 text-sm text-stone-500 dark:text-stone-400">Đang tải...</p>
+        <div className="divide-y divide-stone-100 dark:divide-stone-800">
+          <SkeletonListRow />
+          <SkeletonListRow />
+          <SkeletonListRow />
+        </div>
       ) : contacts.length === 0 ? (
         <p className="px-1 py-3 text-sm text-stone-500 dark:text-stone-400">
           Chưa có ai. Thêm sẵn người hay đi cùng để mỗi cuộc chơi chỉ cần tick chọn.

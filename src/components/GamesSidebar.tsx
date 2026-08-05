@@ -7,6 +7,7 @@ import { z } from "zod";
 import { MAX_QUICK_PARTICIPANTS } from "../../shared/schemas";
 import { useCreateGame, useDuplicateGame, useGames } from "../adapters/react-query/queries";
 import { ContactBookCard } from "./ContactBookCard";
+import { SkeletonCard } from "./ui";
 import { TrashCard } from "./TrashCard";
 
 const gameFormSchema = z.object({
@@ -124,7 +125,11 @@ export function GamesSidebar({ onNavigate }: { onNavigate?: () => void }) {
           Cuộc chơi
         </div>
         {gamesQuery.isPending ? (
-          <p className="px-1 py-4 text-sm text-stone-500 dark:text-stone-400">Đang tải...</p>
+          <div className="space-y-2">
+            <SkeletonCard />
+            <SkeletonCard />
+            <SkeletonCard />
+          </div>
         ) : gamesQuery.data && gamesQuery.data.length > 0 ? (
           <div className="space-y-2">
             {gamesQuery.data.map((game) => (

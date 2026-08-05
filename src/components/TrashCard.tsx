@@ -5,6 +5,7 @@ import { TRASH_RETENTION_DAYS } from "../../shared/schemas";
 import { usePurgeGame, useRestoreGame, useTrashedGames } from "../adapters/react-query/queries";
 import { useConfirm } from "./ConfirmDialog";
 import { useToast } from "./Toast";
+import { SkeletonCard } from "./ui";
 
 /** Con bao nhieu ngay nua truoc khi cuoc chia bi xoa han. */
 function daysLeft(deletedAt: string) {
@@ -77,7 +78,10 @@ export function TrashCard() {
       {open && (
         <>
           {trashQuery.isPending ? (
-            <p className="px-1 py-3 text-sm text-stone-500 dark:text-stone-400">Đang tải...</p>
+            <div className="mt-1 space-y-2">
+              <SkeletonCard />
+              <SkeletonCard />
+            </div>
           ) : games.length === 0 ? (
             <p className="px-1 py-3 text-sm text-stone-500 dark:text-stone-400">
               Trống. Cuộc chơi đã xóa nằm ở đây {TRASH_RETENTION_DAYS} ngày.

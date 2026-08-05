@@ -18,6 +18,7 @@ import {
 } from "../adapters/react-query/queries";
 import { useConfirm } from "./ConfirmDialog";
 import { useToast } from "./Toast";
+import { SkeletonCard } from "./ui";
 
 /** Nhan tieng Viet cho tung quyen, kem tool ma quyen do mo ra. */
 const SCOPE_INFO: Record<McpScope, { label: string; hint: string }> = {
@@ -424,7 +425,10 @@ export function McpTokenPanel() {
           </div>
 
           {tokensQuery.isPending ? (
-            <p className="py-4 text-sm text-stone-500 dark:text-stone-400">Đang tải...</p>
+            <div className="space-y-2">
+              <SkeletonCard />
+              <SkeletonCard />
+            </div>
           ) : tokensQuery.isError ? (
             <p className="py-4 text-sm text-rose-600 dark:text-rose-400">
               Không tải được danh sách token.

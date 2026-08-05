@@ -6,6 +6,7 @@ import { usePhotoUploader } from "../adapters/react-query/photo-upload";
 import { PhotoGrid } from "./PhotoGrid";
 import { useToast } from "./Toast";
 import { usePhotoViewer } from "./use-photo-viewer";
+import { SkeletonPhotoGrid } from "./ui";
 
 /** HEIC tu iPhone duoc trinh duyet giai ma roi nen lai thanh JPEG truoc khi gui. */
 export const PHOTO_FILE_ACCEPT = "image/jpeg,image/png,image/webp,image/heic,image/heif";
@@ -108,7 +109,7 @@ export function PhotoPanel({ gameId, photos, expenses, loading = false }: PhotoP
       )}
 
       {loading ? (
-        <p className="text-sm text-stone-500 dark:text-stone-400">Đang tải ảnh...</p>
+        <SkeletonPhotoGrid />
       ) : photos.length > 0 ? (
         <div className="max-h-[60vh] overflow-y-auto pr-0.5">
           <PhotoGrid photos={photos} expenseTitleById={expenseTitleById} onOpen={photoViewer.open} />

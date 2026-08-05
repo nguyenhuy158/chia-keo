@@ -5,7 +5,7 @@ import { stepPhotoIndex } from "../../shared/photos";
 import { useSharePhoto, useSharePhotos } from "../adapters/react-query/queries";
 import { PhotoGrid } from "./PhotoGrid";
 import { PhotoViewer } from "./PhotoViewer";
-import { EmptyState, LoadingState } from "./ui";
+import { EmptyState, SkeletonPhotoGrid } from "./ui";
 
 type SharePhotoGalleryProps = {
   token: string;
@@ -22,7 +22,7 @@ export function SharePhotoGallery({ token, expenses }: SharePhotoGalleryProps) {
   const detail = useSharePhoto(token, photo?.id || "");
   const expenseTitleById = new Map(expenses.map((expense) => [expense.id, expense.title]));
 
-  if (photosQuery.isPending) return <LoadingState label="Đang tải ảnh..." />;
+  if (photosQuery.isPending) return <SkeletonPhotoGrid count={8} />;
 
   if (photos.length === 0) {
     return (

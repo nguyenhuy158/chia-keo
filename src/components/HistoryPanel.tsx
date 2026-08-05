@@ -19,7 +19,7 @@ import {
 } from "../../shared/game-events";
 import { useGameEvents, useUndoGameEvent } from "../adapters/react-query/queries";
 import { useToast } from "./Toast";
-import { EmptyState } from "./ui";
+import { EmptyState, SkeletonListRow } from "./ui";
 
 const ICONS: Record<GameEventKind, LucideIcon> = {
   game_created: History,
@@ -159,7 +159,11 @@ export function HistoryPanel({ gameId, collapsible = false }: HistoryPanelProps)
           </p>
 
           {eventsQuery.isPending ? (
-            <p className="mt-3 text-sm text-stone-500 dark:text-stone-400">Đang tải...</p>
+            <div className="mt-2 divide-y divide-stone-100 dark:divide-stone-800">
+              <SkeletonListRow icon />
+              <SkeletonListRow icon />
+              <SkeletonListRow icon />
+            </div>
           ) : events.length === 0 ? (
             <div className="mt-2">
               <EmptyState
