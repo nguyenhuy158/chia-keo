@@ -8,6 +8,7 @@ import type { ParticipantInput } from "../../shared/schemas";
 import { getVietQrBankLabel } from "../adapters/browser/vietqr";
 import { Avatar } from "./Avatar";
 import { BankSelect } from "./BankSelect";
+import { useConfirm } from "./ConfirmDialog";
 import { ContactPicker } from "./ContactPicker";
 import { SwipeToDelete } from "./SwipeToDelete";
 import { Field } from "./ui";
@@ -45,11 +46,29 @@ export function ParticipantPanel({
   onUpdate,
   onRemove,
 }: ParticipantPanelProps) {
+  const confirm = useConfirm();
   const [editingParticipantId, setEditingParticipantId] = useState<string | null>(null);
   const form = useForm<ParticipantFormValues>({
     resolver: zodResolver(participantFormSchema),
     defaultValues: emptyForm,
   });
+
+  /**
+   * Xoa nguoi cascade that (chia lai phan cac khoan chi khac) va khong nam
+   * trong Lich su/hoan tac, khac voi xoa khoan chi — nen phai hoi truoc, dung
+   * chung cho ca nut icon lan SwipeToDelete de khong co duong nao lot luoi.
+   */
+  async function handleRemove(participant: ApiParticipant) {
+    const ok = await confirm({
+      title: `Xóa ${participant.name} khỏi cuộc chơi?`,
+      description: "Các khoản chi đã chia cho người này sẽ được chia lại cho những người còn lại.",
+      confirmLabel: "Xóa",
+      destructive: true,
+    });
+    if (!ok) return;
+
+    onRemove(participant.id);
+  }
 
   const handleAdd = form.handleSubmit(async (values) => {
     await onAdd(values);
@@ -131,7 +150,7 @@ export function ParticipantPanel({
 
       <div className="mt-5 grid gap-2 sm:grid-cols-2">
         {participants.map((participant) => (
-          <SwipeToDelete key={participant.id} onDelete={() => onRemove(participant.id)}>
+          <SwipeToDelete key={participant.id} onDelete={() => handleRemove(participant)}>
             <div className="rounded-md border border-stone-200 p-3 dark:border-stone-800">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex min-w-0 items-center gap-2.5">
@@ -159,7 +178,7 @@ export function ParticipantPanel({
                   </button>
                   <button
                     type="button"
-                    onClick={() => onRemove(participant.id)}
+                    onClick={() => handleRemove(participant)}
                     disabled={pending}
                     className="inline-flex h-11 w-11 items-center justify-center rounded-md text-rose-600 transition hover:bg-rose-50 active:bg-rose-100 disabled:cursor-not-allowed disabled:text-rose-300 dark:text-rose-400 dark:hover:bg-rose-500/10 dark:active:bg-rose-500/20"
                     aria-label={`Xóa ${participant.name}`}

@@ -59,15 +59,12 @@ mobile/vùng chạm/accessibility, và visual/nhất quán câu chữ. Chưa cá
 
 ## A. An toàn và phản hồi thao tác (nghiêm trọng nhất)
 
-### A1. Xoá người tham gia không có xác nhận, giờ có 2 đường tắt
-`ParticipantPanel.tsx` gọi `onRemove(participant.id)` thẳng ở cả nút icon
-(dòng 162) lẫn `SwipeToDelete` (dòng 134) — không qua `useConfirm()`, trong
-khi mọi thao tác xoá khác trong app (danh bạ, thùng rác, MCP token, cuộc
-chơi, ảnh) đều qua confirm. Xoá người còn cascade thật (tự chia lại phần các
-khoản chi khác) và **không có trong Lịch sử/hoàn tác** — khác xoá khoản chi
-(không confirm nhưng hoàn tác được qua tab Lịch sử, nên chấp nhận được).
-Đáng lo hơn từ khi thêm `SwipeToDelete`: giờ có 2 lối bấm nhầm dẫn tới cùng
-một thao tác không cứu lại được.
+### A1. ~~Xoá người tham gia không có xác nhận~~ — Đã làm (2026-08-05)
+`ParticipantPanel.tsx`: thêm `handleRemove()` dùng chung cho cả nút icon lẫn
+`SwipeToDelete`, gọi `useConfirm()` trước khi `onRemove()` — nói rõ trong mô
+tả là các khoản chi đã chia cho người này sẽ chia lại cho người còn lại. Cả
+2 đường (icon + vuốt) giờ cùng đi qua một cổng chặn, không còn lối nào bấm
+nhầm là mất luôn.
 
 ### A2. Form Thêm/Sửa khoản chi và Thêm/Sửa người: lỗi mutation bay mất, không ai biết
 `ExpensePanel.tsx` (dòng 537, `handleSubmit`) và `ParticipantPanel.tsx`
