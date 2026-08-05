@@ -82,6 +82,8 @@ export type ApiGameDetail = {
   code: string;
   name: string;
   settlementMode: SettlementMode;
+  /** Dau moi da chon cho che do "pick"; rong la chua chon. */
+  settlementHostId: string;
   createdAt: string;
   participants: ApiParticipant[];
   expenses: ApiExpense[];
@@ -93,6 +95,7 @@ export type ApiShareView = {
   code: string;
   name: string;
   settlementMode: SettlementMode;
+  settlementHostId: string;
   participants: ApiParticipant[];
   expenses: ApiExpense[];
   summary: ApiSummary;

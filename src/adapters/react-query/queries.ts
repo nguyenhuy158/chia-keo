@@ -175,6 +175,13 @@ export function useSetSettlementMode(gameId: string) {
   );
 }
 
+/** Dau moi cho che do "pick"; chuoi rong la de he tu chon. */
+export function useSetSettlementHost(gameId: string) {
+  return useGameDetailMutation((settlementHostId: string) =>
+    getGameApi().games.update(gameId, { settlementHostId }),
+  );
+}
+
 export function useAiSuggestExpense(gameId: string) {
   return useMutation({
     mutationFn: (text: string) => getGameApi().ai.suggestExpense(gameId, text),

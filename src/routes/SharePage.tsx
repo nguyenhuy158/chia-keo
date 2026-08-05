@@ -307,6 +307,7 @@ export function SharePage() {
               expenses: view.expenses,
               summary: view.summary,
               settlementMode: view.settlementMode,
+              settlementHostId: view.settlementHostId,
               shareUrl: window.location.href,
             }}
           />
@@ -352,6 +353,7 @@ export function SharePage() {
               }
               summary={view.summary}
               settlementMode={view.settlementMode}
+              settlementHostId={view.settlementHostId}
               expenses={view.expenses}
             />
 

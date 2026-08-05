@@ -10,6 +10,7 @@ export type GameRow = {
   name: string;
   /** Text tu do trong DB; application chuan hoa ve SettlementMode. */
   settlementMode: string;
+  settlementHostId: string;
   createdAt: string;
   updatedAt: string;
 };
@@ -18,6 +19,7 @@ export type GameRow = {
 export type GameChanges = {
   name?: string;
   settlementMode?: SettlementMode;
+  settlementHostId?: string;
 };
 
 export type ParticipantRow = {

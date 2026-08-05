@@ -7,7 +7,7 @@ import type {
 import type { SettlementMode } from "../../shared/schemas";
 import {
   calculateHostTransfers,
-  pickHostParticipantId,
+  resolveHostParticipantId,
   type SettlementRow,
 } from "../../shared/split";
 import { getQrProvider } from "../core/container";
@@ -30,7 +30,12 @@ const MODE_OPTIONS: Array<{
   {
     value: "host",
     label: "Gom 1 người",
-    hint: "Ai cũng chuyển về một đầu mối, chỉ một QR",
+    hint: "Ai cũng chuyển về người ứng nhiều nhất, chỉ một QR",
+  },
+  {
+    value: "pick",
+    label: "Chọn người",
+    hint: "Gom về một người do bạn chọn, chỉ một QR",
   },
   { value: "off", label: "Tắt", hint: "Không hiện phần chuyển khoản" },
 ];
@@ -42,11 +47,15 @@ type GameDashboardProps = {
   expenseCount: number;
   summary: ApiSummary;
   settlementMode: SettlementMode;
+  /** Dau moi da chon; chi co nghia o che do "pick". */
+  settlementHostId?: string;
   /** Cac khoan cua game; dung de liet ke lich su tra no (kind "transfer"). */
   expenses?: ApiExpense[];
   showHeader?: boolean;
   /** Chi truyen o trang chu cuoc choi; trang share xem thi bo trong. */
   onSettlementModeChange?: (mode: SettlementMode) => void;
+  /** Co mat cung che do "pick" thi moi cho doi dau moi. */
+  onSettlementHostChange?: (participantId: string) => void;
   /** Co mat thi moi dong chuyen khoan toi uu co nut ghi nhan da tra. */
   onSettle?: (settlement: SettlementRow) => void;
   onRemoveTransfer?: (expenseId: string) => void;
@@ -60,9 +69,11 @@ export function GameDashboard({
   expenseCount,
   summary,
   settlementMode,
+  settlementHostId = "",
   expenses = [],
   showHeader = false,
   onSettlementModeChange,
+  onSettlementHostChange,
   onSettle,
   onRemoveTransfer,
   settlePending = false,
@@ -74,8 +85,12 @@ export function GameDashboard({
   const qr = getQrProvider();
 
   const canEditMode = Boolean(onSettlementModeChange);
-  const hostId =
-    settlementMode === "host" ? pickHostParticipantId(summary.balances) : "";
+  const isHostMode = settlementMode === "host" || settlementMode === "pick";
+  const hostId = resolveHostParticipantId(
+    summary.balances,
+    settlementMode,
+    settlementHostId,
+  );
   const host = hostId ? participantById.get(hostId) : undefined;
   const hostTransfers = host
     ? calculateHostTransfers(summary.balances, hostId)
@@ -139,13 +154,11 @@ export function GameDashboard({
       {(canEditMode || settlementMode !== "off") && (
         <section className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm dark:border-stone-800 dark:bg-stone-900">
           <h3 className="text-lg font-semibold text-stone-950 dark:text-stone-50">
-            {settlementMode === "host" && host
-              ? `Gom về ${host.name}`
-              : "Chuyển khoản tối ưu"}
+            {isHostMode && host ? `Gom về ${host.name}` : "Chuyển khoản tối ưu"}
           </h3>
 
           {canEditMode && (
-            <div className="mt-3 grid grid-cols-3 gap-1 rounded-lg bg-stone-100 p-1 dark:bg-stone-950">
+            <div className="mt-3 grid grid-cols-2 gap-1 rounded-lg bg-stone-100 p-1 sm:grid-cols-4 dark:bg-stone-950">
               {MODE_OPTIONS.map((option) => (
                 <button
                   key={option.value}
@@ -165,13 +178,39 @@ export function GameDashboard({
             </div>
           )}
 
+          {settlementMode === "pick" && onSettlementHostChange && (
+            <label className="mt-3 block">
+              <span className="text-xs font-medium text-stone-500 dark:text-stone-400">
+                Người nhận tiền
+              </span>
+              <select
+                value={settlementHostId}
+                onChange={(event) => onSettlementHostChange(event.target.value)}
+                className="mt-1 h-11 w-full rounded-md border border-stone-300 bg-white px-2 text-sm text-stone-950 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-50"
+              >
+                <option value="">Tự chọn (người ứng nhiều nhất)</option>
+                {participants.map((participant) => (
+                  <option key={participant.id} value={participant.id}>
+                    {participant.name}
+                  </option>
+                ))}
+              </select>
+              {settlementHostId && settlementHostId !== hostId && (
+                <span className="mt-1 block text-xs text-amber-600 dark:text-amber-400">
+                  Người đã chọn không còn trong cuộc, đang tạm gom về{" "}
+                  {host?.name || "người ứng nhiều nhất"}.
+                </span>
+              )}
+            </label>
+          )}
+
           <div className="mt-4 space-y-3">
             {settlementMode === "off" ? (
               <p className="text-sm text-stone-500 dark:text-stone-400">
                 Đang tắt. Bảng tổng kết và ảnh cũng sẽ không có phần chuyển
                 khoản.
               </p>
-            ) : settlementMode === "host" ? (
+            ) : isHostMode ? (
               host && hostTransfers.length > 0 ? (
                 <>
                   <div className="rounded-md border border-stone-200 p-3 dark:border-stone-800">

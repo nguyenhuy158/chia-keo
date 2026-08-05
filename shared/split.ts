@@ -197,6 +197,28 @@ export function pickHostParticipantId(balances: BalanceRow[]): string {
 }
 
 /**
+ * Dau moi thuc te cho hai che do gom mot nguoi:
+ * - "host": tu chon nguoi ung nhieu nhat
+ * - "pick": lay nguoi da chon, nhung chi khi nguoi do con trong cuoc (co the
+ *   bi xoa sau khi chon); khong thi quay ve cach cua "host" de van con QR.
+ * Cac che do khac tra ve chuoi rong.
+ */
+export function resolveHostParticipantId(
+  balances: BalanceRow[],
+  settlementMode: string,
+  settlementHostId?: string,
+): string {
+  if (settlementMode !== "host" && settlementMode !== "pick") return "";
+
+  if (settlementMode === "pick" && settlementHostId) {
+    const chosen = balances.some((row) => row.participantId === settlementHostId);
+    if (chosen) return settlementHostId;
+  }
+
+  return pickHostParticipantId(balances);
+}
+
+/**
  * Kieu gom mot dau moi: ai con thieu thi chuyen thang cho host, ai ung du thi
  * host tra lai. Doi lai nhieu luot chuyen hon P2P nhung chi can mot QR.
  */

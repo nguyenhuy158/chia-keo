@@ -1,6 +1,11 @@
 import type { ApiExpense, ApiParticipant, ApiSummary } from "./api-types";
 import type { SettlementMode } from "./schemas";
-import { type BalanceRow, calculateHostTransfers, pickHostParticipantId } from "./split";
+import {
+  type BalanceRow,
+  calculateHostTransfers,
+  pickHostParticipantId,
+  resolveHostParticipantId,
+} from "./split";
 
 export type { SettlementMode };
 
@@ -30,6 +35,8 @@ export type SummaryTextInput = {
   /** Link xem chi tiet, bo qua neu cuoc choi chua bat share. */
   shareUrl?: string;
   settlementMode?: SettlementMode;
+  /** Dau moi da chon; chi dung khi settlementMode la "pick". */
+  settlementHostId?: string;
 };
 
 export type SummarySectionId = "expenses" | "people" | "settlements";
@@ -49,7 +56,7 @@ export type SummaryDocument = {
   subtitle: string;
   sections: SummarySection[];
   footer?: string;
-  /** Chi co o che do "host": nguoi nhan tien, tuc chu nhan cua QR duy nhat. */
+  /** Chi co o che do gom mot nguoi: nguoi nhan tien, chu nhan cua QR duy nhat. */
   hostParticipantId?: string;
 };
 
@@ -212,8 +219,8 @@ function buildHostSection(
   summary: ApiSummary,
   nameById: Map<string, string>,
   variant: SummaryVariant,
+  hostParticipantId: string,
 ): { section: SummarySection; hostParticipantId: string } | null {
-  const hostParticipantId = pickHostParticipantId(summary.balances);
   const transfers = calculateHostTransfers(summary.balances, hostParticipantId);
   if (!hostParticipantId || transfers.length === 0) return null;
 
@@ -225,8 +232,14 @@ function buildHostSection(
     hostParticipantId,
     section: {
       id: "settlements",
+      // Chi khoe "ung nhieu nhat" khi dung the that; che do "pick" co the chon
+      // nguoi khac lam dau moi.
       heading: detailed
-        ? `GOM VỀ ${hostName.toUpperCase()} (${hostName} ứng nhiều nhất, cả nhóm quét 1 QR)`
+        ? `GOM VỀ ${hostName.toUpperCase()} (${
+            hostParticipantId === pickHostParticipantId(summary.balances)
+              ? `${hostName} ứng nhiều nhất, cả nhóm quét 1 QR`
+              : "cả nhóm quét 1 QR"
+          })`
         : `GOM VỀ ${hostName.toUpperCase()}`,
       lines: detailed
         ? buildGroupedHostLines(transfers, hostName, nameById, paidById)
@@ -267,8 +280,13 @@ export function buildSummaryDocument(
 
   let hostParticipantId: string | undefined;
 
-  if (input.settlementMode === "host") {
-    const host = buildHostSection(summary, nameById, variant);
+  if (input.settlementMode === "host" || input.settlementMode === "pick") {
+    const host = buildHostSection(
+      summary,
+      nameById,
+      variant,
+      resolveHostParticipantId(summary.balances, input.settlementMode, input.settlementHostId),
+    );
     if (host) {
       sections.push(host.section);
       hostParticipantId = host.hostParticipantId;

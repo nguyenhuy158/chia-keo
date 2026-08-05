@@ -166,6 +166,36 @@ describe("buildSummaryText", () => {
     expect(text).not.toContain("trả lại");
   });
 
+  it("gom ve dung nguoi duoc chon o che do pick", () => {
+    // Hồng đang nợ nhưng vẫn được chọn làm đầu mối; Nam ứng nhiều nhất bị bỏ qua.
+    const text = buildSummaryText({
+      ...input,
+      settlementMode: "pick",
+      settlementHostId: hong.id,
+    });
+
+    expect(text).toContain("GOM VỀ HỒNG");
+    expect(text).toContain("- Hồng → Nam: 203,3k");
+    expect(text).toContain("- Thu → Hồng: 48,2k");
+    expect(text).not.toContain("CẦN CHUYỂN");
+  });
+
+  it("che do pick chua chon ai thi giong che do host", () => {
+    const picked = buildSummaryText({ ...input, settlementMode: "pick" });
+
+    expect(picked).toBe(buildSummaryText({ ...input, settlementMode: "host" }));
+  });
+
+  it("ban chi tiet khong khoe ung nhieu nhat khi dau moi do nguoi dung chon", () => {
+    const text = buildSummaryText(
+      { ...input, settlementMode: "pick", settlementHostId: hong.id },
+      "detailed",
+    );
+
+    expect(text).toContain("GOM VỀ HỒNG (cả nhóm quét 1 QR)");
+    expect(text).not.toContain("ứng nhiều nhất");
+  });
+
   it("bo han phan chuyen tien o che do off", () => {
     const text = buildSummaryText({ ...input, settlementMode: "off" });
 

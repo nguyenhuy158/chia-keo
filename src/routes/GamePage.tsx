@@ -31,6 +31,7 @@ import {
   useRemoveParticipant,
   useRenameGame,
   useRotateShareLink,
+  useSetSettlementHost,
   useSetSettlementMode,
   useSetShareLinkEnabled,
   useUpdateExpense,
@@ -55,6 +56,7 @@ export function GamePage() {
   const rotateShareLink = useRotateShareLink(gameId);
   const setShareLinkEnabled = useSetShareLinkEnabled(gameId);
   const setSettlementMode = useSetSettlementMode(gameId);
+  const setSettlementHost = useSetSettlementHost(gameId);
   const deleteGame = useDeleteGame();
 
   const [nameDraft, setNameDraft] = useState<string | null>(null);
@@ -144,7 +146,9 @@ export function GamePage() {
       expenseCount={game.expenses.filter((expense) => expense.kind !== "transfer").length}
       summary={game.summary}
       settlementMode={game.settlementMode}
+      settlementHostId={game.settlementHostId}
       onSettlementModeChange={(mode) => setSettlementMode.mutate(mode)}
+      onSettlementHostChange={(participantId) => setSettlementHost.mutate(participantId)}
       expenses={game.expenses}
       onSettle={async (settlement) => {
         const fromName = participantNameById.get(settlement.fromParticipantId) || "Không rõ";
@@ -178,6 +182,7 @@ export function GamePage() {
         expenses: game.expenses,
         summary: game.summary,
         settlementMode: game.settlementMode,
+        settlementHostId: game.settlementHostId,
         shareUrl:
           shareLink && shareLink.enabled
             ? `${window.location.origin}/share/${shareLink.token}`

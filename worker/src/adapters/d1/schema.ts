@@ -73,8 +73,10 @@ export const games = sqliteTable(
       .references(() => user.id, { onDelete: "cascade" }),
     code: text("code").notNull(),
     name: text("name").notNull(),
-    // "p2p" | "host" | "off" — xem SETTLEMENT_MODES o shared/schemas.ts.
+    // "p2p" | "host" | "pick" | "off" — xem SETTLEMENT_MODES o shared/schemas.ts.
     settlementMode: text("settlement_mode").notNull().default("p2p"),
+    // Dau moi da chon cho che do "pick"; rong la chua chon.
+    settlementHostId: text("settlement_host_id").notNull().default(""),
     createdAt: text("created_at").notNull(),
     updatedAt: text("updated_at").notNull(),
   },

@@ -1,6 +1,8 @@
 import { z } from "zod";
 
 export const GAME_NAME_MAX_LENGTH = 100;
+/** Do dai toi da cua mot id do server sinh (`createId`), du de chan rac. */
+export const ID_MAX_LENGTH = 64;
 export const PARTICIPANT_NAME_MAX_LENGTH = 50;
 export const EXPENSE_TITLE_MAX_LENGTH = 100;
 export const EXPENSE_NOTE_MAX_LENGTH = 500;
@@ -31,9 +33,10 @@ export const PHOTO_MIME_TYPES = ["image/jpeg", "image/png", "image/webp"] as con
  * Cach hien phan chuyen tien cua mot cuoc choi:
  * - "p2p": chuyen truc tiep giua tung cap, it luot chuyen nhat
  * - "host": moi nguoi chuyen ve mot dau moi, chi can mot QR
+ * - "pick": nhu "host" nhung dau moi do nguoi dung chon (settlementHostId)
  * - "off": khong hien phan chuyen tien
  */
-export const SETTLEMENT_MODES = ["p2p", "host", "off"] as const;
+export const SETTLEMENT_MODES = ["p2p", "host", "pick", "off"] as const;
 export const DEFAULT_SETTLEMENT_MODE = "host";
 
 export const settlementModeSchema = z.enum(SETTLEMENT_MODES);
@@ -41,6 +44,11 @@ export const settlementModeSchema = z.enum(SETTLEMENT_MODES);
 export const gameInputSchema = z.object({
   name: z.string().trim().min(1).max(GAME_NAME_MAX_LENGTH),
   settlementMode: settlementModeSchema.default(DEFAULT_SETTLEMENT_MODE),
+  /**
+   * Dau moi cho che do "pick". Chuoi rong la chua chon; luc do va khi nguoi
+   * duoc chon khong con trong cuoc thi quay ve nguoi ung nhieu nhat.
+   */
+  settlementHostId: z.string().trim().max(ID_MAX_LENGTH).default(""),
   /**
    * Tao san bay nhieu nguoi ten mac dinh de vao viec ngay, sua ten sau.
    * 0 la khong tao ai (hanh vi cu).

@@ -53,6 +53,7 @@ export async function createGame(
     code: createGameCode(),
     name: input.name,
     settlementMode: input.settlementMode ?? DEFAULT_SETTLEMENT_MODE,
+    settlementHostId: input.settlementHostId ?? "",
     createdAt: now,
     updatedAt: now,
   };
@@ -101,6 +102,7 @@ export async function updateGame(
   const changes: GameChanges = {
     ...(input.name === undefined ? {} : { name: input.name }),
     ...(input.settlementMode === undefined ? {} : { settlementMode: input.settlementMode }),
+    ...(input.settlementHostId === undefined ? {} : { settlementHostId: input.settlementHostId }),
   };
 
   if (Object.keys(changes).length === 0) throw new InvalidInputError();
@@ -126,12 +128,19 @@ export async function duplicateGame(
   const paymentByParticipantId = new Map(paymentRows.map((row) => [row.participantId, row]));
 
   const now = nowIso();
+  // Participant o ban sao co id moi, nen dau moi da chon phai doi chieu sang id
+  // moi; khong co thi de rong (roi ve nguoi ung nhieu nhat).
+  const newIdByOldId = new Map(
+    participantRows.map((row) => [row.id, createId("participant")] as const),
+  );
+
   const game = {
     id: createId("game"),
     ownerUserId: userId,
     code: createGameCode(),
     name: `${source.name} (bản sao)`,
     settlementMode: source.settlementMode,
+    settlementHostId: newIdByOldId.get(source.settlementHostId) || "",
     createdAt: now,
     updatedAt: now,
   };
@@ -143,7 +152,7 @@ export async function duplicateGame(
     const participantNow = nowIso();
     await repo.participants.insert(
       {
-        id: createId("participant"),
+        id: newIdByOldId.get(participant.id) || createId("participant"),
         gameId: game.id,
         name: participant.name,
         createdAt: participantNow,

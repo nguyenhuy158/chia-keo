@@ -6,7 +6,9 @@ import {
   calculateSettlements,
   computeSplitRows,
   MAX_SPLIT_WEIGHT,
+  type BalanceRow,
   type ExpenseInput,
+  resolveHostParticipantId,
 } from "./split";
 
 describe("allocateAmount", () => {
@@ -312,5 +314,35 @@ describe("calculateSettlements", () => {
     for (const balance of net.values()) {
       expect(balance).toBe(0);
     }
+  });
+});
+
+describe("resolveHostParticipantId", () => {
+  const balances: BalanceRow[] = [
+    { participantId: "thieu", paid: 0, owed: 300, balance: -300 },
+    { participantId: "ung-nhieu", paid: 300, owed: 100, balance: 200 },
+    { participantId: "ung-it", paid: 100, owed: 0, balance: 100 },
+  ];
+
+  it("lay nguoi ung nhieu nhat o che do host, bo qua nguoi da chon", () => {
+    expect(resolveHostParticipantId(balances, "host", "thieu")).toBe("ung-nhieu");
+  });
+
+  it("lay dung nguoi da chon o che do pick, ke ca nguoi dang no", () => {
+    expect(resolveHostParticipantId(balances, "pick", "thieu")).toBe("thieu");
+  });
+
+  it("che do pick chua chon ai thi ve nguoi ung nhieu nhat", () => {
+    expect(resolveHostParticipantId(balances, "pick", "")).toBe("ung-nhieu");
+    expect(resolveHostParticipantId(balances, "pick")).toBe("ung-nhieu");
+  });
+
+  it("nguoi da chon khong con trong cuoc thi ve nguoi ung nhieu nhat", () => {
+    expect(resolveHostParticipantId(balances, "pick", "da-bi-xoa")).toBe("ung-nhieu");
+  });
+
+  it("khong co dau moi o cac che do khac", () => {
+    expect(resolveHostParticipantId(balances, "p2p", "thieu")).toBe("");
+    expect(resolveHostParticipantId(balances, "off", "thieu")).toBe("");
   });
 });

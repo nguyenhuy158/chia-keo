@@ -161,6 +161,7 @@ export async function loadGameDetail(
     code: game.code,
     name: game.name,
     settlementMode: toSettlementMode(game.settlementMode),
+    settlementHostId: game.settlementHostId || "",
     createdAt: game.createdAt,
     shareLink,
     ...data,
@@ -174,6 +175,7 @@ export async function loadShareView(repo: GameRepository, game: GameRow): Promis
     code: game.code,
     name: game.name,
     settlementMode: toSettlementMode(game.settlementMode),
+    settlementHostId: game.settlementHostId || "",
     ...data,
   };
 }

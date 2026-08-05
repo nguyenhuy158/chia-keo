@@ -1,0 +1,1 @@
+ALTER TABLE `games` ADD `settlement_host_id` text DEFAULT '' NOT NULL;

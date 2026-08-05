@@ -115,6 +115,7 @@ function toSummaryInput(
     expenses: game.expenses,
     summary: game.summary,
     settlementMode: game.settlementMode,
+    settlementHostId: game.settlementHostId,
     shareUrl:
       shareLink?.enabled && shareLink.token
         ? `${appOrigin}/share/${shareLink.token}`
