@@ -24,13 +24,22 @@ function git(...args) {
   }
 }
 
-const commit = git("rev-parse", "HEAD") || UNKNOWN;
+/**
+ * Cloudflare Pages build tu git checkout detached, nen `rev-parse --abbrev-ref`
+ * ra "HEAD" chu khong ra ten nhanh. CI cua Pages dat san CF_PAGES_BRANCH va
+ * CF_PAGES_COMMIT_SHA nen uu tien doc bien do.
+ */
+const env = process.env;
+const commit = env.CF_PAGES_COMMIT_SHA || git("rev-parse", "HEAD") || UNKNOWN;
+const branchFromGit = git("rev-parse", "--abbrev-ref", "HEAD");
 const info = {
   commit,
   shortCommit: commit === UNKNOWN ? UNKNOWN : commit.slice(0, 7),
   commitSubject: git("log", "-1", "--pretty=%s") || UNKNOWN,
   commitDate: git("log", "-1", "--date=iso-strict", "--pretty=%cd") || UNKNOWN,
-  branch: git("rev-parse", "--abbrev-ref", "HEAD") || UNKNOWN,
+  branch: env.CF_PAGES_BRANCH || (branchFromGit === "HEAD" ? "" : branchFromGit) || UNKNOWN,
+  /** Phan biet bung tu CI cua Cloudflare Pages voi `wrangler pages deploy` tay. */
+  builtBy: env.CF_PAGES === "1" || env.CF_PAGES_BRANCH ? "cloudflare-pages" : "local",
   // Build tu working tree con thay doi chua commit: code dang chay khong khop
   // hoan toan voi commit ghi o tren.
   dirty: git("status", "--porcelain") !== "",

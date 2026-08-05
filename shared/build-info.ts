@@ -11,6 +11,8 @@ export type BuildInfo = {
   /** ISO 8601 ngay commit (khong phai ngay build). */
   commitDate: string;
   branch: string;
+  /** "cloudflare-pages" = CI tu build khi push; "local" = ai do deploy tay. */
+  builtBy: "cloudflare-pages" | "local" | string;
   /** true = build tu working tree con thay doi chua commit. */
   dirty: boolean;
   builtAt: string;
