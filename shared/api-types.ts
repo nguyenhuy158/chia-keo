@@ -29,6 +29,11 @@ export type ApiParticipant = {
   accountName: string;
 };
 
+/** Cuoc chia trong thung rac; khong kem chi tiet vi chi de liet ke va phuc hoi. */
+export type ApiTrashGame = ApiGame & {
+  deletedAt: string;
+};
+
 export type ApiExpenseSplit = {
   participantId: string;
   amount: number;

@@ -28,6 +28,7 @@ export const game: GameRow = {
   settlementHostId: "",
   createdAt: "2026-08-04T00:00:00.000Z",
   updatedAt: "2026-08-04T00:00:00.000Z",
+  deletedAt: null,
 };
 
 export const participants: ParticipantRow[] = ["Huy", "Hường", "Hồng"].map((name, index) => ({
@@ -75,6 +76,7 @@ export const secondGame: GameRow = {
   settlementHostId: "",
   createdAt: "2026-08-03T00:00:00.000Z",
   updatedAt: "2026-08-03T00:00:00.000Z",
+  deletedAt: null,
 };
 
 export const secondParticipants: ParticipantRow[] = ["Huy", "Hường", "Nam"].map(
@@ -175,8 +177,10 @@ export function fakeRepo(
           [secondGame.id, 1],
         ]),
       getById: async (gameId) => games.find((row) => row.id === gameId) || null,
+      listDeletedByOwner: async () => [],
       insert: unused("games.insert"),
       update: unused("games.update"),
+      setDeletedAt: unused("games.setDeletedAt"),
       delete: unused("games.delete"),
     },
     participants: {

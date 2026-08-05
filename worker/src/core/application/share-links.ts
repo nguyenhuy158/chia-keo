@@ -41,7 +41,9 @@ export async function setShareLinkEnabled(
 export async function getSharedGame(repo: GameRepository, token: string): Promise<GameRow> {
   const row = await repo.shareLinks.findByToken(token);
   const expired = Boolean(row?.link.expiresAt && row.link.expiresAt < nowIso());
-  if (!row || !row.link.enabled || expired) throw new NotFoundError();
+  // Cuoc chia trong thung rac thi link share tat theo: khong the vua "da xoa"
+  // voi chu vua con xem duoc voi ca nhom.
+  if (!row || !row.link.enabled || expired || row.game.deletedAt) throw new NotFoundError();
 
   return row.game;
 }

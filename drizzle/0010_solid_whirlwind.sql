@@ -1,0 +1,1 @@
+ALTER TABLE `games` ADD `deleted_at` text;

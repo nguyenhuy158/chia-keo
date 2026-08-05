@@ -181,7 +181,24 @@ export async function loadShareView(repo: GameRepository, game: GameRow): Promis
 }
 
 /** Policy so huu: chi chu cuoc choi duoc thao tac. */
+/**
+ * Cuoc chia dang dung cua user. Cuoc trong thung rac bi coi nhu khong ton tai:
+ * day la choke point cua moi thao tac (xem chi tiet, them khoan, doi che do,
+ * quay link share...) nen chan o mot cho la chan het, khong phai nho o tung
+ * use case.
+ */
 export async function getOwnedGame(repo: GameRepository, gameId: string, userId: string) {
+  const game = await repo.games.getById(gameId);
+  if (!game || game.ownerUserId !== userId || game.deletedAt) return null;
+  return game;
+}
+
+/** Nhu getOwnedGame nhung nhan ca cuoc trong thung rac: de phuc hoi/xoa han. */
+export async function getOwnedGameEvenIfDeleted(
+  repo: GameRepository,
+  gameId: string,
+  userId: string,
+) {
   const game = await repo.games.getById(gameId);
   if (!game || game.ownerUserId !== userId) return null;
   return game;

@@ -79,6 +79,11 @@ export const games = sqliteTable(
     settlementHostId: text("settlement_host_id").notNull().default(""),
     createdAt: text("created_at").notNull(),
     updatedAt: text("updated_at").notNull(),
+    /**
+     * Luc bi cho vao thung rac; null la dang dung. Xoa mem vi xoa that keo theo
+     * cascade ca participant, khoan chi va anh — khong co duong nao lay lai.
+     */
+    deletedAt: text("deleted_at"),
   },
   (table) => [index("games_owner_user_id_idx").on(table.ownerUserId)],
 );

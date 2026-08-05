@@ -40,6 +40,9 @@ export const photoKeys = {
 /** Danh ba suy ra tu participant nen phai lam moi khi participant doi. */
 export const contactKeys = { all: ["contacts"] as const };
 
+/** Thung rac tach khoi ["games"] de danh sach chinh khong keo theo mot query nua. */
+export const trashKeys = { all: ["games-trash"] as const };
+
 /**
  * Lich su co khoa rieng ngoai ["games"]: moi mutation deu sinh them dong lich
  * su nen phai lam moi, nhung nguoc lai mo tab Lich su khong can tai lai game.
@@ -148,6 +151,16 @@ export function useDuplicateGame() {
   });
 }
 
+/** Cuoc chia trong thung rac; chi tai khi nguoi dung mo phan thung rac. */
+export function useTrashedGames(enabled: boolean) {
+  return useQuery({
+    queryKey: trashKeys.all,
+    queryFn: () => getGameApi().games.trash(),
+    enabled,
+  });
+}
+
+/** Xoa mem: cuoc chia roi vao thung rac chu chua mat. */
 export function useDeleteGame() {
   const queryClient = useQueryClient();
 
@@ -155,6 +168,31 @@ export function useDeleteGame() {
     mutationFn: (gameId: string) => getGameApi().games.remove(gameId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: gameKeys.all });
+      queryClient.invalidateQueries({ queryKey: trashKeys.all });
+    },
+  });
+}
+
+export function useRestoreGame() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (gameId: string) => getGameApi().games.restore(gameId),
+    onSuccess: (detail) => {
+      queryClient.setQueryData(gameKeys.detail(detail.id), detail);
+      queryClient.invalidateQueries({ queryKey: gameKeys.all });
+      queryClient.invalidateQueries({ queryKey: trashKeys.all });
+    },
+  });
+}
+
+export function usePurgeGame() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (gameId: string) => getGameApi().games.purge(gameId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: trashKeys.all });
     },
   });
 }

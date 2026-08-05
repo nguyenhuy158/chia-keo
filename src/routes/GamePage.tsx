@@ -84,9 +84,12 @@ export function GamePage() {
   const shareLink = game.shareLink;
 
   async function handleDeleteGame() {
-    if (!window.confirm(`Xóa cuộc chơi "${game.name}"?`)) return;
+    // Xoa mem: noi ro la con lay lai duoc, khong thi nguoi dung tuong mat het
+    // va khong biet co thung rac o sidebar.
+    if (!window.confirm(`Chuyển "${game.name}" vào thùng rác? Phục hồi được ở sidebar.`)) return;
 
     await deleteGame.mutateAsync(game.id);
+    toast("Đã chuyển vào thùng rác");
     navigate({ to: "/" });
   }
 

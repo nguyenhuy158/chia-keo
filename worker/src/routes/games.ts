@@ -21,7 +21,10 @@ import {
   deleteGame,
   duplicateGame,
   getGameDetailForOwner,
+  listDeletedGames,
   listGames,
+  purgeGame,
+  restoreGame,
   updateGame,
 } from "../core/application/games";
 import {
@@ -89,6 +92,10 @@ gamesRouter.post("/games", async (c) => {
   return respond(c, () => createGame(c.get("repo"), c.get("userId"), input), 201);
 });
 
+gamesRouter.get("/games/trash", (c) =>
+  respond(c, () => listDeletedGames(c.get("repo"), c.get("userId"))),
+);
+
 gamesRouter.get("/games/:gameId", (c) =>
   respond(c, () => getGameDetailForOwner(c.get("repo"), c.get("userId"), c.req.param("gameId"))),
 );
@@ -103,6 +110,17 @@ gamesRouter.patch("/games/:gameId", async (c) => {
 gamesRouter.delete("/games/:gameId", (c) =>
   respond(c, async () => {
     await deleteGame(c.get("repo"), c.get("userId"), c.req.param("gameId"));
+    return { ok: true };
+  }),
+);
+
+gamesRouter.post("/games/:gameId/restore", (c) =>
+  respond(c, () => restoreGame(c.get("repo"), c.get("userId"), c.req.param("gameId"))),
+);
+
+gamesRouter.delete("/games/:gameId/purge", (c) =>
+  respond(c, async () => {
+    await purgeGame(c.get("repo"), c.get("userId"), c.req.param("gameId"));
     return { ok: true };
   }),
 );

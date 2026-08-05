@@ -10,6 +10,7 @@ import type {
   ApiPhoto,
   ApiPhotoDetail,
   ApiShareView,
+  ApiTrashGame,
 } from "../../../shared/api-types";
 import type { Contact } from "../../../shared/contacts";
 import type { ApiGameEvent } from "../../../shared/game-events";
@@ -35,6 +36,11 @@ export type GameApiPort = {
     update(gameId: string, input: GameUpdateInput): Promise<ApiGameDetail>;
     remove(gameId: string): Promise<{ ok: boolean }>;
     duplicate(gameId: string): Promise<ApiGameDetail>;
+    /** Cuoc chia trong thung rac; goi day cung don luon cac cuoc qua han giu. */
+    trash(): Promise<ApiTrashGame[]>;
+    restore(gameId: string): Promise<ApiGameDetail>;
+    /** Xoa han, khong lay lai duoc. */
+    purge(gameId: string): Promise<{ ok: boolean }>;
   };
   gameEvents: {
     /** Lich su thao tac cua cuoc chia, moi nhat truoc. */

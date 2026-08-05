@@ -7,6 +7,7 @@ import { z } from "zod";
 import { MAX_QUICK_PARTICIPANTS } from "../../shared/schemas";
 import { useCreateGame, useDuplicateGame, useGames } from "../adapters/react-query/queries";
 import { ContactBookCard } from "./ContactBookCard";
+import { TrashCard } from "./TrashCard";
 
 const gameFormSchema = z.object({
   name: z.string().trim().min(1, "Nhập tên cuộc chơi"),
@@ -161,6 +162,7 @@ export function GamesSidebar({ onNavigate }: { onNavigate?: () => void }) {
           <p className="px-1 py-4 text-sm text-stone-500 dark:text-stone-400">Chưa có cuộc chơi nào.</p>
         )}
       </section>
+      <TrashCard />
     </aside>
   );
 }

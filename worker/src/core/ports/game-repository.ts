@@ -14,6 +14,8 @@ export type GameRow = {
   settlementHostId: string;
   createdAt: string;
   updatedAt: string;
+  /** Luc bi cho vao thung rac; null la dang dung. */
+  deletedAt: string | null;
 };
 
 /** Cac field cua game duoc phep sua; bo trong field nao thi giu nguyen. */
@@ -120,7 +122,10 @@ export type ExpenseUpdate = Partial<
 
 export type GameRepository = {
   games: {
+    /** Chi cac cuoc chia dang dung; cuoc trong thung rac khong tinh. */
     listByOwner(userId: string): Promise<GameRow[]>;
+    /** Cuoc chia trong thung rac, moi xoa truoc. */
+    listDeletedByOwner(userId: string): Promise<GameRow[]>;
     /** So nguoi tham gia theo game; game khong co ai thi vang mat trong map. */
     countParticipants(gameIds: string[]): Promise<Map<string, number>>;
     /** So khoan chi (khong tinh transfer) theo game. */
@@ -128,6 +133,9 @@ export type GameRepository = {
     insert(row: GameRow): Promise<void>;
     getById(gameId: string): Promise<GameRow | null>;
     update(gameId: string, changes: GameChanges, updatedAt: string): Promise<void>;
+    /** Xoa mem: dua vao/lay ra khoi thung rac. */
+    setDeletedAt(gameId: string, deletedAt: string | null): Promise<void>;
+    /** Xoa that, keo theo cascade moi thu thuoc cuoc chia. Khong lay lai duoc. */
     delete(gameId: string): Promise<void>;
   };
   participants: {

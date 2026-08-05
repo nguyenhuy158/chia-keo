@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, inArray, isNull, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNotNull, isNull, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
 import type {
   ExpenseRow,
@@ -70,8 +70,15 @@ export function createD1GameRepository(d1: D1Database): GameRepository {
         return db
           .select()
           .from(schema.games)
-          .where(eq(schema.games.ownerUserId, userId))
+          .where(and(eq(schema.games.ownerUserId, userId), isNull(schema.games.deletedAt)))
           .orderBy(sql`${schema.games.createdAt} desc`);
+      },
+      async listDeletedByOwner(userId): Promise<GameRow[]> {
+        return db
+          .select()
+          .from(schema.games)
+          .where(and(eq(schema.games.ownerUserId, userId), isNotNull(schema.games.deletedAt)))
+          .orderBy(sql`${schema.games.deletedAt} desc`);
       },
       countParticipants: (gameIds) => countBy(db, schema.participants, gameIds),
       countExpenses: (gameIds) => countBy(db, schema.expenses, gameIds, "expense"),
@@ -90,6 +97,12 @@ export function createD1GameRepository(d1: D1Database): GameRepository {
         await db
           .update(schema.games)
           .set({ ...changes, updatedAt })
+          .where(eq(schema.games.id, gameId));
+      },
+      async setDeletedAt(gameId, deletedAt) {
+        await db
+          .update(schema.games)
+          .set({ deletedAt })
           .where(eq(schema.games.id, gameId));
       },
       async delete(gameId) {

@@ -16,6 +16,12 @@ export const DEFAULT_TRANSFER_TITLE = "Trả nợ";
 export const MAX_QUICK_PARTICIPANTS = 30;
 export const QUICK_PARTICIPANT_PREFIX = "Người";
 
+/**
+ * So ngay giu cuoc chia trong thung rac truoc khi xoa han. Viec don dep chay
+ * luc mo thung rac (khong co cron o Pages Functions).
+ */
+export const TRASH_RETENTION_DAYS = 30;
+
 export const PHOTO_CAPTION_MAX_LENGTH = 140;
 export const MAX_PHOTOS_PER_GAME = 60;
 /** Canh dai nhat cua anh goc va anh thu nho sau khi nen o trinh duyet. */

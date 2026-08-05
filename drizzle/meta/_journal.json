@@ -71,6 +71,13 @@
       "when": 1785904651793,
       "tag": "0009_icy_donald_blake",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "6",
+      "when": 1785914079485,
+      "tag": "0010_solid_whirlwind",
+      "breakpoints": true
     }
   ]
 }

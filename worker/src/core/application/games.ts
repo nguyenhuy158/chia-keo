@@ -1,13 +1,14 @@
-import type { ApiGame, ApiGameDetail } from "../../../../shared/api-types";
+import type { ApiGame, ApiGameDetail, ApiTrashGame } from "../../../../shared/api-types";
+import { TRASH_RETENTION_DAYS } from "../../../../shared/schemas";
 import type { GameInput, GameUpdateInput } from "../../../../shared/schemas";
 import {
   DEFAULT_SETTLEMENT_MODE,
   QUICK_PARTICIPANT_PREFIX,
 } from "../../../../shared/schemas";
 import { createGameCode, createId, nowIso } from "../../lib/ids";
-import type { GameChanges, GameRepository } from "../ports/game-repository";
+import type { GameChanges, GameRepository, GameRow } from "../ports/game-repository";
 import { InvalidInputError, NotFoundError } from "./errors";
-import { getOwnedGame, loadGameDetail } from "./game-detail";
+import { getOwnedGame, getOwnedGameEvenIfDeleted, loadGameDetail } from "./game-detail";
 import { recordEvent } from "./game-events";
 
 export async function listGames(repo: GameRepository, userId: string): Promise<ApiGame[]> {
@@ -57,6 +58,7 @@ export async function createGame(
     settlementHostId: input.settlementHostId ?? "",
     createdAt: now,
     updatedAt: now,
+    deletedAt: null,
   };
 
   await repo.games.insert(game);
@@ -168,6 +170,7 @@ export async function duplicateGame(
     settlementHostId: newIdByOldId.get(source.settlementHostId) || "",
     createdAt: now,
     updatedAt: now,
+    deletedAt: null,
   };
 
   await repo.games.insert(game);
@@ -196,6 +199,10 @@ export async function duplicateGame(
   return loadGameDetail(repo, game);
 }
 
+/**
+ * Cho vao thung rac. Khong xoa that vi cascade se keo theo ca participant,
+ * khoan chi va anh — mot lan bam nham la mat het, khong co duong lay lai.
+ */
 export async function deleteGame(
   repo: GameRepository,
   userId: string,
@@ -203,6 +210,69 @@ export async function deleteGame(
 ): Promise<void> {
   const game = await getOwnedGame(repo, gameId, userId);
   if (!game) throw new NotFoundError();
+
+  await repo.games.setDeletedAt(game.id, nowIso());
+}
+
+/**
+ * Thung rac. Nhan dip nay don luon cac cuoc da qua han giu: khong co cron o
+ * Pages Functions nen don luc doc la cach chac chan nhat — va nguoi dung thay
+ * dung nhung gi con lai, khong phai mot con so hua hen.
+ */
+export async function listDeletedGames(
+  repo: GameRepository,
+  userId: string,
+): Promise<ApiTrashGame[]> {
+  const rows = await repo.games.listDeletedByOwner(userId);
+  const cutoff = new Date(Date.now() - TRASH_RETENTION_DAYS * 86_400_000).toISOString();
+
+  const kept: GameRow[] = [];
+  for (const row of rows) {
+    if (row.deletedAt && row.deletedAt < cutoff) {
+      await repo.games.delete(row.id);
+      continue;
+    }
+    kept.push(row);
+  }
+
+  const [participantCounts, expenseCounts] = await Promise.all([
+    repo.games.countParticipants(kept.map((row) => row.id)),
+    repo.games.countExpenses(kept.map((row) => row.id)),
+  ]);
+
+  return kept.map((row) => ({
+    id: row.id,
+    code: row.code,
+    name: row.name,
+    createdAt: row.createdAt,
+    deletedAt: row.deletedAt || "",
+    participantCount: participantCounts.get(row.id) || 0,
+    expenseCount: expenseCounts.get(row.id) || 0,
+  }));
+}
+
+export async function restoreGame(
+  repo: GameRepository,
+  userId: string,
+  gameId: string,
+): Promise<ApiGameDetail> {
+  const game = await getOwnedGameEvenIfDeleted(repo, gameId, userId);
+  if (!game) throw new NotFoundError();
+
+  await repo.games.setDeletedAt(game.id, null);
+  return loadGameDetail(repo, { ...game, deletedAt: null });
+}
+
+/** Xoa han khoi thung rac. Cascade xoa het, khong co buoc hoan tac nao nua. */
+export async function purgeGame(
+  repo: GameRepository,
+  userId: string,
+  gameId: string,
+): Promise<void> {
+  const game = await getOwnedGameEvenIfDeleted(repo, gameId, userId);
+  // Chi xoa han duoc cai da nam trong thung rac: tranh mot request lam mat
+  // cuoc chia dang dung.
+  if (!game || !game.deletedAt) throw new NotFoundError();
 
   await repo.games.delete(game.id);
 }
