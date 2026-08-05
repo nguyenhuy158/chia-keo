@@ -18,13 +18,18 @@ import {
 } from "../../shared/summary-text";
 import { copyImage, copyText, downloadBlob } from "../adapters/browser/clipboard";
 import { buildSummaryImageFileName, renderSummaryImage } from "../adapters/browser/summary-image";
+import {
+  getStoredSummaryImageBackgroundId,
+  storeSummaryImageBackgroundId,
+  SUMMARY_IMAGE_BACKGROUNDS,
+} from "../adapters/browser/summary-image-backgrounds";
 import { useToast } from "./Toast";
 
 const MENU_WIDTH = 268;
 const MENU_GAP = 6;
 const VIEWPORT_MARGIN = 8;
 /** Uoc luong de biet nen mo len hay xuong; khong can chinh xac tuyet doi. */
-const MENU_HEIGHT_ESTIMATE = 360;
+const MENU_HEIGHT_ESTIMATE = 440;
 
 const TRIGGER_CLASS =
   "inline-flex h-11 items-center justify-center gap-2 rounded-md border border-stone-300 bg-white px-3 text-sm font-medium text-stone-700 transition hover:bg-stone-50 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-200 dark:hover:bg-stone-800";
@@ -64,6 +69,8 @@ export function CopyMenu({ input, className }: CopyMenuProps) {
   const triggerRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState<MenuPosition | null>(null);
+  // Doc localStorage mot lan luc mount: nen da chon van con sau khi tai lai trang.
+  const [backgroundId, setBackgroundId] = useState(getStoredSummaryImageBackgroundId);
 
   const open = position !== null;
 
@@ -114,8 +121,13 @@ export function CopyMenu({ input, className }: CopyMenuProps) {
     toast(ok ? "Đã sao chép link" : "Không sao chép được link", ok ? "success" : "error");
   }
 
+  function chooseBackground(id: string) {
+    setBackgroundId(id);
+    storeSummaryImageBackgroundId(id);
+  }
+
   async function copySummaryImage(variant: SummaryVariant = "compact") {
-    const blob = renderSummaryImage(input, variant);
+    const blob = renderSummaryImage(input, variant, backgroundId);
     if (await copyImage(blob)) {
       toast("Đã sao chép ảnh tổng kết");
       return;
@@ -132,7 +144,10 @@ export function CopyMenu({ input, className }: CopyMenuProps) {
 
   async function saveSummaryImage() {
     try {
-      downloadBlob(await renderSummaryImage(input), buildSummaryImageFileName(input));
+      downloadBlob(
+        await renderSummaryImage(input, "compact", backgroundId),
+        buildSummaryImageFileName(input),
+      );
       toast("Đã tải ảnh tổng kết");
     } catch {
       toast("Không tạo được ảnh tổng kết", "error");
@@ -187,6 +202,10 @@ export function CopyMenu({ input, className }: CopyMenuProps) {
     });
   }
 
+  const selectedBackground =
+    SUMMARY_IMAGE_BACKGROUNDS.find((background) => background.id === backgroundId) ||
+    SUMMARY_IMAGE_BACKGROUNDS[0];
+
   async function handleSelect(action: MenuAction) {
     setPosition(null);
     await action.run();
@@ -215,6 +234,33 @@ export function CopyMenu({ input, className }: CopyMenuProps) {
             style={{ position: "fixed", width: MENU_WIDTH, ...position }}
             className="z-[70] overflow-hidden rounded-xl border border-stone-200 bg-white p-1 shadow-xl animate-[overlay-in_120ms_ease] dark:border-stone-700 dark:bg-stone-900"
           >
+            <div className="border-b border-stone-200 px-3 pb-2.5 pt-2 dark:border-stone-700">
+              <p className="text-xs font-medium text-stone-500 dark:text-stone-400">
+                Nền ảnh · {selectedBackground.label}
+              </p>
+              <div className="mt-2 flex items-center gap-1.5">
+                {SUMMARY_IMAGE_BACKGROUNDS.map((background) => {
+                  const selected = background.id === backgroundId;
+                  return (
+                    <button
+                      key={background.id}
+                      type="button"
+                      onClick={() => chooseBackground(background.id)}
+                      title={`${background.label} — ${background.hint}`}
+                      aria-label={`Nền ${background.label}`}
+                      aria-pressed={selected}
+                      style={{ background: background.preview }}
+                      className={`h-8 w-8 shrink-0 rounded-md border transition ${
+                        selected
+                          ? "border-violet-500 ring-2 ring-violet-500/40"
+                          : "border-stone-300 hover:border-stone-400 dark:border-stone-600"
+                      }`}
+                    />
+                  );
+                })}
+              </div>
+            </div>
+
             {actions.map((action) => {
               const Icon = action.icon;
               return (

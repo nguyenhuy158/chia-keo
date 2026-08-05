@@ -8,6 +8,10 @@ import {
 } from "../../../shared/summary-text";
 import { buildVietQrProxyPath, canBuildVietQr, getVietQrBankLabel } from "../../../shared/vietqr";
 import { API_BASE } from "./http-game-api";
+import {
+  getSummaryImageBackground,
+  type SummaryImagePalette,
+} from "./summary-image-backgrounds";
 
 const IMAGE_MIME = "image/png";
 /** Ve o do phan giai gap doi cho net tren man hinh retina va khi zoom. */
@@ -19,6 +23,8 @@ const WRAP_INDENT = 18;
 const QR_SIZE = 168;
 const QR_TEXT_GAP = 20;
 const QR_BLOCK_GAP = 16;
+/** Vien trang lot quanh QR khi nen anh toi. */
+const QR_MAT_PADDING = 10;
 const QR_LOAD_TIMEOUT_MS = 8_000;
 /** Truyen 0 cho VietQR de QR khong gan san so tien, nguoi quet tu nhap. */
 const QR_AMOUNT_FREE = 0;
@@ -41,22 +47,6 @@ const FONT_SAMPLE_TEXT = "Aa0 ăâđêôơư ảấầếệồổộớợủ�
 
 const FONT_STACK = `${IMAGE_FONT_FAMILIES.map((name) => `"${name}"`).join(", ")}, Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif`;
 
-/**
- * Anh luon dung bang mau sang du app dang o dark mode: anh se duoc dan sang
- * Zalo/Messenger nen doc tren nen sang la an toan nhat.
- */
-const COLOR = {
-  background: "#ffffff",
-  accent: "#7c3aed",
-  title: "#0c0a09",
-  subtitle: "#7c3aed",
-  heading: "#6d28d9",
-  body: "#1c1917",
-  muted: "#78716c",
-  divider: "#e7e5e4",
-  qrFrame: "#e7e5e4",
-} as const;
-
 type TextStyle = {
   font: string;
   color: string;
@@ -64,19 +54,52 @@ type TextStyle = {
   gapBefore: number;
 };
 
-const STYLE = {
-  title: { font: `700 27px ${FONT_STACK}`, color: COLOR.title, lineHeight: 34, gapBefore: 0 },
-  subtitle: { font: `600 14px ${FONT_STACK}`, color: COLOR.subtitle, lineHeight: 22, gapBefore: 2 },
-  heading: { font: `700 15px ${FONT_STACK}`, color: COLOR.heading, lineHeight: 24, gapBefore: 22 },
-  body: { font: `400 15px ${FONT_STACK}`, color: COLOR.body, lineHeight: 23, gapBefore: 0 },
-  qrTitle: { font: `700 18px ${FONT_STACK}`, color: COLOR.title, lineHeight: 26, gapBefore: 0 },
-  qrAmount: { font: `700 22px ${FONT_STACK}`, color: COLOR.accent, lineHeight: 32, gapBefore: 0 },
-  qrNote: { font: `600 15px ${FONT_STACK}`, color: COLOR.accent, lineHeight: 24, gapBefore: 0 },
-  qrDetail: { font: `400 14px ${FONT_STACK}`, color: COLOR.muted, lineHeight: 21, gapBefore: 0 },
-  footer: { font: `400 13px ${FONT_STACK}`, color: COLOR.muted, lineHeight: 20, gapBefore: 24 },
-  /** Dong nhom trong phan chuyen tien cua ban chi tiet, vi du "Chuyen vao X". */
-  groupLabel: { font: `600 14px ${FONT_STACK}`, color: COLOR.muted, lineHeight: 24, gapBefore: 6 },
-} satisfies Record<string, TextStyle>;
+/**
+ * Mau chu lay tu nen dang chon (xem summary-image-backgrounds.ts), con co chu va
+ * khoang dong thi co dinh — doi nen khong duoc lam anh xe dich bo cuc.
+ */
+function buildStyles(palette: SummaryImagePalette) {
+  return {
+    title: { font: `700 27px ${FONT_STACK}`, color: palette.title, lineHeight: 34, gapBefore: 0 },
+    subtitle: {
+      font: `600 14px ${FONT_STACK}`,
+      color: palette.subtitle,
+      lineHeight: 22,
+      gapBefore: 2,
+    },
+    heading: {
+      font: `700 15px ${FONT_STACK}`,
+      color: palette.heading,
+      lineHeight: 24,
+      gapBefore: 22,
+    },
+    body: { font: `400 15px ${FONT_STACK}`, color: palette.body, lineHeight: 23, gapBefore: 0 },
+    qrTitle: { font: `700 18px ${FONT_STACK}`, color: palette.title, lineHeight: 26, gapBefore: 0 },
+    qrAmount: {
+      font: `700 22px ${FONT_STACK}`,
+      color: palette.accent,
+      lineHeight: 32,
+      gapBefore: 0,
+    },
+    qrNote: { font: `600 15px ${FONT_STACK}`, color: palette.accent, lineHeight: 24, gapBefore: 0 },
+    qrDetail: {
+      font: `400 14px ${FONT_STACK}`,
+      color: palette.muted,
+      lineHeight: 21,
+      gapBefore: 0,
+    },
+    footer: { font: `400 13px ${FONT_STACK}`, color: palette.muted, lineHeight: 20, gapBefore: 24 },
+    /** Dong nhom trong phan chuyen tien cua ban chi tiet, vi du "Chuyen vao X". */
+    groupLabel: {
+      font: `600 14px ${FONT_STACK}`,
+      color: palette.muted,
+      lineHeight: 24,
+      gapBefore: 6,
+    },
+  } satisfies Record<string, TextStyle>;
+}
+
+type Styles = ReturnType<typeof buildStyles>;
 
 type Block = {
   height: number;
@@ -121,11 +144,11 @@ async function loadQrImage(payee: ApiParticipant, amount: number, code: string) 
   return loadImage(`${API_BASE}${buildVietQrProxyPath(payee, amount, code)}`);
 }
 
-function buildAccountLines(payee: ApiParticipant): QrLine[] {
+function buildAccountLines(payee: ApiParticipant, styles: Styles): QrLine[] {
   const detail = [getVietQrBankLabel(payee.bankId), payee.accountNo].filter(Boolean).join(" · ");
   return [
-    [detail, STYLE.qrDetail],
-    [payee.accountName || payee.name, STYLE.qrDetail],
+    [detail, styles.qrDetail],
+    [payee.accountName || payee.name, styles.qrDetail],
   ];
 }
 
@@ -133,7 +156,11 @@ function buildAccountLines(payee: ApiParticipant): QrLine[] {
  * Tai truoc QR cho phan chuyen tien. Nguoi nhan chua nhap tai khoan hoac anh
  * tai loi thi bo qua, phan do van hien lai bang dong chu nhu cu.
  */
-async function loadQrCards(input: SummaryTextInput, doc: SummaryDocument): Promise<QrCards> {
+async function loadQrCards(
+  input: SummaryTextInput,
+  doc: SummaryDocument,
+  styles: Styles,
+): Promise<QrCards> {
   const participantById = new Map<string, ApiParticipant>(
     input.participants.map((participant) => [participant.id, participant]),
   );
@@ -149,9 +176,9 @@ async function loadQrCards(input: SummaryTextInput, doc: SummaryDocument): Promi
           ? {
               image,
               lines: [
-                [`Chuyển cho ${host.name}`, STYLE.qrTitle],
-                ["Quét rồi tự nhập số tiền", STYLE.qrNote],
-                ...buildAccountLines(host),
+                [`Chuyển cho ${host.name}`, styles.qrTitle],
+                ["Quét rồi tự nhập số tiền", styles.qrNote],
+                ...buildAccountLines(host, styles),
               ],
             }
           : null,
@@ -172,9 +199,9 @@ async function loadQrCards(input: SummaryTextInput, doc: SummaryDocument): Promi
         {
           image,
           lines: [
-            [`${from.name} → ${to.name}`, STYLE.qrTitle],
-            [`${formatThousands(settlement.amount)}k`, STYLE.qrAmount],
-            ...buildAccountLines(to),
+            [`${from.name} → ${to.name}`, styles.qrTitle],
+            [`${formatThousands(settlement.amount)}k`, styles.qrAmount],
+            ...buildAccountLines(to, styles),
           ] as QrLine[],
         },
       ] as const;
@@ -229,7 +256,7 @@ function buildTextBlocks(
   context: CanvasRenderingContext2D,
   text: string,
   style: TextStyle,
-  options: { withDivider?: boolean } = {},
+  options: { divider?: string } = {},
 ): Block[] {
   const maxWidth = CARD_WIDTH - PADDING * 2;
 
@@ -241,8 +268,8 @@ function buildTextBlocks(
       height: style.lineHeight,
       gapBefore,
       draw(target, y) {
-        if (options.withDivider && index === 0 && gapBefore > 0) {
-          target.fillStyle = COLOR.divider;
+        if (options.divider && index === 0 && gapBefore > 0) {
+          target.fillStyle = options.divider;
           target.fillRect(PADDING, y - gapBefore / 2, CARD_WIDTH - PADDING * 2, 1);
         }
         drawText(target, part, style, x, y);
@@ -251,7 +278,7 @@ function buildTextBlocks(
   });
 }
 
-function buildQrBlock(card: QrCard): Block {
+function buildQrBlock(card: QrCard, palette: SummaryImagePalette): Block {
   const textX = PADDING + QR_SIZE + QR_TEXT_GAP;
   const textHeight = card.lines.reduce((total, [, style]) => total + style.lineHeight, 0);
 
@@ -259,7 +286,19 @@ function buildQrBlock(card: QrCard): Block {
     height: QR_SIZE,
     gapBefore: QR_BLOCK_GAP,
     draw(context, y) {
-      context.strokeStyle = COLOR.qrFrame;
+      // Nen toi: lot mot mieng trang rong hon QR de no thanh co y chu khong
+      // giong mot o trang bi bo quen giua nen.
+      if (palette.qrMat) {
+        context.fillStyle = palette.qrMat;
+        context.fillRect(
+          PADDING - QR_MAT_PADDING,
+          y - QR_MAT_PADDING,
+          QR_SIZE + QR_MAT_PADDING * 2,
+          QR_SIZE + QR_MAT_PADDING * 2,
+        );
+      }
+
+      context.strokeStyle = palette.qrFrame;
       context.lineWidth = 1;
       context.strokeRect(PADDING + 0.5, y + 0.5, QR_SIZE - 1, QR_SIZE - 1);
       context.drawImage(card.image, PADDING, y, QR_SIZE, QR_SIZE);
@@ -277,34 +316,42 @@ function buildBlocks(
   doc: SummaryDocument,
   context: CanvasRenderingContext2D,
   qrCards: QrCards,
+  styles: Styles,
+  palette: SummaryImagePalette,
 ): Block[] {
   const blocks: Block[] = [
-    ...buildTextBlocks(context, doc.title, STYLE.title),
-    ...buildTextBlocks(context, doc.subtitle, STYLE.subtitle),
+    ...buildTextBlocks(context, doc.title, styles.title),
+    ...buildTextBlocks(context, doc.subtitle, styles.subtitle),
   ];
 
   for (const section of doc.sections) {
-    blocks.push(...buildTextBlocks(context, section.heading, STYLE.heading, { withDivider: true }));
+    blocks.push(
+      ...buildTextBlocks(context, section.heading, styles.heading, {
+        divider: palette.divider,
+      }),
+    );
 
     if (section.id === "settlements" && qrCards.host) {
-      blocks.push(buildQrBlock(qrCards.host));
+      blocks.push(buildQrBlock(qrCards.host, palette));
     }
 
     section.lines.forEach((line, index) => {
       const card = section.id === "settlements" ? qrCards.byLineIndex.get(index) : undefined;
       if (card) {
-        blocks.push(buildQrBlock(card));
+        blocks.push(buildQrBlock(card, palette));
         return;
       }
 
       // Ban chi tiet chen dong nhom ("Chuyen vao X — tong ...:") giua cac dong
       // chuyen tien; khong danh dau thi no lan vao nhu mot luot chuyen nua.
       const isGroupLabel = section.id === "settlements" && !line.startsWith("- ");
-      blocks.push(...buildTextBlocks(context, line, isGroupLabel ? STYLE.groupLabel : STYLE.body));
+      blocks.push(
+        ...buildTextBlocks(context, line, isGroupLabel ? styles.groupLabel : styles.body),
+      );
     });
   }
 
-  if (doc.footer) blocks.push(...buildTextBlocks(context, doc.footer, STYLE.footer));
+  if (doc.footer) blocks.push(...buildTextBlocks(context, doc.footer, styles.footer));
 
   return blocks;
 }
@@ -352,22 +399,29 @@ async function ensureImageFontsReady() {
 export async function renderSummaryImage(
   input: SummaryTextInput,
   variant: SummaryVariant = "compact",
+  /** Id nen (xem SUMMARY_IMAGE_BACKGROUNDS); id la khong ro thi ve nen mac dinh. */
+  backgroundId?: string,
 ): Promise<Blob> {
+  const background = getSummaryImageBackground(backgroundId);
+  const styles = buildStyles(background.palette);
+
   const doc = buildSummaryDocument(input, variant);
   // Font phai san sang truoc khi do chu, khong thi wrapText do bang font sai.
-  const [, qrCards] = await Promise.all([ensureImageFontsReady(), loadQrCards(input, doc)]);
+  const [, qrCards] = await Promise.all([
+    ensureImageFontsReady(),
+    loadQrCards(input, doc, styles),
+  ]);
 
   const measure = createContext(1, 1);
-  const blocks = buildBlocks(doc, measure.context, qrCards);
+  const blocks = buildBlocks(doc, measure.context, qrCards, styles, background.palette);
 
   const contentHeight = blocks.reduce((total, block) => total + block.gapBefore + block.height, 0);
   const cardHeight = ACCENT_BAR_HEIGHT + PADDING * 2 + contentHeight;
 
   const { canvas, context } = createContext(CARD_WIDTH, cardHeight);
 
-  context.fillStyle = COLOR.background;
-  context.fillRect(0, 0, CARD_WIDTH, cardHeight);
-  context.fillStyle = COLOR.accent;
+  background.paint(context, CARD_WIDTH, cardHeight);
+  context.fillStyle = background.palette.accent;
   context.fillRect(0, 0, CARD_WIDTH, ACCENT_BAR_HEIGHT);
   context.textBaseline = "alphabetic";
 
