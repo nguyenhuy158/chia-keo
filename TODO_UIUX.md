@@ -16,11 +16,14 @@ trang thì `TrashCard` luôn về trạng thái gấp mặc định — đúng �
 người dùng hay mở ra xem thì phải bấm lại mỗi lần. Lưu trạng thái mở/gấp vào
 localStorage theo key riêng từng card.
 
-## 3. Avatar chữ cái đầu + màu riêng cho từng người
-Danh sách người tham gia, dòng lịch sử, dòng chuyển tiền hiện toàn chữ trơn.
-Một avatar tròn chữ cái đầu + màu cố định theo tên (hash tên -> màu trong một
-bảng màu cố định, để cùng một người luôn cùng một màu xuyên suốt app) sẽ dễ
-quét mắt hơn nhiều khi danh sách dài.
+## 3. ~~Avatar theo tên~~ — Đã làm (2026-08-05), một phần
+Dùng DiceBear (kiểu fun-emoji) thay vì chữ cái đầu — xem `docs/avatar-libs.md`
+để biết lý do chọn và cách đổi lib khác. `src/components/Avatar.tsx` là điểm
+chặn duy nhất, đã áp cho danh sách người tham gia và dòng chuyển tiền.
+
+**Cố tình bỏ qua dòng lịch sử**: icon loại thao tác (thêm/xóa/sửa) ở đó đang
+mang nhiều thông tin hơn mặt người, và nhiều dòng (đổi tên cuộc chia, đổi cách
+chuyển tiền...) không gắn với đúng một người để gắn avatar.
 
 ## 4. Vuốt để xoá trên mobile
 Participant, contact, ảnh hiện đều xoá qua nút icon nhỏ. Thêm swipe-to-delete
