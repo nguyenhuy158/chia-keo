@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import type { ApiParticipant } from "../../shared/api-types";
 import { type Contact, normalizeContactName } from "../../shared/contacts";
 import type { ParticipantInput } from "../../shared/schemas";
+import { getVietQrBankLabel } from "../adapters/browser/vietqr";
 import { useContacts } from "../adapters/react-query/queries";
 
 type ContactPickerProps = {
@@ -22,8 +23,8 @@ function toInput(contact: Contact): ParticipantInput {
 }
 
 /**
- * Chon nhanh nguoi hay di cung. Danh ba lay tu cac cuoc chia truoc do, nen lan
- * dau dung app se rong — luc do an luon khoi chiem cho.
+ * Chon nhanh nguoi hay di cung. Danh sach gop tu card Danh ba (tu nhap) va cac
+ * cuoc chia truoc do; chua co ai thi an luon khoi chiem cho.
  */
 export function ContactPicker({ participants, pending, onAddMany }: ContactPickerProps) {
   const contactsQuery = useContacts();
@@ -92,7 +93,7 @@ export function ContactPicker({ participants, pending, onAddMany }: ContactPicke
               title={
                 inGame
                   ? `${contact.name} đã có trong cuộc chia này`
-                  : `${contact.name}${contact.accountNo ? ` · ${contact.bankId} ${contact.accountNo}` : " · chưa có QR"} · ${contact.gameCount} cuộc chia`
+                  : `${contact.name}${contact.accountNo ? ` · ${getVietQrBankLabel(contact.bankId)} ${contact.accountNo}` : " · chưa có QR"} · ${contact.gameCount} cuộc chia`
               }
               className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition ${
                 inGame

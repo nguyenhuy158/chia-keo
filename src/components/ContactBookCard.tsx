@@ -7,6 +7,8 @@ import {
   useDeleteContact,
   useUpdateContact,
 } from "../adapters/react-query/queries";
+import { getVietQrBankLabel } from "../adapters/browser/vietqr";
+import { BankSelect } from "./BankSelect";
 import { useToast } from "./Toast";
 
 type Draft = { name: string; bankId: string; accountNo: string; accountName: string };
@@ -46,22 +48,19 @@ function DraftForm({
         placeholder="Tên · Huy"
         aria-label="Tên"
       />
-      <div className="flex gap-2">
-        <input
-          value={draft.bankId}
-          onChange={(event) => onChange({ ...draft, bankId: event.target.value })}
-          className={`${INPUT_CLASS} w-24 shrink-0`}
-          placeholder="VCB"
-          aria-label="Mã ngân hàng"
-        />
-        <input
-          value={draft.accountNo}
-          onChange={(event) => onChange({ ...draft, accountNo: event.target.value })}
-          className={INPUT_CLASS}
-          placeholder="Số tài khoản"
-          aria-label="Số tài khoản"
-        />
-      </div>
+      <BankSelect
+        value={draft.bankId}
+        onChange={(bankId) => onChange({ ...draft, bankId })}
+        className={INPUT_CLASS}
+        aria-label="Ngân hàng"
+      />
+      <input
+        value={draft.accountNo}
+        onChange={(event) => onChange({ ...draft, accountNo: event.target.value })}
+        className={INPUT_CLASS}
+        placeholder="Số tài khoản"
+        aria-label="Số tài khoản"
+      />
       <input
         value={draft.accountName}
         onChange={(event) => onChange({ ...draft, accountName: event.target.value })}
@@ -113,7 +112,7 @@ function ContactRow({
         </p>
         <p className="mt-0.5 truncate text-xs text-stone-500 dark:text-stone-400">
           {contact.accountNo
-            ? `${contact.bankId || "?"} · ${contact.accountNo}`
+            ? `${getVietQrBankLabel(contact.bankId) || "?"} · ${contact.accountNo}`
             : "chưa có số tài khoản"}
           {contact.gameCount > 0 && ` · ${contact.gameCount} cuộc`}
         </p>

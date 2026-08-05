@@ -5,6 +5,8 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import type { ApiParticipant } from "../../shared/api-types";
 import type { ParticipantInput } from "../../shared/schemas";
+import { getVietQrBankLabel } from "../adapters/browser/vietqr";
+import { BankSelect } from "./BankSelect";
 import { ContactPicker } from "./ContactPicker";
 import { Field } from "./ui";
 
@@ -90,8 +92,12 @@ export function ParticipantPanel({
         <Field label="Tên" error={form.formState.errors.name?.message}>
           <input {...form.register("name")} className="field" placeholder="Huy" />
         </Field>
-        <Field label="Mã ngân hàng">
-          <input {...form.register("bankId")} className="field" placeholder="VCB, TCB, MBB..." />
+        <Field label="Ngân hàng">
+          <BankSelect
+            value={form.watch("bankId")}
+            onChange={(bankId) => form.setValue("bankId", bankId)}
+            className="field"
+          />
         </Field>
         <Field label="Số tài khoản">
           <input {...form.register("accountNo")} className="field" placeholder="0123456789" />
@@ -135,7 +141,7 @@ export function ParticipantPanel({
                 </p>
                 <p className="mt-1 truncate text-xs text-stone-500 dark:text-stone-400">
                   {participant.bankId && participant.accountNo
-                    ? `${participant.bankId} - ${participant.accountNo}`
+                    ? `${getVietQrBankLabel(participant.bankId)} · ${participant.accountNo}`
                     : "Chưa có thông tin QR"}
                 </p>
               </div>
