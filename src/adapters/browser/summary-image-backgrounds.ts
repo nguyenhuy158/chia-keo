@@ -30,6 +30,8 @@ export type SummaryImageBackground = {
   hint: string;
   /** CSS background cho o vuong xem truoc trong menu Copy. */
   preview: string;
+  /** Emoji ve chong len o xem truoc, cho nen co hoa van emoji. */
+  previewEmoji?: string;
   /**
    * Cac mau nen `paint` thuc su to (dau va cuoi cua gradient, mau giay...).
    * Test doi chieu mau chu voi tung mau nay de khong co nen nao lam chu kho doc.
@@ -68,6 +70,50 @@ function fillVerticalGradient(from: string, to: string) {
   };
 }
 
+/**
+ * Hoa van emoji: thua va rat mo de khong an vao chu, xen le hang cho khong
+ * thanh luoi vuong. Vi tri tinh tu chi so hang/cot chu khong random — cung mot
+ * anh ve lai nhieu lan phai giong nhau.
+ */
+const EMOJI_SPACING_X = 116;
+const EMOJI_SPACING_Y = 104;
+const EMOJI_SIZE = 30;
+const EMOJI_ALPHA = 0.16;
+const EMOJI_TILT = 0.18;
+
+function fillEmojiPattern(base: (c: CanvasRenderingContext2D, w: number, h: number) => void, emojis: string[]) {
+  return (context: CanvasRenderingContext2D, width: number, height: number) => {
+    base(context, width, height);
+
+    context.save();
+    context.globalAlpha = EMOJI_ALPHA;
+    context.textAlign = "center";
+    context.textBaseline = "middle";
+    context.font = `${EMOJI_SIZE}px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif`;
+
+    let row = 0;
+    for (let y = EMOJI_SPACING_Y / 2; y < height; y += EMOJI_SPACING_Y) {
+      const indent = row % 2 === 0 ? 0 : EMOJI_SPACING_X / 2;
+      let column = 0;
+
+      for (let x = indent + EMOJI_SPACING_X / 2; x < width; x += EMOJI_SPACING_X) {
+        const emoji = emojis[(row + column) % emojis.length];
+        // Nghieng qua lai cho ngau, khong thang hang cung nhu dan tem.
+        context.save();
+        context.translate(x, y);
+        context.rotate((row + column) % 2 === 0 ? EMOJI_TILT : -EMOJI_TILT);
+        context.fillText(emoji, 0, 0);
+        context.restore();
+        column += 1;
+      }
+
+      row += 1;
+    }
+
+    context.restore();
+  };
+}
+
 const DOT_SPACING = 26;
 const DOT_RADIUS = 1.4;
 
@@ -90,6 +136,24 @@ function fillDottedPaper(base: string, dot: string) {
 }
 
 export const SUMMARY_IMAGE_BACKGROUNDS: SummaryImageBackground[] = [
+  {
+    id: "cau-long",
+    label: "Cầu lông mint",
+    hint: "Xanh mint nhạt, rắc cầu lông mờ",
+    preview: "linear-gradient(#f0fdfa, #ccfbf1)",
+    previewEmoji: "🏸",
+    baseColors: ["#f0fdfa", "#ccfbf1"],
+    palette: {
+      ...LIGHT_INK,
+      accent: "#0d9488",
+      subtitle: "#0f766e",
+      heading: "#115e59",
+      divider: "#99f6e4",
+      qrFrame: "#5eead4",
+      qrMat: null,
+    },
+    paint: fillEmojiPattern(fillVerticalGradient("#f0fdfa", "#ccfbf1"), ["🏸", "✨", "🏸", "🥇"]),
+  },
   {
     id: "trang",
     label: "Trắng trơn",

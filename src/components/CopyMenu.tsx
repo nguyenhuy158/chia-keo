@@ -250,12 +250,14 @@ export function CopyMenu({ input, className }: CopyMenuProps) {
                       aria-label={`Nền ${background.label}`}
                       aria-pressed={selected}
                       style={{ background: background.preview }}
-                      className={`h-8 w-8 shrink-0 rounded-md border transition ${
+                      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md border text-[13px] leading-none transition ${
                         selected
                           ? "border-violet-500 ring-2 ring-violet-500/40"
                           : "border-stone-300 hover:border-stone-400 dark:border-stone-600"
                       }`}
-                    />
+                    >
+                      {background.previewEmoji}
+                    </button>
                   );
                 })}
               </div>

@@ -10,8 +10,22 @@ function fakeContext() {
   const rects: { x: number; y: number; width: number; height: number }[] = [];
   const gradientStops: string[] = [];
 
+  const texts: { text: string; alpha: number }[] = [];
+  let alpha = 1;
+  let depth = 0;
+  let maxDepth = 0;
+
   const context = {
     fillStyle: "" as unknown,
+    font: "",
+    textAlign: "",
+    textBaseline: "",
+    get globalAlpha() {
+      return alpha;
+    },
+    set globalAlpha(value: number) {
+      alpha = value;
+    },
     fillRect(x: number, y: number, width: number, height: number) {
       rects.push({ x, y, width, height });
     },
@@ -25,9 +39,29 @@ function fakeContext() {
     beginPath() {},
     arc() {},
     fill() {},
+    fillText(text: string) {
+      texts.push({ text, alpha });
+    },
+    save() {
+      depth += 1;
+      maxDepth = Math.max(maxDepth, depth);
+    },
+    restore() {
+      depth -= 1;
+    },
+    translate() {},
+    rotate() {},
   };
 
-  return { context: context as unknown as CanvasRenderingContext2D, rects, gradientStops };
+  return {
+    context: context as unknown as CanvasRenderingContext2D,
+    rects,
+    gradientStops,
+    texts,
+    /** Sau khi ve xong phai ve 0: save/restore lech la ro ra ca anh. */
+    balance: () => depth,
+    maxDepth: () => maxDepth,
+  };
 }
 
 describe("SUMMARY_IMAGE_BACKGROUNDS", () => {
@@ -106,6 +140,20 @@ describe("SUMMARY_IMAGE_BACKGROUNDS", () => {
         check("accent", background.palette.accent, MIN_LARGE);
       }
     }
+  });
+
+  it("nen mac dinh rac emoji cau long mo, va tra canvas ve nguyen trang thai", () => {
+    const { context, texts, balance } = fakeContext();
+    const background = getSummaryImageBackground(DEFAULT_SUMMARY_IMAGE_BACKGROUND_ID);
+
+    background.paint(context, 760, 1000);
+
+    expect(background.id).toBe("cau-long");
+    expect(texts.length).toBeGreaterThan(10);
+    expect(texts.some((entry) => entry.text === "🏸")).toBe(true);
+    // Hoa van phai mo hon han chu, khong thi doc so tien khong noi.
+    for (const entry of texts) expect(entry.alpha).toBeLessThan(0.25);
+    expect(balance()).toBe(0);
   });
 
   it("id la khong ro thi ve nen mac dinh chu khong vo", () => {
