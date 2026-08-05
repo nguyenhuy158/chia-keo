@@ -4,6 +4,7 @@ import type { ApiParticipant } from "../../shared/api-types";
 import { type Contact, normalizeContactName } from "../../shared/contacts";
 import type { ParticipantInput } from "../../shared/schemas";
 import { getVietQrBankLabel } from "../adapters/browser/vietqr";
+import { Avatar } from "./Avatar";
 import { useContacts } from "../adapters/react-query/queries";
 
 type ContactPickerProps = {
@@ -103,8 +104,9 @@ export function ContactPicker({ participants, pending, onAddMany }: ContactPicke
                     : "border-stone-300 bg-white text-stone-700 hover:border-violet-400 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-200"
               }`}
             >
-              {inGame ? <Check size={13} /> : picked ? <Check size={13} /> : <Plus size={13} />}
+              <Avatar name={contact.name} size={16} />
               {contact.name}
+              {inGame ? <Check size={13} /> : picked ? <Check size={13} /> : <Plus size={13} />}
             </button>
           );
         })}

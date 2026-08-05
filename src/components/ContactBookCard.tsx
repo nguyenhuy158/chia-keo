@@ -8,6 +8,7 @@ import {
   useUpdateContact,
 } from "../adapters/react-query/queries";
 import { getVietQrBankLabel } from "../adapters/browser/vietqr";
+import { Avatar } from "./Avatar";
 import { BankSelect } from "./BankSelect";
 import { useConfirm } from "./ConfirmDialog";
 import { useToast } from "./Toast";
@@ -104,16 +105,19 @@ function ContactRow({
 }) {
   return (
     <div className="flex items-start justify-between gap-2 px-1 py-2">
-      <div className="min-w-0">
-        <p className="truncate text-sm font-medium text-stone-900 dark:text-stone-100">
-          {contact.name}
-        </p>
-        <p className="mt-0.5 truncate text-xs text-stone-500 dark:text-stone-400">
-          {contact.accountNo
-            ? `${getVietQrBankLabel(contact.bankId) || "?"} · ${contact.accountNo}`
-            : "chưa có số tài khoản"}
-          {contact.gameCount > 0 && ` · ${contact.gameCount} cuộc`}
-        </p>
+      <div className="flex min-w-0 items-center gap-2.5">
+        <Avatar name={contact.name} size={30} />
+        <div className="min-w-0">
+          <p className="truncate text-sm font-medium text-stone-900 dark:text-stone-100">
+            {contact.name}
+          </p>
+          <p className="mt-0.5 truncate text-xs text-stone-500 dark:text-stone-400">
+            {contact.accountNo
+              ? `${getVietQrBankLabel(contact.bankId) || "?"} · ${contact.accountNo}`
+              : "chưa có số tài khoản"}
+            {contact.gameCount > 0 && ` · ${contact.gameCount} cuộc`}
+          </p>
+        </div>
       </div>
       <div className="flex shrink-0 items-center">
         <button
