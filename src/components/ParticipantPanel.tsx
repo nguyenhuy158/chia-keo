@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import type { ApiParticipant } from "../../shared/api-types";
 import type { ParticipantInput } from "../../shared/schemas";
+import { ContactPicker } from "./ContactPicker";
 import { Field } from "./ui";
 
 const participantFormSchema = z.object({
@@ -27,6 +28,7 @@ type ParticipantPanelProps = {
   participants: ApiParticipant[];
   pending: boolean;
   onAdd: (input: ParticipantInput) => Promise<unknown>;
+  onAddMany: (people: ParticipantInput[]) => Promise<unknown>;
   onUpdate: (participantId: string, input: Partial<ParticipantInput>) => Promise<unknown>;
   onRemove: (participantId: string) => void;
 };
@@ -35,6 +37,7 @@ export function ParticipantPanel({
   participants,
   pending,
   onAdd,
+  onAddMany,
   onUpdate,
   onRemove,
 }: ParticipantPanelProps) {
@@ -77,6 +80,11 @@ export function ParticipantPanel({
         <Users size={18} className="text-violet-600 dark:text-violet-400" />
         <h3 className="text-lg font-semibold text-stone-950 dark:text-stone-50">Người tham gia</h3>
       </div>
+
+      {/* Chi hien luc them nguoi moi: dang sua mot nguoi thi form o duoi la trong tam. */}
+      {!editingParticipantId && (
+        <ContactPicker participants={participants} pending={pending} onAddMany={onAddMany} />
+      )}
 
       <form onSubmit={editingParticipantId ? handleSaveEdit : handleAdd} className="grid gap-3 md:grid-cols-2">
         <Field label="Tên" error={form.formState.errors.name?.message}>

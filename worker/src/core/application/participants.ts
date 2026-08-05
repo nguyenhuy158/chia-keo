@@ -1,5 +1,5 @@
 import type { ApiGameDetail } from "../../../../shared/api-types";
-import type { ParticipantInput } from "../../../../shared/schemas";
+import type { ParticipantBatchInput, ParticipantInput } from "../../../../shared/schemas";
 import { createId, nowIso } from "../../lib/ids";
 import type { GameRepository } from "../ports/game-repository";
 import { NotFoundError } from "./errors";
@@ -36,6 +36,40 @@ export async function addParticipant(
       accountName: input.accountName,
     },
   );
+
+  return loadGameDetail(repo, game);
+}
+
+/**
+ * Them nhieu nguoi mot luot (chon tu danh ba). Tra ve game detail mot lan sau
+ * khi chen het, thay vi tinh lai sau tung nguoi.
+ */
+export async function addParticipants(
+  repo: GameRepository,
+  userId: string,
+  gameId: string,
+  input: ParticipantBatchInput,
+): Promise<ApiGameDetail> {
+  const game = await getOwnedGame(repo, gameId, userId);
+  if (!game) throw new NotFoundError();
+
+  for (const person of input.people) {
+    const now = nowIso();
+    await repo.participants.insert(
+      {
+        id: createId("participant"),
+        gameId: game.id,
+        name: person.name,
+        createdAt: now,
+        updatedAt: now,
+      },
+      {
+        bankId: person.bankId,
+        accountNo: person.accountNo,
+        accountName: person.accountName,
+      },
+    );
+  }
 
   return loadGameDetail(repo, game);
 }

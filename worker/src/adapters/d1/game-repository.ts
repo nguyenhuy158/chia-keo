@@ -155,6 +155,34 @@ export function createD1GameRepository(d1: D1Database): GameRepository {
             set: { ...fields, updatedAt },
           });
       },
+      async listByOwner(userId) {
+        // leftJoin: nguoi chua nhap QR van phai co trong danh ba.
+        const rows = await db
+          .select({
+            name: schema.participants.name,
+            gameId: schema.participants.gameId,
+            createdAt: schema.participants.createdAt,
+            bankId: schema.paymentProfiles.bankId,
+            accountNo: schema.paymentProfiles.accountNo,
+            accountName: schema.paymentProfiles.accountName,
+          })
+          .from(schema.participants)
+          .innerJoin(schema.games, eq(schema.games.id, schema.participants.gameId))
+          .leftJoin(
+            schema.paymentProfiles,
+            eq(schema.paymentProfiles.participantId, schema.participants.id),
+          )
+          .where(eq(schema.games.ownerUserId, userId));
+
+        return rows.map((row) => ({
+          name: row.name,
+          gameId: row.gameId,
+          createdAt: row.createdAt,
+          bankId: row.bankId || "",
+          accountNo: row.accountNo || "",
+          accountName: row.accountName || "",
+        }));
+      },
       async delete(participantId) {
         await db.delete(schema.participants).where(eq(schema.participants.id, participantId));
       },

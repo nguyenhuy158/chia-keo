@@ -90,6 +90,14 @@ export const participantInputSchema = z.object({
   accountName: z.string().trim().max(50).default(""),
 });
 
+/**
+ * Them nhieu nguoi mot luot (chon tu danh ba). Gui mot request thay vi N
+ * request: FE khong phai xu ly ca "them duoc 3/5 nguoi roi loi".
+ */
+export const participantBatchInputSchema = z.object({
+  people: z.array(participantInputSchema).min(1).max(MAX_QUICK_PARTICIPANTS),
+});
+
 export const splitModeSchema = z.enum(["equal", "shares", "amount"]);
 
 /**
@@ -189,6 +197,7 @@ export type ExpenseKindInput = z.infer<typeof expenseKindSchema>;
 export type GameInput = z.input<typeof gameInputSchema>;
 export type GameUpdateInput = z.input<typeof gameUpdateSchema>;
 export type ParticipantInput = z.infer<typeof participantInputSchema>;
+export type ParticipantBatchInput = z.infer<typeof participantBatchInputSchema>;
 export type ExpenseInput = z.infer<typeof expenseInputSchema>;
 export type ExpenseSplitInput = z.infer<typeof expenseSplitInputSchema>;
 export type SplitMode = z.infer<typeof splitModeSchema>;

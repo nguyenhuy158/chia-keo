@@ -11,11 +11,13 @@ import type {
   ApiPhotoDetail,
   ApiShareView,
 } from "../../../shared/api-types";
+import type { Contact } from "../../../shared/contacts";
 import type {
   ExpenseInput,
   GameInput,
   GameUpdateInput,
   McpTokenInput,
+  ParticipantBatchInput,
   ParticipantInput,
   PhotoInput,
   PhotoUpdateInput,
@@ -31,8 +33,14 @@ export type GameApiPort = {
     remove(gameId: string): Promise<{ ok: boolean }>;
     duplicate(gameId: string): Promise<ApiGameDetail>;
   };
+  contacts: {
+    /** Nguoi quen suy ra tu cac cuoc chia da tao, nguoi hay di cung len truoc. */
+    list(): Promise<{ contacts: Contact[] }>;
+  };
   participants: {
     create(gameId: string, input: ParticipantInput): Promise<ApiGameDetail>;
+    /** Them nhieu nguoi mot request; dung khi chon tu danh ba. */
+    createMany(gameId: string, input: ParticipantBatchInput): Promise<ApiGameDetail>;
     update(participantId: string, input: Partial<ParticipantInput>): Promise<ApiGameDetail>;
     remove(participantId: string): Promise<ApiGameDetail>;
   };

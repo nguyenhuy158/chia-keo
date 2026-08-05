@@ -24,6 +24,7 @@ import { formatMoney } from "../core/domain/money";
 import {
   useAddExpense,
   useAddParticipant,
+  useAddParticipants,
   useAddTransfer,
   useDeleteGame,
   useGame,
@@ -47,6 +48,7 @@ export function GamePage() {
   const photosQuery = usePhotos(gameId);
 
   const addParticipant = useAddParticipant(gameId);
+  const addParticipants = useAddParticipants(gameId);
   const removeParticipant = useRemoveParticipant();
   const updateParticipant = useUpdateParticipant();
   const addExpense = useAddExpense(gameId);
@@ -101,8 +103,11 @@ export function GamePage() {
   const participantPanel = (
     <ParticipantPanel
       participants={game.participants}
-      pending={addParticipant.isPending || updateParticipant.isPending}
+      pending={
+        addParticipant.isPending || addParticipants.isPending || updateParticipant.isPending
+      }
       onAdd={(input) => addParticipant.mutateAsync(input)}
+      onAddMany={(people) => addParticipants.mutateAsync({ people })}
       onUpdate={(participantId, input) =>
         updateParticipant.mutateAsync({ participantId, input })
       }

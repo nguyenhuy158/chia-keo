@@ -3,6 +3,7 @@ import {
   expenseInputSchema,
   gameInputSchema,
   gameUpdateSchema,
+  participantBatchInputSchema,
   participantInputSchema,
   shareLinkInputSchema,
   transferInputSchema,
@@ -21,8 +22,10 @@ import {
   listGames,
   updateGame,
 } from "../core/application/games";
+import { listContacts } from "../core/application/contacts";
 import {
   addParticipant,
+  addParticipants,
   removeParticipant,
   updateParticipant,
 } from "../core/application/participants";
@@ -36,7 +39,9 @@ const expenseUpdateSchema = expenseInputSchema.partial();
 // Driving adapter: chi parse HTTP, goi use case va map ket qua/loi ve JSON.
 export const gamesRouter = new Hono<AuthedEnv>();
 
-protectPaths(gamesRouter, "/games", "/games/*", "/participants/*", "/expenses/*");
+protectPaths(gamesRouter, "/games", "/games/*", "/participants/*", "/expenses/*", "/contacts");
+
+gamesRouter.get("/contacts", (c) => respond(c, () => listContacts(c.get("repo"), c.get("userId"))));
 
 gamesRouter.get("/games", (c) => respond(c, () => listGames(c.get("repo"), c.get("userId"))));
 
@@ -87,6 +92,17 @@ gamesRouter.post("/games/:gameId/participants", async (c) => {
   return respond(
     c,
     () => addParticipant(c.get("repo"), c.get("userId"), c.req.param("gameId"), input),
+    201,
+  );
+});
+
+gamesRouter.post("/games/:gameId/participants/batch", async (c) => {
+  const input = await readJson(c, participantBatchInputSchema);
+  if (!input) return invalidInput(c);
+
+  return respond(
+    c,
+    () => addParticipants(c.get("repo"), c.get("userId"), c.req.param("gameId"), input),
     201,
   );
 });

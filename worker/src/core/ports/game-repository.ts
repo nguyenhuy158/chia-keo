@@ -1,6 +1,7 @@
 // Port cho tang luu tru. Adapter (D1/drizzle hoac DB khac) chi can implement
 // interface nay; core khong biet gi ve SQL hay driver ben duoi.
 
+import type { ContactSourceRow } from "../../../../shared/contacts";
 import type { SettlementMode } from "../../../../shared/schemas";
 
 export type GameRow = {
@@ -136,6 +137,11 @@ export type GameRepository = {
       updatedAt: string,
     ): Promise<void>;
     delete(participantId: string): Promise<void>;
+    /**
+     * Moi participant thuoc moi cuoc chia cua user, kem tai khoan nhan tien.
+     * Dung de dung danh ba nguoi quen — viec gop/loc lam o `shared/contacts.ts`.
+     */
+    listByOwner(userId: string): Promise<ContactSourceRow[]>;
   };
   paymentProfiles: {
     listByParticipantIds(participantIds: string[]): Promise<PaymentProfileRow[]>;

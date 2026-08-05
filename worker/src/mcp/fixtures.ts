@@ -183,6 +183,7 @@ export function fakeRepo(
       listByGame: async (gameId) =>
         gameId === secondGame.id ? secondParticipants : participants,
       listIdsByGame: unused("participants.listIdsByGame"),
+      listByOwner: unused("participants.listByOwner"),
       getWithGame: unused("participants.getWithGame"),
       insert: unused("participants.insert"),
       rename: unused("participants.rename"),

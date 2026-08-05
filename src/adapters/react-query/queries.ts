@@ -8,6 +8,7 @@ import type {
   ExpenseInput,
   GameInput,
   McpTokenInput,
+  ParticipantBatchInput,
   ParticipantInput,
   PhotoInput,
   PhotoUpdateInput,
@@ -33,6 +34,9 @@ export const photoKeys = {
   shareDetail: (token: string, photoId: string) => ["share-photo", token, photoId] as const,
 };
 
+/** Danh ba suy ra tu participant nen phai lam moi khi participant doi. */
+export const contactKeys = { all: ["contacts"] as const };
+
 /** Anh goc khong bao gio doi nen giu trong cache ca phien lam viec. */
 const PHOTO_DETAIL_STALE_TIME = Infinity;
 
@@ -52,6 +56,14 @@ export function useShareView(token: string) {
     queryKey: gameKeys.share(token),
     queryFn: () => getGameApi().share.view(token),
     retry: false,
+  });
+}
+
+export function useContacts() {
+  return useQuery({
+    queryKey: contactKeys.all,
+    queryFn: () => getGameApi().contacts.list(),
+    select: (data) => data.contacts,
   });
 }
 
@@ -96,6 +108,8 @@ type GameDetailMutationOptions = {
    * vi anh dinh kem se tro thanh anh chung cua cuoc chia.
    */
   refreshPhotos?: boolean;
+  /** Lam moi danh ba: dung cho thao tac them/sua/xoa nguoi tham gia. */
+  refreshContacts?: boolean;
 };
 
 /**
@@ -116,20 +130,32 @@ function useGameDetailMutation<TVariables>(
       if (options.refreshPhotos) {
         queryClient.invalidateQueries({ queryKey: photoKeys.list(detail.id) });
       }
+      if (options.refreshContacts) {
+        queryClient.invalidateQueries({ queryKey: contactKeys.all });
+      }
     },
   });
 }
 
 export function useAddParticipant(gameId: string) {
-  return useGameDetailMutation((input: ParticipantInput) =>
-    getGameApi().participants.create(gameId, input),
+  return useGameDetailMutation(
+    (input: ParticipantInput) => getGameApi().participants.create(gameId, input),
+    { refreshContacts: true },
+  );
+}
+
+/** Them nhieu nguoi mot luot (chon tu danh ba). */
+export function useAddParticipants(gameId: string) {
+  return useGameDetailMutation(
+    (input: ParticipantBatchInput) => getGameApi().participants.createMany(gameId, input),
+    { refreshContacts: true },
   );
 }
 
 export function useRemoveParticipant() {
   return useGameDetailMutation(
     (participantId: string) => getGameApi().participants.remove(participantId),
-    { refreshPhotos: true },
+    { refreshPhotos: true, refreshContacts: true },
   );
 }
 
@@ -137,6 +163,7 @@ export function useUpdateParticipant() {
   return useGameDetailMutation(
     (variables: { participantId: string; input: Partial<ParticipantInput> }) =>
       getGameApi().participants.update(variables.participantId, variables.input),
+    { refreshContacts: true },
   );
 }
 
