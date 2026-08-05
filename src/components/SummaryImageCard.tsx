@@ -1,12 +1,13 @@
-import { Copy, Download } from "lucide-react";
+import { Copy, Download, Expand } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   buildSummaryText,
   type SummaryTextInput,
   type SummaryVariant,
 } from "../../shared/summary-text";
-import { copyImage, downloadBlob } from "../adapters/browser/clipboard";
+import { copyImage, copyText, downloadBlob } from "../adapters/browser/clipboard";
 import { buildSummaryImageFileName, renderSummaryImage } from "../adapters/browser/summary-image";
+import { ImageLightbox } from "./overlays";
 import { SummaryBackgroundPicker } from "./SummaryBackgroundPicker";
 import { useToast } from "./Toast";
 import { useSummaryImageBackground } from "./use-summary-image-background";
@@ -16,6 +17,45 @@ const VARIANTS: { value: SummaryVariant; label: string; hint: string }[] = [
   { value: "detailed", label: "Chi tiết", hint: "Ghi rõ ai đã ứng, ai nhận lại" },
 ];
 
+type ViewMode = "image" | "text";
+
+const VIEW_MODES: { value: ViewMode; label: string; hint: string }[] = [
+  { value: "image", label: "Ảnh", hint: "Ảnh PNG kèm QR" },
+  { value: "text", label: "Chữ", hint: "Bản chữ để dán vào chat" },
+];
+
+/** Hai o chon nam canh nhau, dung cho ca Anh/Chu lan Gon/Chi tiet. */
+function Segmented<T extends string>({
+  options,
+  value,
+  onChange,
+}: {
+  options: { value: T; label: string; hint: string }[];
+  value: T;
+  onChange: (value: T) => void;
+}) {
+  return (
+    <div className="grid grid-cols-2 gap-1 rounded-lg bg-stone-100 p-1 dark:bg-stone-950">
+      {options.map((option) => (
+        <button
+          key={option.value}
+          type="button"
+          onClick={() => onChange(option.value)}
+          title={option.hint}
+          aria-pressed={value === option.value}
+          className={`rounded-md px-2 py-1.5 text-xs font-semibold transition ${
+            value === option.value
+              ? "bg-white text-violet-700 shadow-sm dark:bg-stone-800 dark:text-violet-300"
+              : "text-stone-600 hover:text-stone-950 dark:text-stone-400 dark:hover:text-stone-100"
+          }`}
+        >
+          {option.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 const ACTION_CLASS =
   "inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-md border border-stone-300 bg-white px-3 text-sm font-medium text-stone-700 transition hover:bg-stone-50 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-200 dark:hover:bg-stone-800";
 
@@ -23,6 +63,8 @@ export function SummaryImageCard({ input }: { input: SummaryTextInput }) {
   const toast = useToast();
   const [backgroundId, chooseBackground] = useSummaryImageBackground();
   const [variant, setVariant] = useState<SummaryVariant>("compact");
+  const [viewMode, setViewMode] = useState<ViewMode>("image");
+  const [zoomed, setZoomed] = useState(false);
   const [blob, setBlob] = useState<Blob | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [pending, setPending] = useState(true);
@@ -43,6 +85,9 @@ export function SummaryImageCard({ input }: { input: SummaryTextInput }) {
   const urlRef = useRef<string | null>(null);
 
   useEffect(() => {
+    // Che do chu khong dung den anh; ve san chi ton canvas va vai luot tai QR.
+    if (viewMode !== "image") return;
+
     let cancelled = false;
     setPending(true);
     setFailed(false);
@@ -72,7 +117,7 @@ export function SummaryImageCard({ input }: { input: SummaryTextInput }) {
       cancelled = true;
     };
     // renderKey da bao gom variant + backgroundId + noi dung.
-  }, [renderKey]);
+  }, [renderKey, viewMode]);
 
   useEffect(
     () => () => {
@@ -82,6 +127,7 @@ export function SummaryImageCard({ input }: { input: SummaryTextInput }) {
   );
 
   const fileName = buildSummaryImageFileName(input, variant);
+  const summaryText = buildSummaryText(input, variant);
 
   async function copyPreview() {
     if (!blob) return;
@@ -101,6 +147,11 @@ export function SummaryImageCard({ input }: { input: SummaryTextInput }) {
     }
   }
 
+  async function copySummaryText() {
+    const ok = await copyText(summaryText);
+    toast(ok ? "Đã sao chép tổng kết" : "Không sao chép được tổng kết", ok ? "success" : "error");
+  }
+
   function savePreview() {
     if (!blob) return;
 
@@ -114,61 +165,84 @@ export function SummaryImageCard({ input }: { input: SummaryTextInput }) {
 
   return (
     <section className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm dark:border-stone-800 dark:bg-stone-900">
-      <h3 className="text-lg font-semibold text-stone-950 dark:text-stone-50">Xem trước ảnh</h3>
+      <h3 className="text-lg font-semibold text-stone-950 dark:text-stone-50">Xem trước</h3>
       <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">
-        Đúng ảnh sẽ được copy — đổi nền là thấy ngay.
+        {viewMode === "image"
+          ? "Đúng ảnh sẽ được copy — bấm vào ảnh để xem to."
+          : "Bản chữ để dán vào Zalo/Messenger."}
       </p>
 
-      <div className="mt-3 grid grid-cols-2 gap-1 rounded-lg bg-stone-100 p-1 dark:bg-stone-950">
-        {VARIANTS.map((option) => (
-          <button
-            key={option.value}
-            type="button"
-            onClick={() => setVariant(option.value)}
-            title={option.hint}
-            aria-pressed={variant === option.value}
-            className={`rounded-md px-2 py-1.5 text-xs font-semibold transition ${
-              variant === option.value
-                ? "bg-white text-violet-700 shadow-sm dark:bg-stone-800 dark:text-violet-300"
-                : "text-stone-600 hover:text-stone-950 dark:text-stone-400 dark:hover:text-stone-100"
-            }`}
-          >
-            {option.label}
-          </button>
-        ))}
+      <div className="mt-3 space-y-2">
+        <Segmented options={VIEW_MODES} value={viewMode} onChange={setViewMode} />
+        <Segmented options={VARIANTS} value={variant} onChange={setVariant} />
       </div>
 
-      <div className="mt-3">
-        <SummaryBackgroundPicker value={backgroundId} onChange={chooseBackground} />
-      </div>
+      {viewMode === "image" && (
+        <div className="mt-3">
+          <SummaryBackgroundPicker value={backgroundId} onChange={chooseBackground} />
+        </div>
+      )}
 
-      <div className="mt-3 overflow-hidden rounded-md border border-stone-200 dark:border-stone-700">
-        {failed ? (
-          <p className="p-4 text-sm text-stone-500 dark:text-stone-400">
-            Không vẽ được ảnh trên trình duyệt này. Bản chữ trong menu Copy vẫn dùng được.
-          </p>
-        ) : previewUrl ? (
-          <img
-            // Anh mo dan trong luc ve ban moi cho biet la dang cap nhat.
-            className={`block w-full transition-opacity ${pending ? "opacity-50" : "opacity-100"}`}
-            src={previewUrl}
-            alt="Xem trước ảnh tổng kết"
-          />
+      {viewMode === "image" ? (
+        <div className="mt-3 overflow-hidden rounded-md border border-stone-200 dark:border-stone-700">
+          {failed ? (
+            <p className="p-4 text-sm text-stone-500 dark:text-stone-400">
+              Không vẽ được ảnh trên trình duyệt này. Chuyển sang bản Chữ vẫn dùng được.
+            </p>
+          ) : previewUrl ? (
+            <button
+              type="button"
+              onClick={() => setZoomed(true)}
+              aria-label="Xem ảnh to"
+              className="group relative block w-full cursor-zoom-in"
+            >
+              <img
+                // Anh mo dan trong luc ve ban moi cho biet la dang cap nhat.
+                className={`block w-full transition-opacity ${pending ? "opacity-50" : "opacity-100"}`}
+                src={previewUrl}
+                alt="Xem trước ảnh tổng kết"
+              />
+              <span className="absolute right-2 top-2 inline-flex h-8 w-8 items-center justify-center rounded-full bg-black/45 text-white opacity-80 transition group-hover:opacity-100">
+                <Expand size={15} />
+              </span>
+            </button>
+          ) : (
+            <p className="p-4 text-sm text-stone-500 dark:text-stone-400">Đang vẽ ảnh...</p>
+          )}
+        </div>
+      ) : (
+        <pre className="mt-3 max-h-[26rem] overflow-auto whitespace-pre-wrap break-words rounded-md border border-stone-200 bg-stone-50 p-3 text-[13px] leading-relaxed text-stone-800 dark:border-stone-700 dark:bg-stone-950 dark:text-stone-200">
+          {summaryText}
+        </pre>
+      )}
+
+      <div className="mt-3 flex gap-2">
+        {viewMode === "image" ? (
+          <>
+            <button type="button" onClick={copyPreview} disabled={!blob} className={ACTION_CLASS}>
+              <Copy size={16} />
+              Copy ảnh
+            </button>
+            <button type="button" onClick={savePreview} disabled={!blob} className={ACTION_CLASS}>
+              <Download size={16} />
+              Lưu về máy
+            </button>
+          </>
         ) : (
-          <p className="p-4 text-sm text-stone-500 dark:text-stone-400">Đang vẽ ảnh...</p>
+          <button type="button" onClick={copySummaryText} className={ACTION_CLASS}>
+            <Copy size={16} />
+            Copy chữ
+          </button>
         )}
       </div>
 
-      <div className="mt-3 flex gap-2">
-        <button type="button" onClick={copyPreview} disabled={!blob} className={ACTION_CLASS}>
-          <Copy size={16} />
-          Copy ảnh
-        </button>
-        <button type="button" onClick={savePreview} disabled={!blob} className={ACTION_CLASS}>
-          <Download size={16} />
-          Lưu về máy
-        </button>
-      </div>
+      <ImageLightbox
+        open={zoomed && previewUrl !== null}
+        src={previewUrl || ""}
+        alt="Ảnh tổng kết"
+        onClose={() => setZoomed(false)}
+        onDownload={savePreview}
+      />
     </section>
   );
 }
