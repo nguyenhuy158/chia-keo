@@ -88,13 +88,52 @@ describe("formatThousands", () => {
 });
 
 describe("buildSummaryText", () => {
-  it("liet ke khoan chi theo thu tu cu nhat truoc kem so nguoi chia", () => {
+  it("liet ke khoan chi theo thu tu cu nhat truoc, phan chia viet nhu phep tinh", () => {
     const text = buildSummaryText(input);
 
     expect(text).toContain("CÁC KHOẢN CHI (3 khoản · tổng 412k)");
-    expect(text).toContain("1. Bún bò — 90k · 2 người = 45k · Thu, Hồng · Thu trả");
-    expect(text).toContain("2. Sân + nước + cầu — 305k · 3 người = 101,7k · cả nhóm · Nam trả");
-    expect(text).toContain("3. Trà tắc — 17k · 2 người = 8,5k · Thu, Hồng · Thu trả");
+    // Nguoi tra nam trong ngoac sau ten khoan; chi ket qua mang chu "k".
+    expect(text).toContain("1. Bún bò (Thu trả) — 90/2 = 45k · Thu, Hồng");
+    expect(text).toContain("2. Sân + nước + cầu (Nam trả) — 305/3 = 101,7k · cả nhóm");
+    expect(text).toContain("3. Trà tắc (Thu trả) — 17/2 = 8,5k · Thu, Hồng");
+  });
+
+  it("khoan chi cho mot nguoi thi bo han phep chia", () => {
+    const vo = makeExpense("e-4", "Vớ", 50_000, nam.id, [hong.id]);
+    const withVo = [vo, ...expenses];
+    const text = buildSummaryText({
+      ...input,
+      expenses: withVo,
+      summary: makeSummary(participants, withVo),
+    });
+
+    expect(text).toContain("4. Vớ (Nam trả) — 50k · Hồng");
+    expect(text).not.toContain("50/1");
+  });
+
+  it("khoan chia tuy chinh liet ke so cua tung nguoi thay vi noi chung chung", () => {
+    const custom: ApiExpense = {
+      ...makeExpense("e-5", "Sân", 305_000, nam.id, [thu.id, hong.id, nam.id]),
+      splitMode: "amount",
+      splits: [
+        { participantId: thu.id, amount: 5_000, weight: null },
+        { participantId: hong.id, amount: 200_000, weight: null },
+        { participantId: nam.id, amount: 100_000, weight: null },
+      ],
+    };
+    const withCustom = [custom, ...expenses];
+    const text = buildSummaryText({
+      ...input,
+      expenses: withCustom,
+      summary: makeSummary(participants, withCustom),
+    });
+
+    expect(text).toContain("4. Sân (Nam trả) — 305k = 5 (Thu) + 200 (Hồng) + 100 (Nam) · cả nhóm");
+    expect(text).not.toContain("chia tùy chỉnh");
+    // Khong dung dau chia cho khoan nay: moi nguoi mot muc nen "305/3" la phep
+    // tinh sai. (Fixture co san mot khoan 305k chia deu 3 nguoi, nen doi chieu
+    // ca dong chu khong chi rieng doan "305/3".)
+    expect(text).not.toContain("Sân (Nam trả) — 305/3");
   });
 
   it("cong tung phan cua moi nguoi ra dung so phai chiu", () => {

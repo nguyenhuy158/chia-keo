@@ -79,6 +79,32 @@ function toListedExpenses(expenses: ApiExpense[]) {
   return expenses.filter((expense) => expense.kind !== "transfer").reverse();
 }
 
+/**
+ * Phan chia tien cua mot khoan, viet nhu mot phep tinh nham kiem lai duoc:
+ * - chia deu: "425/5 = 85k" (don vi nghin, chi ket qua mang chu "k")
+ * - chia tuy chinh: "305k = 5 (Huy) + 200 (Kiet)" — moi nguoi mot muc nen khong
+ *   dung dau chia, viet "305/3" o day la mot phep tinh sai
+ * - dung mot nguoi: bo han phep chia, chia cho mot nguoi thi phep chia la rac
+ */
+function describeExpenseSplit(expense: ApiExpense, nameById: Map<string, string>) {
+  const total = formatShortMoney(expense.amount);
+  const splitCount = expense.splits.length;
+  if (splitCount <= 1) return total;
+
+  if (expense.splitMode !== "equal") {
+    const shares = expense.splits
+      .map(
+        (split) =>
+          `${formatThousands(split.amount)} (${nameById.get(split.participantId) || UNKNOWN_NAME})`,
+      )
+      .join(" + ");
+    return `${total} = ${shares}`;
+  }
+
+  const perPerson = expense.amount / splitCount;
+  return `${formatThousands(expense.amount)}/${splitCount} = ${formatShortMoney(perPerson)}`;
+}
+
 function buildExpenseLines(
   expenses: ApiExpense[],
   nameById: Map<string, string>,
@@ -86,21 +112,18 @@ function buildExpenseLines(
 ) {
   return expenses.map((expense, index) => {
     const splitCount = expense.splits.length;
-    const perPerson = splitCount > 0 ? expense.amount / splitCount : 0;
     const payerName = nameById.get(expense.payerParticipantId) || UNKNOWN_NAME;
     const isWholeGroup = splitCount > 0 && splitCount === participantCount;
     const who = isWholeGroup
       ? "cả nhóm"
       : expense.splits.map((split) => nameById.get(split.participantId) || UNKNOWN_NAME).join(", ");
 
-    const perPersonLabel =
-      expense.splitMode === "equal" ? formatShortMoney(perPerson) : "chia tùy chỉnh";
+    // Nguoi tra nam ngay sau ten khoan: doc thanh "Lau bo Hong tra", dung thu tu
+    // nguoi ta van noi, va khoi mot cum "· X tra" o cuoi dong.
     const parts = [
-      `${index + 1}. ${expense.title} — ${formatShortMoney(expense.amount)}`,
-      `${splitCount} người = ${perPersonLabel}`,
+      `${index + 1}. ${expense.title} (${payerName} trả) — ${describeExpenseSplit(expense, nameById)}`,
     ];
     if (who) parts.push(who);
-    parts.push(`${payerName} trả`);
 
     return parts.join(" · ");
   });
