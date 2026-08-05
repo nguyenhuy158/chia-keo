@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { RouterProvider } from "@tanstack/react-router";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
+import { registerSW } from "virtual:pwa-register";
 import { createHttpGameApi } from "./adapters/browser/http-game-api";
 import { vietQrProvider } from "./adapters/browser/vietqr";
 import { ConfirmProvider } from "./components/ConfirmDialog";
@@ -15,6 +16,11 @@ import "./styles.css";
 // Doi backend/QR provider (hoac mock de test) chi can doi 2 dong nay.
 provideGameApi(createHttpGameApi());
 provideQrProvider(vietQrProvider);
+
+// Chi ton tai trong ban build (devOptions tat o vite.config.ts) — registerSW
+// la no-op an toan luc dev vi module ao "virtual:pwa-register" tra ve ham
+// rong khi khong co plugin PWA chay.
+registerSW({ immediate: true });
 
 const queryClient = new QueryClient({
   defaultOptions: {
