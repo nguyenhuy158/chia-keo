@@ -10,11 +10,15 @@ HistoryPanel, McpTokenPanel, PhotoPanel, SharePhotoGallery. Còn giữ nguyên
 tiến trình upload ảnh thật ("Đang tải 2/5") — hai chỗ đó không phải khung chờ
 ban đầu nên không cần mô phỏng hình dạng.
 
-## 2. Sidebar nhớ trạng thái gấp/mở
-`ContactBookCard` và `TrashCard` giờ có 4 card trong sidebar, mỗi lần load lại
-trang thì `TrashCard` luôn về trạng thái gấp mặc định — đúng ý, nhưng nếu
-người dùng hay mở ra xem thì phải bấm lại mỗi lần. Lưu trạng thái mở/gấp vào
-localStorage theo key riêng từng card.
+## 2. ~~Sidebar nhớ trạng thái gấp/mở~~ — Đã làm (2026-08-05)
+`src/components/use-persistent-open.ts`: `useState` có nhớ qua localStorage,
+thay `useState` thường ở `TrashCard` (key `trash`) và `HistoryPanel` khi
+`collapsible` (key `history`, chỉ áp khi có nút gấp/mở — mobile luôn mở nên
+không đụng tới).
+
+**Ghi chú sửa lại cho đúng**: `ContactBookCard` thật ra không có nút gấp/mở
+(luôn hiện hết), chỉ có form thêm người ẩn/hiện riêng — không phải trường hợp
+cần nhớ trạng thái như mô tả ban đầu.
 
 ## 3. ~~Avatar theo tên~~ — Đã làm (2026-08-05), một phần
 Dùng DiceBear (kiểu fun-emoji) thay vì chữ cái đầu — xem `docs/avatar-libs.md`
@@ -25,15 +29,25 @@ chặn duy nhất, đã áp cho danh sách người tham gia và dòng chuyển 
 mang nhiều thông tin hơn mặt người, và nhiều dòng (đổi tên cuộc chia, đổi cách
 chuyển tiền...) không gắn với đúng một người để gắn avatar.
 
-## 4. Vuốt để xoá trên mobile
-Participant, contact, ảnh hiện đều xoá qua nút icon nhỏ. Thêm swipe-to-delete
-(vuốt trái lộ nút xoá đỏ) cho danh sách trên mobile — pattern quen tay hơn so
-với bấm trúng icon nhỏ bằng ngón tay.
+## 4. ~~Vuốt để xoá trên mobile~~ — Đã làm (2026-08-05), một phần
+`src/components/SwipeToDelete.tsx`: vuốt trái lộ nút xoá đỏ, bấm nút mới xoá
+(2 bước liên tiếp, giống Mail — đủ để tránh vuốt nhầm mất dữ liệu). Chỉ bắt
+cử chỉ chạm/bút cảm ứng (`pointerType`), chuột không kích hoạt gì — nút xoá có
+sẵn cạnh mỗi dòng vẫn là đường duy nhất trên desktop, không đổi hành vi.
 
-## 5. Onboarding cho cuộc chơi mới toanh
-Cuộc chơi vừa tạo, chưa có người/khoản chi thì các panel chỉ hiện trống trơn.
-Thêm một empty-state hướng dẫn 3 bước: "1. Thêm người → 2. Thêm khoản chi →
-3. Xem tổng kết", biến mất khi đã có ít nhất 1 người + 1 khoản.
+Áp cho: danh sách người tham gia (`ParticipantPanel`), danh bạ tự nhập
+(`ContactBookCard`, chỉ dòng có trong bảng `contacts` — dòng suy ra từ lịch sử
+không xoá được nên không vuốt được).
+
+**Cố tình bỏ qua ảnh**: `PhotoGrid` không có nút xoá riêng trên mỗi ô — xoá
+ảnh nằm trong màn xem toàn màn hình (`PhotoViewer`), không phải một dòng danh
+sách để vuốt.
+
+## 5. ~~Onboarding cho cuộc chơi mới toanh~~ — Đã làm (2026-08-05)
+`src/components/OnboardingBanner.tsx`: 3 bước "Thêm người → Thêm khoản chi →
+Xem tổng kết", bước nào xong tô xanh có dấu tick. Tự ẩn khi đã có ít nhất 1
+người **và** 1 khoản chi. Hiện phía trên cả layout desktop lẫn mobile trong
+`GamePage`, không phụ thuộc tab đang mở.
 
 ---
 

@@ -14,6 +14,7 @@ import { CopyMenu } from "../components/CopyMenu";
 import { ExpensePanel } from "../components/ExpensePanel";
 import { GameDashboard } from "../components/GameDashboard";
 import { HistoryPanel } from "../components/HistoryPanel";
+import { OnboardingBanner } from "../components/OnboardingBanner";
 import { PhotoPanel } from "../components/PhotoPanel";
 import { ExpenseFab, type GameSection, MobileGameNav } from "../components/MobileGameNav";
 import { ParticipantPanel } from "../components/ParticipantPanel";
@@ -347,6 +348,11 @@ export function GamePage() {
           <MoreHorizontal size={20} />
         </button>
       </div>
+
+      <OnboardingBanner
+        participantCount={game.participants.length}
+        expenseCount={game.expenses.filter((expense) => expense.kind !== "transfer").length}
+      />
 
       {/* Desktop layout: giu nguyen bo cuc luoi. */}
       <div className="hidden gap-5 lg:grid xl:grid-cols-[minmax(0,1fr)_360px]">

@@ -10,7 +10,7 @@ import {
   UserPlus,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { useState } from "react";
+import { usePersistentOpen } from "./use-persistent-open";
 import {
   type ApiGameEvent,
   canUndoEvent,
@@ -116,7 +116,9 @@ type HistoryPanelProps = {
 
 export function HistoryPanel({ gameId, collapsible = false }: HistoryPanelProps) {
   const toast = useToast();
-  const [open, setOpen] = useState(!collapsible);
+  // Chi nho trang thai khi co the gap (desktop); mobile luon mo, khong co gi de nho.
+  const [persistedOpen, setPersistedOpen] = usePersistentOpen("history", false);
+  const open = collapsible ? persistedOpen : true;
   const eventsQuery = useGameEvents(gameId, open);
   const undoEvent = useUndoGameEvent();
   // Mot moc thoi gian cho ca danh sach: moi dong tu tinh se ra ket qua lech nhau.
@@ -144,7 +146,7 @@ export function HistoryPanel({ gameId, collapsible = false }: HistoryPanelProps)
         {collapsible && (
           <button
             type="button"
-            onClick={() => setOpen((current) => !current)}
+            onClick={() => setPersistedOpen((current) => !current)}
             className="rounded-md px-2 py-1 text-xs font-semibold text-violet-700 transition hover:bg-violet-50 dark:text-violet-300 dark:hover:bg-violet-500/10"
           >
             {open ? "Ẩn" : "Xem"}

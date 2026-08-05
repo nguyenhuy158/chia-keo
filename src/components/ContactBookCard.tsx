@@ -8,6 +8,7 @@ import {
   useUpdateContact,
 } from "../adapters/react-query/queries";
 import { getVietQrBankLabel } from "../adapters/browser/vietqr";
+import { SwipeToDelete } from "./SwipeToDelete";
 import { Avatar } from "./Avatar";
 import { BankSelect } from "./BankSelect";
 import { useConfirm } from "./ConfirmDialog";
@@ -271,6 +272,18 @@ export function ContactBookCard() {
                   submitLabel="Lưu"
                 />
               </div>
+            ) : contact.source === "book" ? (
+              // Chi nguoi thuoc danh ba (co id) moi xoa duoc, nen chi nguoi
+              // do moi vuot xoa duoc — vuot nguoi chi suy ra tu lich su se
+              // lo mot nut khong lam gi ca.
+              <SwipeToDelete key={contact.key} onDelete={() => handleDelete(contact)}>
+                <ContactRow
+                  contact={contact}
+                  pending={pending}
+                  onEdit={() => startEdit(contact)}
+                  onDelete={() => handleDelete(contact)}
+                />
+              </SwipeToDelete>
             ) : (
               <ContactRow
                 key={contact.key}

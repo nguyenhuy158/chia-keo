@@ -1,5 +1,5 @@
 import { RotateCcw, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { usePersistentOpen } from "./use-persistent-open";
 import type { ApiTrashGame } from "../../shared/api-types";
 import { TRASH_RETENTION_DAYS } from "../../shared/schemas";
 import { usePurgeGame, useRestoreGame, useTrashedGames } from "../adapters/react-query/queries";
@@ -24,7 +24,7 @@ function daysLeft(deletedAt: string) {
 export function TrashCard() {
   const toast = useToast();
   const confirm = useConfirm();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = usePersistentOpen("trash", false);
   const trashQuery = useTrashedGames(open);
   const restoreGame = useRestoreGame();
   const purgeGame = usePurgeGame();
