@@ -6,6 +6,7 @@ import { z } from "zod";
 import type { ApiParticipant } from "../../shared/api-types";
 import type { ParticipantInput } from "../../shared/schemas";
 import { getVietQrBankLabel } from "../adapters/browser/vietqr";
+import { Avatar } from "./Avatar";
 import { BankSelect } from "./BankSelect";
 import { ContactPicker } from "./ContactPicker";
 import { Field } from "./ui";
@@ -134,15 +135,18 @@ export function ParticipantPanel({
             className="rounded-md border border-stone-200 p-3 dark:border-stone-800"
           >
             <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <p className="truncate text-sm font-semibold text-stone-950 dark:text-stone-50">
-                  {participant.name}
-                </p>
-                <p className="mt-1 truncate text-xs text-stone-500 dark:text-stone-400">
-                  {participant.bankId && participant.accountNo
-                    ? `${getVietQrBankLabel(participant.bankId)} · ${participant.accountNo}`
-                    : "Chưa có thông tin QR"}
-                </p>
+              <div className="flex min-w-0 items-center gap-2.5">
+                <Avatar name={participant.name} size={32} />
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-stone-950 dark:text-stone-50">
+                    {participant.name}
+                  </p>
+                  <p className="mt-1 truncate text-xs text-stone-500 dark:text-stone-400">
+                    {participant.bankId && participant.accountNo
+                      ? `${getVietQrBankLabel(participant.bankId)} · ${participant.accountNo}`
+                      : "Chưa có thông tin QR"}
+                  </p>
+                </div>
               </div>
               <div className="flex shrink-0 items-center gap-1">
                 <button

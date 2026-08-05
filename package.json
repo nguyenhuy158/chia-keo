@@ -22,6 +22,8 @@
     "e2e": "node e2e/ui-smoke.mjs"
   },
   "dependencies": {
+    "@dicebear/collection": "^9.4.2",
+    "@dicebear/core": "^9.4.3",
     "@hookform/resolvers": "^5.4.0",
     "@tailwindcss/vite": "^4.0.0",
     "@tanstack/react-query": "^5.101.2",

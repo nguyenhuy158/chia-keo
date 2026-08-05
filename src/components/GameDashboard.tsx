@@ -12,6 +12,7 @@ import {
 } from "../../shared/split";
 import { getQrProvider } from "../core/container";
 import { formatMoney } from "../core/domain/money";
+import { Avatar } from "./Avatar";
 import { BalancePill, Metric } from "./ui";
 
 /** QR chung cua host khong gan san so tien vi moi nguoi chuyen mot muc khac. */
@@ -300,8 +301,12 @@ export function GameDashboard({
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
-                        <p className="text-sm font-semibold text-stone-950 dark:text-stone-50">
-                          {from.name} trả {to.name}
+                        <p className="flex items-center gap-1.5 text-sm font-semibold text-stone-950 dark:text-stone-50">
+                          <Avatar name={from.name} size={20} />
+                          <span className="truncate">{from.name}</span>
+                          <span className="shrink-0 text-stone-400 dark:text-stone-500">trả</span>
+                          <Avatar name={to.name} size={20} />
+                          <span className="truncate">{to.name}</span>
                         </p>
                         <p className="mt-1 text-sm font-bold text-violet-700 tabular dark:text-violet-400">
                           {formatMoney(settlement.amount)}
