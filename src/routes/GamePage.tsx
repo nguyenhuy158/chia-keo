@@ -19,6 +19,7 @@ import { ExpenseFab, type GameSection, MobileGameNav } from "../components/Mobil
 import { ParticipantPanel } from "../components/ParticipantPanel";
 import { SummaryImageCard } from "../components/SummaryImageCard";
 import { BottomSheet } from "../components/overlays";
+import { useConfirm } from "../components/ConfirmDialog";
 import { useToast } from "../components/Toast";
 import { EmptyState, LoadingState } from "../components/ui";
 import { formatMoney } from "../core/domain/money";
@@ -45,6 +46,7 @@ export function GamePage() {
   const { gameId } = useParams({ from: "/app/games/$gameId" });
   const navigate = useNavigate();
   const toast = useToast();
+  const confirm = useConfirm();
   const gameQuery = useGame(gameId);
   const photosQuery = usePhotos(gameId);
 
@@ -86,7 +88,13 @@ export function GamePage() {
   async function handleDeleteGame() {
     // Xoa mem: noi ro la con lay lai duoc, khong thi nguoi dung tuong mat het
     // va khong biet co thung rac o sidebar.
-    if (!window.confirm(`Chuyển "${game.name}" vào thùng rác? Phục hồi được ở sidebar.`)) return;
+    const ok = await confirm({
+      title: `Chuyển "${game.name}" vào thùng rác?`,
+      description: "Phục hồi được ở sidebar.",
+      confirmLabel: "Chuyển vào thùng rác",
+      destructive: true,
+    });
+    if (!ok) return;
 
     await deleteGame.mutateAsync(game.id);
     toast("Đã chuyển vào thùng rác");
@@ -163,13 +171,12 @@ export function GamePage() {
       onSettle={async (settlement) => {
         const fromName = participantNameById.get(settlement.fromParticipantId) || "Không rõ";
         const toName = participantNameById.get(settlement.toParticipantId) || "Không rõ";
-        if (
-          !window.confirm(
-            `Ghi nhận ${fromName} đã trả ${toName} ${formatMoney(settlement.amount)}?`,
-          )
-        ) {
-          return;
-        }
+        const ok = await confirm({
+          title: `Ghi nhận ${fromName} đã trả ${toName}?`,
+          description: `Số tiền ${formatMoney(settlement.amount)}.`,
+          confirmLabel: "Ghi nhận",
+        });
+        if (!ok) return;
         await addTransfer.mutateAsync({
           fromParticipantId: settlement.fromParticipantId,
           toParticipantId: settlement.toParticipantId,

@@ -3,6 +3,7 @@ import { useState } from "react";
 import type { ApiTrashGame } from "../../shared/api-types";
 import { TRASH_RETENTION_DAYS } from "../../shared/schemas";
 import { usePurgeGame, useRestoreGame, useTrashedGames } from "../adapters/react-query/queries";
+import { useConfirm } from "./ConfirmDialog";
 import { useToast } from "./Toast";
 
 /** Con bao nhieu ngay nua truoc khi cuoc chia bi xoa han. */
@@ -21,6 +22,7 @@ function daysLeft(deletedAt: string) {
  */
 export function TrashCard() {
   const toast = useToast();
+  const confirm = useConfirm();
   const [open, setOpen] = useState(false);
   const trashQuery = useTrashedGames(open);
   const restoreGame = useRestoreGame();
@@ -40,7 +42,13 @@ export function TrashCard() {
 
   async function handlePurge(game: ApiTrashGame) {
     // Buoc nay khong hoan tac duoc nen phai hoi, va hoi kem ten cho khoi nham.
-    if (!window.confirm(`Xóa hẳn "${game.name}"? Không lấy lại được.`)) return;
+    const ok = await confirm({
+      title: `Xóa hẳn "${game.name}"?`,
+      description: "Không lấy lại được.",
+      confirmLabel: "Xóa hẳn",
+      destructive: true,
+    });
+    if (!ok) return;
 
     try {
       await purgeGame.mutateAsync(game.id);

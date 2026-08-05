@@ -9,6 +9,7 @@ import {
 } from "../adapters/react-query/queries";
 import { getVietQrBankLabel } from "../adapters/browser/vietqr";
 import { BankSelect } from "./BankSelect";
+import { useConfirm } from "./ConfirmDialog";
 import { useToast } from "./Toast";
 
 type Draft = { name: string; bankId: string; accountNo: string; accountName: string };
@@ -147,6 +148,7 @@ function ContactRow({
  */
 export function ContactBookCard() {
   const toast = useToast();
+  const confirm = useConfirm();
   const contactsQuery = useContacts();
   const createContact = useCreateContact();
   const updateContact = useUpdateContact();
@@ -195,7 +197,7 @@ export function ContactBookCard() {
 
   async function handleDelete(contact: Contact) {
     if (!contact.id) return;
-    if (!window.confirm(`Xóa ${contact.name} khỏi danh bạ?`)) return;
+    if (!(await confirm({ title: `Xóa ${contact.name} khỏi danh bạ?`, destructive: true }))) return;
 
     try {
       await deleteContact.mutateAsync(contact.id);

@@ -3,6 +3,7 @@ import type { ApiPhoto } from "../../shared/api-types";
 import { indexAfterRemove, stepPhotoIndex } from "../../shared/photos";
 import { usePhoto, useRemovePhoto, useUpdatePhoto } from "../adapters/react-query/queries";
 import { PhotoViewer } from "./PhotoViewer";
+import { useConfirm } from "./ConfirmDialog";
 import { useToast } from "./Toast";
 
 type PhotoViewerHost = {
@@ -22,6 +23,7 @@ export function usePhotoViewer(
   expenseTitleById?: Map<string, string>,
 ): PhotoViewerHost {
   const toast = useToast();
+  const confirm = useConfirm();
   const updatePhoto = useUpdatePhoto(gameId);
   const removePhoto = useRemovePhoto(gameId);
   const [index, setIndex] = useState(-1);
@@ -30,7 +32,8 @@ export function usePhotoViewer(
   const detail = usePhoto(photo?.id || "");
 
   async function handleDelete() {
-    if (!photo || !window.confirm("Xóa ảnh này?")) return;
+    if (!photo) return;
+    if (!(await confirm({ title: "Xóa ảnh này?", destructive: true }))) return;
 
     await removePhoto.mutateAsync(photo.id);
     setIndex(indexAfterRemove(index, photos.length - 1));

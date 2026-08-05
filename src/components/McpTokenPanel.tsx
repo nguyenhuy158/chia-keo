@@ -16,6 +16,7 @@ import {
   useMcpTokens,
   useRevokeMcpToken,
 } from "../adapters/react-query/queries";
+import { useConfirm } from "./ConfirmDialog";
 import { useToast } from "./Toast";
 
 /** Nhan tieng Viet cho tung quyen, kem tool ma quyen do mo ra. */
@@ -171,12 +172,18 @@ function SecretCard({ secret, onDismiss }: { secret: string; onDismiss: () => vo
 function TokenRow({ token }: { token: ApiMcpToken }) {
   const revokeToken = useRevokeMcpToken();
   const toast = useToast();
+  const confirm = useConfirm();
   const status = tokenStatus(token);
 
   async function handleRevoke() {
-    if (!window.confirm(`Thu hồi token "${token.name}"? Client đang dùng sẽ mất quyền ngay.`)) {
-      return;
-    }
+    const ok = await confirm({
+      title: `Thu hồi token "${token.name}"?`,
+      description: "Client đang dùng sẽ mất quyền ngay.",
+      confirmLabel: "Thu hồi",
+      destructive: true,
+    });
+    if (!ok) return;
+
     await revokeToken.mutateAsync(token.id);
     toast("Đã thu hồi token");
   }

@@ -4,6 +4,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { createHttpGameApi } from "./adapters/browser/http-game-api";
 import { vietQrProvider } from "./adapters/browser/vietqr";
+import { ConfirmProvider } from "./components/ConfirmDialog";
 import { ThemeProvider } from "./components/theme";
 import { ToastProvider } from "./components/Toast";
 import { provideGameApi, provideQrProvider } from "./core/container";
@@ -29,7 +30,9 @@ createRoot(document.getElementById("root")!).render(
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <ToastProvider>
-          <RouterProvider router={router} />
+          <ConfirmProvider>
+            <RouterProvider router={router} />
+          </ConfirmProvider>
         </ToastProvider>
       </ThemeProvider>
     </QueryClientProvider>
