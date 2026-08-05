@@ -135,6 +135,37 @@ Tên hiển thị đã có `truncate` nhưng cụm icon không co giãn được
 hệ thống (accessibility) dễ làm nhãn xuống 2 dòng, tràn khỏi `min-h-[3.5rem]`
 cố định.
 
+### B7. Không dialog nào trả focus về nút đã mở nó sau khi đóng
+`ConfirmDialog.tsx`, `overlays.tsx` (BottomSheet/Drawer/ImageLightbox): không
+lưu `document.activeElement` trước khi mở để khôi phục sau khi đóng (Esc, bấm
+Huỷ/Đồng ý, bấm nền). Người dùng bàn phím mất tiêu điểm, phải Tab lại từ đầu
+trang sau mỗi lần đóng — không rõ đang ở đâu trên trang.
+
+### B8. `Dropdown` thiếu ngữ nghĩa combobox chuẩn cho screen reader
+`Dropdown.tsx`: không có `role="listbox"`/`role="option"`/
+`aria-activedescendant`, nên trình đọc màn hình không công bố đúng số
+lượng/vị trí trong danh sách (ví dụ "3 trên 32"). Ngoài ra đóng bằng Esc khi
+đang gõ ô tìm (`searchable`) thì input bị gỡ khỏi DOM ngay lập tức, focus rơi
+hẳn về `<body>` — mất tiêu điểm bàn phím hoàn toàn, nặng hơn B3 đã ghi.
+
+### B9. Nút xoá ẩn trong `SwipeToDelete` vẫn nằm trong luồng Tab khi đang đóng
+`SwipeToDelete.tsx`: nút "Xóa" chỉ ẩn bằng vị trí (nằm ngoài vùng nhìn thấy
+lúc chưa vuốt), không có `tabIndex={-1}`/`aria-hidden` khi đóng. Người dùng
+Tab qua danh sách sẽ dừng ở một nút vô hình xen giữa các dòng, và trình đọc
+màn hình vẫn đọc thấy "Xóa" dù không có gì hiện trên màn hình lúc đó.
+
+### B10. Nút gấp/mở thiếu `aria-expanded`
+`HistoryPanel.tsx`, `TrashCard.tsx`: nút "Ẩn"/"Xem" chỉ đổi chữ, không có
+`aria-expanded` — sai mẫu ARIA disclosure widget chuẩn, trình đọc màn hình
+không công bố đúng trạng thái đóng/mở, chỉ đọc lại nhãn chữ đã đổi.
+
+### B11. `ConfirmDialog` thiếu `aria-describedby` cho phần mô tả
+`ConfirmDialog.tsx`: `role="alertdialog"` chỉ có `aria-label` cho tiêu đề,
+không trỏ `aria-describedby` tới đoạn `pending.description`. Một số trình đọc
+màn hình bỏ qua phần mô tả khi công bố hộp thoại mới mở — với các mô tả quan
+trọng như "Không lấy lại được" (Thùng rác xoá hẳn) thì đây là thông tin không
+nên bị bỏ lỡ.
+
 ## C. Visual và nhất quán câu chữ
 
 ### C1. Dòng "A trả B" trong `GameDashboard` tràn ngang khi tên dài
