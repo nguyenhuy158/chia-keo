@@ -55,6 +55,14 @@ export default defineConfig({
         // hien so cu luc mat mang con te hon khong hien gi. Mat mang thi giao
         // dien (shell) van len, chi phan lay du lieu moi bao loi nhu binh
         // thuong (da co EmptyState/error state san).
+        //
+        // Plugin chi tu bat 2 dong nay khi injectRegister la "auto"/null; o
+        // day dang tat (goi registerSW tay trong main.tsx) nen phai tu khai
+        // ro, khong thi SW moi mac dinh nam cho ("waiting") vo han cho den
+        // khi nguoi dung dong het tab — registerType "autoUpdate" se khong
+        // lam dung nhu ten goi.
+        skipWaiting: true,
+        clientsClaim: true,
       },
     }),
   ],

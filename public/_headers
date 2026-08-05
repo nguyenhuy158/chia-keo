@@ -1,0 +1,8 @@
+# Cloudflare Pages: file tinh khong hash ten (sw.js, manifest) mac dinh bi
+# cache vai tieng — qua lau de trinh duyet som phat hien ban service worker
+# moi sau moi lan deploy. Ep no-cache rieng cho hai file nay.
+/sw.js
+  Cache-Control: no-cache
+
+/manifest.webmanifest
+  Cache-Control: no-cache
