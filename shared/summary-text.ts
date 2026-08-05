@@ -123,7 +123,8 @@ function buildExpenseLines(
     const parts = [
       `${index + 1}. ${expense.title} (${payerName} trả) — ${describeExpenseSplit(expense, nameById)}`,
     ];
-    if (who) parts.push(who);
+    // Danh sach nguoi chia trong ngoac: tach han khoi phep tinh o truoc no.
+    if (who) parts.push(`(${who})`);
 
     return parts.join(" · ");
   });

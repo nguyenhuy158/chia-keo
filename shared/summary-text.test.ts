@@ -93,9 +93,9 @@ describe("buildSummaryText", () => {
 
     expect(text).toContain("CÁC KHOẢN CHI (3 khoản · tổng 412k)");
     // Nguoi tra nam trong ngoac sau ten khoan; chi ket qua mang chu "k".
-    expect(text).toContain("1. Bún bò (Thu trả) — 90/2 = 45k · Thu, Hồng");
-    expect(text).toContain("2. Sân + nước + cầu (Nam trả) — 305/3 = 101,7k · cả nhóm");
-    expect(text).toContain("3. Trà tắc (Thu trả) — 17/2 = 8,5k · Thu, Hồng");
+    expect(text).toContain("1. Bún bò (Thu trả) — 90/2 = 45k · (Thu, Hồng)");
+    expect(text).toContain("2. Sân + nước + cầu (Nam trả) — 305/3 = 101,7k · (cả nhóm)");
+    expect(text).toContain("3. Trà tắc (Thu trả) — 17/2 = 8,5k · (Thu, Hồng)");
   });
 
   it("khoan chi cho mot nguoi thi bo han phep chia", () => {
@@ -107,7 +107,7 @@ describe("buildSummaryText", () => {
       summary: makeSummary(participants, withVo),
     });
 
-    expect(text).toContain("4. Vớ (Nam trả) — 50k · Hồng");
+    expect(text).toContain("4. Vớ (Nam trả) — 50k · (Hồng)");
     expect(text).not.toContain("50/1");
   });
 
@@ -128,7 +128,7 @@ describe("buildSummaryText", () => {
       summary: makeSummary(participants, withCustom),
     });
 
-    expect(text).toContain("4. Sân (Nam trả) — 305k = 5 (Thu) + 200 (Hồng) + 100 (Nam) · cả nhóm");
+    expect(text).toContain("4. Sân (Nam trả) — 305k = 5 (Thu) + 200 (Hồng) + 100 (Nam) · (cả nhóm)");
     expect(text).not.toContain("chia tùy chỉnh");
     // Khong dung dau chia cho khoan nay: moi nguoi mot muc nen "305/3" la phep
     // tinh sai. (Fixture co san mot khoan 305k chia deu 3 nguoi, nen doi chieu
