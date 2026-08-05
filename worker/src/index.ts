@@ -5,6 +5,7 @@ import { AUTH_BASE_PATH, createAuth, getTrustedOrigins } from "./auth";
 import type { Env } from "./env";
 import { rateLimitPost } from "./lib/rate-limit-middleware";
 import { aiRouter } from "./routes/ai";
+import { funStatsRouter } from "./routes/fun-stats";
 import { gamesRouter } from "./routes/games";
 import { mcpRouter } from "./routes/mcp";
 import { mcpTokensRouter } from "./routes/mcp-tokens";
@@ -76,6 +77,7 @@ app.route("/api", shareRouter);
 app.route("/api", aiRouter);
 app.route("/api", photosRouter);
 app.route("/api", gamesRouter);
+app.route("/api", funStatsRouter);
 
 app.onError((error, c) => {
   // Log ra Cloudflare de 500 khong con "cam" nhu truoc.

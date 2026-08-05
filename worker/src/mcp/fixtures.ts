@@ -188,6 +188,7 @@ export function fakeRepo(
         gameId === secondGame.id ? secondParticipants : participants,
       listIdsByGame: unused("participants.listIdsByGame"),
       listByOwner: unused("participants.listByOwner"),
+      listIdNamesByOwner: unused("participants.listIdNamesByOwner"),
       getWithGame: unused("participants.getWithGame"),
       insert: unused("participants.insert"),
       rename: unused("participants.rename"),
@@ -218,6 +219,7 @@ export function fakeRepo(
       update: unused("expenses.update"),
       delete: unused("expenses.delete"),
       listIdsSplitWith: unused("expenses.listIdsSplitWith"),
+      listByGameIds: unused("expenses.listByGameIds"),
     },
     splits: {
       listByExpenseIds: async (expenseIds) =>

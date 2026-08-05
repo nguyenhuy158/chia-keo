@@ -48,6 +48,9 @@ export function createHttpGameApi(): GameApiPort {
       restore: (gameId) => post(`/api/games/${gameId}/restore`),
       purge: (gameId) => destroy(`/api/games/${gameId}/purge`),
     },
+    funStats: {
+      get: () => request(`/api/fun-stats`),
+    },
     gameEvents: {
       list: (gameId) => request(`/api/games/${gameId}/events`),
       undo: (eventId) => post(`/api/events/${eventId}/undo`),

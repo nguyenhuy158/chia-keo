@@ -106,6 +106,39 @@ export type ApiShareView = {
   summary: ApiSummary;
 };
 
+/**
+ * Thong ke vui gop tat ca cuoc chia dang dung cua user — khong dung de tat
+ * toan, chi de xem cho vui. Tach han khoi ApiCrossGameBalances: cai do tinh
+ * settlements that de chuyen tien, cai nay chi la con so giai tri.
+ */
+export type ApiFunStatsBadge = {
+  name: string;
+  totalPaid: number;
+  gameCount: number;
+};
+
+export type ApiFunStatsExpense = {
+  title: string;
+  amount: number;
+  gameName: string;
+  gameCode: string;
+};
+
+export type ApiFunStats = {
+  gameCount: number;
+  totalExpense: number;
+  /** Nguoi ung tien nhieu nhat tinh tren tat ca cuoc chia (theo tong tien tra). */
+  topPayer: ApiFunStatsBadge | null;
+  /** Nguoi co mat trong nhieu cuoc chia nhat. */
+  mostActive: ApiFunStatsBadge | null;
+  biggestExpense: ApiFunStatsExpense | null;
+  biggestGame: { name: string; code: string; participantCount: number } | null;
+  /** Thu trong tuan hay tao cuoc chia nhat: 0 = Chu nhat, giong Date.getDay(). */
+  favoriteWeekday: number | null;
+  /** So cuoc chia da tinh; bo bot cuoc qua tran de tranh vuot gioi han subrequest. */
+  omittedGameCount: number;
+};
+
 /** Phan cua mot nguoi trong mot cuoc chia, khi gop nhieu cuoc lai. */
 export type ApiCrossGamePersonGame = {
   code: string;

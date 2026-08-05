@@ -4,6 +4,7 @@
 import type {
   ApiAiSuggestionResponse,
   ApiCreatedMcpToken,
+  ApiFunStats,
   ApiGame,
   ApiGameDetail,
   ApiMcpToken,
@@ -41,6 +42,10 @@ export type GameApiPort = {
     restore(gameId: string): Promise<ApiGameDetail>;
     /** Xoa han, khong lay lai duoc. */
     purge(gameId: string): Promise<{ ok: boolean }>;
+  };
+  /** Thong ke vui, tach het khoi cac port khac; chi doc. */
+  funStats: {
+    get(): Promise<ApiFunStats>;
   };
   gameEvents: {
     /** Lich su thao tac cua cuoc chia, moi nhat truoc. */

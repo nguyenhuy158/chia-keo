@@ -197,6 +197,17 @@ export function createD1GameRepository(d1: D1Database): GameRepository {
           accountName: row.accountName || "",
         }));
       },
+      async listIdNamesByOwner(userId) {
+        return db
+          .select({
+            id: schema.participants.id,
+            name: schema.participants.name,
+            gameId: schema.participants.gameId,
+          })
+          .from(schema.participants)
+          .innerJoin(schema.games, eq(schema.games.id, schema.participants.gameId))
+          .where(eq(schema.games.ownerUserId, userId));
+      },
       async delete(participantId) {
         await db.delete(schema.participants).where(eq(schema.participants.id, participantId));
       },
@@ -250,6 +261,10 @@ export function createD1GameRepository(d1: D1Database): GameRepository {
       },
       async delete(expenseId) {
         await db.delete(schema.expenses).where(eq(schema.expenses.id, expenseId));
+      },
+      async listByGameIds(gameIds) {
+        if (gameIds.length === 0) return [];
+        return db.select().from(schema.expenses).where(inArray(schema.expenses.gameId, gameIds));
       },
       async listIdsSplitWith(participantId) {
         const rows = await db

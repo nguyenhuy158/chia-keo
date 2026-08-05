@@ -6,6 +6,7 @@ import {
 } from "@tanstack/react-router";
 import { PageShell } from "./components/ui";
 import { AppLayout } from "./routes/AppLayout";
+import { FunStatsPage } from "./routes/FunStatsPage";
 import { GamePage } from "./routes/GamePage";
 import { HomePage } from "./routes/HomePage";
 import { LoginPage } from "./routes/LoginPage";
@@ -56,10 +57,16 @@ const settingsRoute = createRoute({
   component: SettingsPage,
 });
 
+const funStatsRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: "/fun",
+  component: FunStatsPage,
+});
+
 const routeTree = rootRoute.addChildren([
   loginRoute,
   shareRoute,
-  appRoute.addChildren([homeRoute, gameRoute, settingsRoute]),
+  appRoute.addChildren([homeRoute, gameRoute, settingsRoute, funStatsRoute]),
 ]);
 
 export const router = createRouter({ routeTree });

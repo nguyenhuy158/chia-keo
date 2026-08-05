@@ -160,6 +160,12 @@ export type GameRepository = {
      * Dung de dung danh ba nguoi quen — viec gop/loc lam o `shared/contacts.ts`.
      */
     listByOwner(userId: string): Promise<ContactSourceRow[]>;
+    /**
+     * id + ten cua moi participant thuoc moi cuoc chia cua user, trong MOT
+     * truy van. Dung de doi payerParticipantId sang ten khi gop nhieu cuoc —
+     * rieng vi khac cot voi ContactSourceRow (co id, khong co tai khoan).
+     */
+    listIdNamesByOwner(userId: string): Promise<{ id: string; name: string; gameId: string }[]>;
   };
   paymentProfiles: {
     listByParticipantIds(participantIds: string[]): Promise<PaymentProfileRow[]>;
@@ -173,6 +179,12 @@ export type GameRepository = {
     delete(expenseId: string): Promise<void>;
     /** Cac expense co split cua participant nay (de chia lai khi xoa nguoi). */
     listIdsSplitWith(participantId: string): Promise<string[]>;
+    /**
+     * Khoan chi cua nhieu cuoc chia trong MOT truy van (IN...), khong phai
+     * vong lap tung cuoc. Dung cho thong ke gop nhieu cuoc — N cuoc chia thi
+     * van la mot round-trip DB chu khong phai N.
+     */
+    listByGameIds(gameIds: string[]): Promise<ExpenseRow[]>;
   };
   splits: {
     listByExpenseIds(expenseIds: string[]): Promise<ExpenseSplitRow[]>;
