@@ -41,14 +41,17 @@ export const DEFAULT_SETTLEMENT_MODE = "host";
 
 export const settlementModeSchema = z.enum(SETTLEMENT_MODES);
 
+const gameNameSchema = z.string().trim().min(1).max(GAME_NAME_MAX_LENGTH);
+/**
+ * Dau moi cho che do "pick". Chuoi rong la chua chon; luc do va khi nguoi duoc
+ * chon khong con trong cuoc thi quay ve nguoi ung nhieu nhat.
+ */
+const settlementHostIdSchema = z.string().trim().max(ID_MAX_LENGTH);
+
 export const gameInputSchema = z.object({
-  name: z.string().trim().min(1).max(GAME_NAME_MAX_LENGTH),
+  name: gameNameSchema,
   settlementMode: settlementModeSchema.default(DEFAULT_SETTLEMENT_MODE),
-  /**
-   * Dau moi cho che do "pick". Chuoi rong la chua chon; luc do va khi nguoi
-   * duoc chon khong con trong cuoc thi quay ve nguoi ung nhieu nhat.
-   */
-  settlementHostId: z.string().trim().max(ID_MAX_LENGTH).default(""),
+  settlementHostId: settlementHostIdSchema.default(""),
   /**
    * Tao san bay nhieu nguoi ten mac dinh de vao viec ngay, sua ten sau.
    * 0 la khong tao ai (hanh vi cu).
@@ -56,8 +59,19 @@ export const gameInputSchema = z.object({
   participantCount: z.number().int().min(0).max(MAX_QUICK_PARTICIPANTS).default(0),
 });
 
-// participantCount chi co nghia luc tao, bo khoi schema sua de khong nhan cho vui.
-export const gameUpdateSchema = gameInputSchema.omit({ participantCount: true }).partial();
+/**
+ * Khong dung `gameInputSchema.partial()`: `.partial()` chi lam field optional
+ * chu khong bo `.default()`, nen mot PATCH chi doi ten se bi zod bồi thêm
+ * settlementMode mac dinh va am tham ghi de che do chuyen tien.
+ * participantCount cung chi co nghia luc tao nen khong co o day.
+ */
+export const gameUpdateSchema = z
+  .object({
+    name: gameNameSchema,
+    settlementMode: settlementModeSchema,
+    settlementHostId: settlementHostIdSchema,
+  })
+  .partial();
 
 /** Viet hoa chu cai dau ten nguoi cho dong bo, khong dong het chu con lai. */
 export function capitalizeName(name: string) {
