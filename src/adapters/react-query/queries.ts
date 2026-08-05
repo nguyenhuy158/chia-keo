@@ -37,6 +37,12 @@ export const photoKeys = {
 /** Danh ba suy ra tu participant nen phai lam moi khi participant doi. */
 export const contactKeys = { all: ["contacts"] as const };
 
+/**
+ * Lich su co khoa rieng ngoai ["games"]: moi mutation deu sinh them dong lich
+ * su nen phai lam moi, nhung nguoc lai mo tab Lich su khong can tai lai game.
+ */
+export const eventKeys = { list: (gameId: string) => ["events", gameId] as const };
+
 /** Anh goc khong bao gio doi nen giu trong cache ca phien lam viec. */
 const PHOTO_DETAIL_STALE_TIME = Infinity;
 
@@ -65,6 +71,23 @@ export function useContacts() {
     queryFn: () => getGameApi().contacts.list(),
     select: (data) => data.contacts,
   });
+}
+
+export function useGameEvents(gameId: string, enabled: boolean) {
+  return useQuery({
+    queryKey: eventKeys.list(gameId),
+    queryFn: () => getGameApi().gameEvents.list(gameId),
+    select: (data) => data.events,
+    // Chi tai khi nguoi dung thuc su mo tab Lich su.
+    enabled,
+  });
+}
+
+export function useUndoGameEvent() {
+  return useGameDetailMutation(
+    (eventId: string) => getGameApi().gameEvents.undo(eventId),
+    { refreshPhotos: true },
+  );
 }
 
 export function useCreateGame() {
@@ -130,6 +153,8 @@ function useGameDetailMutation<TVariables>(
       if (options.refreshPhotos) {
         queryClient.invalidateQueries({ queryKey: photoKeys.list(detail.id) });
       }
+      // Moi thao tac deu ghi lich su, nen tab Lich su luon phai lam moi.
+      queryClient.invalidateQueries({ queryKey: eventKeys.list(detail.id) });
       if (options.refreshContacts) {
         queryClient.invalidateQueries({ queryKey: contactKeys.all });
       }

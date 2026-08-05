@@ -23,6 +23,7 @@ import {
   updateGame,
 } from "../core/application/games";
 import { listContacts } from "../core/application/contacts";
+import { listGameEvents, undoGameEvent } from "../core/application/game-events";
 import {
   addParticipant,
   addParticipants,
@@ -39,7 +40,15 @@ const expenseUpdateSchema = expenseInputSchema.partial();
 // Driving adapter: chi parse HTTP, goi use case va map ket qua/loi ve JSON.
 export const gamesRouter = new Hono<AuthedEnv>();
 
-protectPaths(gamesRouter, "/games", "/games/*", "/participants/*", "/expenses/*", "/contacts");
+protectPaths(
+  gamesRouter,
+  "/games",
+  "/games/*",
+  "/participants/*",
+  "/expenses/*",
+  "/events/*",
+  "/contacts",
+);
 
 gamesRouter.get("/contacts", (c) => respond(c, () => listContacts(c.get("repo"), c.get("userId"))));
 
@@ -83,6 +92,14 @@ gamesRouter.get("/games/:gameId/summary", (c) =>
     );
     return detail.summary;
   }),
+);
+
+gamesRouter.get("/games/:gameId/events", (c) =>
+  respond(c, () => listGameEvents(c.get("repo"), c.get("userId"), c.req.param("gameId"))),
+);
+
+gamesRouter.post("/events/:eventId/undo", (c) =>
+  respond(c, () => undoGameEvent(c.get("repo"), c.get("userId"), c.req.param("eventId"))),
 );
 
 gamesRouter.post("/games/:gameId/participants", async (c) => {

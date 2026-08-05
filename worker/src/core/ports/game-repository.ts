@@ -104,6 +104,16 @@ export type NewSplitRow = {
   weight: number | null;
 };
 
+/** Mot dong lich su nhu luu trong DB: payload con la JSON chua parse. */
+export type GameEventRow = {
+  id: string;
+  gameId: string;
+  kind: string;
+  payload: string;
+  createdAt: string;
+  undoneAt: string | null;
+};
+
 export type ExpenseUpdate = Partial<
   Pick<ExpenseRow, "kind" | "title" | "note" | "amount" | "payerParticipantId" | "splitMode">
 > & { updatedAt: string };
@@ -191,6 +201,13 @@ export type GameRepository = {
     /** false khi token khong ton tai hoac khong thuoc user nay. */
     revoke(tokenId: string, userId: string, revokedAt: string): Promise<boolean>;
     touchLastUsed(tokenId: string, lastUsedAt: string): Promise<void>;
+  };
+  gameEvents: {
+    /** Lich su cua mot cuoc chia, moi nhat truoc. */
+    listByGame(gameId: string, limit: number): Promise<GameEventRow[]>;
+    getWithGame(eventId: string): Promise<{ event: GameEventRow; game: GameRow } | null>;
+    insert(row: GameEventRow): Promise<void>;
+    markUndone(eventId: string, undoneAt: string): Promise<void>;
   };
   shareLinks: {
     getLatestByGame(gameId: string): Promise<ShareLinkRow | null>;

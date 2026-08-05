@@ -5,6 +5,7 @@ import type { GameRepository } from "../ports/game-repository";
 import { NotFoundError } from "./errors";
 import { reallocateExpenses } from "./expenses";
 import { getOwnedGame, loadGameDetail } from "./game-detail";
+import { recordEvent } from "./game-events";
 
 async function loadOwnedParticipant(repo: GameRepository, participantId: string, userId: string) {
   const row = await repo.participants.getWithGame(participantId);
@@ -36,6 +37,8 @@ export async function addParticipant(
       accountName: input.accountName,
     },
   );
+
+  await recordEvent(repo, game.id, { kind: "participant_added", names: [input.name] });
 
   return loadGameDetail(repo, game);
 }
@@ -71,6 +74,11 @@ export async function addParticipants(
     );
   }
 
+  await recordEvent(repo, game.id, {
+    kind: "participant_added",
+    names: input.people.map((person) => person.name),
+  });
+
   return loadGameDetail(repo, game);
 }
 
@@ -84,8 +92,13 @@ export async function updateParticipant(
   if (!row) throw new NotFoundError();
 
   const now = nowIso();
-  if (input.name !== undefined) {
+  if (input.name !== undefined && input.name !== row.participant.name) {
     await repo.participants.rename(row.participant.id, input.name, now);
+    await recordEvent(repo, row.game.id, {
+      kind: "participant_renamed",
+      from: row.participant.name,
+      to: input.name,
+    });
   }
 
   const paymentFields = {
@@ -113,6 +126,11 @@ export async function removeParticipant(
 
   await repo.participants.delete(row.participant.id);
   await reallocateExpenses(repo, affectedExpenseIds);
+
+  await recordEvent(repo, row.game.id, {
+    kind: "participant_removed",
+    name: row.participant.name,
+  });
 
   return loadGameDetail(repo, row.game);
 }

@@ -13,6 +13,7 @@ import { useState } from "react";
 import { CopyMenu } from "../components/CopyMenu";
 import { ExpensePanel } from "../components/ExpensePanel";
 import { GameDashboard } from "../components/GameDashboard";
+import { HistoryPanel } from "../components/HistoryPanel";
 import { PhotoPanel } from "../components/PhotoPanel";
 import { ExpenseFab, type GameSection, MobileGameNav } from "../components/MobileGameNav";
 import { ParticipantPanel } from "../components/ParticipantPanel";
@@ -343,6 +344,7 @@ export function GamePage() {
           {participantPanel}
           {expensePanel}
           {photoPanel}
+          <HistoryPanel gameId={game.id} collapsible />
         </div>
         <div className="space-y-5">
           {dashboard}
@@ -357,6 +359,7 @@ export function GamePage() {
         {activeSection === "photos" && photoPanel}
         {activeSection === "summary" && dashboard}
         {activeSection === "summary" && summaryImageCard}
+        {activeSection === "history" && <HistoryPanel gameId={game.id} />}
         {activeSection === "summary" && (
           <div className="rounded-lg border border-stone-200 bg-white p-3 shadow-sm dark:border-stone-800 dark:bg-stone-900 [&>button]:w-full">
             {copyAction}

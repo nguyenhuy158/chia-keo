@@ -66,7 +66,7 @@ export function formatThousands(value: number) {
   return shortMoneyFormat.format(Math.round((value / THOUSAND) * scale) / scale);
 }
 
-function formatShortMoney(value: number) {
+export function formatShortMoney(value: number) {
   return `${formatThousands(value)}k`;
 }
 

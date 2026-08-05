@@ -45,6 +45,10 @@ export function createHttpGameApi(): GameApiPort {
       remove: (gameId) => destroy(`/api/games/${gameId}`),
       duplicate: (gameId) => post(`/api/games/${gameId}/duplicate`),
     },
+    gameEvents: {
+      list: (gameId) => request(`/api/games/${gameId}/events`),
+      undo: (eventId) => post(`/api/events/${eventId}/undo`),
+    },
     contacts: {
       list: () => request(`/api/contacts`),
     },

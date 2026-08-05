@@ -16,6 +16,7 @@ import { createId, nowIso } from "../../lib/ids";
 import type { GameRepository } from "../ports/game-repository";
 import { InvalidInputError, NotFoundError } from "./errors";
 import { getOwnedGame, loadGameDetail } from "./game-detail";
+import { recordEvent } from "./game-events";
 
 async function loadOwnedExpense(repo: GameRepository, expenseId: string, userId: string) {
   const row = await repo.expenses.getWithGame(expenseId);
@@ -64,13 +65,14 @@ export async function addExpense(
   const now = nowIso();
   const expenseId = createId("expense");
   const kind = input.kind ?? "expense";
+  const title = input.title || defaultTitleForKind(kind);
 
   await repo.expenses.insert({
     id: expenseId,
     gameId: game.id,
     payerParticipantId: input.payerParticipantId,
     kind,
-    title: input.title || defaultTitleForKind(kind),
+    title,
     amount: input.amount,
     note: input.note,
     splitMode: input.splitMode,
@@ -79,7 +81,18 @@ export async function addExpense(
   });
   await repo.splits.replace(expenseId, toNewSplitRows(expenseId, rows));
 
-  return loadGameDetail(repo, game);
+  const detail = await loadGameDetail(repo, game);
+  // Ten nguoi lay tu detail vua tai, khong query them.
+  const nameById = new Map(detail.participants.map((row) => [row.id, row.name]));
+  await recordEvent(repo, game.id, {
+    kind: "expense_added",
+    title,
+    amount: input.amount,
+    payerName: nameById.get(input.payerParticipantId) || "Không rõ",
+    splitNames: rows.map((row) => nameById.get(row.participantId) || "Không rõ"),
+  });
+
+  return detail;
 }
 
 export async function updateExpense(
@@ -135,6 +148,14 @@ export async function updateExpense(
   });
   await repo.splits.replace(row.expense.id, toNewSplitRows(row.expense.id, rows));
 
+  await recordEvent(repo, row.game.id, {
+    kind: "expense_updated",
+    title: title || defaultTitleForKind(kind),
+    amount,
+    beforeTitle: row.expense.title,
+    beforeAmount: row.expense.amount,
+  });
+
   return loadGameDetail(repo, row.game);
 }
 
@@ -146,7 +167,34 @@ export async function removeExpense(
   const row = await loadOwnedExpense(repo, expenseId, userId);
   if (!row) throw new NotFoundError();
 
+  // Chup lai truoc khi xoa: day la du lieu duy nhat de hoan tac.
+  const splits = await repo.splits.listByExpense(row.expense.id);
+  const participants = await repo.participants.listByGame(row.game.id);
+  const payerName =
+    participants.find((person) => person.id === row.expense.payerParticipantId)?.name || "Không rõ";
+
   await repo.expenses.delete(row.expense.id);
+
+  await recordEvent(repo, row.game.id, {
+    kind: "expense_removed",
+    title: row.expense.title,
+    amount: row.expense.amount,
+    payerName,
+    restore: {
+      payerParticipantId: row.expense.payerParticipantId,
+      kind: row.expense.kind,
+      title: row.expense.title,
+      amount: row.expense.amount,
+      note: row.expense.note,
+      splitMode: row.expense.splitMode,
+      splits: splits.map((split) => ({
+        participantId: split.participantId,
+        amount: split.amount,
+        weight: split.weight,
+      })),
+    },
+  });
+
   return loadGameDetail(repo, row.game);
 }
 
@@ -191,7 +239,16 @@ export async function recordTransfer(
     },
   ]);
 
-  return loadGameDetail(repo, game);
+  const detail = await loadGameDetail(repo, game);
+  const nameById = new Map(detail.participants.map((person) => [person.id, person.name]));
+  await recordEvent(repo, game.id, {
+    kind: "transfer_added",
+    fromName: nameById.get(input.fromParticipantId) || "Không rõ",
+    toName: nameById.get(input.toParticipantId) || "Không rõ",
+    amount: input.amount,
+  });
+
+  return detail;
 }
 
 /**

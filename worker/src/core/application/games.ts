@@ -8,6 +8,7 @@ import { createGameCode, createId, nowIso } from "../../lib/ids";
 import type { GameChanges, GameRepository } from "../ports/game-repository";
 import { InvalidInputError, NotFoundError } from "./errors";
 import { getOwnedGame, loadGameDetail } from "./game-detail";
+import { recordEvent } from "./game-events";
 
 export async function listGames(repo: GameRepository, userId: string): Promise<ApiGame[]> {
   const gameRows = await repo.games.listByOwner(userId);
@@ -77,6 +78,8 @@ export async function createGame(
     );
   }
 
+  await recordEvent(repo, game.id, { kind: "game_created", name: game.name });
+
   return loadGameDetail(repo, game);
 }
 
@@ -108,7 +111,29 @@ export async function updateGame(
   if (Object.keys(changes).length === 0) throw new InvalidInputError();
 
   await repo.games.update(game.id, changes, nowIso());
-  return loadGameDetail(repo, { ...game, ...changes });
+
+  if (changes.name !== undefined && changes.name !== game.name) {
+    await recordEvent(repo, game.id, {
+      kind: "game_renamed",
+      from: game.name,
+      to: changes.name,
+    });
+  }
+
+  // Doi che do hoac doi nguoi nhan deu la "doi cach chuyen tien"; ten nguoi
+  // nhan lay tu detail moi (id vua chon co the la nguoi nao trong danh sach).
+  const detail = await loadGameDetail(repo, { ...game, ...changes });
+
+  if (changes.settlementMode !== undefined || changes.settlementHostId !== undefined) {
+    const hostId = changes.settlementHostId ?? game.settlementHostId;
+    await recordEvent(repo, game.id, {
+      kind: "settlement_changed",
+      mode: changes.settlementMode ?? game.settlementMode,
+      hostName: detail.participants.find((person) => person.id === hostId)?.name || "",
+    });
+  }
+
+  return detail;
 }
 
 /** Nhan ban cuoc choi: giu ten, settlementMode, participant + tai khoan nhan.
@@ -165,6 +190,8 @@ export async function duplicateGame(
       },
     );
   }
+
+  await recordEvent(repo, game.id, { kind: "game_created", name: game.name });
 
   return loadGameDetail(repo, game);
 }

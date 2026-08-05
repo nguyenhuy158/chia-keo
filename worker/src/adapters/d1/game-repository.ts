@@ -6,6 +6,7 @@ import type {
   ExpenseUpdate,
   GameRepository,
   GameRow,
+  GameEventRow,
   McpTokenRow,
   NewSplitRow,
   ParticipantRow,
@@ -388,6 +389,34 @@ export function createD1GameRepository(d1: D1Database): GameRepository {
       },
     },
 
+    gameEvents: {
+      async listByGame(gameId, limit) {
+        return db
+          .select()
+          .from(schema.gameEvents)
+          .where(eq(schema.gameEvents.gameId, gameId))
+          .orderBy(desc(schema.gameEvents.createdAt))
+          .limit(limit);
+      },
+      async getWithGame(eventId) {
+        const rows = await db
+          .select({ event: schema.gameEvents, game: schema.games })
+          .from(schema.gameEvents)
+          .innerJoin(schema.games, eq(schema.games.id, schema.gameEvents.gameId))
+          .where(eq(schema.gameEvents.id, eventId))
+          .limit(1);
+        return rows[0] || null;
+      },
+      async insert(row) {
+        await db.insert(schema.gameEvents).values(row);
+      },
+      async markUndone(eventId, undoneAt) {
+        await db
+          .update(schema.gameEvents)
+          .set({ undoneAt })
+          .where(eq(schema.gameEvents.id, eventId));
+      },
+    },
     shareLinks: {
       async getLatestByGame(gameId): Promise<ShareLinkRow | null> {
         const rows = await db

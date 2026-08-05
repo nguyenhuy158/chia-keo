@@ -12,6 +12,7 @@ import type {
   ApiShareView,
 } from "../../../shared/api-types";
 import type { Contact } from "../../../shared/contacts";
+import type { ApiGameEvent } from "../../../shared/game-events";
 import type {
   ExpenseInput,
   GameInput,
@@ -32,6 +33,12 @@ export type GameApiPort = {
     update(gameId: string, input: GameUpdateInput): Promise<ApiGameDetail>;
     remove(gameId: string): Promise<{ ok: boolean }>;
     duplicate(gameId: string): Promise<ApiGameDetail>;
+  };
+  gameEvents: {
+    /** Lich su thao tac cua cuoc chia, moi nhat truoc. */
+    list(gameId: string): Promise<{ events: ApiGameEvent[] }>;
+    /** Hoan tac mot thao tac (hien chi ho tro khoan chi da xoa). */
+    undo(eventId: string): Promise<ApiGameDetail>;
   };
   contacts: {
     /** Nguoi quen suy ra tu cac cuoc chia da tao, nguoi hay di cung len truoc. */

@@ -191,6 +191,13 @@ export function fakeRepo(
       delete: unused("participants.delete"),
     },
     paymentProfiles: { listByParticipantIds: async () => [] },
+    gameEvents: {
+      listByGame: async () => [],
+      getWithGame: unused("gameEvents.getWithGame"),
+      // MCP chi doc; ghi lich su la viec cua cac mutation qua HTTP.
+      insert: async () => {},
+      markUndone: unused("gameEvents.markUndone"),
+    },
     expenses: {
       listByGame: async (gameId) =>
         gameId === secondGame.id ? [secondExpenseRow] : [expenseRow],

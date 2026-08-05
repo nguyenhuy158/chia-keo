@@ -57,6 +57,13 @@
       "when": 1785889555664,
       "tag": "0007_wild_scarlet_spider",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1785903758107,
+      "tag": "0008_even_lilith",
+      "breakpoints": true
     }
   ]
 }

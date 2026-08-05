@@ -164,6 +164,28 @@ export const gamePhotos = sqliteTable(
   ],
 );
 
+/**
+ * Lich su thao tac cua mot cuoc chia. `payload` la JSON anh chup luc thao tac
+ * xay ra — xem shared/game-events.ts; cau chu hien cho nguoi dung sinh luc doc
+ * chu khong luu o day.
+ */
+export const gameEvents = sqliteTable(
+  "game_events",
+  {
+    id: text("id").primaryKey(),
+    gameId: text("game_id")
+      .notNull()
+      .references(() => games.id, { onDelete: "cascade" }),
+    /** GameEventKind; de text tu do vi kind moi khong nen can migration. */
+    kind: text("kind").notNull(),
+    payload: text("payload").notNull(),
+    createdAt: text("created_at").notNull(),
+    /** Luc bam hoan tac; null la chua hoan tac. */
+    undoneAt: text("undone_at"),
+  },
+  (table) => [index("game_events_game_id_idx").on(table.gameId)],
+);
+
 export const shareLinks = sqliteTable(
   "share_links",
   {
