@@ -15,9 +15,6 @@ type Draft = { name: string; bankId: string; accountNo: string; accountName: str
 
 const EMPTY: Draft = { name: "", bankId: "", accountNo: "", accountName: "" };
 
-const INPUT_CLASS =
-  "h-10 w-full min-w-0 rounded-md border border-stone-300 bg-white px-2.5 text-sm text-stone-950 outline-none transition placeholder:text-stone-400 focus:border-violet-600 focus:ring-2 focus:ring-violet-100 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-100 dark:placeholder:text-stone-500 dark:focus:ring-violet-900/40";
-
 function DraftForm({
   draft,
   onChange,
@@ -44,27 +41,26 @@ function DraftForm({
       <input
         value={draft.name}
         onChange={(event) => onChange({ ...draft, name: event.target.value })}
-        className={INPUT_CLASS}
+        className="field"
         placeholder="Tên · Huy"
         aria-label="Tên"
       />
       <BankSelect
         value={draft.bankId}
         onChange={(bankId) => onChange({ ...draft, bankId })}
-        className={INPUT_CLASS}
-        aria-label="Ngân hàng"
+        ariaLabel="Ngân hàng"
       />
       <input
         value={draft.accountNo}
         onChange={(event) => onChange({ ...draft, accountNo: event.target.value })}
-        className={INPUT_CLASS}
+        className="field"
         placeholder="Số tài khoản"
         aria-label="Số tài khoản"
       />
       <input
         value={draft.accountName}
         onChange={(event) => onChange({ ...draft, accountName: event.target.value })}
-        className={INPUT_CLASS}
+        className="field"
         placeholder="Tên chủ tài khoản (NGUYEN VAN A)"
         aria-label="Tên chủ tài khoản"
       />

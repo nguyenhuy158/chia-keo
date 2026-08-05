@@ -31,6 +31,7 @@ import {
 import { formatMoney, parseMoney } from "../core/domain/money";
 import { usePhotoUploader } from "../adapters/react-query/photo-upload";
 import { useAiScanReceipt, useAiSuggestExpense } from "../adapters/react-query/queries";
+import { Dropdown } from "./Dropdown";
 import { formatMoneyInput, MoneyInput } from "./MoneyInput";
 import { PhotoPickerButton } from "./PhotoPanel";
 import { Field } from "./ui";
@@ -248,8 +249,8 @@ function SharesStepper({
 }
 
 /**
- * Select tuy chinh thay <select> goc: <select> tren mobile mo picker cua OS,
- * khong theo duoc mau/kieu chu cua app va nhin lech tong the.
+ * Chon nguoi trong mot cuoc chia. Chi la `Dropdown` dung chung, doi tu
+ * ApiParticipant sang option — giu ham rieng de cho goi khong phai map tay.
  */
 function ParticipantSelect({
   participants,
@@ -262,63 +263,21 @@ function ParticipantSelect({
   onChange: (id: string) => void;
   ariaLabel: string;
 }) {
-  const [open, setOpen] = useState(false);
-  const rootRef = useRef<HTMLDivElement>(null);
-  const selected = participants.find((participant) => participant.id === value);
-
-  useEffect(() => {
-    if (!open) return;
-    function onDocClick(event: MouseEvent) {
-      if (rootRef.current && !rootRef.current.contains(event.target as Node)) {
-        setOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", onDocClick);
-    return () => document.removeEventListener("mousedown", onDocClick);
-  }, [open]);
+  const options = useMemo(
+    () => participants.map((participant) => ({ value: participant.id, label: participant.name })),
+    [participants],
+  );
 
   return (
-    <div ref={rootRef} className="relative">
-      <button
-        type="button"
-        onClick={() => setOpen((current) => !current)}
-        aria-label={ariaLabel}
-        aria-expanded={open}
-        className="field flex items-center justify-between gap-2 text-left"
-      >
-        <span className="truncate">{selected?.name || "Chọn người"}</span>
-        <ChevronDown
-          size={16}
-          className={`shrink-0 text-stone-400 transition ${open ? "rotate-180" : ""}`}
-        />
-      </button>
-      {open && (
-        <ul className="absolute z-10 mt-1 w-full max-h-60 overflow-auto rounded-md border border-stone-300 bg-white p-1 shadow-lg dark:border-stone-700 dark:bg-stone-800">
-          {participants.map((participant) => {
-            const isSelected = participant.id === value;
-            return (
-              <li key={participant.id}>
-                <button
-                  type="button"
-                  onClick={() => {
-                    onChange(participant.id);
-                    setOpen(false);
-                  }}
-                  className={`flex w-full items-center justify-between gap-2 rounded px-3 py-2.5 text-sm ${
-                    isSelected
-                      ? "bg-violet-50 font-semibold text-violet-800 dark:bg-violet-500/15 dark:text-violet-300"
-                      : "text-stone-700 hover:bg-stone-100 dark:text-stone-200 dark:hover:bg-stone-700"
-                  }`}
-                >
-                  <span className="truncate">{participant.name}</span>
-                  {isSelected && <Check size={14} className="shrink-0" />}
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-      )}
-    </div>
+    <Dropdown
+      options={options}
+      value={value}
+      onChange={onChange}
+      placeholder="Chọn người"
+      ariaLabel={ariaLabel}
+      // Nhom thuong 5-10 nguoi nen cuon la du; o tim chi lam chat them.
+      searchable={participants.length > 12}
+    />
   );
 }
 

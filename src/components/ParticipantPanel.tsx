@@ -96,7 +96,6 @@ export function ParticipantPanel({
           <BankSelect
             value={form.watch("bankId")}
             onChange={(bankId) => form.setValue("bankId", bankId)}
-            className="field"
           />
         </Field>
         <Field label="Số tài khoản">
