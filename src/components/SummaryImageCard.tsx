@@ -63,6 +63,7 @@ export function SummaryImageCard({ input }: { input: SummaryTextInput }) {
   const toast = useToast();
   const [backgroundId, chooseBackground] = useSummaryImageBackground();
   const [variant, setVariant] = useState<SummaryVariant>("compact");
+  const [showQr, setShowQr] = useState(true);
   const [viewMode, setViewMode] = useState<ViewMode>("image");
   const [zoomed, setZoomed] = useState(false);
   const [blob, setBlob] = useState<Blob | null>(null);
@@ -79,8 +80,8 @@ export function SummaryImageCard({ input }: { input: SummaryTextInput }) {
     const accounts = input.participants
       .map((participant) => `${participant.bankId}:${participant.accountNo}`)
       .join("|");
-    return `${backgroundId}\n${variant}\n${accounts}\n${buildSummaryText(input, variant)}`;
-  }, [backgroundId, variant, input]);
+    return `${backgroundId}\n${variant}\n${showQr}\n${accounts}\n${buildSummaryText(input, variant)}`;
+  }, [backgroundId, variant, showQr, input]);
 
   const urlRef = useRef<string | null>(null);
 
@@ -92,7 +93,7 @@ export function SummaryImageCard({ input }: { input: SummaryTextInput }) {
     setPending(true);
     setFailed(false);
 
-    renderSummaryImage(inputRef.current, variant, backgroundId).then(
+    renderSummaryImage(inputRef.current, variant, backgroundId, showQr).then(
       (rendered) => {
         if (cancelled) return;
 
@@ -178,8 +179,17 @@ export function SummaryImageCard({ input }: { input: SummaryTextInput }) {
       </div>
 
       {viewMode === "image" && (
-        <div className="mt-3">
+        <div className="mt-3 space-y-2">
           <SummaryBackgroundPicker value={backgroundId} onChange={chooseBackground} />
+          <label className="flex items-center gap-2 text-sm text-stone-600 dark:text-stone-300">
+            <input
+              type="checkbox"
+              checked={showQr}
+              onChange={(event) => setShowQr(event.target.checked)}
+              className="h-4 w-4 rounded border-stone-300 text-violet-600 focus:ring-violet-500 dark:border-stone-600"
+            />
+            Hiện QR chuyển khoản trên ảnh
+          </label>
         </div>
       )}
 

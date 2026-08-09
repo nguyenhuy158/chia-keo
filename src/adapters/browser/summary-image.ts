@@ -401,6 +401,8 @@ export async function renderSummaryImage(
   variant: SummaryVariant = "compact",
   /** Id nen (xem SUMMARY_IMAGE_BACKGROUNDS); id la khong ro thi ve nen mac dinh. */
   backgroundId?: string,
+  /** false thi bo qua tai va ve QR, chi con chu — dung khi chia se noi khong muon lo tai khoan qua QR. */
+  showQr = true,
 ): Promise<Blob> {
   const background = getSummaryImageBackground(backgroundId);
   const styles = buildStyles(background.palette);
@@ -409,7 +411,9 @@ export async function renderSummaryImage(
   // Font phai san sang truoc khi do chu, khong thi wrapText do bang font sai.
   const [, qrCards] = await Promise.all([
     ensureImageFontsReady(),
-    loadQrCards(input, doc, styles),
+    showQr
+      ? loadQrCards(input, doc, styles)
+      : Promise.resolve<QrCards>({ byLineIndex: new Map(), host: null }),
   ]);
 
   const measure = createContext(1, 1);
