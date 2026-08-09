@@ -67,21 +67,28 @@ export function SwipeToDelete({ children, onDelete, deleteLabel = "Xóa" }: Swip
     setDragX(0);
   }
 
+  const revealed = open || dragX < 0;
+
   return (
     <div className="relative overflow-hidden rounded-md">
-      <button
-        type="button"
-        onClick={() => {
-          close();
-          onDelete();
-        }}
-        aria-label={deleteLabel}
-        style={{ width: REVEAL_WIDTH }}
-        className="absolute inset-y-0 right-0 flex items-center justify-center gap-1 bg-rose-600 text-xs font-semibold text-white"
-      >
-        <Trash2 size={15} />
-        {deleteLabel}
-      </button>
+      {/* Chi dung nut do khi dang vuot. Dung luc nao cung render thi o goc bo
+          tron cua khung, mau do lo ra thanh vet do canh moi dong tren desktop
+          — noi vuot khong bao gio xay ra vi chi bat pointer cham/but. */}
+      {revealed && (
+        <button
+          type="button"
+          onClick={() => {
+            close();
+            onDelete();
+          }}
+          aria-label={deleteLabel}
+          style={{ width: REVEAL_WIDTH }}
+          className="absolute inset-y-0 right-0 flex items-center justify-center gap-1 bg-rose-600 text-xs font-semibold text-white"
+        >
+          <Trash2 size={15} />
+          {deleteLabel}
+        </button>
+      )}
       <div
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
@@ -92,7 +99,10 @@ export function SwipeToDelete({ children, onDelete, deleteLabel = "Xóa" }: Swip
           transition: dragging ? "none" : "transform 180ms ease",
           touchAction: "pan-y",
         }}
-        className="relative"
+        // Nen duc BAT BUOC: nut xoa do nam duoi lop nay (absolute inset-y-0
+        // right-0). Thieu nen thi mau do xuyen qua, de len ten va nuot hai nut
+        // sua/xoa cua tung dong ngay ca khi chua vuot.
+        className="relative bg-white dark:bg-stone-900"
       >
         {children}
         {open && (

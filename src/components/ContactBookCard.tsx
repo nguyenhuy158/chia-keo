@@ -113,8 +113,11 @@ function ContactRow({
             {contact.name}
           </p>
           <p className="mt-0.5 truncate text-xs text-stone-500 dark:text-stone-400">
+            {/* Khong ro ngan hang thi chi hien so tai khoan. Truoc day fallback
+                ra "?" nen dong nao thieu bankId cung hien "? · 0123..." — trong
+                nhu du lieu hong chu khong phai thieu mot truong. */}
             {contact.accountNo
-              ? `${getVietQrBankLabel(contact.bankId) || "?"} · ${contact.accountNo}`
+              ? [getVietQrBankLabel(contact.bankId), contact.accountNo].filter(Boolean).join(" · ")
               : "chưa có số tài khoản"}
             {contact.gameCount > 0 && ` · ${contact.gameCount} cuộc`}
           </p>
