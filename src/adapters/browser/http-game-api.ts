@@ -55,6 +55,10 @@ export function createHttpGameApi(): GameApiPort {
       list: (gameId) => request(`/api/games/${gameId}/events`),
       undo: (eventId) => post(`/api/events/${eventId}/undo`),
     },
+    preferences: {
+      get: () => request(`/api/preferences`),
+      update: (input) => patch(`/api/preferences`, input),
+    },
     contacts: {
       list: () => request(`/api/contacts`),
       create: (input) => post(`/api/contacts`, input),

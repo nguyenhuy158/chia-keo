@@ -6,11 +6,11 @@ import {
   type SummaryVariant,
 } from "../../shared/summary-text";
 import { copyImage, copyText, downloadBlob } from "../adapters/browser/clipboard";
+import { usePreferences, useUpdatePreferences } from "../adapters/react-query/queries";
 import { buildSummaryImageFileName, renderSummaryImage } from "../adapters/browser/summary-image";
 import { ImageLightbox } from "./overlays";
 import { SummaryBackgroundPicker } from "./SummaryBackgroundPicker";
 import { useToast } from "./Toast";
-import { usePersistentOpen } from "./use-persistent-open";
 import { Switch } from "./ui";
 import { useSummaryImageBackground } from "./use-summary-image-background";
 
@@ -65,8 +65,10 @@ export function SummaryImageCard({ input }: { input: SummaryTextInput }) {
   const toast = useToast();
   const [backgroundId, chooseBackground] = useSummaryImageBackground();
   const [variant, setVariant] = useState<SummaryVariant>("compact");
-  // Nho lua chon qua cac lan F5: bat/tat QR la thoi quen cua tung nhom.
-  const [showQr, setShowQr] = usePersistentOpen("summary-show-qr", true);
+  // Nho lua chon o server: bat/tat QR la thoi quen cua tung nhom, va giu
+  // nguyen khi doi may hay xoa cache trinh duyet.
+  const { summaryShowQr: showQr } = usePreferences();
+  const updatePreferences = useUpdatePreferences();
   const [viewMode, setViewMode] = useState<ViewMode>("image");
   const [zoomed, setZoomed] = useState(false);
   const [blob, setBlob] = useState<Blob | null>(null);
@@ -184,7 +186,11 @@ export function SummaryImageCard({ input }: { input: SummaryTextInput }) {
       {viewMode === "image" && (
         <div className="mt-3 space-y-2">
           <SummaryBackgroundPicker value={backgroundId} onChange={chooseBackground} />
-          <Switch checked={showQr} onChange={setShowQr} label="Hiện QR chuyển khoản trên ảnh" />
+          <Switch
+            checked={showQr}
+            onChange={(next) => updatePreferences.mutate({ summaryShowQr: next })}
+            label="Hiện QR chuyển khoản trên ảnh"
+          />
         </div>
       )}
 

@@ -194,6 +194,26 @@ export const mcpTokenInputSchema = z.object({
   expiresInDays: z.number().int().min(1).max(3650).nullable().default(null),
 });
 
+/**
+ * Tuy chon hien thi cua user, luu tren server de doi may/xoa cache van con.
+ * Them tuy chon moi: khai bao o day, DB khong can doi (bang key/value).
+ */
+export const userPreferencesSchema = z.object({
+  /** Hien QR chuyen khoan tren anh tong ket. */
+  summaryShowQr: z.boolean(),
+});
+
+export const DEFAULT_USER_PREFERENCES: UserPreferences = {
+  summaryShowQr: true,
+};
+
+export const USER_PREFERENCE_KEYS = Object.keys(
+  userPreferencesSchema.shape,
+) as UserPreferenceKey[];
+
+/** Chi gui nhung tuy chon vua doi; field vang giu nguyen gia tri cu. */
+export const userPreferencesPatchSchema = userPreferencesSchema.partial();
+
 const photoDimensionSchema = z.number().int().positive().max(20_000);
 
 export const photoInputSchema = z.object({
@@ -236,3 +256,6 @@ export type PhotoInput = z.infer<typeof photoInputSchema>;
 export type PhotoUpdateInput = z.infer<typeof photoUpdateSchema>;
 export type McpScope = z.infer<typeof mcpScopeSchema>;
 export type McpTokenInput = z.input<typeof mcpTokenInputSchema>;
+export type UserPreferences = z.infer<typeof userPreferencesSchema>;
+export type UserPreferenceKey = keyof UserPreferences;
+export type UserPreferencesPatch = z.infer<typeof userPreferencesPatchSchema>;

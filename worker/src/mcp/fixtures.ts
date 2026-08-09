@@ -196,6 +196,10 @@ export function fakeRepo(
       delete: unused("participants.delete"),
     },
     paymentProfiles: { listByParticipantIds: async () => [] },
+    userPreferences: {
+      listByUser: async () => [],
+      upsert: unused("userPreferences.upsert"),
+    },
     contacts: {
       listByOwner: async () => [],
       getOwned: unused("contacts.getOwned"),

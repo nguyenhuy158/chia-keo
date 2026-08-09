@@ -17,7 +17,10 @@ import type {
   PhotoUpdateInput,
   SettlementMode,
   TransferInput,
+  UserPreferences,
+  UserPreferencesPatch,
 } from "../../../shared/schemas";
+import { DEFAULT_USER_PREFERENCES } from "../../../shared/schemas";
 import { getGameApi } from "../../core/container";
 
 export const gameKeys = {
@@ -41,6 +44,9 @@ export const photoKeys = {
 export const contactKeys = { all: ["contacts"] as const };
 
 /** Thung rac tach khoi ["games"] de danh sach chinh khong keo theo mot query nua. */
+/** Tuy chon hien thi cua user; doc mot lan, cac man dung chung cache nay. */
+export const preferenceKeys = { all: ["preferences"] as const };
+
 export const trashKeys = { all: ["games-trash"] as const };
 
 /**
@@ -68,6 +74,49 @@ export function useShareView(token: string) {
     queryKey: gameKeys.share(token),
     queryFn: () => getGameApi().share.view(token),
     retry: false,
+  });
+}
+
+/**
+ * Tuy chon lay tu server nen chua co du lieu la con dung mac dinh — component
+ * khong phai xu ly trang thai "chua biet".
+ */
+export function usePreferences(): UserPreferences {
+  const query = useQuery({
+    queryKey: preferenceKeys.all,
+    queryFn: () => getGameApi().preferences.get(),
+  });
+
+  return query.data?.preferences || DEFAULT_USER_PREFERENCES;
+}
+
+/**
+ * Cap nhat lac quan: cong tac phai lat ngay theo tay nguoi dung, ket qua tu
+ * server ve sau chi de xac nhan. Loi thi tra lai gia tri cu.
+ */
+export function useUpdatePreferences() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (patch: UserPreferencesPatch) => getGameApi().preferences.update(patch),
+    onMutate: async (patch) => {
+      await queryClient.cancelQueries({ queryKey: preferenceKeys.all });
+      const previous = queryClient.getQueryData<{ preferences: UserPreferences }>(
+        preferenceKeys.all,
+      );
+
+      queryClient.setQueryData(preferenceKeys.all, {
+        preferences: { ...(previous?.preferences || DEFAULT_USER_PREFERENCES), ...patch },
+      });
+
+      return { previous };
+    },
+    onError: (_error, _patch, context) => {
+      if (context?.previous) queryClient.setQueryData(preferenceKeys.all, context.previous);
+    },
+    onSuccess: (data) => {
+      queryClient.setQueryData(preferenceKeys.all, data);
+    },
   });
 }
 

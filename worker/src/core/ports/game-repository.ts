@@ -25,6 +25,12 @@ export type GameChanges = {
   settlementHostId?: string;
 };
 
+export type UserPreferenceRow = {
+  key: string;
+  /** JSON cua gia tri; tang tren tu parse va bo qua dong hong. */
+  value: string;
+};
+
 export type ParticipantRow = {
   id: string;
   gameId: string;
@@ -221,6 +227,12 @@ export type GameRepository = {
     /** false khi token khong ton tai hoac khong thuoc user nay. */
     revoke(tokenId: string, userId: string, revokedAt: string): Promise<boolean>;
     touchLastUsed(tokenId: string, lastUsedAt: string): Promise<void>;
+  };
+  userPreferences: {
+    /** Toan bo tuy chon da luu cua user; key la du do tang tren hieu. */
+    listByUser(userId: string): Promise<UserPreferenceRow[]>;
+    /** Ghi de gia tri cu cua dung key do — moi user mot dong tren moi key. */
+    upsert(userId: string, key: string, value: string, updatedAt: string): Promise<void>;
   };
   contacts: {
     listByOwner(userId: string): Promise<ContactBookRow[]>;

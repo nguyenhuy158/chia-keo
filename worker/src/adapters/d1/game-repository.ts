@@ -417,6 +417,24 @@ export function createD1GameRepository(d1: D1Database): GameRepository {
       },
     },
 
+    userPreferences: {
+      async listByUser(userId) {
+        return db
+          .select({ key: schema.userPreferences.key, value: schema.userPreferences.value })
+          .from(schema.userPreferences)
+          .where(eq(schema.userPreferences.userId, userId));
+      },
+      async upsert(userId, key, value, updatedAt) {
+        await db
+          .insert(schema.userPreferences)
+          .values({ id: createId("pref"), userId, key, value, updatedAt })
+          .onConflictDoUpdate({
+            target: [schema.userPreferences.userId, schema.userPreferences.key],
+            set: { value, updatedAt },
+          });
+      },
+    },
+
     contacts: {
       async listByOwner(userId) {
         return db

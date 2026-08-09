@@ -27,6 +27,8 @@ import type {
   PhotoInput,
   PhotoUpdateInput,
   TransferInput,
+  UserPreferences,
+  UserPreferencesPatch,
 } from "../../../shared/schemas";
 
 export type GameApiPort = {
@@ -52,6 +54,12 @@ export type GameApiPort = {
     list(gameId: string): Promise<{ events: ApiGameEvent[] }>;
     /** Hoan tac mot thao tac (hien chi ho tro khoan chi da xoa). */
     undo(eventId: string): Promise<ApiGameDetail>;
+  };
+  preferences: {
+    /** Tuy chon hien thi cua user, luu tren server nen doi may van con. */
+    get(): Promise<{ preferences: UserPreferences }>;
+    /** Chi gui field vua doi; tra ve toan bo tuy chon sau khi ghi. */
+    update(patch: UserPreferencesPatch): Promise<{ preferences: UserPreferences }>;
   };
   contacts: {
     /** Danh ba tu nhap gop voi nguoi suy ra tu cac cuoc chia da tao. */

@@ -264,6 +264,26 @@ export const mcpTokens = sqliteTable(
   (table) => [index("mcp_tokens_user_id_idx").on(table.userId)],
 );
 
+/**
+ * Tuy chon hien thi cua tung user (vd bat/tat QR tren anh tong ket). De dang
+ * key/value chu khong moi tuy chon mot cot: them tuy chon moi khong can
+ * migration, va cot la se bi bo qua luc doc (xem USER_PREFERENCE_KEYS).
+ */
+export const userPreferences = sqliteTable(
+  "user_preferences",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    key: text("key").notNull(),
+    /** Gia tri dang JSON, de sau nay chua duoc ca so va chuoi. */
+    value: text("value").notNull(),
+    updatedAt: text("updated_at").notNull(),
+  },
+  (table) => [uniqueIndex("user_preferences_user_key_idx").on(table.userId, table.key)],
+);
+
 export const paymentProfiles = sqliteTable(
   "payment_profiles",
   {

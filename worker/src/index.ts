@@ -12,6 +12,7 @@ import { mcpTokensRouter } from "./routes/mcp-tokens";
 import { photosRouter } from "./routes/photos";
 import { qrRouter } from "./routes/qr";
 import { shareRouter } from "./routes/share";
+import { userPreferencesRouter } from "./routes/user-preferences";
 
 // Chan brute-force login/dang ky va spam tao game/link share (theo IP).
 const AUTH_RATE_LIMIT = { limit: 10, windowMs: 60_000 };
@@ -78,6 +79,7 @@ app.route("/api", aiRouter);
 app.route("/api", photosRouter);
 app.route("/api", gamesRouter);
 app.route("/api", funStatsRouter);
+app.route("/api", userPreferencesRouter);
 
 app.onError((error, c) => {
   // Log ra Cloudflare de 500 khong con "cam" nhu truoc.
