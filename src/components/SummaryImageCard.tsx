@@ -10,6 +10,7 @@ import { buildSummaryImageFileName, renderSummaryImage } from "../adapters/brows
 import { ImageLightbox } from "./overlays";
 import { SummaryBackgroundPicker } from "./SummaryBackgroundPicker";
 import { useToast } from "./Toast";
+import { Switch } from "./ui";
 import { useSummaryImageBackground } from "./use-summary-image-background";
 
 const VARIANTS: { value: SummaryVariant; label: string; hint: string }[] = [
@@ -181,15 +182,7 @@ export function SummaryImageCard({ input }: { input: SummaryTextInput }) {
       {viewMode === "image" && (
         <div className="mt-3 space-y-2">
           <SummaryBackgroundPicker value={backgroundId} onChange={chooseBackground} />
-          <label className="flex items-center gap-2 text-sm text-stone-600 dark:text-stone-300">
-            <input
-              type="checkbox"
-              checked={showQr}
-              onChange={(event) => setShowQr(event.target.checked)}
-              className="h-4 w-4 rounded border-stone-300 text-violet-600 focus:ring-violet-500 dark:border-stone-600"
-            />
-            Hiện QR chuyển khoản trên ảnh
-          </label>
+          <Switch checked={showQr} onChange={setShowQr} label="Hiện QR chuyển khoản trên ảnh" />
         </div>
       )}
 

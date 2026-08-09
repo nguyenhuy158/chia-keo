@@ -109,6 +109,40 @@ export function Metric({ label, value }: { label: string; value: string }) {
   );
 }
 
+/** Cong tac bat/tat kieu iOS, dung khi checkbox trinh duyet mac dinh qua tho. */
+export function Switch({
+  checked,
+  onChange,
+  label,
+}: {
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+  label: string;
+}) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      onClick={() => onChange(!checked)}
+      className="flex items-center gap-2.5 text-sm text-stone-600 dark:text-stone-300"
+    >
+      <span
+        className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${
+          checked ? "bg-violet-600" : "bg-stone-300 dark:bg-stone-700"
+        }`}
+      >
+        <span
+          className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${
+            checked ? "translate-x-5" : "translate-x-0.5"
+          }`}
+        />
+      </span>
+      {label}
+    </button>
+  );
+}
+
 export function BalancePill({ value }: { value: number }) {
   if (value > 0) {
     return (
