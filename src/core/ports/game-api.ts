@@ -3,6 +3,7 @@
 
 import type {
   ApiAiSuggestionResponse,
+  ApiCrossGameBalances,
   ApiCreatedMcpToken,
   ApiFunStats,
   ApiGame,
@@ -48,6 +49,10 @@ export type GameApiPort = {
   /** Thong ke vui, tach het khoi cac port khac; chi doc. */
   funStats: {
     get(): Promise<ApiFunStats>;
+  };
+  /** So du gop tat ca cuoc chia, dung cho phan "ai con no ai" o trang chu. */
+  crossBalances: {
+    get(): Promise<ApiCrossGameBalances>;
   };
   gameEvents: {
     /** Lich su thao tac cua cuoc chia, moi nhat truoc. */

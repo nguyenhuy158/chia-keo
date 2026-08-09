@@ -51,6 +51,9 @@ export function createHttpGameApi(): GameApiPort {
     funStats: {
       get: () => request(`/api/fun-stats`),
     },
+    crossBalances: {
+      get: () => request(`/api/cross-balances`),
+    },
     gameEvents: {
       list: (gameId) => request(`/api/games/${gameId}/events`),
       undo: (eventId) => post(`/api/events/${eventId}/undo`),

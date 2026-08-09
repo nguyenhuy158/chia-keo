@@ -5,6 +5,7 @@ import { AUTH_BASE_PATH, createAuth, getTrustedOrigins } from "./auth";
 import type { Env } from "./env";
 import { rateLimitPost } from "./lib/rate-limit-middleware";
 import { aiRouter } from "./routes/ai";
+import { crossBalancesRouter } from "./routes/cross-balances";
 import { funStatsRouter } from "./routes/fun-stats";
 import { gamesRouter } from "./routes/games";
 import { mcpRouter } from "./routes/mcp";
@@ -79,6 +80,7 @@ app.route("/api", aiRouter);
 app.route("/api", photosRouter);
 app.route("/api", gamesRouter);
 app.route("/api", funStatsRouter);
+app.route("/api", crossBalancesRouter);
 app.route("/api", userPreferencesRouter);
 
 app.onError((error, c) => {
