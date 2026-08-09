@@ -1,7 +1,9 @@
 import { useNavigate, useParams } from "@tanstack/react-router";
 import {
   Check,
+  Images,
   Link as LinkIcon,
+  ListChecks,
   MoreHorizontal,
   Pencil,
   Power,
@@ -17,6 +19,7 @@ import { HistoryPanel } from "../components/HistoryPanel";
 import { OnboardingBanner } from "../components/OnboardingBanner";
 import { PhotoPanel } from "../components/PhotoPanel";
 import { ExpenseFab, type GameSection, MobileGameNav } from "../components/MobileGameNav";
+import { useMobileShell } from "../components/mobile-shell";
 import { ParticipantPanel } from "../components/ParticipantPanel";
 import { SummaryImageCard } from "../components/SummaryImageCard";
 import { BottomSheet } from "../components/overlays";
@@ -68,6 +71,8 @@ export function GamePage() {
 
   const [nameDraft, setNameDraft] = useState<string | null>(null);
   const [activeSection, setActiveSection] = useState<GameSection>("expenses");
+  const [moreTab, setMoreTab] = useState<"photos" | "history">("photos");
+  const shell = useMobileShell();
   const [actionsOpen, setActionsOpen] = useState(false);
 
   if (gameQuery.isPending) {
@@ -338,7 +343,15 @@ export function GamePage() {
           {shareActions}
           {deleteAction}
         </div>
-        {/* Mobile: gom vao mot nut mo bottom sheet. */}
+        {/* Mobile: nut chuyen cuoc choi va nut mo bottom sheet tuy chon. */}
+        <button
+          type="button"
+          onClick={() => shell?.openGames()}
+          aria-label="Danh sách cuộc chơi"
+          className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-stone-300 text-stone-700 transition hover:bg-stone-50 active:bg-stone-100 dark:border-stone-700 dark:text-stone-200 dark:hover:bg-stone-800 dark:active:bg-stone-700 lg:hidden"
+        >
+          <ListChecks size={20} />
+        </button>
         <button
           type="button"
           onClick={() => setActionsOpen(true)}
@@ -372,10 +385,39 @@ export function GamePage() {
       <div className="space-y-5 pb-28 lg:hidden">
         {activeSection === "people" && participantPanel}
         {activeSection === "expenses" && expensePanel}
-        {activeSection === "photos" && photoPanel}
         {activeSection === "summary" && dashboard}
         {activeSection === "summary" && summaryImageCard}
-        {activeSection === "history" && <HistoryPanel gameId={game.id} />}
+        {activeSection === "more" && (
+          <div className="space-y-4">
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setMoreTab("photos")}
+                className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition ${
+                  moreTab === "photos"
+                    ? "bg-violet-600 text-white"
+                    : "border border-stone-300 text-stone-600 dark:border-stone-700 dark:text-stone-300"
+                }`}
+              >
+                <Images size={14} className="mr-1 inline" />
+                Ảnh
+              </button>
+              <button
+                type="button"
+                onClick={() => setMoreTab("history")}
+                className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition ${
+                  moreTab === "history"
+                    ? "bg-violet-600 text-white"
+                    : "border border-stone-300 text-stone-600 dark:border-stone-700 dark:text-stone-300"
+                }`}
+              >
+                Lịch sử
+              </button>
+            </div>
+            {moreTab === "photos" && photoPanel}
+            {moreTab === "history" && <HistoryPanel gameId={game.id} />}
+          </div>
+        )}
         {activeSection === "summary" && (
           <div className="rounded-lg border border-stone-200 bg-white p-3 shadow-sm dark:border-stone-800 dark:bg-stone-900 [&>button]:w-full">
             {copyAction}
@@ -383,8 +425,8 @@ export function GamePage() {
         )}
       </div>
 
-      {/* Tab anh co nut them anh rieng nen khong hien FAB khoan chi. */}
-      {activeSection !== "expenses" && activeSection !== "photos" && (
+      {/* Tab anh (trong Khac) co nut them anh rieng nen khong hien FAB khoan chi. */}
+      {activeSection !== "expenses" && !(activeSection === "more" && moreTab === "photos") && (
         <ExpenseFab onClick={() => setActiveSection("expenses")} />
       )}
       <MobileGameNav active={activeSection} onChange={setActiveSection} />

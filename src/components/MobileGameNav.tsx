@@ -1,15 +1,13 @@
-import { History, Images, ListChecks, Plus, QrCode, Users, Wallet } from "lucide-react";
+import { LayoutGrid, Plus, QrCode, Users, Wallet } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { useMobileShell } from "./mobile-shell";
 
-export type GameSection = "people" | "expenses" | "photos" | "summary" | "history";
+export type GameSection = "people" | "expenses" | "more" | "summary";
 
 const SECTIONS: { id: GameSection; label: string; icon: LucideIcon }[] = [
   { id: "people", label: "Người", icon: Users },
   { id: "expenses", label: "Chi", icon: Wallet },
-  { id: "photos", label: "Ảnh", icon: Images },
   { id: "summary", label: "Tổng kết", icon: QrCode },
-  { id: "history", label: "Lịch sử", icon: History },
+  { id: "more", label: "Khác", icon: LayoutGrid },
 ];
 
 type MobileGameNavProps = {
@@ -19,19 +17,9 @@ type MobileGameNavProps = {
 
 /** Thanh dieu huong duoi man hinh cho mot cuoc choi, chi hien tren mobile. */
 export function MobileGameNav({ active, onChange }: MobileGameNavProps) {
-  const shell = useMobileShell();
-
   return (
     <nav className="safe-bottom fixed inset-x-0 bottom-0 z-40 border-t border-stone-200 bg-white/95 backdrop-blur dark:border-stone-800 dark:bg-stone-900/95 lg:hidden">
-      <div className="mx-auto grid max-w-md grid-cols-6">
-        <button
-          type="button"
-          onClick={() => shell?.openGames()}
-          className="flex min-h-[3.5rem] flex-col items-center justify-center gap-0.5 text-stone-500 transition active:bg-stone-100 dark:text-stone-400 dark:active:bg-stone-800"
-        >
-          <ListChecks size={20} />
-          <span className="text-[11px] font-medium">Cuộc chơi</span>
-        </button>
+      <div className="mx-auto grid max-w-md grid-cols-4">
         {SECTIONS.map((section) => {
           const Icon = section.icon;
           const isActive = section.id === active;
