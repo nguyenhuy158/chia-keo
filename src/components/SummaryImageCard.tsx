@@ -10,6 +10,7 @@ import { buildSummaryImageFileName, renderSummaryImage } from "../adapters/brows
 import { ImageLightbox } from "./overlays";
 import { SummaryBackgroundPicker } from "./SummaryBackgroundPicker";
 import { useToast } from "./Toast";
+import { usePersistentOpen } from "./use-persistent-open";
 import { Switch } from "./ui";
 import { useSummaryImageBackground } from "./use-summary-image-background";
 
@@ -64,7 +65,8 @@ export function SummaryImageCard({ input }: { input: SummaryTextInput }) {
   const toast = useToast();
   const [backgroundId, chooseBackground] = useSummaryImageBackground();
   const [variant, setVariant] = useState<SummaryVariant>("compact");
-  const [showQr, setShowQr] = useState(true);
+  // Nho lua chon qua cac lan F5: bat/tat QR la thoi quen cua tung nhom.
+  const [showQr, setShowQr] = usePersistentOpen("summary-show-qr", true);
   const [viewMode, setViewMode] = useState<ViewMode>("image");
   const [zoomed, setZoomed] = useState(false);
   const [blob, setBlob] = useState<Blob | null>(null);

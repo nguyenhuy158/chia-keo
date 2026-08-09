@@ -4,8 +4,13 @@ const PREFIX = "chia-keo-open:";
 
 function readStored(key: string, defaultOpen: boolean): boolean {
   if (typeof window === "undefined") return defaultOpen;
-  const stored = window.localStorage.getItem(PREFIX + key);
-  return stored === null ? defaultOpen : stored === "1";
+  try {
+    const stored = window.localStorage.getItem(PREFIX + key);
+    return stored === null ? defaultOpen : stored === "1";
+  } catch {
+    // Safari an danh/bi chan cookie: doc cung nem, cu dung mac dinh.
+    return defaultOpen;
+  }
 }
 
 /**
