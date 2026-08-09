@@ -63,14 +63,17 @@ export function AppLayout() {
             >
               <Menu size={20} />
             </button>
-            <div className="min-w-0">
+            {/* Logo la duong ve trang chu. Truoc day no la <h1> tron: vao mot
+                cuoc chia tren mobile la khong con nut nao ve home — sidebar bi
+                thu vao drawer, ma drawer chi liet ke cac cuoc chia. */}
+            <Link to="/" aria-label="Về trang chủ" className="min-w-0">
               <h1 className="truncate bg-gradient-to-r from-violet-600 to-fuchsia-600 bg-clip-text text-lg font-extrabold text-transparent sm:text-xl">
                 Chia kèo
               </h1>
               <p className="hidden text-sm text-stone-600 dark:text-stone-400 sm:block">
                 Tính tiền nhóm và sinh QR nhận tiền.
               </p>
-            </div>
+            </Link>
           </div>
           <div className="flex items-center gap-2 sm:gap-3">
             <span className="hidden text-sm text-stone-600 dark:text-stone-400 sm:inline">
