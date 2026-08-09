@@ -12,6 +12,7 @@ import { mcpRouter } from "./routes/mcp";
 import { mcpTokensRouter } from "./routes/mcp-tokens";
 import { photosRouter } from "./routes/photos";
 import { qrRouter } from "./routes/qr";
+import { sessionRouter } from "./routes/session";
 import { shareRouter } from "./routes/share";
 import { userPreferencesRouter } from "./routes/user-preferences";
 
@@ -81,6 +82,7 @@ app.route("/api", photosRouter);
 app.route("/api", gamesRouter);
 app.route("/api", funStatsRouter);
 app.route("/api", crossBalancesRouter);
+app.route("/api", sessionRouter);
 app.route("/api", userPreferencesRouter);
 
 app.onError((error, c) => {

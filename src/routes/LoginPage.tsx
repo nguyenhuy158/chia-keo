@@ -1,3 +1,4 @@
+import { useQueryClient } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Navigate, useNavigate } from "@tanstack/react-router";
 import { WalletCards } from "lucide-react";
@@ -5,6 +6,8 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { authClient, usernameToEmail } from "../adapters/browser/auth-client";
+import { ssoLoginUrl } from "../adapters/browser/sso";
+import { sessionKeys, useAppSession } from "../adapters/react-query/session-query";
 import { ThemeToggle } from "../components/theme";
 import { Field, LoadingState } from "../components/ui";
 
@@ -54,7 +57,9 @@ function GoogleMark() {
 
 export function LoginPage() {
   const navigate = useNavigate();
-  const { data: session, isPending } = authClient.useSession();
+  // Phai hoi /api/session: vao bang cookie SSO thi authClient khong thay gi.
+  const { user, isPending } = useAppSession();
+  const queryClient = useQueryClient();
   const [mode, setMode] = useState<AuthMode>("sign-in");
   const [authError, setAuthError] = useState("");
   const [googlePending, setGooglePending] = useState(false);
@@ -74,7 +79,7 @@ export function LoginPage() {
     );
   }
 
-  if (session?.user) {
+  if (user) {
     return <Navigate to="/" />;
   }
 
@@ -102,23 +107,21 @@ export function LoginPage() {
       return;
     }
 
+    // Cache /api/session dang giu user: null tu luc mo trang login; khong xoa
+    // thi AppLayout doc lai cache cu va da nguoc ve day.
+    await queryClient.invalidateQueries({ queryKey: sessionKeys.all });
     navigate({ to: "/" });
   });
 
-  async function handleGoogleSignIn() {
+  /**
+   * Google di qua SSO chung cua *.huyab.click chu khong qua better-auth social:
+   * ca he sinh thai dung MOT OAuth client, them app moi khong phai vao Google
+   * console nua. Username/mat khau van la better-auth, khong doi gi.
+   */
+  function handleGoogleSignIn() {
     setAuthError("");
     setGooglePending(true);
-
-    // Thanh cong thi browser bi redirect sang Google, khong quay lai day.
-    const result = await authClient.signIn.social({
-      provider: "google",
-      callbackURL: `${window.location.origin}/`,
-    });
-
-    setGooglePending(false);
-    if (result.error) {
-      setAuthError(result.error.message || "Không mở được đăng nhập Google.");
-    }
+    window.location.href = ssoLoginUrl();
   }
 
   return (

@@ -7,10 +7,14 @@ import { Drawer } from "../components/overlays";
 import { ThemeToggle } from "../components/theme";
 import { LoadingState } from "../components/ui";
 import { authClient } from "../adapters/browser/auth-client";
+import { API_BASE } from "../adapters/browser/http-game-api";
+import { ssoLogoutUrl } from "../adapters/browser/sso";
+import { useAppSession } from "../adapters/react-query/session-query";
 
 export function AppLayout() {
   const navigate = useNavigate();
-  const { data: session, isPending } = authClient.useSession();
+  // Nguon su that duy nhat: /api/session thay ca better-auth lan cookie SSO.
+  const { user, isPending } = useAppSession();
   const [gamesOpen, setGamesOpen] = useState(false);
 
   if (isPending) {
@@ -21,16 +25,30 @@ export function AppLayout() {
     );
   }
 
-  if (!session?.user) {
+  if (!user) {
     return <Navigate to="/login" />;
   }
 
   async function handleLogout() {
-    await authClient.signOut();
+    // Xoa ca hai: session better-auth nam o app, cookie SSO nam o domain cha.
+    // Bo qua loi cua signOut — nguoi dang nhap bang SSO khong co session nao de
+    // xoa, va du sao cung sap roi khoi trang.
+    await authClient.signOut().catch(() => undefined);
+
+    const response = await fetch(`${API_BASE}/api/session`, { credentials: "include" });
+    const stillSignedIn = response.ok && Boolean((await response.json()).user);
+
+    // Con session sau khi signOut nghia la dang vao bang SSO: phai qua trang
+    // logout cua SSO moi xoa duoc cookie domain cha, dieu huong noi bo vo ich.
+    if (stillSignedIn) {
+      window.location.href = ssoLogoutUrl();
+      return;
+    }
+
     navigate({ to: "/login" });
   }
 
-  const displayName = session.user.displayUsername || session.user.name;
+  const displayName = user.name;
 
   return (
     <MobileShellContext.Provider value={{ openGames: () => setGamesOpen(true) }}>
