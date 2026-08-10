@@ -1,5 +1,6 @@
 import { BookUser, Check, Pencil, Plus, Trash2, X } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 import type { Contact } from "../../shared/contacts";
 import {
   useContacts,
@@ -12,7 +13,6 @@ import { SwipeToDelete } from "./SwipeToDelete";
 import { Avatar } from "./Avatar";
 import { BankSelect } from "./BankSelect";
 import { useConfirm } from "./ConfirmDialog";
-import { useToast } from "./Toast";
 import { SkeletonListRow } from "./ui";
 
 type Draft = { name: string; bankId: string; accountNo: string; accountName: string };
@@ -156,7 +156,6 @@ function ContactRow({
  * khoan) de trong tung cuoc chia chi con tick chon ai tham gia.
  */
 export function ContactBookCard() {
-  const toast = useToast();
   const confirm = useConfirm();
   const contactsQuery = useContacts();
   const createContact = useCreateContact();
@@ -197,10 +196,10 @@ export function ContactBookCard() {
         await createContact.mutateAsync(draft);
       }
 
-      toast(contact ? "Đã lưu vào danh bạ" : "Đã thêm vào danh bạ");
+      toast.success(contact ? "Đã lưu vào danh bạ" : "Đã thêm vào danh bạ");
       reset();
     } catch {
-      toast("Không lưu được danh bạ", "error");
+      toast.error("Không lưu được danh bạ");
     }
   }
 
@@ -210,9 +209,9 @@ export function ContactBookCard() {
 
     try {
       await deleteContact.mutateAsync(contact.id);
-      toast("Đã xóa khỏi danh bạ");
+      toast.success("Đã xóa khỏi danh bạ");
     } catch {
-      toast("Không xóa được", "error");
+      toast.error("Không xóa được");
     }
   }
 

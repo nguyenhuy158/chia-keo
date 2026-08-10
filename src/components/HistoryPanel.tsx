@@ -18,7 +18,7 @@ import {
   type GameEventKind,
 } from "../../shared/game-events";
 import { useGameEvents, useUndoGameEvent } from "../adapters/react-query/queries";
-import { useToast } from "./Toast";
+import { toast } from "sonner";
 import { EmptyState, SkeletonListRow } from "./ui";
 
 const ICONS: Record<GameEventKind, LucideIcon> = {
@@ -115,7 +115,6 @@ type HistoryPanelProps = {
 };
 
 export function HistoryPanel({ gameId, collapsible = false }: HistoryPanelProps) {
-  const toast = useToast();
   // Chi nho trang thai khi co the gap (desktop); mobile luon mo, khong co gi de nho.
   const [persistedOpen, setPersistedOpen] = usePersistentOpen("history", false);
   const open = collapsible ? persistedOpen : true;
@@ -127,10 +126,10 @@ export function HistoryPanel({ gameId, collapsible = false }: HistoryPanelProps)
   async function handleUndo(eventId: string) {
     try {
       await undoEvent.mutateAsync(eventId);
-      toast("Đã dựng lại khoản chi");
+      toast.success("Đã dựng lại khoản chi");
     } catch {
       // Hay gap nhat: nguoi tra hoac nguoi chia da bi xoa khoi cuoc chia.
-      toast("Không hoàn tác được — người liên quan không còn trong cuộc chia", "error");
+      toast.error("Không hoàn tác được — người liên quan không còn trong cuộc chia");
     }
   }
 

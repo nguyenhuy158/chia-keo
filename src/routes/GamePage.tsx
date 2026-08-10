@@ -26,7 +26,7 @@ import { ParticipantPanel } from "../components/ParticipantPanel";
 import { SummaryImageCard } from "../components/SummaryImageCard";
 import { BottomSheet } from "../components/overlays";
 import { useConfirm } from "../components/ConfirmDialog";
-import { useToast } from "../components/Toast";
+import { toast } from "sonner";
 import { EmptyState, LoadingState } from "../components/ui";
 import { formatMoney } from "../core/domain/money";
 import {
@@ -51,7 +51,6 @@ import {
 export function GamePage() {
   const { gameId } = useParams({ from: "/app/games/$gameId" });
   const navigate = useNavigate();
-  const toast = useToast();
   const confirm = useConfirm();
   const gameQuery = useGame(gameId);
   const photosQuery = usePhotos(gameId);
@@ -106,7 +105,7 @@ export function GamePage() {
     if (!ok) return;
 
     await deleteGame.mutateAsync(game.id);
-    toast("Đã chuyển vào thùng rác");
+    toast.success("Đã chuyển vào thùng rác");
     navigate({ to: "/" });
   }
 
@@ -192,7 +191,7 @@ export function GamePage() {
           amount: settlement.amount,
           note: "",
         });
-        toast("Đã ghi nhận trả nợ");
+        toast.success("Đã ghi nhận trả nợ");
       }}
       onRemoveTransfer={(expenseId) => removeExpense.mutate(expenseId)}
       settlePending={addTransfer.isPending}
@@ -229,9 +228,9 @@ export function GamePage() {
             credentials: "include",
           });
           if (!response.ok) throw new Error();
-          toast("Đã gửi email tóm tắt về hộp thư của bạn");
+          toast.success("Đã gửi email tóm tắt về hộp thư của bạn");
         } catch {
-          toast("Gửi email thất bại, thử lại sau");
+          toast.error("Gửi email thất bại, thử lại sau");
         } finally {
           setEmailPending(false);
         }

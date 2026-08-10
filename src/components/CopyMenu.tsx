@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { toast } from "sonner";
 import {
   buildSummaryText,
   type SummaryTextInput,
@@ -20,7 +21,6 @@ import { copyImage, copyText, downloadBlob } from "../adapters/browser/clipboard
 import { buildSummaryImageFileName, renderSummaryImage } from "../adapters/browser/summary-image";
 import { SummaryBackgroundPicker } from "./SummaryBackgroundPicker";
 import { useSummaryImageBackground } from "./use-summary-image-background";
-import { useToast } from "./Toast";
 
 const MENU_WIDTH = 268;
 const MENU_GAP = 6;
@@ -62,7 +62,6 @@ function computePosition(trigger: HTMLElement): MenuPosition {
 }
 
 export function CopyMenu({ input, className }: CopyMenuProps) {
-  const toast = useToast();
   const triggerRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState<MenuPosition | null>(null);
@@ -100,36 +99,37 @@ export function CopyMenu({ input, className }: CopyMenuProps) {
 
   async function copySummaryText() {
     const ok = await copyText(buildSummaryText(input));
-    toast(ok ? "Đã sao chép tổng kết" : "Không sao chép được tổng kết", ok ? "success" : "error");
+    (ok ? toast.success : toast.error)(
+      ok ? "Đã sao chép tổng kết" : "Không sao chép được tổng kết",
+    );
   }
 
   async function copyDetailedSummaryText() {
     const ok = await copyText(buildSummaryText(input, "detailed"));
-    toast(
+    (ok ? toast.success : toast.error)(
       ok ? "Đã sao chép tổng kết chi tiết" : "Không sao chép được tổng kết",
-      ok ? "success" : "error",
     );
   }
 
   async function copyShareLink() {
     if (!input.shareUrl) return;
     const ok = await copyText(input.shareUrl);
-    toast(ok ? "Đã sao chép link" : "Không sao chép được link", ok ? "success" : "error");
+    (ok ? toast.success : toast.error)(ok ? "Đã sao chép link" : "Không sao chép được link");
   }
 
   async function copySummaryImage(variant: SummaryVariant = "compact") {
     const blob = renderSummaryImage(input, variant, backgroundId);
     if (await copyImage(blob)) {
-      toast("Đã sao chép ảnh tổng kết");
+      toast.success("Đã sao chép ảnh tổng kết");
       return;
     }
 
     // Firefox va vai webview khong cho ghi anh vao clipboard, tai ve cho chac.
     try {
       downloadBlob(await blob, buildSummaryImageFileName(input, variant));
-      toast("Trình duyệt không copy được ảnh, đã tải ảnh về máy", "info");
+      toast("Trình duyệt không copy được ảnh, đã tải ảnh về máy");
     } catch {
-      toast("Không tạo được ảnh tổng kết", "error");
+      toast.error("Không tạo được ảnh tổng kết");
     }
   }
 
@@ -139,9 +139,9 @@ export function CopyMenu({ input, className }: CopyMenuProps) {
         await renderSummaryImage(input, "compact", backgroundId),
         buildSummaryImageFileName(input),
       );
-      toast("Đã tải ảnh tổng kết");
+      toast.success("Đã tải ảnh tổng kết");
     } catch {
-      toast("Không tạo được ảnh tổng kết", "error");
+      toast.error("Không tạo được ảnh tổng kết");
     }
   }
 

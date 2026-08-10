@@ -3,11 +3,11 @@ import { RouterProvider } from "@tanstack/react-router";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { registerSW } from "virtual:pwa-register";
+import { Toaster } from "sonner";
 import { createHttpGameApi } from "./adapters/browser/http-game-api";
 import { vietQrProvider } from "./adapters/browser/vietqr";
 import { ConfirmProvider } from "./components/ConfirmDialog";
 import { ThemeProvider } from "./components/theme";
-import { ToastProvider } from "./components/Toast";
 import { provideGameApi, provideQrProvider } from "./core/container";
 import { router } from "./router";
 import "./styles.css";
@@ -35,11 +35,10 @@ createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
-        <ToastProvider>
-          <ConfirmProvider>
-            <RouterProvider router={router} />
-          </ConfirmProvider>
-        </ToastProvider>
+        <ConfirmProvider>
+          <RouterProvider router={router} />
+        </ConfirmProvider>
+        <Toaster position="bottom-center" theme="system" richColors />
       </ThemeProvider>
     </QueryClientProvider>
   </StrictMode>,

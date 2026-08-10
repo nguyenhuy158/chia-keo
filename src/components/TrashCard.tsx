@@ -1,10 +1,10 @@
 import { RotateCcw, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import { usePersistentOpen } from "./use-persistent-open";
 import type { ApiTrashGame } from "../../shared/api-types";
 import { TRASH_RETENTION_DAYS } from "../../shared/schemas";
 import { usePurgeGame, useRestoreGame, useTrashedGames } from "../adapters/react-query/queries";
 import { useConfirm } from "./ConfirmDialog";
-import { useToast } from "./Toast";
 import { SkeletonCard } from "./ui";
 
 /** Con bao nhieu ngay nua truoc khi cuoc chia bi xoa han. */
@@ -22,7 +22,6 @@ function daysLeft(deletedAt: string) {
  * request cho danh sach ma khong ai xem.
  */
 export function TrashCard() {
-  const toast = useToast();
   const confirm = useConfirm();
   const [open, setOpen] = usePersistentOpen("trash", false);
   const trashQuery = useTrashedGames(open);
@@ -35,9 +34,9 @@ export function TrashCard() {
   async function handleRestore(game: ApiTrashGame) {
     try {
       await restoreGame.mutateAsync(game.id);
-      toast(`Đã phục hồi "${game.name}"`);
+      toast.success(`Đã phục hồi "${game.name}"`);
     } catch {
-      toast("Không phục hồi được", "error");
+      toast.error("Không phục hồi được");
     }
   }
 
@@ -53,9 +52,9 @@ export function TrashCard() {
 
     try {
       await purgeGame.mutateAsync(game.id);
-      toast("Đã xóa hẳn");
+      toast.success("Đã xóa hẳn");
     } catch {
-      toast("Không xóa được", "error");
+      toast.error("Không xóa được");
     }
   }
 

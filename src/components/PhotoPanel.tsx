@@ -1,10 +1,10 @@
 import { Images, ImageUp } from "lucide-react";
 import type { ReactNode } from "react";
+import { toast } from "sonner";
 import type { ApiExpense, ApiPhoto } from "../../shared/api-types";
 import { MAX_PHOTOS_PER_GAME } from "../../shared/schemas";
 import { usePhotoUploader } from "../adapters/react-query/photo-upload";
 import { PhotoGrid } from "./PhotoGrid";
-import { useToast } from "./Toast";
 import { usePhotoViewer } from "./use-photo-viewer";
 import { SkeletonPhotoGrid } from "./ui";
 
@@ -63,7 +63,6 @@ type PhotoPanelProps = {
 
 /** Album anh cua mot cuoc chia: them, xem toan man hinh, sua chu thich, xoa. */
 export function PhotoPanel({ gameId, photos, expenses, loading = false }: PhotoPanelProps) {
-  const toast = useToast();
   const uploader = usePhotoUploader(gameId);
   const expenseTitleById = new Map(expenses.map((expense) => [expense.id, expense.title]));
   const photoViewer = usePhotoViewer(gameId, photos, expenseTitleById);
@@ -71,7 +70,7 @@ export function PhotoPanel({ gameId, photos, expenses, loading = false }: PhotoP
 
   async function handlePick(files: File[]) {
     const uploaded = await uploader.upload(files);
-    if (uploaded.length > 0) toast(`Đã thêm ${uploaded.length} ảnh`);
+    if (uploaded.length > 0) toast.success(`Đã thêm ${uploaded.length} ảnh`);
   }
 
   const addButton = (

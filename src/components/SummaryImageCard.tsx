@@ -1,5 +1,6 @@
 import { Copy, Download, Expand } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { toast } from "sonner";
 import {
   buildSummaryText,
   type SummaryTextInput,
@@ -10,7 +11,6 @@ import { usePreferences, useUpdatePreferences } from "../adapters/react-query/qu
 import { buildSummaryImageFileName, renderSummaryImage } from "../adapters/browser/summary-image";
 import { ImageLightbox } from "./overlays";
 import { SummaryBackgroundPicker } from "./SummaryBackgroundPicker";
-import { useToast } from "./Toast";
 import { Switch } from "./ui";
 import { useSummaryImageBackground } from "./use-summary-image-background";
 
@@ -62,7 +62,6 @@ const ACTION_CLASS =
   "inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-md border border-stone-300 bg-white px-3 text-sm font-medium text-stone-700 transition hover:bg-stone-50 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-200 dark:hover:bg-stone-800";
 
 export function SummaryImageCard({ input }: { input: SummaryTextInput }) {
-  const toast = useToast();
   const [backgroundId, chooseBackground] = useSummaryImageBackground();
   const [variant, setVariant] = useState<SummaryVariant>("compact");
   // Nho lua chon o server: bat/tat QR la thoi quen cua tung nhom, va giu
@@ -141,21 +140,23 @@ export function SummaryImageCard({ input }: { input: SummaryTextInput }) {
     // copyImage nhan Promise vi Safari huy quyen clipboard neu await truoc; anh
     // o day da co san nen boc lai cho dung chu ky.
     if (await copyImage(Promise.resolve(blob))) {
-      toast("Đã sao chép ảnh tổng kết");
+      toast.success("Đã sao chép ảnh tổng kết");
       return;
     }
 
     try {
       downloadBlob(blob, fileName);
-      toast("Trình duyệt không copy được ảnh, đã tải ảnh về máy", "info");
+      toast("Trình duyệt không copy được ảnh, đã tải ảnh về máy");
     } catch {
-      toast("Không sao chép được ảnh", "error");
+      toast.error("Không sao chép được ảnh");
     }
   }
 
   async function copySummaryText() {
     const ok = await copyText(summaryText);
-    toast(ok ? "Đã sao chép tổng kết" : "Không sao chép được tổng kết", ok ? "success" : "error");
+    (ok ? toast.success : toast.error)(
+      ok ? "Đã sao chép tổng kết" : "Không sao chép được tổng kết",
+    );
   }
 
   function savePreview() {
@@ -163,9 +164,9 @@ export function SummaryImageCard({ input }: { input: SummaryTextInput }) {
 
     try {
       downloadBlob(blob, fileName);
-      toast("Đã tải ảnh tổng kết");
+      toast.success("Đã tải ảnh tổng kết");
     } catch {
-      toast("Không tải được ảnh", "error");
+      toast.error("Không tải được ảnh");
     }
   }
 

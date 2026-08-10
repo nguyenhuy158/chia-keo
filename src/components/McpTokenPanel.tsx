@@ -2,6 +2,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Check, ChevronDown, Copy, KeyRound, Plug, Trash2, TriangleAlert } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { z } from "zod";
 import type { ApiMcpToken } from "../../shared/api-types";
 import {
@@ -17,7 +18,6 @@ import {
   useRevokeMcpToken,
 } from "../adapters/react-query/queries";
 import { useConfirm } from "./ConfirmDialog";
-import { useToast } from "./Toast";
 import { SkeletonCard } from "./ui";
 
 /** Nhan tieng Viet cho tung quyen, kem tool ma quyen do mo ra. */
@@ -93,17 +93,16 @@ const STATUS_CLASS = {
 };
 
 function CopyButton({ value, label }: { value: string; label: string }) {
-  const toast = useToast();
   const [copied, setCopied] = useState(false);
 
   async function handleCopy() {
     const ok = await copyText(value);
     if (!ok) {
-      toast("Không copy được, hãy chọn tay", "error");
+      toast.error("Không copy được, hãy chọn tay");
       return;
     }
     setCopied(true);
-    toast(`Đã copy ${label}`);
+    toast.success(`Đã copy ${label}`);
     window.setTimeout(() => setCopied(false), 1600);
   }
 
@@ -172,7 +171,6 @@ function SecretCard({ secret, onDismiss }: { secret: string; onDismiss: () => vo
 
 function TokenRow({ token }: { token: ApiMcpToken }) {
   const revokeToken = useRevokeMcpToken();
-  const toast = useToast();
   const confirm = useConfirm();
   const status = tokenStatus(token);
 
@@ -186,7 +184,7 @@ function TokenRow({ token }: { token: ApiMcpToken }) {
     if (!ok) return;
 
     await revokeToken.mutateAsync(token.id);
-    toast("Đã thu hồi token");
+    toast.success("Đã thu hồi token");
   }
 
   return (

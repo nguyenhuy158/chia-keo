@@ -1,10 +1,10 @@
 import { useState, type ReactNode } from "react";
+import { toast } from "sonner";
 import type { ApiPhoto } from "../../shared/api-types";
 import { indexAfterRemove, stepPhotoIndex } from "../../shared/photos";
 import { usePhoto, useRemovePhoto, useUpdatePhoto } from "../adapters/react-query/queries";
 import { PhotoViewer } from "./PhotoViewer";
 import { useConfirm } from "./ConfirmDialog";
-import { useToast } from "./Toast";
 
 type PhotoViewerHost = {
   /** Mo anh tai vi tri `index` trong danh sach da truyen vao. */
@@ -22,7 +22,6 @@ export function usePhotoViewer(
   photos: ApiPhoto[],
   expenseTitleById?: Map<string, string>,
 ): PhotoViewerHost {
-  const toast = useToast();
   const confirm = useConfirm();
   const updatePhoto = useUpdatePhoto(gameId);
   const removePhoto = useRemovePhoto(gameId);
@@ -37,7 +36,7 @@ export function usePhotoViewer(
 
     await removePhoto.mutateAsync(photo.id);
     setIndex(indexAfterRemove(index, photos.length - 1));
-    toast("Đã xóa ảnh");
+    toast.success("Đã xóa ảnh");
   }
 
   return {

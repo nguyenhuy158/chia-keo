@@ -150,17 +150,6 @@ a,
   }
 }
 
-@keyframes toast-in {
-  from {
-    opacity: 0;
-    transform: translateY(0.75rem) scale(0.98);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
