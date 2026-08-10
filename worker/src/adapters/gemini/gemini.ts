@@ -3,6 +3,13 @@ import type { Env } from "../../env";
 
 const DEFAULT_GEMINI_MODEL = "gemini-2.0-flash";
 const GEMINI_TEMPERATURE = 0.2;
+/**
+ * Cloudflare AI Gateway (provider google-ai-studio), khong phai goi truc tiep
+ * generativelanguage.googleapis.com nua — cung mot BYOK key nhung co them
+ * log/cache/rate-limit xem duoc trong dash Cloudflare > AI > AI Gateway.
+ */
+const AI_GATEWAY_GOOGLE_AI_STUDIO_URL =
+  "https://gateway.ai.cloudflare.com/v1/8644a6e0bbe848731d8614f9feca2806/chiakeo/google-ai-studio";
 
 export type GeminiPart = AiContentPart;
 
@@ -41,7 +48,7 @@ export async function generateGeminiJson(env: Env, parts: GeminiPart[]): Promise
 
   const model = env.GEMINI_MODEL || DEFAULT_GEMINI_MODEL;
   const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${apiKey}`,
+    `${AI_GATEWAY_GOOGLE_AI_STUDIO_URL}/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${apiKey}`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
