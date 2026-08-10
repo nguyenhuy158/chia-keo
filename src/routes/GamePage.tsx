@@ -4,6 +4,7 @@ import {
   Images,
   Link as LinkIcon,
   ListChecks,
+  Mail,
   MoreHorizontal,
   Pencil,
   Power,
@@ -12,6 +13,7 @@ import {
   X,
 } from "lucide-react";
 import { useState } from "react";
+import { API_BASE } from "../adapters/browser/http-game-api";
 import { CopyMenu } from "../components/CopyMenu";
 import { ExpensePanel } from "../components/ExpensePanel";
 import { GameDashboard } from "../components/GameDashboard";
@@ -214,6 +216,34 @@ export function GamePage() {
     />
   );
 
+  const [emailPending, setEmailPending] = useState(false);
+
+  const emailAction = (
+    <button
+      type="button"
+      disabled={emailPending}
+      onClick={async () => {
+        setEmailPending(true);
+        try {
+          const response = await fetch(`${API_BASE}/api/games/${game.id}/email-summary`, {
+            method: "POST",
+            credentials: "include",
+          });
+          if (!response.ok) throw new Error();
+          toast("Đã gửi email tóm tắt về hộp thư của bạn");
+        } catch {
+          toast("Gửi email thất bại, thử lại sau");
+        } finally {
+          setEmailPending(false);
+        }
+      }}
+      className="inline-flex h-11 items-center justify-center gap-2 rounded-md border border-stone-300 bg-white px-3 text-sm font-medium text-stone-700 transition hover:bg-stone-50 disabled:opacity-50 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-200 dark:hover:bg-stone-800"
+    >
+      <Mail size={15} />
+      {emailPending ? "Đang gửi..." : "Email cho tôi"}
+    </button>
+  );
+
   const copyAction = (
     <CopyMenu
       input={{
@@ -340,6 +370,7 @@ export function GamePage() {
         {/* Desktop: cac nut hien inline. */}
         <div className="hidden flex-wrap items-center justify-end gap-2 lg:flex">
           {copyAction}
+          {emailAction}
           {shareActions}
           {deleteAction}
         </div>
@@ -419,8 +450,9 @@ export function GamePage() {
           </div>
         )}
         {activeSection === "summary" && (
-          <div className="rounded-lg border border-stone-200 bg-white p-3 shadow-sm dark:border-stone-800 dark:bg-stone-900 [&>button]:w-full">
+          <div className="flex flex-col gap-2 rounded-lg border border-stone-200 bg-white p-3 shadow-sm dark:border-stone-800 dark:bg-stone-900 [&>button]:w-full">
             {copyAction}
+            {emailAction}
           </div>
         )}
       </div>
@@ -438,6 +470,7 @@ export function GamePage() {
       >
         <div className="flex flex-col gap-2 pb-2 [&>button]:w-full">
           {copyAction}
+          {emailAction}
           {shareActions}
           {deleteAction}
         </div>

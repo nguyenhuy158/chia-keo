@@ -7,8 +7,8 @@ import { rateLimitPost } from "./lib/rate-limit-middleware";
 import { aiRouter } from "./routes/ai";
 import { crossBalancesRouter } from "./routes/cross-balances";
 import { funStatsRouter } from "./routes/fun-stats";
+import { emailSummaryRouter } from "./routes/email-summary";
 import { gamesRouter } from "./routes/games";
-import { mailerTestRouter } from "./routes/mailer-test";
 import { mcpRouter } from "./routes/mcp";
 import { mcpTokensRouter } from "./routes/mcp-tokens";
 import { photosRouter } from "./routes/photos";
@@ -85,7 +85,7 @@ app.route("/api", funStatsRouter);
 app.route("/api", crossBalancesRouter);
 app.route("/api", sessionRouter);
 app.route("/api", userPreferencesRouter);
-app.route("/api", mailerTestRouter);
+app.route("/api", emailSummaryRouter);
 
 app.onError((error, c) => {
   // Log ra Cloudflare de 500 khong con "cam" nhu truoc.
