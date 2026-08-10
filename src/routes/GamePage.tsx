@@ -76,6 +76,7 @@ export function GamePage() {
   const [moreTab, setMoreTab] = useState<"photos" | "history">("photos");
   const shell = useMobileShell();
   const [actionsOpen, setActionsOpen] = useState(false);
+  const [emailPending, setEmailPending] = useState(false);
 
   if (gameQuery.isPending) {
     return <LoadingState />;
@@ -215,8 +216,6 @@ export function GamePage() {
       }}
     />
   );
-
-  const [emailPending, setEmailPending] = useState(false);
 
   const emailAction = (
     <button
