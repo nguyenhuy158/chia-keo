@@ -11,4 +11,8 @@ export type Env = {
   GEMINI_API_KEY?: string;
   /** Model Gemini, mac dinh gemini-2.0-flash. */
   GEMINI_MODEL?: string;
+  /** Service Binding toi Worker mailer, xem wrangler.toml [[services]]. */
+  MAILER: Fetcher;
+  /** Phai khop INTERNAL_API_KEY dat o Worker mailer. */
+  MAILER_KEY: string;
 };
