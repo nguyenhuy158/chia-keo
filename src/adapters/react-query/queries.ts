@@ -338,6 +338,12 @@ export function useReorderExpenses(gameId: string) {
   );
 }
 
+export function useReorderParticipants(gameId: string) {
+  return useGameDetailMutation((participantIds: string[]) =>
+    getGameApi().participants.reorder(gameId, participantIds),
+  );
+}
+
 export function useAddTransfer(gameId: string) {
   return useGameDetailMutation((input: TransferInput) =>
     getGameApi().transfers.create(gameId, input),

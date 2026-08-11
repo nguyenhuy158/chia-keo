@@ -13,14 +13,7 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import {
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-  type PointerEvent as ReactPointerEvent,
-} from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 import type { ResolvedAiExpense } from "../../shared/ai";
@@ -40,6 +33,7 @@ import { formatMoney, parseMoney } from "../core/domain/money";
 import { usePhotoUploader } from "../adapters/react-query/photo-upload";
 import { useAiScanReceipt, useAiSuggestExpense } from "../adapters/react-query/queries";
 import { Dropdown } from "./Dropdown";
+import { useDragReorder } from "./use-drag-reorder";
 import { MoneyInput } from "./MoneyInput";
 import { PhotoPickerButton } from "./PhotoPanel";
 import { Field } from "./ui";
@@ -305,99 +299,19 @@ export function ExpensePanel({
   const participantById = new Map(participants.map((participant) => [participant.id, participant]));
 
   const visibleExpenses = expenses.filter((expense) => expense.kind !== "transfer");
-  const [dragOrder, setDragOrder] = useState<string[] | null>(null);
-  const [draggingId, setDraggingId] = useState<string | null>(null);
-  const [dragTranslateY, setDragTranslateY] = useState(0);
-  const draggingIdRef = useRef<string | null>(null);
-  const dragStartYRef = useRef(0);
-  const rowRefs = useRef(new Map<string, HTMLDivElement>());
-  // Vi tri cac dong ngay truoc khi doi thu tu, de FLIP: dong khac tru
-  // (draggingId) truot vao vi tri moi bang animation thay vi nhay cung.
-  const prevRectsRef = useRef(new Map<string, DOMRect>());
-
-  const orderedExpenses = dragOrder
-    ? (dragOrder
-        .map((id) => visibleExpenses.find((expense) => expense.id === id))
-        .filter(Boolean) as ApiExpense[])
-    : visibleExpenses;
-
-  useLayoutEffect(() => {
-    const prevRects = prevRectsRef.current;
-    if (prevRects.size === 0) return;
-    prevRectsRef.current = new Map();
-
-    for (const [id, node] of rowRefs.current) {
-      if (id === draggingIdRef.current) continue;
-      const before = prevRects.get(id);
-      if (!before) continue;
-      const after = node.getBoundingClientRect();
-      const deltaY = before.top - after.top;
-      if (deltaY === 0) continue;
-
-      node.style.transition = "none";
-      node.style.transform = `translateY(${deltaY}px)`;
-      requestAnimationFrame(() => {
-        node.style.transition = "transform 180ms ease";
-        node.style.transform = "";
-      });
-    }
-  }, [dragOrder]);
-
-  function handleDragPointerDown(expenseId: string, event: ReactPointerEvent) {
-    event.preventDefault();
-    (event.target as HTMLElement).setPointerCapture(event.pointerId);
-    draggingIdRef.current = expenseId;
-    setDraggingId(expenseId);
-    dragStartYRef.current = event.clientY;
-    setDragTranslateY(0);
-    setDragOrder(visibleExpenses.map((expense) => expense.id));
-  }
-
-  function handleDragPointerMove(event: ReactPointerEvent) {
-    const draggingId = draggingIdRef.current;
-    if (!draggingId) return;
-    setDragTranslateY(event.clientY - dragStartYRef.current);
-
-    let closestId: string | null = null;
-    let closestDistance = Infinity;
-    for (const [id, node] of rowRefs.current) {
-      const rect = node.getBoundingClientRect();
-      const center = rect.top + rect.height / 2;
-      const distance = Math.abs(event.clientY - center);
-      if (distance < closestDistance) {
-        closestDistance = distance;
-        closestId = id;
-      }
-    }
-    if (!closestId || closestId === draggingId) return;
-
-    const rects = new Map<string, DOMRect>();
-    for (const [id, node] of rowRefs.current) rects.set(id, node.getBoundingClientRect());
-    prevRectsRef.current = rects;
-
-    setDragOrder((current) => {
-      const order = current ? [...current] : visibleExpenses.map((expense) => expense.id);
-      const fromIndex = order.indexOf(draggingId);
-      const toIndex = order.indexOf(closestId as string);
-      if (fromIndex === -1 || toIndex === -1) return order;
-      order.splice(fromIndex, 1);
-      order.splice(toIndex, 0, draggingId);
-      return order;
-    });
-  }
-
-  function handleDragPointerUp() {
-    const draggingId = draggingIdRef.current;
-    draggingIdRef.current = null;
-    setDraggingId(null);
-    setDragTranslateY(0);
-    if (!draggingId || !dragOrder) return;
-
-    const originalOrder = visibleExpenses.map((expense) => expense.id);
-    const changed = dragOrder.some((id, index) => id !== originalOrder[index]);
-    if (changed) onReorder(dragOrder);
-    setDragOrder(null);
-  }
+  const {
+    orderedItems: orderedExpenses,
+    draggingId,
+    dragTranslateY,
+    registerRow,
+    handleDragPointerDown,
+    handleDragPointerMove,
+    handleDragPointerUp,
+  } = useDragReorder<ApiExpense>(
+    visibleExpenses,
+    (expense) => expense.id,
+    onReorder,
+  );
 
   const form = useForm<ExpenseFormValues>({
     resolver: zodResolver(expenseFormSchema),
@@ -1110,10 +1024,7 @@ function handleSplitModeChange(mode: SplitMode) {
           return (
             <div
               key={expense.id}
-              ref={(node) => {
-                if (node) rowRefs.current.set(expense.id, node);
-                else rowRefs.current.delete(expense.id);
-              }}
+              ref={registerRow(expense.id)}
               style={
                 draggingId === expense.id
                   ? { transform: `translateY(${dragTranslateY}px)`, position: "relative", zIndex: 10 }

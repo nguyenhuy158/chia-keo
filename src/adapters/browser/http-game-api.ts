@@ -73,6 +73,8 @@ export function createHttpGameApi(): GameApiPort {
       createMany: (gameId, input) => post(`/api/games/${gameId}/participants/batch`, input),
       update: (participantId, input) => patch(`/api/participants/${participantId}`, input),
       remove: (participantId) => destroy(`/api/participants/${participantId}`),
+      reorder: (gameId, participantIds) =>
+        patch(`/api/games/${gameId}/participants/reorder`, { participantIds }),
     },
     expenses: {
       create: (gameId, input) => post(`/api/games/${gameId}/expenses`, input),

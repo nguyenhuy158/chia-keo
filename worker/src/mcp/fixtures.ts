@@ -35,6 +35,7 @@ export const participants: ParticipantRow[] = ["Huy", "Hường", "Hồng"].map(
   id: `p${index}`,
   gameId: game.id,
   name,
+  sequence: index,
   createdAt: game.createdAt,
   updatedAt: game.createdAt,
 }));
@@ -85,6 +86,7 @@ export const secondParticipants: ParticipantRow[] = ["Huy", "Hường", "Nam"].m
     id: `q${index}`,
     gameId: secondGame.id,
     name,
+    sequence: index,
     createdAt: secondGame.createdAt,
     updatedAt: secondGame.createdAt,
   }),
@@ -195,6 +197,7 @@ export function fakeRepo(
       getWithGame: unused("participants.getWithGame"),
       insert: unused("participants.insert"),
       rename: unused("participants.rename"),
+      reorder: unused("participants.reorder"),
       upsertPaymentProfile: unused("participants.upsertPaymentProfile"),
       delete: unused("participants.delete"),
     },

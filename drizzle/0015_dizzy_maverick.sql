@@ -1,0 +1,1 @@
+ALTER TABLE `participants` ADD `sequence` integer DEFAULT 0 NOT NULL;

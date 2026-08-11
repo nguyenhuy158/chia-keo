@@ -35,6 +35,8 @@ export type ParticipantRow = {
   id: string;
   gameId: string;
   name: string;
+  /** Thu tu hien thi nguoi dung tu sap: so nho hien truoc, giong expenses. */
+  sequence: number;
   createdAt: string;
   updatedAt: string;
 };
@@ -169,10 +171,16 @@ export type GameRepository = {
       participantId: string,
     ): Promise<{ participant: ParticipantRow; game: GameRow } | null>;
     insert(
-      row: ParticipantRow,
+      row: Omit<ParticipantRow, "sequence">,
       payment: Omit<PaymentProfileRow, "participantId">,
     ): Promise<void>;
     rename(participantId: string, name: string, updatedAt: string): Promise<void>;
+    /**
+     * Ghi lai thu tu nguoi dung tu sap. `orderedIds` la danh sach id theo thu
+     * tu hien thi mong muon (tu tren xuong); id dau tien nhan sequence nho
+     * nhat de khop chieu sort hien tai (sequence asc = tren cung).
+     */
+    reorder(gameId: string, orderedIds: string[]): Promise<void>;
     upsertPaymentProfile(
       participantId: string,
       fields: Partial<Omit<PaymentProfileRow, "participantId">>,

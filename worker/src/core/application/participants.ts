@@ -2,7 +2,7 @@ import type { ApiGameDetail } from "../../../../shared/api-types";
 import type { ParticipantBatchInput, ParticipantInput } from "../../../../shared/schemas";
 import { createId, nowIso } from "../../lib/ids";
 import type { GameRepository } from "../ports/game-repository";
-import { NotFoundError } from "./errors";
+import { InvalidInputError, NotFoundError } from "./errors";
 import { reallocateExpenses } from "./expenses";
 import { getAccessibleGame, hasGameAccess, loadGameDetail } from "./game-detail";
 import { recordEvent } from "./game-events";
@@ -133,4 +133,23 @@ export async function removeParticipant(
   });
 
   return loadGameDetail(repo, row.game, userId);
+}
+
+export async function reorderParticipants(
+  repo: GameRepository,
+  userId: string,
+  gameId: string,
+  orderedIds: string[],
+): Promise<ApiGameDetail> {
+  const game = await getAccessibleGame(repo, gameId, userId);
+  if (!game) throw new NotFoundError();
+
+  const existingIds = new Set((await repo.participants.listByGame(gameId)).map((row) => row.id));
+  const valid =
+    new Set(orderedIds).size === orderedIds.length && orderedIds.every((id) => existingIds.has(id));
+  if (!valid) throw new InvalidInputError();
+
+  await repo.participants.reorder(game.id, orderedIds);
+
+  return loadGameDetail(repo, game, userId);
 }

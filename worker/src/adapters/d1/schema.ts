@@ -96,6 +96,8 @@ export const participants = sqliteTable(
       .notNull()
       .references(() => games.id, { onDelete: "cascade" }),
     name: text("name").notNull(),
+    // Thu tu hien thi nguoi dung tu sap: so lon hien truoc, giong expenses.
+    sequence: integer("sequence").notNull().default(0),
     createdAt: text("created_at").notNull(),
     updatedAt: text("updated_at").notNull(),
   },

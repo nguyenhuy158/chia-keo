@@ -81,6 +81,7 @@ export type GameApiPort = {
     createMany(gameId: string, input: ParticipantBatchInput): Promise<ApiGameDetail>;
     update(participantId: string, input: Partial<ParticipantInput>): Promise<ApiGameDetail>;
     remove(participantId: string): Promise<ApiGameDetail>;
+    reorder(gameId: string, participantIds: string[]): Promise<ApiGameDetail>;
   };
   expenses: {
     create(gameId: string, input: ExpenseInput): Promise<ApiGameDetail>;

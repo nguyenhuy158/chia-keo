@@ -128,7 +128,7 @@ export function createD1GameRepository(d1: D1Database): GameRepository {
           .select()
           .from(schema.participants)
           .where(eq(schema.participants.gameId, gameId))
-          .orderBy(asc(schema.participants.createdAt));
+          .orderBy(asc(schema.participants.sequence), asc(schema.participants.createdAt));
       },
       async listIdsByGame(gameId) {
         const rows = await db
@@ -147,7 +147,10 @@ export function createD1GameRepository(d1: D1Database): GameRepository {
         return rows[0] || null;
       },
       async insert(row, payment) {
-        await db.insert(schema.participants).values(row);
+        await db.insert(schema.participants).values({
+          ...row,
+          sequence: sql`(SELECT COALESCE(MAX(${schema.participants.sequence}), 0) + 1 FROM ${schema.participants} WHERE ${schema.participants.gameId} = ${row.gameId})`,
+        });
         await db.insert(schema.paymentProfiles).values({
           id: createId("payment"),
           participantId: row.id,
@@ -163,6 +166,22 @@ export function createD1GameRepository(d1: D1Database): GameRepository {
           .update(schema.participants)
           .set({ name, updatedAt })
           .where(eq(schema.participants.id, participantId));
+      },
+      async reorder(gameId, orderedIds) {
+        const [{ minSequence }] = await db
+          .select({ minSequence: sql<number>`COALESCE(MIN(${schema.participants.sequence}), 0)` })
+          .from(schema.participants)
+          .where(eq(schema.participants.gameId, gameId));
+
+        const base = minSequence - orderedIds.length;
+        await Promise.all(
+          orderedIds.map((id, index) =>
+            db
+              .update(schema.participants)
+              .set({ sequence: base + index })
+              .where(and(eq(schema.participants.id, id), eq(schema.participants.gameId, gameId))),
+          ),
+        );
       },
       async upsertPaymentProfile(participantId, fields, updatedAt) {
         await db

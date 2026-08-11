@@ -41,6 +41,7 @@ import {
   useRemoveExpense,
   useRemoveParticipant,
   useReorderExpenses,
+  useReorderParticipants,
   useRenameGame,
   useRotateShareLink,
   useSetSettlementHost,
@@ -60,6 +61,7 @@ export function GamePage() {
   const addParticipant = useAddParticipant(gameId);
   const addParticipants = useAddParticipants(gameId);
   const removeParticipant = useRemoveParticipant();
+  const reorderParticipants = useReorderParticipants(gameId);
   const updateParticipant = useUpdateParticipant();
   const addExpense = useAddExpense(gameId);
   const updateExpense = useUpdateExpense();
@@ -135,6 +137,7 @@ export function GamePage() {
         updateParticipant.mutateAsync({ participantId, input })
       }
       onRemove={(participantId) => removeParticipant.mutate(participantId)}
+      onReorder={(participantIds) => reorderParticipants.mutate(participantIds)}
     />
   );
 

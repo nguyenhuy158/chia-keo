@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Check, Pencil, Plus, Trash2, Users, X } from "lucide-react";
+import { Check, GripVertical, Pencil, Plus, Trash2, Users, X } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -12,6 +12,7 @@ import { useConfirm } from "./ConfirmDialog";
 import { ContactPicker } from "./ContactPicker";
 import { SwipeToDelete } from "./SwipeToDelete";
 import { Field } from "./ui";
+import { useDragReorder } from "./use-drag-reorder";
 
 const participantFormSchema = z.object({
   name: z.string().trim().min(1, "Nhập tên người tham gia"),
@@ -36,6 +37,7 @@ type ParticipantPanelProps = {
   onAddMany: (people: ParticipantInput[]) => Promise<unknown>;
   onUpdate: (participantId: string, input: Partial<ParticipantInput>) => Promise<unknown>;
   onRemove: (participantId: string) => void;
+  onReorder: (participantIds: string[]) => void;
 };
 
 export function ParticipantPanel({
@@ -45,9 +47,19 @@ export function ParticipantPanel({
   onAddMany,
   onUpdate,
   onRemove,
+  onReorder,
 }: ParticipantPanelProps) {
   const confirm = useConfirm();
   const [editingParticipantId, setEditingParticipantId] = useState<string | null>(null);
+  const {
+    orderedItems: orderedParticipants,
+    draggingId,
+    dragTranslateY,
+    registerRow,
+    handleDragPointerDown,
+    handleDragPointerMove,
+    handleDragPointerUp,
+  } = useDragReorder<ApiParticipant>(participants, (participant) => participant.id, onReorder);
   const form = useForm<ParticipantFormValues>({
     resolver: zodResolver(participantFormSchema),
     defaultValues: emptyForm,
@@ -148,47 +160,84 @@ export function ParticipantPanel({
         </div>
       </form>
 
-      <div className="mt-5 grid gap-2 sm:grid-cols-2">
-        {participants.map((participant) => (
-          <SwipeToDelete key={participant.id} onDelete={() => handleRemove(participant)}>
-            <div className="rounded-md border border-stone-200 p-3 dark:border-stone-800">
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex min-w-0 items-center gap-2.5">
-                  <Avatar name={participant.name} size={32} />
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold text-stone-950 dark:text-stone-50">
-                      {participant.name}
-                    </p>
-                    <p className="mt-1 truncate text-xs text-stone-500 dark:text-stone-400">
-                      {participant.bankId && participant.accountNo
-                        ? `${getVietQrBankLabel(participant.bankId)} · ${participant.accountNo}`
-                        : "Chưa có thông tin QR"}
-                    </p>
+      <div className="mt-5 space-y-2">
+        {orderedParticipants.map((participant) => (
+          <div
+            key={participant.id}
+            ref={registerRow(participant.id)}
+            style={
+              draggingId === participant.id
+                ? { transform: `translateY(${dragTranslateY}px)`, position: "relative", zIndex: 10 }
+                : undefined
+            }
+          >
+            <SwipeToDelete onDelete={() => handleRemove(participant)}>
+              <div
+                className={`rounded-md border border-stone-200 p-3 dark:border-stone-800 ${
+                  draggingId === participant.id ? "opacity-90 shadow-lg" : ""
+                }`}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex min-w-0 items-center gap-1">
+                    <button
+                      type="button"
+                      onPointerDown={(event) => {
+                        event.stopPropagation();
+                        handleDragPointerDown(participant.id, event);
+                      }}
+                      onPointerMove={(event) => {
+                        event.stopPropagation();
+                        handleDragPointerMove(event);
+                      }}
+                      onPointerUp={(event) => {
+                        event.stopPropagation();
+                        handleDragPointerUp();
+                      }}
+                      onPointerCancel={(event) => {
+                        event.stopPropagation();
+                        handleDragPointerUp();
+                      }}
+                      className="flex h-11 w-6 shrink-0 items-center justify-center text-stone-400 [touch-action:none] dark:text-stone-600"
+                      aria-label={`Kéo để đổi thứ tự ${participant.name}`}
+                    >
+                      <GripVertical size={16} />
+                    </button>
+                    <Avatar name={participant.name} size={32} />
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold text-stone-950 dark:text-stone-50">
+                        {participant.name}
+                      </p>
+                      <p className="mt-1 truncate text-xs text-stone-500 dark:text-stone-400">
+                        {participant.bankId && participant.accountNo
+                          ? `${getVietQrBankLabel(participant.bankId)} · ${participant.accountNo}`
+                          : "Chưa có thông tin QR"}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => startEdit(participant)}
+                      disabled={pending}
+                      className="inline-flex h-11 w-11 items-center justify-center rounded-md text-stone-600 transition hover:bg-stone-50 active:bg-stone-100 disabled:cursor-not-allowed disabled:text-stone-300 dark:text-stone-300 dark:hover:bg-stone-800 dark:active:bg-stone-700"
+                      aria-label={`Sửa ${participant.name}`}
+                    >
+                      <Pencil size={16} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleRemove(participant)}
+                      disabled={pending}
+                      className="inline-flex h-11 w-11 items-center justify-center rounded-md text-rose-600 transition hover:bg-rose-50 active:bg-rose-100 disabled:cursor-not-allowed disabled:text-rose-300 dark:text-rose-400 dark:hover:bg-rose-500/10 dark:active:bg-rose-500/20"
+                      aria-label={`Xóa ${participant.name}`}
+                    >
+                      <Trash2 size={16} />
+                    </button>
                   </div>
                 </div>
-                <div className="flex shrink-0 items-center gap-1">
-                  <button
-                    type="button"
-                    onClick={() => startEdit(participant)}
-                    disabled={pending}
-                    className="inline-flex h-11 w-11 items-center justify-center rounded-md text-stone-600 transition hover:bg-stone-50 active:bg-stone-100 disabled:cursor-not-allowed disabled:text-stone-300 dark:text-stone-300 dark:hover:bg-stone-800 dark:active:bg-stone-700"
-                    aria-label={`Sửa ${participant.name}`}
-                  >
-                    <Pencil size={16} />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleRemove(participant)}
-                    disabled={pending}
-                    className="inline-flex h-11 w-11 items-center justify-center rounded-md text-rose-600 transition hover:bg-rose-50 active:bg-rose-100 disabled:cursor-not-allowed disabled:text-rose-300 dark:text-rose-400 dark:hover:bg-rose-500/10 dark:active:bg-rose-500/20"
-                    aria-label={`Xóa ${participant.name}`}
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                </div>
               </div>
-            </div>
-          </SwipeToDelete>
+            </SwipeToDelete>
+          </div>
         ))}
       </div>
     </section>

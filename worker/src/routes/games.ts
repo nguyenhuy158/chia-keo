@@ -9,6 +9,7 @@ import {
   gameUpdateSchema,
   participantBatchInputSchema,
   participantInputSchema,
+  participantReorderInputSchema,
   shareLinkInputSchema,
   transferInputSchema,
 } from "../../../shared/schemas";
@@ -47,6 +48,7 @@ import {
   addParticipant,
   addParticipants,
   removeParticipant,
+  reorderParticipants,
   updateParticipant,
 } from "../core/application/participants";
 import { rotateShareLink, setShareLinkEnabled } from "../core/application/share-links";
@@ -176,6 +178,20 @@ gamesRouter.post("/games/:gameId/participants/batch", async (c) => {
     c,
     () => addParticipants(c.get("repo"), c.get("userId"), c.req.param("gameId"), input),
     201,
+  );
+});
+
+gamesRouter.patch("/games/:gameId/participants/reorder", async (c) => {
+  const input = await readJson(c, participantReorderInputSchema);
+  if (!input) return invalidInput(c);
+
+  return respond(c, () =>
+    reorderParticipants(
+      c.get("repo"),
+      c.get("userId"),
+      c.req.param("gameId"),
+      input.participantIds,
+    ),
   );
 });
 
