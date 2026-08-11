@@ -119,6 +119,9 @@ export const expenses = sqliteTable(
     note: text("note").notNull().default(""),
     // "equal": chia deu; "shares": theo so phan; "amount": so tien cu the.
     splitMode: text("split_mode").notNull().default("equal"),
+    // Thu tu hien thi nguoi dung tu sap: so lon hien truoc. Khoan moi them
+    // nhan gia tri lon nhat + 1 trong cuoc chia do.
+    sequence: integer("sequence").notNull().default(0),
     createdAt: text("created_at").notNull(),
     updatedAt: text("updated_at").notNull(),
   },

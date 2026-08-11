@@ -85,6 +85,7 @@ export type GameApiPort = {
     create(gameId: string, input: ExpenseInput): Promise<ApiGameDetail>;
     update(expenseId: string, input: Partial<ExpenseInput>): Promise<ApiGameDetail>;
     remove(expenseId: string): Promise<ApiGameDetail>;
+    reorder(gameId: string, expenseIds: string[]): Promise<ApiGameDetail>;
   };
   transfers: {
     create(gameId: string, input: TransferInput): Promise<ApiGameDetail>;

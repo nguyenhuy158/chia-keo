@@ -256,6 +256,24 @@ export async function recordTransfer(
  * nhung nguoi con lai theo dung mode cu (mode "amount" chia lai theo ty le
  * phan cu); khoan chi khong con ai chiu thi xoa luon.
  */
+export async function reorderExpenses(
+  repo: GameRepository,
+  userId: string,
+  gameId: string,
+  orderedIds: string[],
+): Promise<ApiGameDetail> {
+  const game = await getOwnedGame(repo, gameId, userId);
+  if (!game) throw new NotFoundError();
+
+  const existingIds = new Set((await repo.expenses.listByGame(gameId)).map((row) => row.id));
+  const valid = new Set(orderedIds).size === orderedIds.length && orderedIds.every((id) => existingIds.has(id));
+  if (!valid) throw new InvalidInputError();
+
+  await repo.expenses.reorder(game.id, orderedIds);
+
+  return loadGameDetail(repo, game);
+}
+
 export async function reallocateExpenses(repo: GameRepository, expenseIds: string[]) {
   for (const expenseId of expenseIds) {
     const expense = await repo.expenses.getById(expenseId);

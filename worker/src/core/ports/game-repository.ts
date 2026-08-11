@@ -55,6 +55,7 @@ export type ExpenseRow = {
   amount: number;
   note: string;
   splitMode: string;
+  sequence: number;
   createdAt: string;
   updatedAt: string;
 };
@@ -180,7 +181,7 @@ export type GameRepository = {
     listByGame(gameId: string): Promise<ExpenseRow[]>;
     getById(expenseId: string): Promise<ExpenseRow | null>;
     getWithGame(expenseId: string): Promise<{ expense: ExpenseRow; game: GameRow } | null>;
-    insert(row: ExpenseRow): Promise<void>;
+    insert(row: Omit<ExpenseRow, "sequence">): Promise<void>;
     update(expenseId: string, fields: ExpenseUpdate): Promise<void>;
     delete(expenseId: string): Promise<void>;
     /** Cac expense co split cua participant nay (de chia lai khi xoa nguoi). */
@@ -191,6 +192,12 @@ export type GameRepository = {
      * van la mot round-trip DB chu khong phai N.
      */
     listByGameIds(gameIds: string[]): Promise<ExpenseRow[]>;
+    /**
+     * Ghi lai thu tu nguoi dung tu sap. `orderedIds` la danh sach id theo thu
+     * tu hien thi mong muon (tu tren xuong); id dau tien nhan sequence lon
+     * nhat de khop chieu sort hien tai (sequence desc = tren cung).
+     */
+    reorder(gameId: string, orderedIds: string[]): Promise<void>;
   };
   splits: {
     listByExpenseIds(expenseIds: string[]): Promise<ExpenseSplitRow[]>;

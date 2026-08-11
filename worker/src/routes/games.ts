@@ -3,6 +3,7 @@ import {
   contactInputSchema,
   contactUpdateSchema,
   expenseInputSchema,
+  expenseReorderInputSchema,
   gameInputSchema,
   gameUpdateSchema,
   participantBatchInputSchema,
@@ -14,6 +15,7 @@ import {
   addExpense,
   recordTransfer,
   removeExpense,
+  reorderExpenses,
   updateExpense,
 } from "../core/application/expenses";
 import {
@@ -193,6 +195,15 @@ gamesRouter.post("/games/:gameId/expenses", async (c) => {
     c,
     () => addExpense(c.get("repo"), c.get("userId"), c.req.param("gameId"), input),
     201,
+  );
+});
+
+gamesRouter.patch("/games/:gameId/expenses/reorder", async (c) => {
+  const input = await readJson(c, expenseReorderInputSchema);
+  if (!input) return invalidInput(c);
+
+  return respond(c, () =>
+    reorderExpenses(c.get("repo"), c.get("userId"), c.req.param("gameId"), input.expenseIds),
   );
 });
 

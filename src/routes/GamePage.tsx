@@ -39,6 +39,7 @@ import {
   usePhotos,
   useRemoveExpense,
   useRemoveParticipant,
+  useReorderExpenses,
   useRenameGame,
   useRotateShareLink,
   useSetSettlementHost,
@@ -62,6 +63,7 @@ export function GamePage() {
   const addExpense = useAddExpense(gameId);
   const updateExpense = useUpdateExpense();
   const removeExpense = useRemoveExpense();
+  const reorderExpenses = useReorderExpenses(gameId);
   const addTransfer = useAddTransfer(gameId);
   const renameGame = useRenameGame(gameId);
   const rotateShareLink = useRotateShareLink(gameId);
@@ -148,6 +150,7 @@ export function GamePage() {
       onUpdate={(expenseId, input) => updateExpense.mutateAsync({ expenseId, input })}
       onRemove={(expenseId) => removeExpense.mutate(expenseId)}
       onAddTransfer={(input) => addTransfer.mutateAsync(input)}
+      onReorder={(expenseIds) => reorderExpenses.mutate(expenseIds)}
     />
   );
 

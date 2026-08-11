@@ -128,6 +128,11 @@ export const participantBatchInputSchema = z.object({
 
 export const splitModeSchema = z.enum(["equal", "shares", "amount"]);
 
+/** Danh sach id khoan chi theo thu tu hien thi moi nguoi dung keo tha. */
+export const expenseReorderInputSchema = z.object({
+  expenseIds: z.array(z.string().min(1)).min(1),
+});
+
 /**
  * Mot dong chia tuy chinh: `value` la so phan (mode "shares") hoac so tien
  * (mode "amount") cua participant tuong ung.
@@ -249,6 +254,7 @@ export type ParticipantBatchInput = z.infer<typeof participantBatchInputSchema>;
 export type ContactInput = z.infer<typeof contactInputSchema>;
 export type ContactUpdateInput = z.infer<typeof contactUpdateSchema>;
 export type ExpenseInput = z.infer<typeof expenseInputSchema>;
+export type ExpenseReorderInput = z.infer<typeof expenseReorderInputSchema>;
 export type ExpenseSplitInput = z.infer<typeof expenseSplitInputSchema>;
 export type SplitMode = z.infer<typeof splitModeSchema>;
 export type TransferInput = z.infer<typeof transferInputSchema>;

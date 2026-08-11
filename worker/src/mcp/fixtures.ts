@@ -48,6 +48,7 @@ const expenseRow: ExpenseRow = {
   amount: 300_000,
   note: "",
   splitMode: "equal",
+  sequence: 1,
   createdAt: game.createdAt,
   updatedAt: game.createdAt,
 };
@@ -99,6 +100,7 @@ const secondExpenseRow: ExpenseRow = {
   amount: 300_000,
   note: "",
   splitMode: "equal",
+  sequence: 1,
   createdAt: secondGame.createdAt,
   updatedAt: secondGame.createdAt,
 };
@@ -224,6 +226,7 @@ export function fakeRepo(
       delete: unused("expenses.delete"),
       listIdsSplitWith: unused("expenses.listIdsSplitWith"),
       listByGameIds: unused("expenses.listByGameIds"),
+      reorder: unused("expenses.reorder"),
     },
     splits: {
       listByExpenseIds: async (expenseIds) =>

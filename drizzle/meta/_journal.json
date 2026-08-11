@@ -85,6 +85,13 @@
       "when": 1786268531764,
       "tag": "0011_square_captain_flint",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "6",
+      "when": 1786462464006,
+      "tag": "0012_thin_wiccan",
+      "breakpoints": true
     }
   ]
 }

@@ -3,6 +3,7 @@ import {
   Banknote,
   Check,
   ChevronDown,
+  GripVertical,
   ImagePlus,
   Minus,
   Paperclip,
@@ -12,7 +13,7 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 import type { ResolvedAiExpense } from "../../shared/ai";
@@ -140,6 +141,7 @@ type ExpensePanelProps = {
   onUpdate: (expenseId: string, input: Partial<ExpenseInput>) => Promise<unknown>;
   onRemove: (expenseId: string) => void;
   onAddTransfer: (input: TransferInput) => Promise<unknown>;
+  onReorder: (expenseIds: string[]) => void;
 };
 
 const AI_ERROR_MESSAGES: Record<string, string> = {
@@ -291,8 +293,66 @@ export function ExpensePanel({
   onUpdate,
   onRemove,
   onAddTransfer,
+  onReorder,
 }: ExpensePanelProps) {
   const participantById = new Map(participants.map((participant) => [participant.id, participant]));
+
+  const visibleExpenses = expenses.filter((expense) => expense.kind !== "transfer");
+  const [dragOrder, setDragOrder] = useState<string[] | null>(null);
+  const draggingIdRef = useRef<string | null>(null);
+  const rowRefs = useRef(new Map<string, HTMLDivElement>());
+
+  const orderedExpenses = dragOrder
+    ? (dragOrder
+        .map((id) => visibleExpenses.find((expense) => expense.id === id))
+        .filter(Boolean) as ApiExpense[])
+    : visibleExpenses;
+
+  function handleDragPointerDown(expenseId: string, event: ReactPointerEvent) {
+    event.preventDefault();
+    (event.target as HTMLElement).setPointerCapture(event.pointerId);
+    draggingIdRef.current = expenseId;
+    setDragOrder(visibleExpenses.map((expense) => expense.id));
+  }
+
+  function handleDragPointerMove(event: ReactPointerEvent) {
+    const draggingId = draggingIdRef.current;
+    if (!draggingId) return;
+
+    let closestId: string | null = null;
+    let closestDistance = Infinity;
+    for (const [id, node] of rowRefs.current) {
+      const rect = node.getBoundingClientRect();
+      const center = rect.top + rect.height / 2;
+      const distance = Math.abs(event.clientY - center);
+      if (distance < closestDistance) {
+        closestDistance = distance;
+        closestId = id;
+      }
+    }
+    if (!closestId || closestId === draggingId) return;
+
+    setDragOrder((current) => {
+      const order = current ? [...current] : visibleExpenses.map((expense) => expense.id);
+      const fromIndex = order.indexOf(draggingId);
+      const toIndex = order.indexOf(closestId as string);
+      if (fromIndex === -1 || toIndex === -1) return order;
+      order.splice(fromIndex, 1);
+      order.splice(toIndex, 0, draggingId);
+      return order;
+    });
+  }
+
+  function handleDragPointerUp() {
+    const draggingId = draggingIdRef.current;
+    draggingIdRef.current = null;
+    if (!draggingId || !dragOrder) return;
+
+    const originalOrder = visibleExpenses.map((expense) => expense.id);
+    const changed = dragOrder.some((id, index) => id !== originalOrder[index]);
+    if (changed) onReorder(dragOrder);
+    setDragOrder(null);
+  }
 
   const form = useForm<ExpenseFormValues>({
     resolver: zodResolver(expenseFormSchema),
@@ -996,9 +1056,7 @@ function handleSplitModeChange(mode: SplitMode) {
       </form>
 
       <div className="mt-5 space-y-2">
-        {expenses
-          .filter((expense) => expense.kind !== "transfer")
-          .map((expense) => {
+        {orderedExpenses.map((expense) => {
           const payer = participantById.get(expense.payerParticipantId);
           const isEditing = expense.id === editingExpenseId;
           const attachedPhotos = filterPhotosByExpenseId(photos, expense.id);
@@ -1007,28 +1065,47 @@ function handleSplitModeChange(mode: SplitMode) {
           return (
             <div
               key={expense.id}
+              ref={(node) => {
+                if (node) rowRefs.current.set(expense.id, node);
+                else rowRefs.current.delete(expense.id);
+              }}
               className={`rounded-md border p-3 ${
+                draggingIdRef.current === expense.id ? "opacity-60" : ""
+              } ${
                 isEditing
                   ? "border-violet-500 bg-violet-50 dark:border-violet-500 dark:bg-violet-500/10"
                   : "border-stone-200 dark:border-stone-800"
               }`}
             >
               <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold text-stone-950 dark:text-stone-50">
-                    {expense.title}
-                    {expense.kind === "income" && (
-                      <span className="ml-1.5 rounded bg-emerald-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400">
-                        Thu
-                      </span>
-                    )}
-                  </p>
-                  <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">
-                    {payer?.name || "Không rõ"} {expense.kind === "income" ? "nhận" : "trả"}, chia{" "}
-                    {expense.splitParticipantIds.length} người
-                    {SPLIT_MODE_BADGES[expense.splitMode] &&
-                      ` · ${SPLIT_MODE_BADGES[expense.splitMode]}`}
-                  </p>
+                <div className="flex min-w-0 items-start gap-1">
+                  <button
+                    type="button"
+                    onPointerDown={(event) => handleDragPointerDown(expense.id, event)}
+                    onPointerMove={handleDragPointerMove}
+                    onPointerUp={handleDragPointerUp}
+                    onPointerCancel={handleDragPointerUp}
+                    className="flex h-11 w-6 shrink-0 items-center justify-center text-stone-400 [touch-action:none] dark:text-stone-600"
+                    aria-label={`Kéo để đổi thứ tự ${expense.title}`}
+                  >
+                    <GripVertical size={16} />
+                  </button>
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold text-stone-950 dark:text-stone-50">
+                      {expense.title}
+                      {expense.kind === "income" && (
+                        <span className="ml-1.5 rounded bg-emerald-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400">
+                          Thu
+                        </span>
+                      )}
+                    </p>
+                    <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">
+                      {payer?.name || "Không rõ"} {expense.kind === "income" ? "nhận" : "trả"}, chia{" "}
+                      {expense.splitParticipantIds.length} người
+                      {SPLIT_MODE_BADGES[expense.splitMode] &&
+                        ` · ${SPLIT_MODE_BADGES[expense.splitMode]}`}
+                    </p>
+                  </div>
                 </div>
                 <div className="flex shrink-0 items-center gap-1">
                   <span

@@ -332,6 +332,12 @@ export function useRemoveExpense() {
   });
 }
 
+export function useReorderExpenses(gameId: string) {
+  return useGameDetailMutation((expenseIds: string[]) =>
+    getGameApi().expenses.reorder(gameId, expenseIds),
+  );
+}
+
 export function useAddTransfer(gameId: string) {
   return useGameDetailMutation((input: TransferInput) =>
     getGameApi().transfers.create(gameId, input),

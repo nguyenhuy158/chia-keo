@@ -234,7 +234,7 @@ export function createD1GameRepository(d1: D1Database): GameRepository {
           .select()
           .from(schema.expenses)
           .where(eq(schema.expenses.gameId, gameId))
-          .orderBy(desc(schema.expenses.createdAt));
+          .orderBy(desc(schema.expenses.sequence), desc(schema.expenses.createdAt));
       },
       async getById(expenseId) {
         const rows = await db
@@ -254,7 +254,10 @@ export function createD1GameRepository(d1: D1Database): GameRepository {
         return rows[0] || null;
       },
       async insert(row) {
-        await db.insert(schema.expenses).values(row);
+        await db.insert(schema.expenses).values({
+          ...row,
+          sequence: sql`(SELECT COALESCE(MAX(${schema.expenses.sequence}), 0) + 1 FROM ${schema.expenses} WHERE ${schema.expenses.gameId} = ${row.gameId})`,
+        });
       },
       async update(expenseId, fields: ExpenseUpdate) {
         await db.update(schema.expenses).set(fields).where(eq(schema.expenses.id, expenseId));
@@ -265,6 +268,22 @@ export function createD1GameRepository(d1: D1Database): GameRepository {
       async listByGameIds(gameIds) {
         if (gameIds.length === 0) return [];
         return db.select().from(schema.expenses).where(inArray(schema.expenses.gameId, gameIds));
+      },
+      async reorder(gameId, orderedIds) {
+        const [{ maxSequence }] = await db
+          .select({ maxSequence: sql<number>`COALESCE(MAX(${schema.expenses.sequence}), 0)` })
+          .from(schema.expenses)
+          .where(eq(schema.expenses.gameId, gameId));
+
+        const base = maxSequence + orderedIds.length;
+        await Promise.all(
+          orderedIds.map((id, index) =>
+            db
+              .update(schema.expenses)
+              .set({ sequence: base - index })
+              .where(and(eq(schema.expenses.id, id), eq(schema.expenses.gameId, gameId))),
+          ),
+        );
       },
       async listIdsSplitWith(participantId) {
         const rows = await db
