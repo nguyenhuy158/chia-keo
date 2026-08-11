@@ -239,6 +239,10 @@ export function resolveHostParticipantId(
  * Kieu gom mot dau moi: ai con thieu thi chuyen thang cho host, ai ung du thi
  * host tra lai. Doi lai nhieu luot chuyen hon P2P nhung chi can mot QR.
  */
+/**
+ * Giu dung thu tu cua `balances` (= thu tu nguoi tham gia nguoi dung tu sap),
+ * khong sort theo so tien — de danh sach "gom ve" khop voi tab Người.
+ */
 export function calculateHostTransfers(
   balances: BalanceRow[],
   hostParticipantId: string,
@@ -249,8 +253,7 @@ export function calculateHostTransfers(
       participantId: row.participantId,
       amount: Math.abs(row.balance),
       toHost: row.balance < 0,
-    }))
-    .sort((a, b) => b.amount - a.amount);
+    }));
 }
 
 /**
