@@ -92,6 +92,9 @@ export function createHttpGameApi(): GameApiPort {
       add: (gameId, email) => post(`/api/games/${gameId}/collaborators`, { email }),
       remove: (gameId, collaboratorUserId) =>
         destroy(`/api/games/${gameId}/collaborators/${collaboratorUserId}`),
+      removePending: (gameId, email) =>
+        destroy(`/api/games/${gameId}/collaborators/pending/${encodeURIComponent(email)}`),
+      listCandidates: (gameId) => request(`/api/games/${gameId}/collaborators/candidates`),
     },
     photos: {
       list: (gameId) => request(`/api/games/${gameId}/photos`),

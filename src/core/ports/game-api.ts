@@ -11,6 +11,7 @@ import type {
   ApiMcpToken,
   ApiPhoto,
   ApiPhotoDetail,
+  ApiShareCandidate,
   ApiShareView,
   ApiTrashGame,
 } from "../../../shared/api-types";
@@ -98,6 +99,10 @@ export type GameApiPort = {
     /** Chi chu cuoc choi goi duoc; nguoi duoc chia se khac chi doc `collaborators` trong detail. */
     add(gameId: string, email: string): Promise<ApiGameDetail>;
     remove(gameId: string, collaboratorUserId: string): Promise<ApiGameDetail>;
+    /** Xoa invite "cho" (chua tung dang nhap nen chua co userId). */
+    removePending(gameId: string, email: string): Promise<ApiGameDetail>;
+    /** User da dang nhap he thong, chua duoc chia se cuoc nay — de click chon nhanh. */
+    listCandidates(gameId: string): Promise<ApiShareCandidate[]>;
   };
   photos: {
     /** Danh sach anh cua cuoc chia, chi kem ban thu nho. */

@@ -601,6 +601,13 @@ export function createD1GameRepository(d1: D1Database): GameRepository {
           .limit(1);
         return rows[0] || null;
       },
+      async listAllExceptOwner(ownerUserId) {
+        return db
+          .select({ id: schema.user.id, name: schema.user.name, email: schema.user.email })
+          .from(schema.user)
+          .where(sql`${schema.user.id} != ${ownerUserId}`)
+          .orderBy(asc(schema.user.name));
+      },
     },
 
     gameCollaborators: {
@@ -610,15 +617,22 @@ export function createD1GameRepository(d1: D1Database): GameRepository {
             id: schema.gameCollaborators.id,
             gameId: schema.gameCollaborators.gameId,
             userId: schema.gameCollaborators.userId,
+            invitedEmail: schema.gameCollaborators.invitedEmail,
             createdAt: schema.gameCollaborators.createdAt,
             name: schema.user.name,
             email: schema.user.email,
           })
           .from(schema.gameCollaborators)
-          .innerJoin(schema.user, eq(schema.user.id, schema.gameCollaborators.userId))
+          // leftJoin: invite "cho" (userId null) van phai hien trong danh sach.
+          .leftJoin(schema.user, eq(schema.user.id, schema.gameCollaborators.userId))
           .where(eq(schema.gameCollaborators.gameId, gameId))
           .orderBy(asc(schema.gameCollaborators.createdAt));
-        return rows;
+
+        return rows.map((row) => ({
+          ...row,
+          name: row.name || "",
+          email: row.email || row.invitedEmail,
+        }));
       },
       async isCollaborator(gameId, userId) {
         const rows = await db
@@ -640,7 +654,7 @@ export function createD1GameRepository(d1: D1Database): GameRepository {
           .where(
             and(
               eq(schema.gameCollaborators.gameId, row.gameId),
-              eq(schema.gameCollaborators.userId, row.userId),
+              eq(schema.gameCollaborators.invitedEmail, row.invitedEmail),
             ),
           )
           .limit(1);
@@ -649,13 +663,22 @@ export function createD1GameRepository(d1: D1Database): GameRepository {
         await db.insert(schema.gameCollaborators).values(row);
         return true;
       },
-      async remove(gameId, userId) {
+      async remove(gameId, target) {
+        const matchTarget = target.userId
+          ? eq(schema.gameCollaborators.userId, target.userId)
+          : eq(schema.gameCollaborators.invitedEmail, target.invitedEmail || "");
         await db
           .delete(schema.gameCollaborators)
+          .where(and(eq(schema.gameCollaborators.gameId, gameId), matchTarget));
+      },
+      async resolvePendingByEmail(email, userId) {
+        await db
+          .update(schema.gameCollaborators)
+          .set({ userId })
           .where(
             and(
-              eq(schema.gameCollaborators.gameId, gameId),
-              eq(schema.gameCollaborators.userId, userId),
+              sql`lower(${schema.gameCollaborators.invitedEmail}) = lower(${email})`,
+              isNull(schema.gameCollaborators.userId),
             ),
           );
       },

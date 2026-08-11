@@ -67,11 +67,16 @@ export type ExpenseSplitRow = {
   weight: number | null;
 };
 
-/** Nguoi duoc chia se cuoc choi, kem thong tin hien thi lay tu bang `user`. */
+/**
+ * Nguoi duoc chia se cuoc choi. userId null = email da nhap luc chia se nhung
+ * chua tung dang nhap; name/email hien thi thi dung invitedEmail lam email,
+ * name la "" (frontend hien invitedEmail thay vao cho name khi con dang cho).
+ */
 export type CollaboratorRow = {
   id: string;
   gameId: string;
-  userId: string;
+  userId: string | null;
+  invitedEmail: string;
   name: string;
   email: string;
   createdAt: string;
@@ -284,12 +289,32 @@ export type GameRepository = {
   users: {
     /** Doi chieu khong phan biet hoa thuong; null neu email chua co tai khoan. */
     findIdByEmail(email: string): Promise<{ id: string; name: string; email: string } | null>;
+    /** Toan bo user da dang nhap he thong, tru chinh nguoi goi — de chon nhanh khi chia se. */
+    listAllExceptOwner(
+      ownerUserId: string,
+    ): Promise<{ id: string; name: string; email: string }[]>;
   };
   gameCollaborators: {
     listByGame(gameId: string): Promise<CollaboratorRow[]>;
     isCollaborator(gameId: string, userId: string): Promise<boolean>;
-    /** true da them nguoi moi, false neu nguoi do da duoc chia se roi (khong lam gi). */
-    add(row: { id: string; gameId: string; userId: string; createdAt: string }): Promise<boolean>;
-    remove(gameId: string, userId: string): Promise<void>;
+    /**
+     * true da them nguoi moi (co the la invite "cho", userId null), false neu
+     * email do da duoc chia se roi trong game nay (khong lam gi).
+     */
+    add(row: {
+      id: string;
+      gameId: string;
+      userId: string | null;
+      invitedEmail: string;
+      createdAt: string;
+    }): Promise<boolean>;
+    /** Xoa theo userId (da resolve) hoac invitedEmail (con dang cho). */
+    remove(gameId: string, target: { userId?: string; invitedEmail?: string }): Promise<void>;
+    /**
+     * Dien userId vao moi invite "cho" trung email nay (khong phan biet hoa
+     * thuong) — goi ngay luc resolveSsoUserId tao/tim thay user, de nguoi vua
+     * dang nhap lan dau thay ngay cuoc choi da duoc chia se cho ho.
+     */
+    resolvePendingByEmail(email: string, userId: string): Promise<void>;
   };
 };

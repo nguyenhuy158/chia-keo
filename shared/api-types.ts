@@ -79,7 +79,16 @@ export type ApiShareLink = {
 };
 
 export type ApiCollaborator = {
-  userId: string;
+  /** null = email da nhap luc chia se nhung chua tung dang nhap he thong. */
+  userId: string | null;
+  /** "" khi con dang cho (chua co ten hien thi). */
+  name: string;
+  email: string;
+};
+
+/** User da dang nhap he thong, goi y de click chon nhanh khi chia se. */
+export type ApiShareCandidate = {
+  id: string;
   name: string;
   email: string;
 };

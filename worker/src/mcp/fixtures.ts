@@ -257,12 +257,14 @@ export function fakeRepo(
     },
     users: {
       findIdByEmail: unused("users.findIdByEmail"),
+      listAllExceptOwner: unused("users.listAllExceptOwner"),
     },
     gameCollaborators: {
       listByGame: async () => [],
       isCollaborator: async () => false,
       add: unused("gameCollaborators.add"),
       remove: unused("gameCollaborators.remove"),
+      resolvePendingByEmail: unused("gameCollaborators.resolvePendingByEmail"),
     },
   };
 }

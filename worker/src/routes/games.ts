@@ -12,7 +12,12 @@ import {
   shareLinkInputSchema,
   transferInputSchema,
 } from "../../../shared/schemas";
-import { shareGame, unshareGame } from "../core/application/collaborators";
+import {
+  listShareCandidates,
+  shareGame,
+  unshareGame,
+  unshareGameByEmail,
+} from "../core/application/collaborators";
 import {
   addExpense,
   recordTransfer,
@@ -233,6 +238,12 @@ gamesRouter.post("/games/:gameId/transfers", async (c) => {
   );
 });
 
+gamesRouter.get("/games/:gameId/collaborators/candidates", (c) =>
+  respond(c, () =>
+    listShareCandidates(c.get("repo"), c.get("userId"), c.req.param("gameId")),
+  ),
+);
+
 gamesRouter.post("/games/:gameId/collaborators", async (c) => {
   const input = await readJson(c, collaboratorInputSchema);
   if (!input) return invalidInput(c);
@@ -243,6 +254,17 @@ gamesRouter.post("/games/:gameId/collaborators", async (c) => {
     201,
   );
 });
+
+gamesRouter.delete("/games/:gameId/collaborators/pending/:email", (c) =>
+  respond(c, () =>
+    unshareGameByEmail(
+      c.get("repo"),
+      c.get("userId"),
+      c.req.param("gameId"),
+      decodeURIComponent(c.req.param("email")),
+    ),
+  ),
+);
 
 gamesRouter.delete("/games/:gameId/collaborators/:collaboratorUserId", (c) =>
   respond(c, () =>

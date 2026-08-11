@@ -499,3 +499,18 @@ export function useRemoveCollaborator(gameId: string) {
     getGameApi().collaborators.remove(gameId, collaboratorUserId),
   );
 }
+
+export function useRemovePendingCollaborator(gameId: string) {
+  return useGameDetailMutation((email: string) =>
+    getGameApi().collaborators.removePending(gameId, email),
+  );
+}
+
+/** Chi tai khi panel chia se dang mo (xem `enabled`), khong phai luc nao cung can. */
+export function useShareCandidates(gameId: string, enabled: boolean) {
+  return useQuery({
+    queryKey: ["share-candidates", gameId],
+    queryFn: () => getGameApi().collaborators.listCandidates(gameId),
+    enabled,
+  });
+}
