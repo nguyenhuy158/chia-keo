@@ -7,6 +7,56 @@ export function formatMoneyInput(raw: string) {
   return new Intl.NumberFormat("vi-VN").format(Number(digits));
 }
 
+// Cho phep go bieu thuc +-*/ (vd 20000+30000) truoc khi chot gia tri.
+const EXPRESSION_CHARS = /[^0-9+\-*/.\s]/g;
+const HAS_OPERATOR = /[+\-*/]/;
+
+function sanitizeMoneyExpression(raw: string) {
+  return raw.replace(EXPRESSION_CHARS, "");
+}
+
+/** Tinh bieu thuc +-*/ nhap tho; tra null neu khong hop le hoac ket qua am. */
+export function evaluateMoneyExpression(raw: string): number | null {
+  const sanitized = sanitizeMoneyExpression(raw).trim();
+  if (!sanitized) return null;
+  // Chi con lai so va +-*/., an toan de eval truc tiep.
+  if (/[+\-*/.]{2,}|^[+\-*/.]|[+\-*/.]$/.test(sanitized)) return null;
+  const result = evalArithmetic(sanitized);
+  if (result === null || !Number.isFinite(result) || result < 0) return null;
+  return Math.round(result);
+}
+
+/** Parser +-*/  thu cong (khong dung eval/Function), uu tien * va / truoc. */
+function evalArithmetic(expr: string): number | null {
+  const tokens = expr.match(/\d+\.?\d*|[+\-*/]/g);
+  if (!tokens || tokens.length === 0) return null;
+
+  // Rut gon * va / truoc theo thu tu toan hoc.
+  const terms: number[] = [Number(tokens[0])];
+  const addOps: string[] = [];
+  let i = 1;
+  while (i < tokens.length) {
+    const op = tokens[i];
+    const nextVal = Number(tokens[i + 1]);
+    if (op === undefined || Number.isNaN(nextVal)) return null;
+    if (op === "*" || op === "/") {
+      const prev = terms.pop()!;
+      terms.push(op === "*" ? prev * nextVal : prev / nextVal);
+    } else if (op === "+" || op === "-") {
+      addOps.push(op);
+      terms.push(nextVal);
+    } else {
+      return null;
+    }
+    i += 2;
+  }
+
+  return terms.reduce((sum, term, idx) => {
+    if (idx === 0) return term;
+    return addOps[idx - 1] === "-" ? sum - term : sum + term;
+  }, 0);
+}
+
 type MoneyInputProps = {
   value: string;
   onChange: (value: string) => void;
@@ -20,12 +70,19 @@ type MoneyInputProps = {
 
 /**
  * Input tien te tu dong them dau phan cach hang nghin khi go.
+ * Ho tro go bieu thuc +-*/ (vd 20000+30000), tu tinh khi blur hoac Enter.
  * Gia tri tra ra la chuoi da format; dung parseMoney de lay so nguyen khi luu.
  */
 export const MoneyInput = forwardRef<HTMLInputElement, MoneyInputProps>(function MoneyInput(
   { value, onChange, onBlur, placeholder, id, name, className = "", "aria-label": ariaLabel },
   ref,
 ) {
+  const resolveExpression = () => {
+    if (!HAS_OPERATOR.test(value)) return;
+    const result = evaluateMoneyExpression(value);
+    onChange(result === null ? "" : formatMoneyInput(String(result)));
+  };
+
   return (
     <input
       ref={ref}
@@ -33,12 +90,21 @@ export const MoneyInput = forwardRef<HTMLInputElement, MoneyInputProps>(function
       name={name}
       aria-label={ariaLabel}
       className={`field tabular ${className}`}
-      inputMode="numeric"
+      inputMode="text"
       autoComplete="off"
       placeholder={placeholder}
       value={value}
-      onChange={(event) => onChange(formatMoneyInput(event.target.value))}
-      onBlur={onBlur}
+      onChange={(event) => {
+        const sanitized = sanitizeMoneyExpression(event.target.value);
+        onChange(HAS_OPERATOR.test(sanitized) ? sanitized : formatMoneyInput(sanitized));
+      }}
+      onKeyDown={(event) => {
+        if (event.key === "Enter") resolveExpression();
+      }}
+      onBlur={() => {
+        resolveExpression();
+        onBlur?.();
+      }}
     />
   );
 });
