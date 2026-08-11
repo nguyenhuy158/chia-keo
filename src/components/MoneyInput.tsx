@@ -19,16 +19,19 @@ function sanitizeMoneyExpression(raw: string) {
 export function evaluateMoneyExpression(raw: string): number | null {
   const sanitized = sanitizeMoneyExpression(raw).trim();
   if (!sanitized) return null;
-  // Chi con lai so va +-*/., an toan de eval truc tiep.
-  if (/[+\-*/.]{2,}|^[+\-*/.]|[+\-*/.]$/.test(sanitized)) return null;
-  const result = evalArithmetic(sanitized);
+  // Dau "." o day la dau phan nhom nghin (vi-VN, vd 3.000 = 3000), khong phai
+  // dau thap phan — VND khong co le. Bo het truoc khi tinh, khong thi
+  // "3.000+4000" bi Number() hieu la 3 (dot thanh dau cham thap phan).
+  const withoutThousandsDot = sanitized.replace(/\./g, "");
+  if (/[+\-*/]{2,}|^[+\-*/]|[+\-*/]$/.test(withoutThousandsDot)) return null;
+  const result = evalArithmetic(withoutThousandsDot);
   if (result === null || !Number.isFinite(result) || result < 0) return null;
   return Math.round(result);
 }
 
 /** Parser cong tru nhan chia thu cong (khong dung eval/Function), uu tien nhan chia truoc. */
 function evalArithmetic(expr: string): number | null {
-  const tokens = expr.match(/\d+\.?\d*|[+\-*/]/g);
+  const tokens = expr.match(/\d+|[+\-*/]/g);
   if (!tokens || tokens.length === 0) return null;
 
   // Rut gon * va / truoc theo thu tu toan hoc.
