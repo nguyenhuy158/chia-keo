@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Check, GripVertical, Pencil, Plus, Trash2, Users, X } from "lucide-react";
+import { Check, ChevronDown, ChevronUp, Pencil, Plus, Trash2, Users, X } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -12,7 +12,6 @@ import { useConfirm } from "./ConfirmDialog";
 import { ContactPicker } from "./ContactPicker";
 import { SwipeToDelete } from "./SwipeToDelete";
 import { Field } from "./ui";
-import { useDragReorder } from "./use-drag-reorder";
 
 const participantFormSchema = z.object({
   name: z.string().trim().min(1, "Nhập tên người tham gia"),
@@ -51,15 +50,6 @@ export function ParticipantPanel({
 }: ParticipantPanelProps) {
   const confirm = useConfirm();
   const [editingParticipantId, setEditingParticipantId] = useState<string | null>(null);
-  const {
-    orderedItems: orderedParticipants,
-    draggingId,
-    dragTranslateY,
-    registerRow,
-    handleDragPointerDown,
-    handleDragPointerMove,
-    handleDragPointerUp,
-  } = useDragReorder<ApiParticipant>(participants, (participant) => participant.id, onReorder);
   const form = useForm<ParticipantFormValues>({
     resolver: zodResolver(participantFormSchema),
     defaultValues: emptyForm,
@@ -80,6 +70,17 @@ export function ParticipantPanel({
     if (!ok) return;
 
     onRemove(participant.id);
+  }
+
+  /** Doi cho voi nguoi ngay tren/duoi trong danh sach hien tai. */
+  function move(participantId: string, direction: -1 | 1) {
+    const index = participants.findIndex((participant) => participant.id === participantId);
+    const targetIndex = index + direction;
+    if (index === -1 || targetIndex < 0 || targetIndex >= participants.length) return;
+
+    const order = participants.map((participant) => participant.id);
+    [order[index], order[targetIndex]] = [order[targetIndex], order[index]];
+    onReorder(order);
   }
 
   const handleAdd = form.handleSubmit(async (values) => {
@@ -161,47 +162,32 @@ export function ParticipantPanel({
       </form>
 
       <div className="mt-5 space-y-2">
-        {orderedParticipants.map((participant) => (
-          <div
-            key={participant.id}
-            ref={registerRow(participant.id)}
-            style={
-              draggingId === participant.id
-                ? { transform: `translateY(${dragTranslateY}px)`, position: "relative", zIndex: 10 }
-                : undefined
-            }
-          >
+        {participants.map((participant, index) => (
+          <div key={participant.id}>
             <SwipeToDelete onDelete={() => handleRemove(participant)}>
-              <div
-                className={`rounded-md border border-stone-200 p-3 dark:border-stone-800 ${
-                  draggingId === participant.id ? "opacity-90 shadow-lg" : ""
-                }`}
-              >
+              <div className="rounded-md border border-stone-200 p-3 dark:border-stone-800">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex min-w-0 items-center gap-1">
-                    <button
-                      type="button"
-                      onPointerDown={(event) => {
-                        event.stopPropagation();
-                        handleDragPointerDown(participant.id, event);
-                      }}
-                      onPointerMove={(event) => {
-                        event.stopPropagation();
-                        handleDragPointerMove(event);
-                      }}
-                      onPointerUp={(event) => {
-                        event.stopPropagation();
-                        handleDragPointerUp();
-                      }}
-                      onPointerCancel={(event) => {
-                        event.stopPropagation();
-                        handleDragPointerUp();
-                      }}
-                      className="flex h-11 w-6 shrink-0 items-center justify-center text-stone-400 [touch-action:none] dark:text-stone-600"
-                      aria-label={`Kéo để đổi thứ tự ${participant.name}`}
-                    >
-                      <GripVertical size={16} />
-                    </button>
+                    <div className="flex shrink-0 flex-col">
+                      <button
+                        type="button"
+                        onClick={() => move(participant.id, -1)}
+                        disabled={pending || index === 0}
+                        className="flex h-5 w-6 items-center justify-center text-stone-400 transition hover:text-stone-700 disabled:opacity-30 dark:text-stone-600 dark:hover:text-stone-200"
+                        aria-label={`Đưa ${participant.name} lên`}
+                      >
+                        <ChevronUp size={15} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => move(participant.id, 1)}
+                        disabled={pending || index === participants.length - 1}
+                        className="flex h-5 w-6 items-center justify-center text-stone-400 transition hover:text-stone-700 disabled:opacity-30 dark:text-stone-600 dark:hover:text-stone-200"
+                        aria-label={`Đưa ${participant.name} xuống`}
+                      >
+                        <ChevronDown size={15} />
+                      </button>
+                    </div>
                     <Avatar name={participant.name} size={32} />
                     <div className="min-w-0">
                       <p className="truncate text-sm font-semibold text-stone-950 dark:text-stone-50">
