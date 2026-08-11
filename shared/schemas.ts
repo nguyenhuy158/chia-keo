@@ -176,6 +176,10 @@ export const shareLinkInputSchema = z.object({
   enabled: z.boolean(),
 });
 
+export const collaboratorInputSchema = z.object({
+  email: z.string().trim().min(1).max(200).email("Email không hợp lệ"),
+});
+
 export const MCP_TOKEN_NAME_MAX_LENGTH = 60;
 export const MAX_MCP_TOKENS_PER_USER = 20;
 

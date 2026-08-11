@@ -4,12 +4,12 @@ import { createId, nowIso } from "../../lib/ids";
 import type { GameRepository } from "../ports/game-repository";
 import { NotFoundError } from "./errors";
 import { reallocateExpenses } from "./expenses";
-import { getOwnedGame, loadGameDetail } from "./game-detail";
+import { getAccessibleGame, hasGameAccess, loadGameDetail } from "./game-detail";
 import { recordEvent } from "./game-events";
 
 async function loadOwnedParticipant(repo: GameRepository, participantId: string, userId: string) {
   const row = await repo.participants.getWithGame(participantId);
-  if (!row || row.game.ownerUserId !== userId) return null;
+  if (!row || !(await hasGameAccess(repo, row.game, userId))) return null;
   return row;
 }
 
@@ -19,7 +19,7 @@ export async function addParticipant(
   gameId: string,
   input: ParticipantInput,
 ): Promise<ApiGameDetail> {
-  const game = await getOwnedGame(repo, gameId, userId);
+  const game = await getAccessibleGame(repo, gameId, userId);
   if (!game) throw new NotFoundError();
 
   const now = nowIso();
@@ -40,7 +40,7 @@ export async function addParticipant(
 
   await recordEvent(repo, game.id, { kind: "participant_added", names: [input.name] });
 
-  return loadGameDetail(repo, game);
+  return loadGameDetail(repo, game, userId);
 }
 
 /**
@@ -53,7 +53,7 @@ export async function addParticipants(
   gameId: string,
   input: ParticipantBatchInput,
 ): Promise<ApiGameDetail> {
-  const game = await getOwnedGame(repo, gameId, userId);
+  const game = await getAccessibleGame(repo, gameId, userId);
   if (!game) throw new NotFoundError();
 
   for (const person of input.people) {
@@ -79,7 +79,7 @@ export async function addParticipants(
     names: input.people.map((person) => person.name),
   });
 
-  return loadGameDetail(repo, game);
+  return loadGameDetail(repo, game, userId);
 }
 
 export async function updateParticipant(
@@ -111,7 +111,7 @@ export async function updateParticipant(
     await repo.participants.upsertPaymentProfile(row.participant.id, paymentFields, now);
   }
 
-  return loadGameDetail(repo, row.game);
+  return loadGameDetail(repo, row.game, userId);
 }
 
 export async function removeParticipant(
@@ -132,5 +132,5 @@ export async function removeParticipant(
     name: row.participant.name,
   });
 
-  return loadGameDetail(repo, row.game);
+  return loadGameDetail(repo, row.game, userId);
 }

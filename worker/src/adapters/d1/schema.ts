@@ -238,6 +238,30 @@ export const shareLinks = sqliteTable(
 );
 
 /**
+ * Nguoi duoc chia se cuoc choi (nhap email, phai da co tai khoan trong he
+ * thong). Duoc lam moi thu nhu chu, tru xoa/phuc hoi/xoa han cuoc choi —
+ * nhung thao tac do van kiem tra rieng ownerUserId.
+ */
+export const gameCollaborators = sqliteTable(
+  "game_collaborators",
+  {
+    id: text("id").primaryKey(),
+    gameId: text("game_id")
+      .notNull()
+      .references(() => games.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    createdAt: text("created_at").notNull(),
+  },
+  (table) => [
+    index("game_collaborators_game_id_idx").on(table.gameId),
+    index("game_collaborators_user_id_idx").on(table.userId),
+    uniqueIndex("game_collaborators_game_user_idx").on(table.gameId, table.userId),
+  ],
+);
+
+/**
  * Token cho endpoint MCP. Moi user tao duoc nhieu token, moi token mot bo
  * scope rieng chon luc tao.
  *

@@ -19,6 +19,8 @@ export type ApiGame = {
   createdAt: string;
   participantCount: number;
   expenseCount: number;
+  /** false la duoc chia se vao, khong phai cuoc tu tao — an nut xoa o danh sach. */
+  isOwner: boolean;
 };
 
 export type ApiParticipant = {
@@ -76,6 +78,12 @@ export type ApiShareLink = {
   enabled: boolean;
 };
 
+export type ApiCollaborator = {
+  userId: string;
+  name: string;
+  email: string;
+};
+
 export type ApiSummary = {
   totalExpense: number;
   balances: BalanceRow[];
@@ -94,6 +102,9 @@ export type ApiGameDetail = {
   expenses: ApiExpense[];
   summary: ApiSummary;
   shareLink: ApiShareLink | null;
+  /** false neu nguoi xem chi la nguoi duoc chia se (khong xoa duoc cuoc choi). */
+  isOwner: boolean;
+  collaborators: ApiCollaborator[];
 };
 
 export type ApiShareView = {

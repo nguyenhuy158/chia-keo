@@ -7,7 +7,7 @@ import {
 import { createId, nowIso } from "../../lib/ids";
 import type { GameRepository, PhotoDetailRow, PhotoRow } from "../ports/game-repository";
 import { BadRequestError, InvalidInputError, NotFoundError } from "./errors";
-import { getOwnedGame } from "./game-detail";
+import { getAccessibleGame, hasGameAccess } from "./game-detail";
 import { getSharedGame } from "./share-links";
 
 export const PHOTO_LIMIT_ERROR = "too_many_photos";
@@ -38,7 +38,7 @@ async function assertExpenseInGame(repo: GameRepository, expenseId: string, game
 /** Anh + cuoc chia, chi khi nguoi dung la chu cuoc chia. */
 async function getOwnedPhoto(repo: GameRepository, photoId: string, userId: string) {
   const row = await repo.photos.getWithGame(photoId);
-  if (!row || row.game.ownerUserId !== userId) throw new NotFoundError();
+  if (!row || !(await hasGameAccess(repo, row.game, userId))) throw new NotFoundError();
   return row;
 }
 
@@ -47,7 +47,7 @@ export async function listGamePhotos(
   userId: string,
   gameId: string,
 ): Promise<ApiPhoto[]> {
-  const game = await getOwnedGame(repo, gameId, userId);
+  const game = await getAccessibleGame(repo, gameId, userId);
   if (!game) throw new NotFoundError();
 
   return (await repo.photos.listByGame(game.id)).map(toApiPhoto);
@@ -59,7 +59,7 @@ export async function addGamePhoto(
   gameId: string,
   input: PhotoInput,
 ): Promise<ApiPhoto> {
-  const game = await getOwnedGame(repo, gameId, userId);
+  const game = await getAccessibleGame(repo, gameId, userId);
   if (!game) throw new NotFoundError();
 
   if ((await repo.photos.countByGame(game.id)) >= MAX_PHOTOS_PER_GAME) {

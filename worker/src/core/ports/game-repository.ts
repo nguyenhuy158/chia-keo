@@ -67,6 +67,16 @@ export type ExpenseSplitRow = {
   weight: number | null;
 };
 
+/** Nguoi duoc chia se cuoc choi, kem thong tin hien thi lay tu bang `user`. */
+export type CollaboratorRow = {
+  id: string;
+  gameId: string;
+  userId: string;
+  name: string;
+  email: string;
+  createdAt: string;
+};
+
 export type ShareLinkRow = {
   gameId: string;
   token: string;
@@ -131,6 +141,8 @@ export type GameRepository = {
   games: {
     /** Chi cac cuoc chia dang dung; cuoc trong thung rac khong tinh. */
     listByOwner(userId: string): Promise<GameRow[]>;
+    /** Cac cuoc chia (dang dung) nguoi nay duoc chia se vao, khong tinh cuoc tu tao. */
+    listSharedWithUser(userId: string): Promise<GameRow[]>;
     /** Cuoc chia trong thung rac, moi xoa truoc. */
     listDeletedByOwner(userId: string): Promise<GameRow[]>;
     /** So nguoi tham gia theo game; game khong co ai thi vang mat trong map. */
@@ -268,5 +280,16 @@ export type GameRepository = {
     replace(gameId: string, row: ShareLinkRow & { id: string }): Promise<void>;
     setEnabled(gameId: string, enabled: boolean): Promise<void>;
     findByToken(token: string): Promise<{ link: ShareLinkRow; game: GameRow } | null>;
+  };
+  users: {
+    /** Doi chieu khong phan biet hoa thuong; null neu email chua co tai khoan. */
+    findIdByEmail(email: string): Promise<{ id: string; name: string; email: string } | null>;
+  };
+  gameCollaborators: {
+    listByGame(gameId: string): Promise<CollaboratorRow[]>;
+    isCollaborator(gameId: string, userId: string): Promise<boolean>;
+    /** true da them nguoi moi, false neu nguoi do da duoc chia se roi (khong lam gi). */
+    add(row: { id: string; gameId: string; userId: string; createdAt: string }): Promise<boolean>;
+    remove(gameId: string, userId: string): Promise<void>;
   };
 };

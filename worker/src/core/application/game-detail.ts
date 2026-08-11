@@ -1,4 +1,5 @@
 import type {
+  ApiCollaborator,
   ApiExpense,
   ApiGameDetail,
   ApiParticipant,
@@ -150,11 +151,19 @@ export async function loadShareLink(
 export async function loadGameDetail(
   repo: GameRepository,
   game: GameRow,
+  userId: string,
 ): Promise<ApiGameDetail> {
-  const [data, shareLink] = await Promise.all([
+  const [data, shareLink, collaboratorRows] = await Promise.all([
     loadGameData(repo, game.id),
     loadShareLink(repo, game.id),
+    repo.gameCollaborators.listByGame(game.id),
   ]);
+
+  const collaborators: ApiCollaborator[] = collaboratorRows.map((row) => ({
+    userId: row.userId,
+    name: row.name,
+    email: row.email,
+  }));
 
   return {
     id: game.id,
@@ -164,6 +173,8 @@ export async function loadGameDetail(
     settlementHostId: game.settlementHostId || "",
     createdAt: game.createdAt,
     shareLink,
+    isOwner: game.ownerUserId === userId,
+    collaborators,
     ...data,
   };
 }
@@ -180,17 +191,36 @@ export async function loadShareView(repo: GameRepository, game: GameRow): Promis
   };
 }
 
-/** Policy so huu: chi chu cuoc choi duoc thao tac. */
 /**
- * Cuoc chia dang dung cua user. Cuoc trong thung rac bi coi nhu khong ton tai:
- * day la choke point cua moi thao tac (xem chi tiet, them khoan, doi che do,
- * quay link share...) nen chan o mot cho la chan het, khong phai nho o tung
- * use case.
+ * Cuoc chia dang dung ma user duoc PHEP SUA: chu hoac nguoi duoc chia se.
+ * Cuoc trong thung rac bi coi nhu khong ton tai: day la choke point cua moi
+ * thao tac sua (xem chi tiet, them khoan, doi che do, quay link share...) nen
+ * chan o mot cho la chan het, khong phai nho o tung use case. Rieng xoa/phuc
+ * hoi/xoa han dung `getOwnedGame` (chi chu) — collaborator khong duoc dong.
  */
+export async function getAccessibleGame(repo: GameRepository, gameId: string, userId: string) {
+  const game = await repo.games.getById(gameId);
+  if (!game || game.deletedAt) return null;
+  if (game.ownerUserId === userId) return game;
+  if (await repo.gameCollaborators.isCollaborator(gameId, userId)) return game;
+  return null;
+}
+
+/** Policy so huu: chi chu cuoc choi duoc thao tac (xoa/phuc hoi/xoa han). */
 export async function getOwnedGame(repo: GameRepository, gameId: string, userId: string) {
   const game = await repo.games.getById(gameId);
   if (!game || game.ownerUserId !== userId || game.deletedAt) return null;
   return game;
+}
+
+/** Nhu getAccessibleGame nhung tra true/false, dung cho cac lookup theo id con. */
+export async function hasGameAccess(
+  repo: GameRepository,
+  game: GameRow,
+  userId: string,
+): Promise<boolean> {
+  if (game.ownerUserId === userId) return true;
+  return repo.gameCollaborators.isCollaborator(game.id, userId);
 }
 
 /** Nhu getOwnedGame nhung nhan ca cuoc trong thung rac: de phuc hoi/xoa han. */

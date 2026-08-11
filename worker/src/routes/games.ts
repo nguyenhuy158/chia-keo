@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import {
+  collaboratorInputSchema,
   contactInputSchema,
   contactUpdateSchema,
   expenseInputSchema,
@@ -11,6 +12,7 @@ import {
   shareLinkInputSchema,
   transferInputSchema,
 } from "../../../shared/schemas";
+import { shareGame, unshareGame } from "../core/application/collaborators";
 import {
   addExpense,
   recordTransfer,
@@ -230,6 +232,28 @@ gamesRouter.post("/games/:gameId/transfers", async (c) => {
     201,
   );
 });
+
+gamesRouter.post("/games/:gameId/collaborators", async (c) => {
+  const input = await readJson(c, collaboratorInputSchema);
+  if (!input) return invalidInput(c);
+
+  return respond(
+    c,
+    () => shareGame(c.get("repo"), c.get("userId"), c.req.param("gameId"), input.email),
+    201,
+  );
+});
+
+gamesRouter.delete("/games/:gameId/collaborators/:collaboratorUserId", (c) =>
+  respond(c, () =>
+    unshareGame(
+      c.get("repo"),
+      c.get("userId"),
+      c.req.param("gameId"),
+      c.req.param("collaboratorUserId"),
+    ),
+  ),
+);
 
 gamesRouter.post("/games/:gameId/share-links", (c) =>
   respond(c, () => rotateShareLink(c.get("repo"), c.get("userId"), c.req.param("gameId")), 201),

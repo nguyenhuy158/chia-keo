@@ -88,6 +88,11 @@ export function createHttpGameApi(): GameApiPort {
       rotate: (gameId) => post(`/api/games/${gameId}/share-links`),
       setEnabled: (gameId, enabled) => patch(`/api/games/${gameId}/share-link`, { enabled }),
     },
+    collaborators: {
+      add: (gameId, email) => post(`/api/games/${gameId}/collaborators`, { email }),
+      remove: (gameId, collaboratorUserId) =>
+        destroy(`/api/games/${gameId}/collaborators/${collaboratorUserId}`),
+    },
     photos: {
       list: (gameId) => request(`/api/games/${gameId}/photos`),
       detail: (photoId) => request(`/api/photos/${photoId}`),

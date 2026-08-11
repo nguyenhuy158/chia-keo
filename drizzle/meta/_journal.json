@@ -92,6 +92,13 @@
       "when": 1786462464006,
       "tag": "0012_thin_wiccan",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "6",
+      "when": 1786464405460,
+      "tag": "0013_lively_puff_adder",
+      "breakpoints": true
     }
   ]
 }

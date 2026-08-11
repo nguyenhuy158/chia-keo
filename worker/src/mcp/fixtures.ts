@@ -180,6 +180,7 @@ export function fakeRepo(
         ]),
       getById: async (gameId) => games.find((row) => row.id === gameId) || null,
       listDeletedByOwner: async () => [],
+      listSharedWithUser: async () => [],
       insert: unused("games.insert"),
       update: unused("games.update"),
       setDeletedAt: unused("games.setDeletedAt"),
@@ -253,6 +254,15 @@ export function fakeRepo(
       setEnabled: unused("shareLinks.setEnabled"),
       findByToken: async (token) =>
         link && token === link.token ? { link, game } : null,
+    },
+    users: {
+      findIdByEmail: unused("users.findIdByEmail"),
+    },
+    gameCollaborators: {
+      listByGame: async () => [],
+      isCollaborator: async () => false,
+      add: unused("gameCollaborators.add"),
+      remove: unused("gameCollaborators.remove"),
     },
   };
 }

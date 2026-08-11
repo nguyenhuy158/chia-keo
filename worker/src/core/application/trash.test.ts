@@ -52,6 +52,7 @@ function stubRepo(rows: GameRow[]) {
     paymentProfiles: { listByParticipantIds: async () => [] },
     photos: { countByGame: async () => 0 },
     shareLinks: { getLatestByGame: async () => null },
+    gameCollaborators: { listByGame: async () => [], isCollaborator: async () => false },
   } as unknown as GameRepository;
 
   return { repo, softDeleted, hardDeleted };

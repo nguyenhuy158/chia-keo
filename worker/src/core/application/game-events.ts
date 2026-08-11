@@ -7,7 +7,7 @@ import {
 import { createId, nowIso } from "../../lib/ids";
 import type { GameEventRow, GameRepository } from "../ports/game-repository";
 import { InvalidInputError, NotFoundError } from "./errors";
-import { getOwnedGame, loadGameDetail } from "./game-detail";
+import { getAccessibleGame, hasGameAccess, loadGameDetail } from "./game-detail";
 
 /** Doc toi day roi thoi: lich su cu hon the khong ai cuon tay den. */
 export const GAME_EVENT_PAGE_SIZE = 200;
@@ -55,7 +55,7 @@ export async function listGameEvents(
   userId: string,
   gameId: string,
 ): Promise<{ events: ApiGameEvent[] }> {
-  const game = await getOwnedGame(repo, gameId, userId);
+  const game = await getAccessibleGame(repo, gameId, userId);
   if (!game) throw new NotFoundError();
 
   const rows = await repo.gameEvents.listByGame(game.id, GAME_EVENT_PAGE_SIZE);
@@ -75,7 +75,7 @@ export async function undoGameEvent(
   eventId: string,
 ): Promise<ApiGameDetail> {
   const row = await repo.gameEvents.getWithGame(eventId);
-  if (!row || row.game.ownerUserId !== userId) throw new NotFoundError();
+  if (!row || !(await hasGameAccess(repo, row.game, userId))) throw new NotFoundError();
 
   const event = toApiEvent(row.event);
   if (!event || !canUndoEvent(event)) throw new InvalidInputError();
@@ -127,5 +127,5 @@ export async function undoGameEvent(
     amount: restore.amount,
   });
 
-  return loadGameDetail(repo, row.game);
+  return loadGameDetail(repo, row.game, userId);
 }

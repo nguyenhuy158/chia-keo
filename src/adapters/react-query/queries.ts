@@ -489,3 +489,13 @@ export function useSetShareLinkEnabled(gameId: string) {
     getGameApi().shareLinks.setEnabled(gameId, enabled),
   );
 }
+
+export function useAddCollaborator(gameId: string) {
+  return useGameDetailMutation((email: string) => getGameApi().collaborators.add(gameId, email));
+}
+
+export function useRemoveCollaborator(gameId: string) {
+  return useGameDetailMutation((collaboratorUserId: string) =>
+    getGameApi().collaborators.remove(gameId, collaboratorUserId),
+  );
+}

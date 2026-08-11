@@ -3,7 +3,7 @@ import { normalizeAiExpense, resolveAiExpense } from "../../../../shared/ai";
 import type { AiContentPart, AiProvider } from "../ports/ai-provider";
 import type { GameRepository } from "../ports/game-repository";
 import { AiProviderError, NotFoundError } from "./errors";
-import { getOwnedGame } from "./game-detail";
+import { getAccessibleGame } from "./game-detail";
 
 type AiDeps = {
   repo: GameRepository;
@@ -11,7 +11,7 @@ type AiDeps = {
 };
 
 async function loadOwnedGameParticipants(deps: AiDeps, userId: string, gameId: string) {
-  const game = await getOwnedGame(deps.repo, gameId, userId);
+  const game = await getAccessibleGame(deps.repo, gameId, userId);
   if (!game) throw new NotFoundError();
 
   const participants = await deps.repo.participants.listByGame(game.id);

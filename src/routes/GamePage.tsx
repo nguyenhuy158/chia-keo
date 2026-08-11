@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { API_BASE } from "../adapters/browser/http-game-api";
+import { CollaboratorsPanel } from "../components/CollaboratorsPanel";
 import { CopyMenu } from "../components/CopyMenu";
 import { ExpensePanel } from "../components/ExpensePanel";
 import { GameDashboard } from "../components/GameDashboard";
@@ -305,7 +306,7 @@ export function GamePage() {
     </button>
   );
 
-  const deleteAction = (
+  const deleteAction = game.isOwner ? (
     <button
       type="button"
       onClick={handleDeleteGame}
@@ -315,6 +316,14 @@ export function GamePage() {
       <Trash2 size={16} />
       Xóa
     </button>
+  ) : null;
+
+  const collaboratorsPanel = (
+    <CollaboratorsPanel
+      gameId={game.id}
+      isOwner={game.isOwner}
+      collaborators={game.collaborators}
+    />
   );
 
   return (
@@ -410,6 +419,7 @@ export function GamePage() {
         <div className="space-y-5">
           {dashboard}
           {summaryImageCard}
+          {collaboratorsPanel}
         </div>
       </div>
 
@@ -419,6 +429,7 @@ export function GamePage() {
         {activeSection === "expenses" && expensePanel}
         {activeSection === "summary" && dashboard}
         {activeSection === "summary" && summaryImageCard}
+        {activeSection === "summary" && collaboratorsPanel}
         {activeSection === "more" && (
           <div className="space-y-4">
             <div className="flex gap-2">

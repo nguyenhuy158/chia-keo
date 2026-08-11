@@ -15,12 +15,12 @@ import {
 import { createId, nowIso } from "../../lib/ids";
 import type { GameRepository } from "../ports/game-repository";
 import { InvalidInputError, NotFoundError } from "./errors";
-import { getOwnedGame, loadGameDetail } from "./game-detail";
+import { getAccessibleGame, hasGameAccess, loadGameDetail } from "./game-detail";
 import { recordEvent } from "./game-events";
 
 async function loadOwnedExpense(repo: GameRepository, expenseId: string, userId: string) {
   const row = await repo.expenses.getWithGame(expenseId);
-  if (!row || row.game.ownerUserId !== userId) return null;
+  if (!row || !(await hasGameAccess(repo, row.game, userId))) return null;
   return row;
 }
 
@@ -73,7 +73,7 @@ export async function addExpense(
   gameId: string,
   input: ExpenseInput,
 ): Promise<ApiGameDetail> {
-  const game = await getOwnedGame(repo, gameId, userId);
+  const game = await getAccessibleGame(repo, gameId, userId);
   if (!game) throw new NotFoundError();
 
   const priorTotals = await loadPriorTotals(repo, game.id);
@@ -107,7 +107,7 @@ export async function addExpense(
   });
   await repo.splits.replace(expenseId, toNewSplitRows(expenseId, rows));
 
-  const detail = await loadGameDetail(repo, game);
+  const detail = await loadGameDetail(repo, game, userId);
   // Ten nguoi lay tu detail vua tai, khong query them.
   const nameById = new Map(detail.participants.map((row) => [row.id, row.name]));
   await recordEvent(repo, game.id, {
@@ -183,7 +183,7 @@ export async function updateExpense(
     beforeAmount: row.expense.amount,
   });
 
-  return loadGameDetail(repo, row.game);
+  return loadGameDetail(repo, row.game, userId);
 }
 
 export async function removeExpense(
@@ -222,7 +222,7 @@ export async function removeExpense(
     },
   });
 
-  return loadGameDetail(repo, row.game);
+  return loadGameDetail(repo, row.game, userId);
 }
 
 export async function recordTransfer(
@@ -231,7 +231,7 @@ export async function recordTransfer(
   gameId: string,
   input: TransferInput,
 ): Promise<ApiGameDetail> {
-  const game = await getOwnedGame(repo, gameId, userId);
+  const game = await getAccessibleGame(repo, gameId, userId);
   if (!game) throw new NotFoundError();
 
   const participantIds = new Set(await repo.participants.listIdsByGame(game.id));
@@ -266,7 +266,7 @@ export async function recordTransfer(
     },
   ]);
 
-  const detail = await loadGameDetail(repo, game);
+  const detail = await loadGameDetail(repo, game, userId);
   const nameById = new Map(detail.participants.map((person) => [person.id, person.name]));
   await recordEvent(repo, game.id, {
     kind: "transfer_added",
@@ -289,7 +289,7 @@ export async function reorderExpenses(
   gameId: string,
   orderedIds: string[],
 ): Promise<ApiGameDetail> {
-  const game = await getOwnedGame(repo, gameId, userId);
+  const game = await getAccessibleGame(repo, gameId, userId);
   if (!game) throw new NotFoundError();
 
   const existingIds = new Set((await repo.expenses.listByGame(gameId)).map((row) => row.id));
@@ -298,7 +298,7 @@ export async function reorderExpenses(
 
   await repo.expenses.reorder(game.id, orderedIds);
 
-  return loadGameDetail(repo, game);
+  return loadGameDetail(repo, game, userId);
 }
 
 export async function reallocateExpenses(repo: GameRepository, expenseIds: string[]) {

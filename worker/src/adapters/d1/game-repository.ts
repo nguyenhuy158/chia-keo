@@ -1,6 +1,7 @@
 import { and, asc, desc, eq, inArray, isNotNull, isNull, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
 import type {
+  CollaboratorRow,
   ExpenseRow,
   ExpenseSplitRow,
   ExpenseUpdate,
@@ -72,6 +73,17 @@ export function createD1GameRepository(d1: D1Database): GameRepository {
           .from(schema.games)
           .where(and(eq(schema.games.ownerUserId, userId), isNull(schema.games.deletedAt)))
           .orderBy(sql`${schema.games.createdAt} desc`);
+      },
+      async listSharedWithUser(userId): Promise<GameRow[]> {
+        const rows = await db
+          .select({ game: schema.games })
+          .from(schema.gameCollaborators)
+          .innerJoin(schema.games, eq(schema.games.id, schema.gameCollaborators.gameId))
+          .where(
+            and(eq(schema.gameCollaborators.userId, userId), isNull(schema.games.deletedAt)),
+          )
+          .orderBy(sql`${schema.games.createdAt} desc`);
+        return rows.map((row) => row.game);
       },
       async listDeletedByOwner(userId): Promise<GameRow[]> {
         return db
@@ -577,6 +589,75 @@ export function createD1GameRepository(d1: D1Database): GameRepository {
           .where(eq(schema.shareLinks.token, token))
           .limit(1);
         return rows[0] || null;
+      },
+    },
+
+    users: {
+      async findIdByEmail(email) {
+        const rows = await db
+          .select({ id: schema.user.id, name: schema.user.name, email: schema.user.email })
+          .from(schema.user)
+          .where(sql`lower(${schema.user.email}) = lower(${email})`)
+          .limit(1);
+        return rows[0] || null;
+      },
+    },
+
+    gameCollaborators: {
+      async listByGame(gameId): Promise<CollaboratorRow[]> {
+        const rows = await db
+          .select({
+            id: schema.gameCollaborators.id,
+            gameId: schema.gameCollaborators.gameId,
+            userId: schema.gameCollaborators.userId,
+            createdAt: schema.gameCollaborators.createdAt,
+            name: schema.user.name,
+            email: schema.user.email,
+          })
+          .from(schema.gameCollaborators)
+          .innerJoin(schema.user, eq(schema.user.id, schema.gameCollaborators.userId))
+          .where(eq(schema.gameCollaborators.gameId, gameId))
+          .orderBy(asc(schema.gameCollaborators.createdAt));
+        return rows;
+      },
+      async isCollaborator(gameId, userId) {
+        const rows = await db
+          .select({ id: schema.gameCollaborators.id })
+          .from(schema.gameCollaborators)
+          .where(
+            and(
+              eq(schema.gameCollaborators.gameId, gameId),
+              eq(schema.gameCollaborators.userId, userId),
+            ),
+          )
+          .limit(1);
+        return rows.length > 0;
+      },
+      async add(row) {
+        const existing = await db
+          .select({ id: schema.gameCollaborators.id })
+          .from(schema.gameCollaborators)
+          .where(
+            and(
+              eq(schema.gameCollaborators.gameId, row.gameId),
+              eq(schema.gameCollaborators.userId, row.userId),
+            ),
+          )
+          .limit(1);
+        if (existing.length > 0) return false;
+
+        await db.insert(schema.gameCollaborators).values(row);
+        return true;
+      },
+      async remove(gameId, userId) {
+        await db
+          .delete(schema.gameCollaborators)
+          .where(
+            and(
+              eq(schema.gameCollaborators.gameId, gameId),
+              eq(schema.gameCollaborators.userId, userId),
+            ),
+          );
       },
     },
   };

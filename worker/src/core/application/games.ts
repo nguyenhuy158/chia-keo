@@ -8,11 +8,20 @@ import {
 import { createGameCode, createId, nowIso } from "../../lib/ids";
 import type { GameChanges, GameRepository, GameRow } from "../ports/game-repository";
 import { InvalidInputError, NotFoundError } from "./errors";
-import { getOwnedGame, getOwnedGameEvenIfDeleted, loadGameDetail } from "./game-detail";
+import {
+  getAccessibleGame,
+  getOwnedGame,
+  getOwnedGameEvenIfDeleted,
+  loadGameDetail,
+} from "./game-detail";
 import { recordEvent } from "./game-events";
 
 export async function listGames(repo: GameRepository, userId: string): Promise<ApiGame[]> {
-  const gameRows = await repo.games.listByOwner(userId);
+  const [ownedRows, sharedRows] = await Promise.all([
+    repo.games.listByOwner(userId),
+    repo.games.listSharedWithUser(userId),
+  ]);
+  const gameRows = [...ownedRows, ...sharedRows];
   const gameIds = gameRows.map((row) => row.id);
 
   const [participantCounts, expenseCounts] = await Promise.all([
@@ -27,6 +36,7 @@ export async function listGames(repo: GameRepository, userId: string): Promise<A
     createdAt: row.createdAt,
     participantCount: participantCounts.get(row.id) || 0,
     expenseCount: expenseCounts.get(row.id) || 0,
+    isOwner: row.ownerUserId === userId,
   }));
 }
 
@@ -82,7 +92,7 @@ export async function createGame(
 
   await recordEvent(repo, game.id, { kind: "game_created", name: game.name });
 
-  return loadGameDetail(repo, game);
+  return loadGameDetail(repo, game, userId);
 }
 
 export async function getGameDetailForOwner(
@@ -90,9 +100,9 @@ export async function getGameDetailForOwner(
   userId: string,
   gameId: string,
 ): Promise<ApiGameDetail> {
-  const game = await getOwnedGame(repo, gameId, userId);
+  const game = await getAccessibleGame(repo, gameId, userId);
   if (!game) throw new NotFoundError();
-  return loadGameDetail(repo, game);
+  return loadGameDetail(repo, game, userId);
 }
 
 export async function updateGame(
@@ -101,7 +111,7 @@ export async function updateGame(
   gameId: string,
   input: GameUpdateInput,
 ): Promise<ApiGameDetail> {
-  const game = await getOwnedGame(repo, gameId, userId);
+  const game = await getAccessibleGame(repo, gameId, userId);
   if (!game) throw new NotFoundError();
 
   const changes: GameChanges = {
@@ -124,7 +134,7 @@ export async function updateGame(
 
   // Doi che do hoac doi nguoi nhan deu la "doi cach chuyen tien"; ten nguoi
   // nhan lay tu detail moi (id vua chon co the la nguoi nao trong danh sach).
-  const detail = await loadGameDetail(repo, { ...game, ...changes });
+  const detail = await loadGameDetail(repo, { ...game, ...changes }, userId);
 
   if (changes.settlementMode !== undefined || changes.settlementHostId !== undefined) {
     const hostId = changes.settlementHostId ?? game.settlementHostId;
@@ -145,7 +155,7 @@ export async function duplicateGame(
   userId: string,
   gameId: string,
 ): Promise<ApiGameDetail> {
-  const source = await getOwnedGame(repo, gameId, userId);
+  const source = await getAccessibleGame(repo, gameId, userId);
   if (!source) throw new NotFoundError();
 
   const participantRows = await repo.participants.listByGame(source.id);
@@ -196,7 +206,7 @@ export async function duplicateGame(
 
   await recordEvent(repo, game.id, { kind: "game_created", name: game.name });
 
-  return loadGameDetail(repo, game);
+  return loadGameDetail(repo, game, userId);
 }
 
 /**
@@ -248,6 +258,7 @@ export async function listDeletedGames(
     deletedAt: row.deletedAt || "",
     participantCount: participantCounts.get(row.id) || 0,
     expenseCount: expenseCounts.get(row.id) || 0,
+    isOwner: true,
   }));
 }
 
@@ -260,7 +271,7 @@ export async function restoreGame(
   if (!game) throw new NotFoundError();
 
   await repo.games.setDeletedAt(game.id, null);
-  return loadGameDetail(repo, { ...game, deletedAt: null });
+  return loadGameDetail(repo, { ...game, deletedAt: null }, userId);
 }
 
 /** Xoa han khoi thung rac. Cascade xoa het, khong co buoc hoan tac nao nua. */

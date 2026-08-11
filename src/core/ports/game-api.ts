@@ -94,6 +94,11 @@ export type GameApiPort = {
     rotate(gameId: string): Promise<ApiGameDetail>;
     setEnabled(gameId: string, enabled: boolean): Promise<ApiGameDetail>;
   };
+  collaborators: {
+    /** Chi chu cuoc choi goi duoc; nguoi duoc chia se khac chi doc `collaborators` trong detail. */
+    add(gameId: string, email: string): Promise<ApiGameDetail>;
+    remove(gameId: string, collaboratorUserId: string): Promise<ApiGameDetail>;
+  };
   photos: {
     /** Danh sach anh cua cuoc chia, chi kem ban thu nho. */
     list(gameId: string): Promise<ApiPhoto[]>;
