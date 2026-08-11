@@ -13,7 +13,14 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type PointerEvent as ReactPointerEvent,
+} from "react";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 import type { ResolvedAiExpense } from "../../shared/ai";
@@ -299,8 +306,14 @@ export function ExpensePanel({
 
   const visibleExpenses = expenses.filter((expense) => expense.kind !== "transfer");
   const [dragOrder, setDragOrder] = useState<string[] | null>(null);
+  const [draggingId, setDraggingId] = useState<string | null>(null);
+  const [dragTranslateY, setDragTranslateY] = useState(0);
   const draggingIdRef = useRef<string | null>(null);
+  const dragStartYRef = useRef(0);
   const rowRefs = useRef(new Map<string, HTMLDivElement>());
+  // Vi tri cac dong ngay truoc khi doi thu tu, de FLIP: dong khac tru
+  // (draggingId) truot vao vi tri moi bang animation thay vi nhay cung.
+  const prevRectsRef = useRef(new Map<string, DOMRect>());
 
   const orderedExpenses = dragOrder
     ? (dragOrder
@@ -308,16 +321,42 @@ export function ExpensePanel({
         .filter(Boolean) as ApiExpense[])
     : visibleExpenses;
 
+  useLayoutEffect(() => {
+    const prevRects = prevRectsRef.current;
+    if (prevRects.size === 0) return;
+    prevRectsRef.current = new Map();
+
+    for (const [id, node] of rowRefs.current) {
+      if (id === draggingIdRef.current) continue;
+      const before = prevRects.get(id);
+      if (!before) continue;
+      const after = node.getBoundingClientRect();
+      const deltaY = before.top - after.top;
+      if (deltaY === 0) continue;
+
+      node.style.transition = "none";
+      node.style.transform = `translateY(${deltaY}px)`;
+      requestAnimationFrame(() => {
+        node.style.transition = "transform 180ms ease";
+        node.style.transform = "";
+      });
+    }
+  }, [dragOrder]);
+
   function handleDragPointerDown(expenseId: string, event: ReactPointerEvent) {
     event.preventDefault();
     (event.target as HTMLElement).setPointerCapture(event.pointerId);
     draggingIdRef.current = expenseId;
+    setDraggingId(expenseId);
+    dragStartYRef.current = event.clientY;
+    setDragTranslateY(0);
     setDragOrder(visibleExpenses.map((expense) => expense.id));
   }
 
   function handleDragPointerMove(event: ReactPointerEvent) {
     const draggingId = draggingIdRef.current;
     if (!draggingId) return;
+    setDragTranslateY(event.clientY - dragStartYRef.current);
 
     let closestId: string | null = null;
     let closestDistance = Infinity;
@@ -331,6 +370,10 @@ export function ExpensePanel({
       }
     }
     if (!closestId || closestId === draggingId) return;
+
+    const rects = new Map<string, DOMRect>();
+    for (const [id, node] of rowRefs.current) rects.set(id, node.getBoundingClientRect());
+    prevRectsRef.current = rects;
 
     setDragOrder((current) => {
       const order = current ? [...current] : visibleExpenses.map((expense) => expense.id);
@@ -346,6 +389,8 @@ export function ExpensePanel({
   function handleDragPointerUp() {
     const draggingId = draggingIdRef.current;
     draggingIdRef.current = null;
+    setDraggingId(null);
+    setDragTranslateY(0);
     if (!draggingId || !dragOrder) return;
 
     const originalOrder = visibleExpenses.map((expense) => expense.id);
@@ -1069,8 +1114,15 @@ function handleSplitModeChange(mode: SplitMode) {
                 if (node) rowRefs.current.set(expense.id, node);
                 else rowRefs.current.delete(expense.id);
               }}
+              style={
+                draggingId === expense.id
+                  ? { transform: `translateY(${dragTranslateY}px)`, position: "relative", zIndex: 10 }
+                  : undefined
+              }
               className={`rounded-md border p-3 ${
-                draggingIdRef.current === expense.id ? "opacity-60" : ""
+                draggingId === expense.id
+                  ? "opacity-90 shadow-lg"
+                  : "transition-shadow"
               } ${
                 isEditing
                   ? "border-violet-500 bg-violet-50 dark:border-violet-500 dark:bg-violet-500/10"
