@@ -1,4 +1,7 @@
+import { createAvatar } from "@dicebear/core";
+import { funEmoji } from "@dicebear/collection";
 import type { ApiParticipant } from "../../../shared/api-types";
+import { normalizeContactName } from "../../../shared/contacts";
 import {
   buildSummaryDocument,
   formatThousands,
@@ -26,6 +29,9 @@ const QR_BLOCK_GAP = 16;
 /** Vien trang lot quanh QR khi nen anh toi. */
 const QR_MAT_PADDING = 10;
 const QR_LOAD_TIMEOUT_MS = 8_000;
+/** Duong kinh avatar ve truoc ten tung nguoi (o phan "TỪNG NGƯỜI"). */
+const AVATAR_SIZE = 20;
+const AVATAR_TEXT_GAP = 8;
 /** Truyen 0 cho VietQR de QR khong gan san so tien, nguoi quet tu nhap. */
 const QR_AMOUNT_FREE = 0;
 const FONT_LOAD_TIMEOUT_MS = 3_000;
@@ -144,6 +150,36 @@ async function loadQrImage(payee: ApiParticipant, amount: number, code: string) 
   return loadImage(`${API_BASE}${buildVietQrProxyPath(payee, amount, code)}`);
 }
 
+/**
+ * Avatar sinh tu ten (xem Avatar.tsx — cung seed nen ra dung avatar da thay
+ * trong app), khong phai anh tai qua mang nen khong can crossOrigin thuc su.
+ */
+async function loadAvatarImage(name: string) {
+  const seed = normalizeContactName(name) || "?";
+  const dataUri = createAvatar(funEmoji, { seed, size: AVATAR_SIZE * PIXEL_SCALE }).toDataUri();
+  return loadImage(dataUri);
+}
+
+async function loadAvatarsByParticipantId(participants: ApiParticipant[]) {
+  const loaded = await Promise.all(
+    participants.map(async (participant) => {
+      const image = await loadAvatarImage(participant.name);
+      return image ? ([participant.id, image] as const) : null;
+    }),
+  );
+  return new Map(loaded.filter((entry): entry is [string, HTMLImageElement] => entry !== null));
+}
+
+function drawAvatar(context: CanvasRenderingContext2D, image: HTMLImageElement, x: number, y: number) {
+  context.save();
+  context.beginPath();
+  context.arc(x + AVATAR_SIZE / 2, y + AVATAR_SIZE / 2, AVATAR_SIZE / 2, 0, Math.PI * 2);
+  context.closePath();
+  context.clip();
+  context.drawImage(image, x, y, AVATAR_SIZE, AVATAR_SIZE);
+  context.restore();
+}
+
 function buildAccountLines(payee: ApiParticipant, styles: Styles): QrLine[] {
   const detail = [getVietQrBankLabel(payee.bankId), payee.accountNo].filter(Boolean).join(" · ");
   return [
@@ -256,13 +292,14 @@ function buildTextBlocks(
   context: CanvasRenderingContext2D,
   text: string,
   style: TextStyle,
-  options: { divider?: string } = {},
+  options: { divider?: string; avatar?: HTMLImageElement | null } = {},
 ): Block[] {
-  const maxWidth = CARD_WIDTH - PADDING * 2;
+  const avatarOffset = options.avatar ? AVATAR_SIZE + AVATAR_TEXT_GAP : 0;
+  const maxWidth = CARD_WIDTH - PADDING * 2 - avatarOffset;
 
   return wrapText(context, text, style, maxWidth).map((part, index) => {
     const gapBefore = index === 0 ? style.gapBefore : 0;
-    const x = PADDING + (index === 0 ? 0 : WRAP_INDENT);
+    const x = PADDING + avatarOffset + (index === 0 ? 0 : WRAP_INDENT);
 
     return {
       height: style.lineHeight,
@@ -271,6 +308,9 @@ function buildTextBlocks(
         if (options.divider && index === 0 && gapBefore > 0) {
           target.fillStyle = options.divider;
           target.fillRect(PADDING, y - gapBefore / 2, CARD_WIDTH - PADDING * 2, 1);
+        }
+        if (options.avatar && index === 0) {
+          drawAvatar(target, options.avatar, PADDING, y + (style.lineHeight - AVATAR_SIZE) / 2);
         }
         drawText(target, part, style, x, y);
       },
@@ -318,6 +358,8 @@ function buildBlocks(
   qrCards: QrCards,
   styles: Styles,
   palette: SummaryImagePalette,
+  participants: ApiParticipant[],
+  avatarsByParticipantId: Map<string, HTMLImageElement>,
 ): Block[] {
   const blocks: Block[] = [
     ...buildTextBlocks(context, doc.title, styles.title),
@@ -345,8 +387,16 @@ function buildBlocks(
       // Ban chi tiet chen dong nhom ("Chuyen vao X — tong ...:") giua cac dong
       // chuyen tien; khong danh dau thi no lan vao nhu mot luot chuyen nua.
       const isGroupLabel = section.id === "settlements" && !line.startsWith("- ");
+      // Dong "TỪNG NGƯỜI" xep dung thu tu participants (xem buildPersonLines),
+      // nen zip theo index la lay dung nguoi cho dong do.
+      const avatar =
+        section.id === "people"
+          ? avatarsByParticipantId.get(participants[index]?.id || "")
+          : undefined;
       blocks.push(
-        ...buildTextBlocks(context, line, isGroupLabel ? styles.groupLabel : styles.body),
+        ...buildTextBlocks(context, line, isGroupLabel ? styles.groupLabel : styles.body, {
+          avatar,
+        }),
       );
     });
   }
@@ -403,21 +453,34 @@ export async function renderSummaryImage(
   backgroundId?: string,
   /** false thi bo qua tai va ve QR, chi con chu — dung khi chia se noi khong muon lo tai khoan qua QR. */
   showQr = true,
+  /** false thi bo qua avatar truoc ten tung nguoi. */
+  showAvatar = true,
 ): Promise<Blob> {
   const background = getSummaryImageBackground(backgroundId);
   const styles = buildStyles(background.palette);
 
   const doc = buildSummaryDocument(input, variant);
   // Font phai san sang truoc khi do chu, khong thi wrapText do bang font sai.
-  const [, qrCards] = await Promise.all([
+  const [, qrCards, avatarsByParticipantId] = await Promise.all([
     ensureImageFontsReady(),
     showQr
       ? loadQrCards(input, doc, styles)
       : Promise.resolve<QrCards>({ byLineIndex: new Map(), host: null }),
+    showAvatar
+      ? loadAvatarsByParticipantId(input.participants)
+      : Promise.resolve(new Map<string, HTMLImageElement>()),
   ]);
 
   const measure = createContext(1, 1);
-  const blocks = buildBlocks(doc, measure.context, qrCards, styles, background.palette);
+  const blocks = buildBlocks(
+    doc,
+    measure.context,
+    qrCards,
+    styles,
+    background.palette,
+    input.participants,
+    avatarsByParticipantId,
+  );
 
   const contentHeight = blocks.reduce((total, block) => total + block.gapBefore + block.height, 0);
   const cardHeight = ACCENT_BAR_HEIGHT + PADDING * 2 + contentHeight;

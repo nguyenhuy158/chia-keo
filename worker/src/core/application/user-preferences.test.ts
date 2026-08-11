@@ -20,12 +20,12 @@ function createRepo(rows: UserPreferenceRow[]) {
 describe("user preferences", () => {
   it("tra ve mac dinh khi user chua luu gi", async () => {
     const { repo } = createRepo([]);
-    expect(await getUserPreferences(repo, "u1")).toEqual({ preferences: { summaryShowQr: true } });
+    expect(await getUserPreferences(repo, "u1")).toEqual({ preferences: { summaryShowQr: true, summaryShowAvatar: true } });
   });
 
   it("doc lai gia tri da luu", async () => {
     const { repo } = createRepo([{ key: "summaryShowQr", value: "false" }]);
-    expect(await getUserPreferences(repo, "u1")).toEqual({ preferences: { summaryShowQr: false } });
+    expect(await getUserPreferences(repo, "u1")).toEqual({ preferences: { summaryShowQr: false, summaryShowAvatar: true } });
   });
 
   it("bo qua dong hong hoac key la, khong lam vo phan con lai", async () => {
@@ -33,14 +33,14 @@ describe("user preferences", () => {
       { key: "summaryShowQr", value: "{khong-phai-json" },
       { key: "tuyChonDaBo", value: "\"x\"" },
     ]);
-    expect(await getUserPreferences(repo, "u1")).toEqual({ preferences: { summaryShowQr: true } });
+    expect(await getUserPreferences(repo, "u1")).toEqual({ preferences: { summaryShowQr: true, summaryShowAvatar: true } });
   });
 
   it("ghi roi tra ve toan bo tuy chon", async () => {
     const { repo, stored } = createRepo([]);
     const result = await updateUserPreferences(repo, "u1", { summaryShowQr: false });
 
-    expect(result).toEqual({ preferences: { summaryShowQr: false } });
+    expect(result).toEqual({ preferences: { summaryShowQr: false, summaryShowAvatar: true } });
     expect(stored.get("summaryShowQr")).toBe("false");
   });
 });

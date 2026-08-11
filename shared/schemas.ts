@@ -206,10 +206,13 @@ export const mcpTokenInputSchema = z.object({
 export const userPreferencesSchema = z.object({
   /** Hien QR chuyen khoan tren anh tong ket. */
   summaryShowQr: z.boolean(),
+  /** Hien avatar truoc ten tung nguoi tren anh tong ket. */
+  summaryShowAvatar: z.boolean(),
 });
 
 export const DEFAULT_USER_PREFERENCES: UserPreferences = {
   summaryShowQr: true,
+  summaryShowAvatar: true,
 };
 
 export const USER_PREFERENCE_KEYS = Object.keys(

@@ -66,7 +66,7 @@ export function SummaryImageCard({ input }: { input: SummaryTextInput }) {
   const [variant, setVariant] = useState<SummaryVariant>("compact");
   // Nho lua chon o server: bat/tat QR la thoi quen cua tung nhom, va giu
   // nguyen khi doi may hay xoa cache trinh duyet.
-  const { summaryShowQr: showQr } = usePreferences();
+  const { summaryShowQr: showQr, summaryShowAvatar: showAvatar } = usePreferences();
   const updatePreferences = useUpdatePreferences();
   const [viewMode, setViewMode] = useState<ViewMode>("image");
   const [zoomed, setZoomed] = useState(false);
@@ -84,8 +84,8 @@ export function SummaryImageCard({ input }: { input: SummaryTextInput }) {
     const accounts = input.participants
       .map((participant) => `${participant.bankId}:${participant.accountNo}`)
       .join("|");
-    return `${backgroundId}\n${variant}\n${showQr}\n${accounts}\n${buildSummaryText(input, variant)}`;
-  }, [backgroundId, variant, showQr, input]);
+    return `${backgroundId}\n${variant}\n${showQr}\n${showAvatar}\n${accounts}\n${buildSummaryText(input, variant)}`;
+  }, [backgroundId, variant, showQr, showAvatar, input]);
 
   const urlRef = useRef<string | null>(null);
 
@@ -97,7 +97,7 @@ export function SummaryImageCard({ input }: { input: SummaryTextInput }) {
     setPending(true);
     setFailed(false);
 
-    renderSummaryImage(inputRef.current, variant, backgroundId, showQr).then(
+    renderSummaryImage(inputRef.current, variant, backgroundId, showQr, showAvatar).then(
       (rendered) => {
         if (cancelled) return;
 
@@ -191,6 +191,11 @@ export function SummaryImageCard({ input }: { input: SummaryTextInput }) {
             checked={showQr}
             onChange={(next) => updatePreferences.mutate({ summaryShowQr: next })}
             label="Hiện QR chuyển khoản trên ảnh"
+          />
+          <Switch
+            checked={showAvatar}
+            onChange={(next) => updatePreferences.mutate({ summaryShowAvatar: next })}
+            label="Hiện avatar trước tên trên ảnh"
           />
         </div>
       )}
