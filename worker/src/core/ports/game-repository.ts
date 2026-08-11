@@ -293,6 +293,8 @@ export type GameRepository = {
     listAllExceptOwner(
       ownerUserId: string,
     ): Promise<{ id: string; name: string; email: string }[]>;
+    /** Chi doi ten hien thi; email/dang nhap khong doi. */
+    updateName(userId: string, name: string, updatedAt: Date): Promise<void>;
   };
   gameCollaborators: {
     listByGame(gameId: string): Promise<CollaboratorRow[]>;

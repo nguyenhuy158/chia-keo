@@ -180,6 +180,16 @@ export const collaboratorInputSchema = z.object({
   email: z.string().trim().min(1).max(200).email("Email không hợp lệ"),
 });
 
+export const USER_NAME_MAX_LENGTH = 60;
+
+export const profileInputSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(1, "Tên không được để trống")
+    .max(USER_NAME_MAX_LENGTH, "Tên quá dài"),
+});
+
 export const MCP_TOKEN_NAME_MAX_LENGTH = 60;
 export const MAX_MCP_TOKENS_PER_USER = 20;
 

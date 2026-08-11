@@ -4,7 +4,7 @@
 // cookie SSO se bi coi la chua dang nhap va bi da ve /login vo han. Hook nay
 // hoi `/api/session` — noi backend da gop hai duong lai.
 
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { API_BASE } from "../browser/http-game-api";
 
 export type SessionUser = { id: string; name: string; image: string | null };
@@ -25,4 +25,30 @@ export function useAppSession() {
   });
 
   return { user: query.data?.user || null, isPending: query.isPending };
+}
+
+/** Doi ten hien thi cua chinh minh; ghi luon vao cache session sau khi luu. */
+export function useUpdateProfileName() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (name: string): Promise<{ name: string }> => {
+      const response = await fetch(`${API_BASE}/api/profile`, {
+        method: "PATCH",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name }),
+      });
+      if (!response.ok) {
+        const body = (await response.json().catch(() => null)) as { error?: string } | null;
+        throw new Error(body?.error || "update_failed");
+      }
+      return response.json();
+    },
+    onSuccess: ({ name }) => {
+      queryClient.setQueryData<{ user: SessionUser | null }>(sessionKeys.all, (previous) =>
+        previous?.user ? { user: { ...previous.user, name } } : previous,
+      );
+    },
+  });
 }

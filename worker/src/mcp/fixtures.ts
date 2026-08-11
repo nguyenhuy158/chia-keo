@@ -258,6 +258,7 @@ export function fakeRepo(
     users: {
       findIdByEmail: unused("users.findIdByEmail"),
       listAllExceptOwner: unused("users.listAllExceptOwner"),
+      updateName: unused("users.updateName"),
     },
     gameCollaborators: {
       listByGame: async () => [],

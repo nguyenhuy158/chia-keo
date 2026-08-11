@@ -608,6 +608,9 @@ export function createD1GameRepository(d1: D1Database): GameRepository {
           .where(sql`${schema.user.id} != ${ownerUserId}`)
           .orderBy(asc(schema.user.name));
       },
+      async updateName(userId, name, updatedAt) {
+        await db.update(schema.user).set({ name, updatedAt }).where(eq(schema.user.id, userId));
+      },
     },
 
     gameCollaborators: {

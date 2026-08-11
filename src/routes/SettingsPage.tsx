@@ -1,8 +1,9 @@
 import { Link } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
 import { McpTokenPanel } from "../components/McpTokenPanel";
+import { ProfileNamePanel } from "../components/ProfileNamePanel";
 
-/** Trang cai dat cua tai khoan; hien chi co phan token MCP. */
+/** Trang cai dat cua tai khoan. */
 export function SettingsPage() {
   return (
     <div className="space-y-3">
@@ -18,6 +19,7 @@ export function SettingsPage() {
         <h1 className="text-sm font-semibold text-stone-950 dark:text-stone-50">Cài đặt</h1>
       </div>
 
+      <ProfileNamePanel />
       <McpTokenPanel />
     </div>
   );
