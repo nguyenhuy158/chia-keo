@@ -67,16 +67,32 @@ export const MAX_SPLIT_WEIGHT = 1000;
 /**
  * Chia `amount` cho danh sach nguoi tham gia. Phan du (neu tien le) duoc cong
  * lan luot cho cac nguoi dau danh sach de tong split luon bang tong tien goc.
+ *
+ * `priorTotals` (khong bat buoc): tong tien nguoi do da bi chia o cac khoan
+ * chi truoc trong cung cuoc, dung de uu tien phan du cho nguoi dang chia it
+ * hon — tranh mot nguoi lien tuc dinh 1 dong le o nhieu khoan lien tiep.
  */
-export function allocateAmount(amount: number, participantIds: string[]): SplitShare[] {
+export function allocateAmount(
+  amount: number,
+  participantIds: string[],
+  priorTotals?: Map<string, number>,
+): SplitShare[] {
   if (participantIds.length === 0) return [];
 
   const base = Math.floor(amount / participantIds.length);
   const remainder = amount % participantIds.length;
 
-  return participantIds.map((participantId, index) => ({
+  const orderedIds = priorTotals
+    ? [...participantIds].sort((a, b) => {
+        const diff = (priorTotals.get(a) || 0) - (priorTotals.get(b) || 0);
+        return diff !== 0 ? diff : participantIds.indexOf(a) - participantIds.indexOf(b);
+      })
+    : participantIds;
+  const remainderIds = new Set(orderedIds.slice(0, remainder));
+
+  return participantIds.map((participantId) => ({
     participantId,
-    amount: base + (index < remainder ? 1 : 0),
+    amount: base + (remainderIds.has(participantId) ? 1 : 0),
   }));
 }
 
@@ -116,11 +132,12 @@ export function computeSplitRows(
   mode: SplitMode,
   participantIds: string[],
   splits: SplitValueInput[],
+  priorTotals?: Map<string, number>,
 ): ComputedSplit[] | null {
   if (mode === "equal") {
     const ids = [...new Set(participantIds)];
     if (ids.length === 0) return null;
-    return allocateAmount(amount, ids).map((share) => ({ ...share, weight: null }));
+    return allocateAmount(amount, ids, priorTotals).map((share) => ({ ...share, weight: null }));
   }
 
   if (splits.length === 0) return null;

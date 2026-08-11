@@ -34,6 +34,25 @@ function toNewSplitRows(expenseId: string, rows: ComputedSplit[]) {
   }));
 }
 
+/**
+ * Tong tien moi nguoi da bi chia o cac khoan chi khac trong cung cuoc (tru
+ * `excludeExpenseId` khi dang sua). Dung de uu tien phan du cho nguoi dang
+ * chia it hon, tranh mot nguoi lien tuc dinh tien le o nhieu khoan lien tiep.
+ */
+async function loadPriorTotals(repo: GameRepository, gameId: string, excludeExpenseId?: string) {
+  const expenseRows = await repo.expenses.listByGame(gameId);
+  const expenseIds = expenseRows
+    .map((row) => row.id)
+    .filter((id) => id !== excludeExpenseId);
+  const splitRows = await repo.splits.listByExpenseIds(expenseIds);
+
+  const totals = new Map<string, number>();
+  for (const split of splitRows) {
+    totals.set(split.participantId, (totals.get(split.participantId) || 0) + split.amount);
+  }
+  return totals;
+}
+
 async function assertMembers(
   repo: GameRepository,
   gameId: string,
@@ -57,7 +76,14 @@ export async function addExpense(
   const game = await getOwnedGame(repo, gameId, userId);
   if (!game) throw new NotFoundError();
 
-  const rows = computeSplitRows(input.amount, input.splitMode, input.splitParticipantIds, input.splits);
+  const priorTotals = await loadPriorTotals(repo, game.id);
+  const rows = computeSplitRows(
+    input.amount,
+    input.splitMode,
+    input.splitParticipantIds,
+    input.splits,
+    priorTotals,
+  );
   if (!rows) throw new InvalidInputError();
 
   await assertMembers(repo, game.id, input.payerParticipantId, rows);
@@ -126,7 +152,8 @@ export async function updateExpense(
       value: splitMode === "shares" ? split.weight || 1 : split.amount,
     }));
 
-  const rows = computeSplitRows(amount, splitMode, splitParticipantIds, splits);
+  const priorTotals = await loadPriorTotals(repo, row.game.id, row.expense.id);
+  const rows = computeSplitRows(amount, splitMode, splitParticipantIds, splits, priorTotals);
   if (!rows) throw new InvalidInputError();
 
   const payerParticipantId = input.payerParticipantId ?? row.expense.payerParticipantId;
