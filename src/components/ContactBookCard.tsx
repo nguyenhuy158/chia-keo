@@ -19,6 +19,9 @@ type Draft = { name: string; bankId: string; accountNo: string; accountName: str
 
 const EMPTY: Draft = { name: "", bankId: "", accountNo: "", accountName: "" };
 
+/** So dong hien mac dinh; bam "Xem thêm" moi lo them tung nhom nay. */
+const PAGE_SIZE = 8;
+
 function DraftForm({
   draft,
   onChange,
@@ -165,9 +168,12 @@ export function ContactBookCard() {
   const [adding, setAdding] = useState(false);
   const [draft, setDraft] = useState<Draft>(EMPTY);
   const [editingKey, setEditingKey] = useState<string | null>(null);
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
   const pending = createContact.isPending || updateContact.isPending || deleteContact.isPending;
   const contacts = contactsQuery.data || [];
+  const visibleContacts = contacts.slice(0, visibleCount);
+  const remainingCount = contacts.length - visibleContacts.length;
 
   function startEdit(contact: Contact) {
     setEditingKey(contact.key);
@@ -262,7 +268,7 @@ export function ContactBookCard() {
         </p>
       ) : (
         <div className="divide-y divide-stone-100 dark:divide-stone-800">
-          {contacts.map((contact) =>
+          {visibleContacts.map((contact) =>
             editingKey === contact.key ? (
               <div key={contact.key} className="py-2">
                 <DraftForm
@@ -297,6 +303,16 @@ export function ContactBookCard() {
             ),
           )}
         </div>
+      )}
+
+      {remainingCount > 0 && (
+        <button
+          type="button"
+          onClick={() => setVisibleCount((current) => current + PAGE_SIZE)}
+          className="mt-2 w-full rounded-md py-2 text-center text-sm font-medium text-violet-600 transition hover:bg-violet-50 dark:text-violet-400 dark:hover:bg-violet-500/10"
+        >
+          Xem thêm ({remainingCount})
+        </button>
       )}
     </section>
   );
