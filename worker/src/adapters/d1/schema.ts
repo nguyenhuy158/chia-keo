@@ -238,9 +238,12 @@ export const shareLinks = sqliteTable(
 );
 
 /**
- * Nguoi duoc chia se cuoc choi (nhap email, phai da co tai khoan trong he
- * thong). Duoc lam moi thu nhu chu, tru xoa/phuc hoi/xoa han cuoc choi —
- * nhung thao tac do van kiem tra rieng ownerUserId.
+ * Nguoi duoc chia se cuoc choi (nhap email). Duoc lam moi thu nhu chu, tru
+ * xoa/phuc hoi/xoa han cuoc choi — nhung thao tac do van kiem tra rieng
+ * ownerUserId.
+ *
+ * userId null = email chua tung dang nhap (invite "cho"); resolveSsoUserId
+ * tu dien userId vao ngay luc nguoi do dang nhap lan dau, khong can share lai.
  */
 export const gameCollaborators = sqliteTable(
   "game_collaborators",
@@ -249,15 +252,17 @@ export const gameCollaborators = sqliteTable(
     gameId: text("game_id")
       .notNull()
       .references(() => games.id, { onDelete: "cascade" }),
-    userId: text("user_id")
-      .notNull()
-      .references(() => user.id, { onDelete: "cascade" }),
+    userId: text("user_id").references(() => user.id, { onDelete: "cascade" }),
+    /** Email luc chia se, chuan hoa lowercase; dung de doi chieu khi user do login lan dau. */
+    invitedEmail: text("invited_email").notNull().default(""),
     createdAt: text("created_at").notNull(),
   },
   (table) => [
     index("game_collaborators_game_id_idx").on(table.gameId),
     index("game_collaborators_user_id_idx").on(table.userId),
+    index("game_collaborators_invited_email_idx").on(table.invitedEmail),
     uniqueIndex("game_collaborators_game_user_idx").on(table.gameId, table.userId),
+    uniqueIndex("game_collaborators_game_email_idx").on(table.gameId, table.invitedEmail),
   ],
 );
 

@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { and, eq, isNull, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
 import * as schema from "./adapters/d1/schema";
 import type { SsoClaims } from "./sso";
@@ -39,6 +39,19 @@ export async function resolveSsoUserId(db: D1Database, claims: SsoClaims): Promi
     createdAt: now,
     updatedAt: now,
   });
+
+  // Dien userId vao moi loi moi chia se cuoc choi ("cho") trung email nay: ai
+  // duoc chia se truoc khi tung dang nhap se thay ngay cuoc choi do sau khi
+  // dang nhap lan dau, khong phai duoc chia se lai.
+  await orm
+    .update(schema.gameCollaborators)
+    .set({ userId: id })
+    .where(
+      and(
+        sql`lower(${schema.gameCollaborators.invitedEmail}) = lower(${claims.email})`,
+        isNull(schema.gameCollaborators.userId),
+      ),
+    );
 
   return id;
 }
