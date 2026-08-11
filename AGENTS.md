@@ -67,7 +67,6 @@ worker/src/                    # Backend hexagon (Hono on Cloudflare Worker)
   lib/                         #   Small infra: http helpers, ids, require-user
   auth.ts  env.ts  index.ts    #   Better Auth, Env type, app + middleware
 
-functions/api/[[path]].ts      # Cloudflare Pages shim delegating /api/* to the worker
 drizzle/                       # Generated D1 migrations
 e2e/ui-smoke.mjs               # Playwright smoke suite (pnpm e2e)
 ```

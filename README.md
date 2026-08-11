@@ -72,9 +72,8 @@ Xem thêm: `docs/architecture.md`.
 - DB: Cloudflare D1.
 - ORM/migration: Drizzle ORM + drizzle-kit.
 - Auth: Better Auth + username plugin + password.
-- Deploy:
-  - Frontend deploy Cloudflare Pages.
-  - API Worker deploy bang Wrangler hoac GitHub Actions.
+- Deploy: mot Cloudflare Worker duy nhat (API + static assets), CI bang
+  Workers Builds.
 
 ### Thu vien nen them
 
@@ -274,8 +273,8 @@ Sau khi co balance, tinh danh sach chuyen khoan toi uu (peer-to-peer):
 Cho phep Claude (Claude Code, Claude Desktop...) doc du lieu chia tien qua
 [Model Context Protocol]. Endpoint: `POST /api/mcp`, transport **Streamable
 HTTP** o che do stateless — moi POST la mot JSON-RPC message va nhan lai dung
-mot JSON response, khong giu session va khong mo SSE (Pages Functions khong co
-Durable Object de giu state).
+mot JSON response, khong giu session va khong mo SSE (chua dung Durable Object
+de giu state).
 
 [Model Context Protocol]: https://modelcontextprotocol.io
 
@@ -347,22 +346,24 @@ Chi con **mot backend duy nhat**: Hono Worker trong `worker/`. Toan bo `/api/*`
 ly. Schema D1 quan ly bang Drizzle (`worker/src/db/schema.ts`, migration o
 `drizzle/`).
 
-Deploy qua **Cloudflare Pages** (khong dung GitHub Actions): Pages connect
-GitHub, tu build + deploy khi push `main`. Pages Functions chi con mot shim
-`functions/api/[[path]].ts` uy quyen moi request `/api/*` cho Hono app trong
-`worker/` — nen khong con backend trung lap.
+Deploy qua **Workers Builds** (khong dung GitHub Actions): Worker `chiakeo`
+connect GitHub, tu build + deploy khi push `main`. Cung mot Worker vua chay
+`/api/*` vua tra file tinh trong `dist/` — xem [docs/cloudflare-v1.md].
 
-Pages settings:
+Config nam trong `wrangler.toml`:
 
-- Framework preset: `Vite`
-- Build command: `pnpm build`
-- Build output directory: `dist`
+- `main = worker/src/index.ts`, `[assets]` `directory = ./dist` voi
+  `run_worker_first = ["/api/*"]` va SPA fallback
 - Compatibility flag: `nodejs_compat` (Better Auth can node builtins)
-- D1 binding: `DB` -> `chiakeo-db`
-- Secret: `BETTER_AUTH_SECRET` (bat buoc); `GEMINI_API_KEY` (tuy chon, bat AI);
+- `workers_dev = false`, chi phuc vu qua `chiakeo.huyab.click`
+- D1 binding: `DB` -> `chiakeo-db`; service binding: `MAILER` -> Worker `mailer`
+- Secret: `BETTER_AUTH_SECRET` (bat buoc); `MAILER_KEY` (khop
+  `INTERNAL_API_KEY` cua `mailer`); `GEMINI_API_KEY` (tuy chon, bat AI);
   `GEMINI_MODEL` (tuy chon, mac dinh `gemini-2.0-flash`)
 
-Config Worker/Pages nam trong `wrangler.toml`. Migration D1:
+[docs/cloudflare-v1.md]: docs/cloudflare-v1.md
+
+Migration D1:
 
 ```bash
 pnpm db:migrate:remote   # wrangler d1 migrations apply DB --remote
@@ -373,7 +374,6 @@ pnpm db:migrate:remote   # wrangler d1 migrations apply DB --remote
 Frontend:
 
 - `VITE_API_URL`
-- `VITE_GOOGLE_AUTH_URL`
 - `VITE_TURNSTILE_SITE_KEY`
 
 Worker:
@@ -398,7 +398,7 @@ Worker:
 
 1. ~~Tach routing FE sang TanStack Router.~~ Xong.
 2. ~~Them form validation bang react-hook-form + zod.~~ Xong.
-3. ~~Gop backend ve mot Worker (Hono) duy nhat, Pages uy quyen qua catch-all.~~ Xong.
+3. ~~Gop backend ve mot Worker (Hono) duy nhat, bo Pages.~~ Xong.
 4. ~~Bo sung migration Drizzle khi schema D1 thay doi.~~ Dang dung `drizzle/`.
 5. ~~Them React Query cho cache/sync API.~~ Xong.
 6. ~~Them Better Auth username/password.~~ Xong.

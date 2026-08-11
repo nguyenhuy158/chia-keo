@@ -1,13 +1,26 @@
 name = "chiakeo"
+main = "worker/src/index.ts"
 compatibility_date = "2026-07-03"
-# nodejs_compat can cho Pages Functions vi API dung better-auth + drizzle (can Node built-ins).
+# nodejs_compat can vi API dung better-auth + drizzle (can Node built-ins).
 compatibility_flags = ["nodejs_compat"]
-# Deploy bang Cloudflare Pages: build ra ./dist, functions/ xu ly /api/*.
-pages_build_output_dir = "./dist"
+# Chi phuc vu qua custom domain, khong mo chiakeo.huycode.workers.dev.
+workers_dev = false
+routes = [{ pattern = "chiakeo.huyab.click", custom_domain = true }]
+
+# Vite build ra ./dist; Worker chi chay cho /api/* (ke ca /api/auth/*), con lai
+# tra file tinh. not_found_handling = SPA: URL khong khop file nao tra index.html
+# de router client tu xu ly.
+[assets]
+directory = "./dist"
+not_found_handling = "single-page-application"
+run_worker_first = ["/api/*"]
 
 # Origin FE duoc phep goi API (chi can khi FE khong cung domain voi API).
 [vars]
 ALLOWED_ORIGINS = ""
+
+[observability]
+enabled = true
 
 [[d1_databases]]
 binding = "DB"

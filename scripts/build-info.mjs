@@ -25,21 +25,32 @@ function git(...args) {
 }
 
 /**
- * Cloudflare Pages build tu git checkout detached, nen `rev-parse --abbrev-ref`
- * ra "HEAD" chu khong ra ten nhanh. CI cua Pages dat san CF_PAGES_BRANCH va
- * CF_PAGES_COMMIT_SHA nen uu tien doc bien do.
+ * Workers Builds (CI) build tu git checkout detached, nen `rev-parse
+ * --abbrev-ref` ra "HEAD" chu khong ra ten nhanh. CI dat san
+ * WORKERS_CI_BRANCH va WORKERS_CI_COMMIT_SHA nen uu tien doc bien do.
+ * CF_PAGES_* la di san tu thoi deploy bang Pages, giu lai cho chac.
  */
 const env = process.env;
-const commit = env.CF_PAGES_COMMIT_SHA || git("rev-parse", "HEAD") || UNKNOWN;
+const commit =
+  env.WORKERS_CI_COMMIT_SHA || env.CF_PAGES_COMMIT_SHA || git("rev-parse", "HEAD") || UNKNOWN;
 const branchFromGit = git("rev-parse", "--abbrev-ref", "HEAD");
 const info = {
   commit,
   shortCommit: commit === UNKNOWN ? UNKNOWN : commit.slice(0, 7),
   commitSubject: git("log", "-1", "--pretty=%s") || UNKNOWN,
   commitDate: git("log", "-1", "--date=iso-strict", "--pretty=%cd") || UNKNOWN,
-  branch: env.CF_PAGES_BRANCH || (branchFromGit === "HEAD" ? "" : branchFromGit) || UNKNOWN,
-  /** Phan biet bung tu CI cua Cloudflare Pages voi `wrangler pages deploy` tay. */
-  builtBy: env.CF_PAGES === "1" || env.CF_PAGES_BRANCH ? "cloudflare-pages" : "local",
+  branch:
+    env.WORKERS_CI_BRANCH ||
+    env.CF_PAGES_BRANCH ||
+    (branchFromGit === "HEAD" ? "" : branchFromGit) ||
+    UNKNOWN,
+  /** Phan biet bung tu CI (Workers Builds) voi `wrangler deploy` tay. */
+  builtBy:
+    env.WORKERS_CI === "1" || env.WORKERS_CI_BRANCH
+      ? "workers-builds"
+      : env.CF_PAGES === "1" || env.CF_PAGES_BRANCH
+        ? "cloudflare-pages"
+        : "local",
   // Build tu working tree con thay doi chua commit: code dang chay khong khop
   // hoan toan voi commit ghi o tren.
   dirty: git("status", "--porcelain") !== "",

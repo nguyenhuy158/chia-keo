@@ -39,22 +39,9 @@ export function getTrustedOrigins(env: Env, requestUrl?: string) {
 }
 
 /**
- * Chi bat provider khi co du client id + secret, de dev local khong co bien moi
- * truong van khoi tao auth binh thuong.
+ * Khong khai bao socialProviders: dang nhap Google di qua SSO chung
+ * auth.huyab.click (xem sso.ts), nen app nay khong giu OAuth client rieng.
  */
-function getSocialProviders(env: Env) {
-  if (!env.GOOGLE_CLIENT_ID || !env.GOOGLE_CLIENT_SECRET) {
-    return undefined;
-  }
-
-  return {
-    google: {
-      clientId: env.GOOGLE_CLIENT_ID,
-      clientSecret: env.GOOGLE_CLIENT_SECRET,
-    },
-  };
-}
-
 export function createAuth(env: Env, requestUrl?: string) {
   const db = drizzle(env.DB, { schema });
 
@@ -73,7 +60,6 @@ export function createAuth(env: Env, requestUrl?: string) {
     emailAndPassword: {
       enabled: true,
     },
-    socialProviders: getSocialProviders(env),
     plugins: [username()],
   });
 }
