@@ -45,6 +45,8 @@ export type SummarySection = {
   id: SummarySectionId;
   heading: string;
   lines: string[];
+  /** Nguoi ung voi tung dong (de ve avatar); undefined o dong tieu de nhom. */
+  lineParticipantIds?: (string | undefined)[];
 };
 
 /**
@@ -178,11 +180,13 @@ function buildPersonLines(
 }
 
 function buildSettlementLines(summary: ApiSummary, nameById: Map<string, string>) {
-  return summary.settlements.map((settlement) => {
+  const lines = summary.settlements.map((settlement) => {
     const from = nameById.get(settlement.fromParticipantId) || UNKNOWN_NAME;
     const to = nameById.get(settlement.toParticipantId) || UNKNOWN_NAME;
     return `- ${from} → ${to}: ${formatShortMoney(settlement.amount)}`;
   });
+  const participantIds = summary.settlements.map((settlement) => settlement.fromParticipantId);
+  return { lines, participantIds };
 }
 
 /**
@@ -194,13 +198,15 @@ function buildFlatHostLines(
   hostName: string,
   nameById: Map<string, string>,
 ) {
-  return transfers.map((transfer) => {
+  const lines = transfers.map((transfer) => {
     const name = nameById.get(transfer.participantId) || UNKNOWN_NAME;
     const amount = formatShortMoney(transfer.amount);
     return transfer.toHost
       ? `- ${name} → ${hostName}: ${amount}`
       : `- ${hostName} → ${name}: ${amount}`;
   });
+  const participantIds = transfers.map((transfer) => transfer.participantId);
+  return { lines, participantIds };
 }
 
 /**
@@ -214,29 +220,34 @@ function buildGroupedHostLines(
   paidById: Map<string, number>,
 ) {
   const lines: string[] = [];
+  const participantIds: (string | undefined)[] = [];
   const incoming = transfers.filter((transfer) => transfer.toHost);
   const outgoing = transfers.filter((transfer) => !transfer.toHost);
 
   if (incoming.length > 0) {
     const total = incoming.reduce((sum, transfer) => sum + transfer.amount, 0);
     lines.push(`Chuyển vào ${hostName} — tổng ${formatShortMoney(total)}:`);
+    participantIds.push(undefined);
     for (const transfer of incoming) {
       const name = nameById.get(transfer.participantId) || UNKNOWN_NAME;
       lines.push(`- ${name} → ${hostName}: ${formatShortMoney(transfer.amount)}`);
+      participantIds.push(transfer.participantId);
     }
   }
 
   if (outgoing.length > 0) {
     lines.push(`${hostName} chuyển ra:`);
+    participantIds.push(undefined);
     for (const transfer of outgoing) {
       const name = nameById.get(transfer.participantId) || UNKNOWN_NAME;
       const paid = paidById.get(transfer.participantId) || 0;
       const reason = paid > 0 ? ` (${name} đã ứng ${formatShortMoney(paid)})` : "";
       lines.push(`- ${hostName} → ${name}: ${formatShortMoney(transfer.amount)}${reason}`);
+      participantIds.push(transfer.participantId);
     }
   }
 
-  return lines;
+  return { lines, participantIds };
 }
 
 function buildHostSection(
@@ -251,6 +262,9 @@ function buildHostSection(
   const hostName = nameById.get(hostParticipantId) || UNKNOWN_NAME;
   const detailed = variant === "detailed";
   const paidById = new Map(summary.balances.map((row) => [row.participantId, row.paid]));
+  const { lines, participantIds } = detailed
+    ? buildGroupedHostLines(transfers, hostName, nameById, paidById)
+    : buildFlatHostLines(transfers, hostName, nameById);
 
   return {
     hostParticipantId,
@@ -265,9 +279,8 @@ function buildHostSection(
               : "cả nhóm quét 1 QR"
           })`
         : `GOM VỀ ${hostName.toUpperCase()}`,
-      lines: detailed
-        ? buildGroupedHostLines(transfers, hostName, nameById, paidById)
-        : buildFlatHostLines(transfers, hostName, nameById),
+      lines,
+      lineParticipantIds: participantIds,
     },
   };
 }
@@ -316,9 +329,14 @@ export function buildSummaryDocument(
       hostParticipantId = host.hostParticipantId;
     }
   } else if (input.settlementMode !== "off") {
-    const settlementLines = buildSettlementLines(summary, nameById);
+    const { lines: settlementLines, participantIds } = buildSettlementLines(summary, nameById);
     if (settlementLines.length > 0) {
-      sections.push({ id: "settlements", heading: "CẦN CHUYỂN", lines: settlementLines });
+      sections.push({
+        id: "settlements",
+        heading: "CẦN CHUYỂN",
+        lines: settlementLines,
+        lineParticipantIds: participantIds,
+      });
     }
   }
 

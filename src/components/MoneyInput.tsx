@@ -15,7 +15,7 @@ function sanitizeMoneyExpression(raw: string) {
   return raw.replace(EXPRESSION_CHARS, "");
 }
 
-/** Tinh bieu thuc +-*/ nhap tho; tra null neu khong hop le hoac ket qua am. */
+/** Tinh bieu thuc cong tru nhan chia nhap tho; tra null neu khong hop le hoac ket qua am. */
 export function evaluateMoneyExpression(raw: string): number | null {
   const sanitized = sanitizeMoneyExpression(raw).trim();
   if (!sanitized) return null;
@@ -26,7 +26,7 @@ export function evaluateMoneyExpression(raw: string): number | null {
   return Math.round(result);
 }
 
-/** Parser +-*/  thu cong (khong dung eval/Function), uu tien * va / truoc. */
+/** Parser cong tru nhan chia thu cong (khong dung eval/Function), uu tien nhan chia truoc. */
 function evalArithmetic(expr: string): number | null {
   const tokens = expr.match(/\d+\.?\d*|[+\-*/]/g);
   if (!tokens || tokens.length === 0) return null;
@@ -70,7 +70,7 @@ type MoneyInputProps = {
 
 /**
  * Input tien te tu dong them dau phan cach hang nghin khi go.
- * Ho tro go bieu thuc +-*/ (vd 20000+30000), tu tinh khi blur hoac Enter.
+ * Ho tro go bieu thuc cong tru nhan chia (vd 20000+30000), tu tinh khi blur hoac Enter.
  * Gia tri tra ra la chuoi da format; dung parseMoney de lay so nguyen khi luu.
  */
 export const MoneyInput = forwardRef<HTMLInputElement, MoneyInputProps>(function MoneyInput(

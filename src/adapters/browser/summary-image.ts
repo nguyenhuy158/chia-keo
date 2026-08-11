@@ -392,7 +392,9 @@ function buildBlocks(
       const avatar =
         section.id === "people"
           ? avatarsByParticipantId.get(participants[index]?.id || "")
-          : undefined;
+          : section.id === "settlements"
+            ? avatarsByParticipantId.get(section.lineParticipantIds?.[index] || "")
+            : undefined;
       blocks.push(
         ...buildTextBlocks(context, line, isGroupLabel ? styles.groupLabel : styles.body, {
           avatar,
