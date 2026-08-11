@@ -40,7 +40,7 @@ import { formatMoney, parseMoney } from "../core/domain/money";
 import { usePhotoUploader } from "../adapters/react-query/photo-upload";
 import { useAiScanReceipt, useAiSuggestExpense } from "../adapters/react-query/queries";
 import { Dropdown } from "./Dropdown";
-import { formatMoneyInput, MoneyInput } from "./MoneyInput";
+import { MoneyInput } from "./MoneyInput";
 import { PhotoPickerButton } from "./PhotoPanel";
 import { Field } from "./ui";
 import { usePhotoViewer } from "./use-photo-viewer";
@@ -504,7 +504,7 @@ function handleSplitModeChange(mode: SplitMode) {
     const shares = allocateAmount(total, splitParticipantIds);
     const nextValues = { ...splitValues };
     for (const share of shares) {
-      nextValues[share.participantId] = formatMoneyInput(String(share.amount));
+      nextValues[share.participantId] = String(share.amount);
     }
     form.setValue("splitValues", nextValues);
     // eslint-disable-next-line react-hooks/exhaustive-deps
