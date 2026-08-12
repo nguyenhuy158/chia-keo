@@ -5,6 +5,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ApiGameDetail, ApiPhoto } from "../../../shared/api-types";
 import type { Contact } from "../../../shared/contacts";
+import { canUndoEvent } from "../../../shared/game-events";
 import type {
   ContactInput,
   ContactUpdateInput,
@@ -174,6 +175,30 @@ export function useUndoGameEvent() {
     (eventId: string) => getGameApi().gameEvents.undo(eventId),
     { refreshPhotos: true },
   );
+}
+
+/**
+ * Vua xoa xong 1 khoan chi thi tim dong lich su moi nhat tuong ung de moi
+ * toast "Hoan tac". Khop ca ten+so tien (khong chi lay dong moi nhat) de
+ * tranh hoan tac nham khi dong lich su khong phai do xoa khoan chi nay tao ra
+ * (vi du ghi lich su bi loi va roi vao nhanh catch cua recordEvent).
+ */
+export async function findUndoableExpenseRemoval(
+  gameId: string,
+  match: { title: string; amount: number },
+): Promise<string | null> {
+  const { events } = await getGameApi().gameEvents.list(gameId);
+  const latest = events[0];
+  if (
+    latest &&
+    canUndoEvent(latest) &&
+    latest.payload.kind === "expense_removed" &&
+    latest.payload.title === match.title &&
+    latest.payload.amount === match.amount
+  ) {
+    return latest.id;
+  }
+  return null;
 }
 
 export function useCreateGame() {

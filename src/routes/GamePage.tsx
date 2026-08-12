@@ -31,6 +31,7 @@ import { toast } from "sonner";
 import { EmptyState, GamePageSkeleton } from "../components/ui";
 import { formatMoney } from "../core/domain/money";
 import {
+  findUndoableExpenseRemoval,
   useAddExpense,
   useAddParticipant,
   useAddParticipants,
@@ -47,6 +48,7 @@ import {
   useSetSettlementHost,
   useSetSettlementMode,
   useSetShareLinkEnabled,
+  useUndoGameEvent,
   useUpdateExpense,
   useUpdateParticipant,
 } from "../adapters/react-query/queries";
@@ -66,6 +68,7 @@ export function GamePage() {
   const addExpense = useAddExpense(gameId);
   const updateExpense = useUpdateExpense();
   const removeExpense = useRemoveExpense();
+  const undoEvent = useUndoGameEvent();
   const reorderExpenses = useReorderExpenses(gameId);
   const addTransfer = useAddTransfer(gameId);
   const renameGame = useRenameGame(gameId);
@@ -125,6 +128,34 @@ export function GamePage() {
     rotateShareLink.mutate(undefined, { onSuccess: () => toast.success("Đã tạo link mới") });
   }
 
+  async function handleRemoveExpense(expenseId: string) {
+    // Xoa ngay, khong hoi lai: khoan chi/chuyen tien la loai duy nhat ma
+    // ha tang lich su hoan tac duoc (canUndoEvent), nen thay confirm bang
+    // toast "Hoan tac" kieu Gmail cho nhanh tay hon.
+    const target = game.expenses.find((expense) => expense.id === expenseId);
+    await removeExpense.mutateAsync(expenseId);
+    const eventId = target
+      ? await findUndoableExpenseRemoval(game.id, { title: target.title, amount: target.amount })
+      : null;
+
+    toast(target ? `Đã xóa "${target.title}"` : "Đã xóa khoản chi", {
+      action: eventId
+        ? {
+            label: "Hoàn tác",
+            onClick: () => {
+              undoEvent.mutateAsync(eventId).then(
+                () => toast.success("Đã dựng lại khoản chi"),
+                () =>
+                  toast.error(
+                    "Không hoàn tác được — người liên quan không còn trong cuộc chia",
+                  ),
+              );
+            },
+          }
+        : undefined,
+    });
+  }
+
   async function handleRenameGame() {
     const name = (nameDraft || "").trim();
     if (!name || name === game.name) {
@@ -163,7 +194,7 @@ export function GamePage() {
       pending={addExpense.isPending || updateExpense.isPending}
       onAdd={(input) => addExpense.mutateAsync(input)}
       onUpdate={(expenseId, input) => updateExpense.mutateAsync({ expenseId, input })}
-      onRemove={(expenseId) => removeExpense.mutate(expenseId)}
+      onRemove={handleRemoveExpense}
       onAddTransfer={(input) => addTransfer.mutateAsync(input)}
       onReorder={(expenseIds) => reorderExpenses.mutate(expenseIds)}
     />
@@ -217,7 +248,7 @@ export function GamePage() {
         });
         toast.success("Đã ghi nhận trả nợ");
       }}
-      onRemoveTransfer={(expenseId) => removeExpense.mutate(expenseId)}
+      onRemoveTransfer={handleRemoveExpense}
       settlePending={addTransfer.isPending}
     />
   );

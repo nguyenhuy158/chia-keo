@@ -263,8 +263,29 @@ bắt buộc)" (`ExpensePanel.tsx`, 2 chỗ) — cả 4 đổi sang `stone-400` 
 Icon-only (nút kéo thả, nút xoá, mũi tên) giữ `stone-500`/`stone-600`: quy
 ước có sẵn toàn app cho trạng thái phụ/trang trí, không phải lỗi mới.
 
-## D5. Confirm dialog cho thao tác có thể hoàn tác nên đổi thành toast-undo
-Xoá người/khoản chi hiện chặn bằng `ConfirmDialog` (thêm 1 bước bấm trước
-khi làm), nhưng app đã có sẵn hạ tầng hoàn tác (`HistoryPanel`,
-`useUndoGameEvent`). Kiểu Gmail "Đã xóa — Hoàn tác" (toast có nút undo) đỡ
-chặn luồng hơn modal, vẫn an toàn vì sửa được ngay sau đó.
+## D5. ~~Confirm dialog cho thao tác có thể hoàn tác nên đổi thành toast-undo~~ — Đã làm (2026-08-12), phạm vi hẹp hơn mô tả gốc
+Kiểm tra lại trước khi sửa thì đề bài ban đầu sai giả định:
+- Xoá **khoản chi/giao dịch tất toán** (`ExpensePanel`, `GameDashboard`)
+  KHÔNG có `ConfirmDialog` — bấm icon thùng rác là xoá ngay, không có lưới an
+  toàn nào (không hỏi lại, không hoàn tác). Đây mới là chỗ đáng thêm
+  toast-undo, cộng thêm chứ không phải thay thế.
+- Xoá **người tham gia** (`ParticipantPanel`) có `ConfirmDialog`, nhưng
+  `canUndoEvent` (`shared/game-events.ts`) chỉ coi `expense_removed` là hoàn
+  tác được — `participant_removed` không có đường hoàn tác thật. Bỏ confirm
+  ở đây sẽ kém an toàn hơn, không phải ngang bằng, nên GIỮ NGUYÊN.
+
+Đã làm: `GamePage.tsx` thêm `handleRemoveExpense` dùng cho cả xoá khoản chi
+và xoá giao dịch tất toán (2 chỗ `onRemove`/`onRemoveTransfer`, cùng gọi
+`removeExpense` phía dưới) — xoá xong show `toast()` kiểu Gmail; nếu tìm được
+đúng dòng lịch sử vừa tạo (khớp cả `title` + `amount`, không chỉ lấy dòng mới
+nhất, để tránh hoàn tác nhầm) thì toast có nút "Hoàn tác" gọi
+`useUndoGameEvent`, không thì chỉ show "Đã xóa" thường. Helper tra dòng lịch
+sử mới (`findUndoableExpenseRemoval`) đặt ở `queries.ts`, gọi thẳng
+`getGameApi().gameEvents.list()` (không qua cache) ngay sau khi xoá thành
+công — không đổi API/backend, không thêm optimistic risk.
+
+Các nút xoá còn dùng `ConfirmDialog` khác đều giữ nguyên, có lý do riêng:
+`ParticipantPanel` (không hoàn tác được, giải thích trên), `TrashCard.
+handlePurge` (xoá vĩnh viễn, code đã ghi rõ không hoàn tác), `handleDeleteGame`
+(đã là xoá mềm có Thùng rác riêng, không cần thêm lớp undo nữa),
+`handleRotateShareLink` (link cũ hết hạn ngay, không có gì để "hoàn tác").
