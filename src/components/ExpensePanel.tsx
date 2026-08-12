@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { z } from "zod";
 import type { ResolvedAiExpense } from "../../shared/ai";
 import type { ApiExpense, ApiGameDetail, ApiParticipant, ApiPhoto } from "../../shared/api-types";
@@ -555,12 +556,18 @@ function handleSplitModeChange(mode: SplitMode) {
 
   const handleSubmit = form.handleSubmit(async (values) => {
     if (values.kind === "transfer") {
-      await onAddTransfer({
-        fromParticipantId: values.payerId,
-        toParticipantId: values.toId,
-        amount: parseMoney(values.amount),
-        note: values.title || DEFAULT_TRANSFER_TITLE,
-      });
+      try {
+        await onAddTransfer({
+          fromParticipantId: values.payerId,
+          toParticipantId: values.toId,
+          amount: parseMoney(values.amount),
+          note: values.title || DEFAULT_TRANSFER_TITLE,
+        });
+        toast.success("Đã ghi nhận trả nợ");
+      } catch {
+        toast.error("Không lưu được khoản trả nợ");
+        return;
+      }
       form.reset({
         kind: "transfer",
         title: "",
@@ -594,16 +601,23 @@ function handleSplitModeChange(mode: SplitMode) {
             })),
     };
 
-    if (editingExpenseId) {
-      await onUpdate(editingExpenseId, input);
-      setEditingExpenseId("");
-    } else {
-      const detail = await onAdd(input);
-      const created = findCreatedExpense(detail, expenses);
-      if (created && stagedFiles.length > 0) {
-        await uploader.upload(stagedFiles, { expenseId: created.id });
+    try {
+      if (editingExpenseId) {
+        await onUpdate(editingExpenseId, input);
+        setEditingExpenseId("");
+      } else {
+        const detail = await onAdd(input);
+        const created = findCreatedExpense(detail, expenses);
+        if (created && stagedFiles.length > 0) {
+          await uploader.upload(stagedFiles, { expenseId: created.id });
+        }
       }
+      toast.success(editingExpenseId ? "Đã lưu khoản chi" : "Đã thêm khoản chi");
+    } catch {
+      toast.error("Không lưu được khoản chi");
+      return;
     }
+
     setStagedFiles([]);
     form.reset({
       kind: values.kind,
