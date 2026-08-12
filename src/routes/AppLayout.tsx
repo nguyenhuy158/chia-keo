@@ -53,7 +53,7 @@ export function AppLayout() {
   return (
     <MobileShellContext.Provider value={{ openGames: () => setGamesOpen(true) }}>
       <header className="sticky top-0 z-30 border-b border-stone-200 bg-white dark:border-stone-800 dark:bg-stone-900">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:px-5 sm:py-4">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 px-4 py-3 sm:gap-3 sm:px-5 sm:py-4">
           <div className="flex min-w-0 items-center gap-2">
             <button
               type="button"
@@ -75,7 +75,10 @@ export function AppLayout() {
               </p>
             </Link>
           </div>
-          <div className="flex items-center gap-2 sm:gap-3">
+          {/* gap hep hon logo/hamburger phia trai: cum nay toan nut co dinh
+              (44px), khong co gi de co giãn nhu logo, nen phai tu nhuong
+              truoc de logo con dat ten cuoc choi o man ~360px (TODO B5). */}
+          <div className="flex items-center gap-1.5 sm:gap-3">
             <span className="hidden text-sm text-stone-600 dark:text-stone-400 sm:inline">
               {displayName}
             </span>
@@ -107,7 +110,7 @@ export function AppLayout() {
             <button
               type="button"
               onClick={handleLogout}
-              className="inline-flex h-11 items-center gap-2 rounded-md border border-stone-300 bg-white px-3 text-sm font-medium text-stone-700 transition hover:bg-stone-50 active:bg-stone-100 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-200 dark:hover:bg-stone-800 dark:active:bg-stone-700"
+              className="inline-flex h-11 items-center gap-2 rounded-md border border-stone-300 bg-white px-2 text-sm font-medium text-stone-700 transition hover:bg-stone-50 active:bg-stone-100 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-200 dark:hover:bg-stone-800 dark:active:bg-stone-700 sm:px-3"
             >
               <LogOut size={16} />
               <span className="hidden sm:inline">Thoát</span>
