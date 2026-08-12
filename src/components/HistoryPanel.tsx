@@ -84,7 +84,7 @@ function EventRow({
         )}
       </div>
       <div className="flex shrink-0 flex-col items-end gap-1">
-        <span className="text-[11px] tabular-nums text-stone-400 dark:text-stone-500">
+        <span className="text-[11px] tabular-nums text-stone-400">
           {formatWhen(event.createdAt, now)}
         </span>
         {canUndoEvent(event) && (
