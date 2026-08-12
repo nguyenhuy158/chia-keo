@@ -67,6 +67,60 @@ export function SkeletonListRow({ icon = false }: { icon?: boolean }) {
   );
 }
 
+/**
+ * Khung trang chi tiet cuoc choi (GamePage/SharePage) luc dang tai: giu dung
+ * bo cuc header + danh sach + the tong ket thay vi mot chu "Dang tai..." o
+ * giua trang trong, de khong giat layout khi du lieu that ve.
+ */
+export function GamePageSkeleton({ split = true }: { split?: boolean }) {
+  const listCards = (
+    <>
+      <div className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm dark:border-stone-800 dark:bg-stone-900">
+        <div className="divide-y divide-stone-100 dark:divide-stone-800">
+          <SkeletonListRow icon />
+          <SkeletonListRow icon />
+          <SkeletonListRow icon />
+        </div>
+      </div>
+      <div className="space-y-2 rounded-lg border border-stone-200 bg-white p-4 shadow-sm dark:border-stone-800 dark:bg-stone-900">
+        <SkeletonCard />
+        <SkeletonCard />
+        <SkeletonCard />
+      </div>
+    </>
+  );
+
+  const summaryCard = (
+    <div className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm dark:border-stone-800 dark:bg-stone-900">
+      <Skeleton className="h-24 w-full" />
+      <div className="mt-3 space-y-2">
+        <SkeletonListRow />
+        <SkeletonListRow />
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="space-y-5">
+      <div className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm dark:border-stone-800 dark:bg-stone-900">
+        <Skeleton className="h-3 w-16" />
+        <Skeleton className="mt-2 h-6 w-40" />
+      </div>
+      {split ? (
+        <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
+          <div className="space-y-5">{listCards}</div>
+          <div className="space-y-5">{summaryCard}</div>
+        </div>
+      ) : (
+        <div className="space-y-5">
+          {summaryCard}
+          {listCards}
+        </div>
+      )}
+    </div>
+  );
+}
+
 /** Luoi o vuong cho anh dang tai — dung so cot voi PhotoGrid that. */
 export function SkeletonPhotoGrid({ count = 6 }: { count?: number }) {
   return (

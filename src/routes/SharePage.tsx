@@ -6,7 +6,7 @@ import { CopyMenu } from "../components/CopyMenu";
 import { GameDashboard } from "../components/GameDashboard";
 import { SharePhotoGallery } from "../components/SharePhotoGallery";
 import { ThemeToggle } from "../components/theme";
-import { EmptyState, LoadingState } from "../components/ui";
+import { EmptyState, GamePageSkeleton } from "../components/ui";
 import { formatMoney } from "../core/domain/money";
 import { useShareView } from "../adapters/react-query/queries";
 
@@ -264,8 +264,8 @@ export function SharePage() {
 
   if (shareQuery.isPending) {
     return (
-      <div className="mx-auto w-full max-w-2xl px-5 py-10">
-        <LoadingState />
+      <div className="mx-auto w-full max-w-2xl px-4 py-4 sm:px-5">
+        <GamePageSkeleton split={false} />
       </div>
     );
   }

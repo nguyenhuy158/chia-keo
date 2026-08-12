@@ -28,7 +28,7 @@ import { SummaryImageCard } from "../components/SummaryImageCard";
 import { BottomSheet } from "../components/overlays";
 import { useConfirm } from "../components/ConfirmDialog";
 import { toast } from "sonner";
-import { EmptyState, LoadingState } from "../components/ui";
+import { EmptyState, GamePageSkeleton } from "../components/ui";
 import { formatMoney } from "../core/domain/money";
 import {
   useAddExpense,
@@ -83,7 +83,7 @@ export function GamePage() {
   const [emailPending, setEmailPending] = useState(false);
 
   if (gameQuery.isPending) {
-    return <LoadingState />;
+    return <GamePageSkeleton />;
   }
 
   if (gameQuery.isError || !gameQuery.data) {

@@ -242,10 +242,14 @@ không đụng id thật khi reconcile...) là một thay đổi lớn, rủi ro
 hiển thị sai trong lúc chờ. Để lại `isPending` (nút disable + spinner, form
 giữ nguyên) thay vì optimistic giả — an toàn hơn cho app tiền bạc.
 
-## D3. Trang full-page vẫn dùng loader chữ, không phải skeleton
+## D3. ~~Trang full-page vẫn dùng loader chữ, không phải skeleton~~ — Đã làm (2026-08-12)
 `GamePage.tsx`/`SharePage.tsx` còn "Đang tải..." (cố tình bỏ ở Đợt 1 mục 1
-vì lúc đó các list-level skeleton chưa xong hết). Giờ phần lớn skeleton đã
-có, có thể nâng cấp 2 trang full-page này luôn cho nhất quán.
+vì lúc đó các list-level skeleton chưa xong hết). ~~Giờ phần lớn skeleton đã
+có, có thể nâng cấp 2 trang full-page này luôn cho nhất quán.~~ Thêm
+`GamePageSkeleton` (`src/components/ui.tsx`) tái dùng `Skeleton`/
+`SkeletonCard`/`SkeletonListRow` có sẵn, giữ đúng bố cục header + danh sách +
+thẻ tổng kết (`split` prop: `true` = 2 cột như GamePage, `false` = 1 cột như
+SharePage) để không giật layout khi dữ liệu thật về.
 
 ## D4. Contrast dark mode chưa rà hết toàn app
 Đợt 2 chỉ đo 4 card mới (Danh bạ, Lịch sử, Thùng rác, ConfirmDialog). Còn
