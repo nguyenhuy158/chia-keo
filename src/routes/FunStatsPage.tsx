@@ -27,7 +27,7 @@ function StatCard({
   detail?: string;
 }) {
   return (
-    <div className="rounded-xl border border-stone-200 bg-white p-4 shadow-sm dark:border-stone-800 dark:bg-stone-900">
+    <div className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm dark:border-stone-800 dark:bg-stone-900">
       <div className="flex items-center gap-2 text-violet-600 dark:text-violet-400">
         {icon}
         <span className="text-sm font-medium text-stone-500 dark:text-stone-400">{label}</span>
