@@ -19,6 +19,7 @@ import {
 } from "../../shared/game-events";
 import { useGameEvents, useUndoGameEvent } from "../adapters/react-query/queries";
 import { toast } from "sonner";
+import { formatDateTime, formatTime } from "./format-datetime";
 import { EmptyState, SkeletonListRow } from "./ui";
 
 const ICONS: Record<GameEventKind, LucideIcon> = {
@@ -38,16 +39,13 @@ const ICONS: Record<GameEventKind, LucideIcon> = {
 /** Mau chu cho cac viec "pha" (xoa) de quet mat thay ngay giua danh sach dai. */
 const DESTRUCTIVE: GameEventKind[] = ["expense_removed", "participant_removed"];
 
-const TIME = new Intl.DateTimeFormat("vi-VN", { hour: "2-digit", minute: "2-digit" });
-const DATE = new Intl.DateTimeFormat("vi-VN", { day: "2-digit", month: "2-digit" });
-
 /** Trong ngay thi chi can gio; khac ngay thi kem ngay/thang. */
 function formatWhen(iso: string, now: Date) {
   const at = new Date(iso);
   if (Number.isNaN(at.getTime())) return "";
 
   const sameDay = at.toDateString() === now.toDateString();
-  return sameDay ? TIME.format(at) : `${DATE.format(at)} ${TIME.format(at)}`;
+  return sameDay ? formatTime(iso) : formatDateTime(iso, { includeYear: false });
 }
 
 function EventRow({
@@ -146,6 +144,7 @@ export function HistoryPanel({ gameId, collapsible = false }: HistoryPanelProps)
           <button
             type="button"
             onClick={() => setPersistedOpen((current) => !current)}
+            aria-expanded={open}
             className="rounded-md px-2 py-1 text-xs font-semibold text-violet-700 transition hover:bg-violet-50 dark:text-violet-300 dark:hover:bg-violet-500/10"
           >
             {open ? "Ẩn" : "Xem"}
