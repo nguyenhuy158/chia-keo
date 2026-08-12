@@ -148,6 +148,8 @@ export function Dropdown({
         aria-label={ariaLabel}
         aria-expanded={open}
         aria-controls={open ? listId : undefined}
+        aria-haspopup="listbox"
+        aria-activedescendant={open ? activeOptionId : undefined}
         className="field flex items-center justify-between gap-2 text-left disabled:cursor-not-allowed disabled:opacity-60"
       >
         <span className={`truncate ${selected ? "" : "text-stone-400 dark:text-stone-500"}`}>
@@ -178,20 +180,25 @@ export function Dropdown({
             </div>
           )}
 
-          <ul className="max-h-60 overflow-auto p-1">
+          <ul role="listbox" aria-label={ariaLabel} className="max-h-60 overflow-auto p-1">
             {visible.length === 0 ? (
               <li className="px-3 py-2.5 text-sm text-stone-500 dark:text-stone-400">
                 Không tìm thấy
               </li>
             ) : (
-              visible.map((option) => {
+              visible.map((option, index) => {
                 const isSelected = option.value === value;
                 return (
-                  <li key={option.value}>
+                  <li key={option.value} role="presentation">
                     <button
                       type="button"
+                      id={`${listId}-option-${index}`}
+                      role="option"
+                      aria-selected={isSelected}
                       onClick={() => choose(option.value)}
                       className={`flex w-full items-center justify-between gap-2 rounded px-3 py-2.5 text-left text-sm ${
+                        index === activeIndex ? "bg-stone-100 dark:bg-stone-700" : ""
+                      } ${
                         isSelected
                           ? "bg-violet-50 font-semibold text-violet-800 dark:bg-violet-500/15 dark:text-violet-300"
                           : "text-stone-700 hover:bg-stone-100 dark:text-stone-200 dark:hover:bg-stone-700"

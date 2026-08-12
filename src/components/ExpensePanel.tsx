@@ -1084,10 +1084,10 @@ function handleSplitModeChange(mode: SplitMode) {
                 </div>
                 <div className="flex shrink-0 items-center gap-1">
                   <span
-                    className={`text-sm font-semibold tabular ${
+                    className={`text-sm font-bold tabular ${
                       expense.kind === "income"
                         ? "text-emerald-700 dark:text-emerald-400"
-                        : "text-stone-950 dark:text-stone-50"
+                        : "text-violet-700 dark:text-violet-400"
                     }`}
                   >
                     {expense.kind === "income" ? "+" : ""}

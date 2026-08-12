@@ -66,136 +66,131 @@ tả là các khoản chi đã chia cho người này sẽ chia lại cho ngư�
 2 đường (icon + vuốt) giờ cùng đi qua một cổng chặn, không còn lối nào bấm
 nhầm là mất luôn.
 
-### A2. Form Thêm/Sửa khoản chi và Thêm/Sửa người: lỗi mutation bay mất, không ai biết
-`ExpensePanel.tsx` (dòng 537, `handleSubmit`) và `ParticipantPanel.tsx`
-(dòng 54, 74) gọi thẳng `await onAdd(...)`/`await onUpdate(...)` không bọc
-`try/catch`. Mạng rớt hay server trả lỗi thì promise reject thành unhandled
-rejection trong console, form đứng yên với dữ liệu đã nhập, **không có dòng
-chữ nào báo lỗi** cho người dùng biết vì sao không lưu được. So sánh:
-`ContactBookCard`, `TrashCard`, `McpTokenPanel` (viết sau, cùng đợt
-ConfirmDialog) đều có `try/catch` + `toast(..., "error")` — hai form cũ và
-dùng nhiều nhất trong app lại là hai cái thiếu.
+### A2. ~~Form Thêm/Sửa khoản chi và Thêm/Sửa người: lỗi mutation bay mất~~ — đã có sẵn, TODO cũ sai giả định (2026-08-12)
+Kiểm tra lại (2026-08-12) thấy `ExpensePanel.tsx` (`handleSubmit`) và
+`ParticipantPanel.tsx` (`handleAdd`/`handleUpdate`) đã bọc `try/catch` quanh
+`await onAdd(...)`/`await onUpdate(...)` từ trước, có `toast.error(...)` khi
+lỗi. Mô tả gốc trỏ đúng vị trí (dòng số) nhưng nội dung đã lệch với code hiện
+tại — chắc đã được sửa cùng đợt thêm `sonner`/`ConfirmDialog` mà chưa cập
+nhật lại mục này. Không cần sửa thêm.
 
-### A3. Không có toast báo thành công cho phần lớn thao tác cốt lõi
-Grep `useToast` trong `ExpensePanel.tsx` và `ParticipantPanel.tsx`: **0 kết
-quả**. Thêm/sửa/xoá khoản chi, thêm/sửa/xoá người, đổi cách chuyển tiền, đổi
-người nhận, bật/tắt link share, đổi link share (`GamePage.tsx` dòng
-101-263) — không cái nào có `toast("Đã...")`. Người dùng phải tự nhìn danh
-sách đổi để biết thao tác có chạy hay không, khác hẳn các flow mới hơn
-(danh bạ, thùng rác, hoàn tác lịch sử) đều báo rõ.
+### A3. ~~Không có toast báo thành công cho thao tác cốt lõi~~ — đã có sẵn, TODO cũ sai giả định (2026-08-12)
+Grep lại đúng tên hàm app đang dùng (`toast` của `sonner`, không phải
+`useToast` như TODO gốc ghi) thì cả `ExpensePanel.tsx` và
+`ParticipantPanel.tsx` đều có `toast.success(...)`/`toast.error(...)` cho
+thêm/sửa/xoá khoản chi và thêm/sửa/xoá người. `GamePage.tsx` cũng đã có
+`toast.success(...)` cho đổi cách chia, đổi người nhận, bật/tắt link share,
+đổi link share. Không còn thao tác cốt lõi nào thiếu toast. Không cần sửa
+thêm.
 
-### A4. "Đổi link share" không xác nhận dù làm link cũ hết hạn ngay lập tức
-`GamePage.tsx` dòng 251: nút "Đổi link" chỉ có `title="Tạo token mới, link cũ
-sẽ hết hiệu lực"` (tooltip, ít ai thấy) chứ không có confirm — bấm nhầm là cả
-nhóm đang xem link cũ mất quyền xem ngay, phải xin link mới. Không nghiêm
-trọng bằng A1 (không mất dữ liệu, chỉ mất quyền truy cập tạm thời) nhưng
-cùng nhóm "thao tác một chiều không hỏi lại".
+### A4. ~~"Đổi link share" không xác nhận~~ — đã có sẵn, TODO cũ sai giả định (2026-08-12)
+`GamePage.tsx`, `handleRotateShareLink`: đã gọi `confirm({ title: "Tạo link
+chia sẻ mới?", description: "Link cũ sẽ hết hiệu lực ngay...", destructive:
+true })` trước khi rotate, và `toast.success("Đã tạo link mới")` sau khi
+xong. Có thể đã được thêm cùng đợt A1 (2026-08-05) mà TODO không cập nhật.
+Không cần sửa thêm.
 
 ## B. Mobile, vùng chạm, accessibility
 
-### B1. `ConfirmDialog` nổi thấp hơn `ImageLightbox` — z-index lệch thứ tự ưu tiên
-`ConfirmDialog.tsx` dùng `z-[70]`, `overlays.tsx` (ImageLightbox) dùng
-`z-[80]`. Về nguyên tắc confirm phải luôn nổi trên mọi overlay khác (nó là
-cổng chặn cuối trước một hành động phá huỷ), nhưng hiện xếp thấp hơn
-Lightbox. Hiện chưa có đường nào trigger confirm từ trong Lightbox nên chưa
-vỡ thật, nhưng thứ tự z-index (`nav 40 < sheet/drawer 50 < confirm 70 <
-lightbox 80`) sai logic ưu tiên, dễ vỡ khi thêm tính năng sau này. Sửa: nâng
-`ConfirmDialog` lên `z-[90]`, cao nhất trong mọi overlay.
+### B1. ~~`ConfirmDialog` nổi thấp hơn `ImageLightbox`~~ — đã có sẵn, TODO cũ sai giả định (2026-08-12)
+`ConfirmDialog.tsx` đã dùng `z-[90]`, cao hơn `overlays.tsx` (ImageLightbox
+`z-[80]`). Không cần sửa thêm.
 
-### B2. `ConfirmDialog` không có focus trap thật
-`ConfirmDialog.tsx`: chỉ `confirmButtonRef.current?.focus()` một lần lúc mở,
-không chặn Tab/Shift+Tab. Backdrop chỉ chặn click chuột, không set `inert`
-lên phần còn lại của trang — người dùng bàn phím Tab được ra ngoài modal,
-thao tác lên UI nền trong khi hộp thoại đang mở. Escape thì hoạt động đúng.
+### B2. ~~`ConfirmDialog` không có focus trap thật~~ — đã có sẵn, TODO cũ sai giả định (2026-08-12)
+`ConfirmDialog.tsx` đã có `handleKey` lắng nghe `Tab`/`Shift+Tab`, query
+`focusable` trong `dialogRef` và bọc vòng lại first/last khi ra khỏi hai
+đầu — focus trap đúng chuẩn (không set `inert`, nhưng bọc vòng bằng Tab đã
+đạt cùng mục tiêu là chặn Tab thoát khỏi dialog). Không cần sửa thêm.
 
-### B3. `Dropdown` không đóng khi mất focus bàn phím, không có điều hướng mũi tên
-`Dropdown.tsx`: chỉ lắng nghe `mousedown` ngoài vùng để đóng — Tab ra khỏi
-dropdown bằng bàn phím thì danh sách vẫn treo mở. Không có `ArrowDown/Up` +
-`Enter` để duyệt/chọn option, chỉ click/chạm hoặc Tab tuần tự qua từng nút.
+### B3. ~~`Dropdown` không đóng khi mất focus bàn phím, không có mũi tên~~ — đã có sẵn, TODO cũ sai giả định (2026-08-12)
+`Dropdown.tsx` đã có `onFocusOut` đóng dropdown khi Tab ra ngoài, và
+`onKeyDown` xử lý `ArrowDown`/`ArrowUp` (di `activeIndex`) + `Enter` (chọn
+option đang sáng) + `Escape` (đóng, trả focus về trigger). Không cần sửa
+thêm.
 
-### B4. Vùng chạm dưới chuẩn 44px ở vài nút mới thêm
-`TrashCard.tsx` (nút Phục hồi/Xoá hẳn, `h-9` = 36px), `ContactBookCard.tsx`
-(nút Sửa/Xoá của mỗi dòng, `h-9 w-9`, đặt sát nhau không gap; nút "+" mở form
-thêm chỉ `h-8` = 32px — nhỏ nhất app), `ContactPicker.tsx` (chip chọn người
-quen `px-3 py-1.5 text-xs` ~ 28-30px cao). Phần còn lại của app dùng chuẩn
-`h-11` (44px) cho nút hành động chính — mấy chỗ này lọt lưới.
+### B4. ~~Vùng chạm dưới chuẩn 44px~~ — đã có sẵn, TODO cũ sai giả định (2026-08-12)
+`TrashCard.tsx`, `ContactBookCard.tsx` đã dùng `h-11`/`h-10` cho các nút
+hành động; `ContactPicker.tsx` chip đã đổi `py-3`. Không còn `h-9`/`h-8` nào
+trong 3 file này. Không cần sửa thêm.
 
-### B5. Header (`AppLayout.tsx`) chật ở màn hình hẹp (~360px)
-Cụm nút phải có 4 phần tử liền nhau đều `shrink-0`: link Thống kê vui
-(44px), link Cài đặt (44px), ThemeToggle, nút Thoát — cộng gap tối thiểu
-~200px chỉ riêng cụm này, trong khi máy màn 360px chỉ còn ~328px sau padding.
-Tên hiển thị đã có `truncate` nhưng cụm icon không co giãn được.
+### B5. ~~Header (`AppLayout.tsx`) chật ở màn hình hẹp~~ — đã có sẵn, TODO cũ sai giả định (2026-08-12)
+Cụm nút phải đã đổi `gap-3` cố định thành `gap-1.5 sm:gap-3` (co lại ở màn
+hẹp), có sẵn comment trong code ghi rõ đây là cách xử lý cho đúng vấn đề
+TODO B5 nêu. Tên hiển thị (`{displayName}`) và nhãn "Thoát" đã ẩn dưới
+`sm:`, chỉ còn cụm icon 44px cố định + logo co giãn bằng `truncate`. Không
+cần sửa thêm.
 
-### B6. Nhãn bottom-nav (`MobileGameNav.tsx`) chưa chặn xuống dòng
-`<span className="text-[11px] font-medium">{section.label}</span>` không có
-`whitespace-nowrap`, cột chỉ rộng ~75px (6 cột). Người dùng phóng to cỡ chữ
-hệ thống (accessibility) dễ làm nhãn xuống 2 dòng, tràn khỏi `min-h-[3.5rem]`
-cố định.
+### B6. ~~Nhãn bottom-nav chưa chặn xuống dòng~~ — đã có sẵn, TODO cũ sai giả định (2026-08-12)
+`MobileGameNav.tsx` đã có `whitespace-nowrap` trên span nhãn. Không cần sửa
+thêm.
 
-### B7. Không dialog nào trả focus về nút đã mở nó sau khi đóng
-`ConfirmDialog.tsx`, `overlays.tsx` (BottomSheet/Drawer/ImageLightbox): không
-lưu `document.activeElement` trước khi mở để khôi phục sau khi đóng (Esc, bấm
-Huỷ/Đồng ý, bấm nền). Người dùng bàn phím mất tiêu điểm, phải Tab lại từ đầu
-trang sau mỗi lần đóng — không rõ đang ở đâu trên trang.
+### B7. ~~Không dialog nào trả focus về nút đã mở nó~~ — đã có sẵn, TODO cũ sai giả định (2026-08-12)
+`overlays.tsx` đã có hook chung `useRestoreFocus(open)` (lưu
+`document.activeElement` lúc mở, gọi lại `.focus()` lúc đóng), dùng ở cả
+`BottomSheet`/`Drawer`/`ImageLightbox` và `ConfirmDialog.tsx`. Không cần sửa
+thêm.
 
-### B8. `Dropdown` thiếu ngữ nghĩa combobox chuẩn cho screen reader
-`Dropdown.tsx`: không có `role="listbox"`/`role="option"`/
-`aria-activedescendant`, nên trình đọc màn hình không công bố đúng số
-lượng/vị trí trong danh sách (ví dụ "3 trên 32"). Ngoài ra đóng bằng Esc khi
-đang gõ ô tìm (`searchable`) thì input bị gỡ khỏi DOM ngay lập tức, focus rơi
-hẳn về `<body>` — mất tiêu điểm bàn phím hoàn toàn, nặng hơn B3 đã ghi.
+### B8. `Dropdown` thiếu ngữ nghĩa combobox chuẩn cho screen reader — Đã làm (2026-08-12), phần nhỏ hơn mô tả gốc
+Kiểm tra lại: phần "Esc khi đang gõ ô tìm làm focus rơi về `<body>`" trong
+mô tả gốc đã không còn đúng — `onKeyDown` xử lý `Escape` đã gọi
+`triggerRef.current?.focus()` trước khi đóng, nên focus không bị mất. Phần
+còn thiếu thật: `Dropdown.tsx` không có `role="listbox"`/`role="option"`/
+`aria-activedescendant` nên trình đọc màn hình không công bố đúng số
+lượng/vị trí trong danh sách. Đã thêm: `role="listbox"` trên `<ul>`,
+`role="option"` + `id` khớp mẫu `${listId}-option-${index}` +
+`aria-selected` trên từng option, `aria-activedescendant`/`aria-haspopup`
+trên nút trigger trỏ tới option đang được `activeIndex` chọn. Chỉ kiểm bằng
+đọc code (typecheck/test/build xanh) — chưa test bằng trình đọc màn hình
+thật, vì môi trường này không có browser.
 
-### B9. Nút xoá ẩn trong `SwipeToDelete` vẫn nằm trong luồng Tab khi đang đóng
-`SwipeToDelete.tsx`: nút "Xóa" chỉ ẩn bằng vị trí (nằm ngoài vùng nhìn thấy
-lúc chưa vuốt), không có `tabIndex={-1}`/`aria-hidden` khi đóng. Người dùng
-Tab qua danh sách sẽ dừng ở một nút vô hình xen giữa các dòng, và trình đọc
-màn hình vẫn đọc thấy "Xóa" dù không có gì hiện trên màn hình lúc đó.
+### B9. ~~Nút xoá ẩn trong `SwipeToDelete` vẫn nằm trong luồng Tab khi đóng~~ — đã có sẵn, TODO cũ sai giả định (2026-08-12)
+`SwipeToDelete.tsx`: nút "Xóa" chỉ render khi `revealed` (đang mở hoặc đang
+kéo) — `{revealed && <button>...}` — nên lúc đóng nút không tồn tại trong
+DOM, không nằm trong luồng Tab, trình đọc màn hình không thấy. Không cần
+sửa thêm.
 
-### B10. Nút gấp/mở thiếu `aria-expanded`
-`HistoryPanel.tsx`, `TrashCard.tsx`: nút "Ẩn"/"Xem" chỉ đổi chữ, không có
-`aria-expanded` — sai mẫu ARIA disclosure widget chuẩn, trình đọc màn hình
-không công bố đúng trạng thái đóng/mở, chỉ đọc lại nhãn chữ đã đổi.
+### B10. ~~Nút gấp/mở thiếu `aria-expanded`~~ — đã có sẵn, TODO cũ sai giả định (2026-08-12)
+`HistoryPanel.tsx`, `TrashCard.tsx` đã có `aria-expanded={open}` trên nút
+"Ẩn"/"Xem". Không cần sửa thêm.
 
-### B11. `ConfirmDialog` thiếu `aria-describedby` cho phần mô tả
-`ConfirmDialog.tsx`: `role="alertdialog"` chỉ có `aria-label` cho tiêu đề,
-không trỏ `aria-describedby` tới đoạn `pending.description`. Một số trình đọc
-màn hình bỏ qua phần mô tả khi công bố hộp thoại mới mở — với các mô tả quan
-trọng như "Không lấy lại được" (Thùng rác xoá hẳn) thì đây là thông tin không
-nên bị bỏ lỡ.
+### B11. ~~`ConfirmDialog` thiếu `aria-describedby`~~ — đã có sẵn, TODO cũ sai giả định (2026-08-12)
+`ConfirmDialog.tsx` đã có `aria-describedby={pending.description ?
+"confirm-dialog-description" : undefined}` trỏ tới `<p id="confirm-dialog-
+description">`. Không cần sửa thêm.
 
 ## C. Visual và nhất quán câu chữ
 
-### C1. Dòng "A trả B" trong `GameDashboard` tràn ngang khi tên dài
-Dòng ~304-309: 2 `<span className="truncate">` (tên người) nằm trong
-`<p className="flex items-center gap-1.5 ...">` nhưng không có `min-w-0`
-trên span — trong flexbox, `truncate` không tự co được nếu thiếu `min-w-0`.
-Tên dài thật (không phải "Huy") sẽ đẩy tràn thay vì bị cắt "...". Đây là lỗi
-tôi tạo ra khi thêm Avatar vào dòng này, chưa kiểm kỹ lúc đó.
+### C1. ~~Dòng "A trả B" tràn ngang khi tên dài~~ — đã có sẵn, TODO cũ sai giả định (2026-08-12)
+`GameDashboard.tsx` dòng ~306-309: 2 `<span className="min-w-0 truncate">`
+đã có `min-w-0`. Không cần sửa thêm.
 
-### C2. Số tiền trong `ExpensePanel` không nổi bật như quy tắc còn lại của app
-Danh sách khoản chi: tiêu đề khoản chi và số tiền dùng **cùng cỡ chữ, cùng
-độ đậm, cùng màu** (`text-sm font-semibold text-stone-950`). So với
-`GameDashboard` (số tiền settlement dùng `font-bold text-violet-700`, tách
-hẳn khỏi tên người) — tiền là thông tin quan trọng nhất, đang không được
-nhấn ở đúng chỗ nhiều người nhìn nhất (danh sách khoản chi).
+### C2. Số tiền trong `ExpensePanel` không nổi bật như quy tắc còn lại của app — Đã làm (2026-08-12)
+Danh sách khoản chi: số tiền chi (không phải thu) vẫn dùng
+`text-sm font-semibold text-stone-950`, cùng cỡ/màu với tiêu đề khoản chi.
+Đổi thành `text-sm font-bold text-violet-700 dark:text-violet-400`, khớp quy
+ước `GameDashboard` (settlement dùng `font-bold text-violet-700`). Giữ
+nguyên nhánh thu (`income`) đang dùng `emerald` để phân biệt thu/chi.
 
-### C3. Bo góc lệch tông ở `FunStatsPage`
-`StatCard` (component mới nhất) dùng `rounded-xl`; toàn bộ card nội dung
-phẳng khác trong app (`GamesSidebar`, `TrashCard`, `ContactBookCard`,
-`OnboardingBanner`) dùng `rounded-lg`. `rounded-xl`/`rounded-2xl` trong app
-hiện chỉ dành cho lớp phủ nổi (dialog, sheet, toast, menu) — StatCard không
-phải overlay nên lệch quy ước.
+### C3. ~~Bo góc lệch tông ở `FunStatsPage`~~ — đã có sẵn, TODO cũ sai giả định (2026-08-12)
+`StatCard` trong `FunStatsPage.tsx` đã dùng `rounded-lg`, khớp
+`GamesSidebar`/`TrashCard`/`ContactBookCard`/`OnboardingBanner`. Không cần
+sửa thêm.
 
-### C4. Hai hàm format ngày viết riêng, không dùng chung
-`HistoryPanel.tsx` (dòng 41-50) và `McpTokenPanel.tsx` (dòng 73-79) mỗi nơi
-tự viết một hàm `Intl.DateTimeFormat`/`toLocaleString` khác nhau (một cái có
-năm, một cái không). Không sai nhưng dễ trôi dần thành nhiều kiểu khi thêm
-chỗ mới — nên gộp thành một helper dùng chung, có tham số bật/tắt năm.
+### C4. ~~Hai hàm format ngày viết riêng, không dùng chung~~ — đã có sẵn, TODO cũ sai giả định (2026-08-12)
+`HistoryPanel.tsx` và `McpTokenPanel.tsx` đã cùng import
+`formatDateTime`/`formatTime` từ `format-datetime.tsx`, có tham số
+`includeYear`. Không cần sửa thêm.
 
-### C5. Số người/số khoản lặp lại 2 nơi khi đang mở một cuộc chơi
-Dòng game trong `GamesSidebar` (đang bôi tím vì active) và `Metric` trong
-`GameDashboard` cùng hiện đúng một con số "khoản chi" — không sai nhưng thừa
-phân cấp thông tin, hai nơi không liên kết trực quan với nhau.
+### C5. Số người/số khoản lặp lại 2 nơi khi đang mở một cuộc chơi — đã xem lại, giữ nguyên có lý do (2026-08-12)
+`GamesSidebar.tsx` dòng game (`{game.participantCount} người,
+{game.expenseCount} khoản`) và `Metric` trong `GameDashboard.tsx` ("Số
+người"/"Khoản chi") đúng là cùng hiện một số liệu — nhưng hai chỗ phục vụ
+hai bối cảnh khác nhau: sidebar là danh sách để *chọn* cuộc chơi (cần số
+liệu ngắn để so sánh nhanh giữa các game), `Metric` là trang chi tiết *đang
+mở* (cần số liệu làm điểm neo mở đầu trang). Bỏ một trong hai làm mất thông
+tin hữu ích ở đúng bối cảnh đó; "liên kết trực quan" giữa 2 nơi không rõ sẽ
+trông ra sao mà không thêm phức tạp không cần thiết (ví dụ animation
+chuyển tiếp) cho lợi ích rất nhỏ. Quyết định: giữ nguyên, không phải bug.
 
 ---
 
