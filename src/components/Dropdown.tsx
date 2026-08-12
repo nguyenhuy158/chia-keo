@@ -46,8 +46,11 @@ export function Dropdown({
 }: DropdownProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
+  // Vi tri dang "sang" bang ban phim (khac focus DOM thuc, xem aria-activedescendant).
+  const [activeIndex, setActiveIndex] = useState(0);
   const rootRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const listId = useId();
 
   const selected = options.find((option) => option.value === value);
@@ -58,6 +61,16 @@ export function Dropdown({
     return options.filter((option) => foldText(option.label).includes(needle));
   }, [options, query, searchable]);
 
+  const activeOptionId =
+    activeIndex >= 0 && activeIndex < visible.length ? `${listId}-option-${activeIndex}` : undefined;
+
+  // Mo ra la nham thang vao muc dang chon; go tim doi danh sach thi ve dau.
+  useEffect(() => {
+    if (!open) return;
+    const selectedIndex = visible.findIndex((option) => option.value === value);
+    setActiveIndex(selectedIndex >= 0 ? selectedIndex : 0);
+  }, [open, visible, value]);
+
   useEffect(() => {
     if (!open) return;
 
@@ -67,19 +80,50 @@ export function Dropdown({
       }
     }
 
+    // Tab ra khoi ca dropdown (trigger + o tim) thi dong lai, khong de danh
+    // sach treo mo trong khi ban phim da roi sang phan khac cua trang.
+    function onFocusOut(event: FocusEvent) {
+      if (rootRef.current && !rootRef.current.contains(event.relatedTarget as Node)) {
+        setOpen(false);
+      }
+    }
+
     // Esc de dong: mo dropdown roi doi y la chuyen thuong xuyen, bat nguoi
     // dung phai bam ra ngoai moi thoat thi vuong.
     function onKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") setOpen(false);
+      if (event.key === "Escape") {
+        setOpen(false);
+        triggerRef.current?.focus();
+        return;
+      }
+      if (event.key === "ArrowDown") {
+        event.preventDefault();
+        setActiveIndex((current) => Math.min(current + 1, visible.length - 1));
+        return;
+      }
+      if (event.key === "ArrowUp") {
+        event.preventDefault();
+        setActiveIndex((current) => Math.max(current - 1, 0));
+        return;
+      }
+      if (event.key === "Enter") {
+        const option = visible[activeIndex];
+        if (option) {
+          event.preventDefault();
+          choose(option.value);
+        }
+      }
     }
 
     document.addEventListener("mousedown", onDocClick);
+    document.addEventListener("focusout", onFocusOut);
     document.addEventListener("keydown", onKeyDown);
     return () => {
       document.removeEventListener("mousedown", onDocClick);
+      document.removeEventListener("focusout", onFocusOut);
       document.removeEventListener("keydown", onKeyDown);
     };
-  }, [open]);
+  }, [open, visible, activeIndex]);
 
   // Mo ra la con tro nam san o o tim, khoi phai bam them mot lan nua.
   useEffect(() => {
@@ -90,6 +134,9 @@ export function Dropdown({
     onChange(next);
     setOpen(false);
     setQuery("");
+    // Dong bang phim (Enter/click) thi tra focus ve trigger, giong Esc — khong
+    // de rơi khoi ca widget sau khi chon xong.
+    triggerRef.current?.focus();
   }
 
   return (
