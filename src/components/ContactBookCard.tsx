@@ -126,13 +126,13 @@ function ContactRow({
           </p>
         </div>
       </div>
-      <div className="flex shrink-0 items-center">
+      <div className="flex shrink-0 items-center gap-1">
         <button
           type="button"
           onClick={onEdit}
           disabled={pending}
           aria-label={`Sửa ${contact.name}`}
-          className="inline-flex h-9 w-9 items-center justify-center rounded-md text-stone-500 transition hover:bg-stone-100 hover:text-stone-800 disabled:opacity-40 dark:text-stone-400 dark:hover:bg-stone-800 dark:hover:text-stone-100"
+          className="inline-flex h-11 w-11 items-center justify-center rounded-md text-stone-500 transition hover:bg-stone-100 hover:text-stone-800 disabled:opacity-40 dark:text-stone-400 dark:hover:bg-stone-800 dark:hover:text-stone-100"
         >
           <Pencil size={14} />
         </button>
@@ -144,7 +144,7 @@ function ContactRow({
             onClick={onDelete}
             disabled={pending}
             aria-label={`Xóa ${contact.name} khỏi danh bạ`}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-md text-rose-500 transition hover:bg-rose-50 disabled:opacity-40 dark:text-rose-400 dark:hover:bg-rose-500/10"
+            className="inline-flex h-11 w-11 items-center justify-center rounded-md text-rose-500 transition hover:bg-rose-50 disabled:opacity-40 dark:text-rose-400 dark:hover:bg-rose-500/10"
           >
             <Trash2 size={14} />
           </button>
@@ -237,7 +237,7 @@ export function ContactBookCard() {
           }}
           aria-label="Thêm vào danh bạ"
           title="Thêm người"
-          className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-violet-600 text-white transition hover:bg-violet-700 active:scale-95"
+          className="inline-flex h-11 w-11 items-center justify-center rounded-md bg-violet-600 text-white transition hover:bg-violet-700 active:scale-95"
         >
           {adding ? <X size={15} /> : <Plus size={15} />}
         </button>
