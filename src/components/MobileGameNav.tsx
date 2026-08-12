@@ -36,7 +36,7 @@ export function MobileGameNav({ active, onChange }: MobileGameNavProps) {
               }`}
             >
               <Icon size={20} />
-              <span className="text-[11px] font-medium">{section.label}</span>
+              <span className="whitespace-nowrap text-[11px] font-medium">{section.label}</span>
             </button>
           );
         })}
