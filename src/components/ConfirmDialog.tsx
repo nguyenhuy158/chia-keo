@@ -10,6 +10,7 @@ import {
   type ReactNode,
 } from "react";
 import { createPortal } from "react-dom";
+import { useRestoreFocus } from "./overlays";
 
 type ConfirmOptions = {
   title: string;
@@ -46,6 +47,8 @@ type PendingConfirm = ConfirmOptions & { resolve: (value: boolean) => void };
 export function ConfirmProvider({ children }: { children: ReactNode }) {
   const [pending, setPending] = useState<PendingConfirm | null>(null);
   const confirmButtonRef = useRef<HTMLButtonElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useRestoreFocus(Boolean(pending));
 
   const confirm = useCallback<ConfirmFn>((options) => {
     return new Promise<boolean>((resolve) => {
@@ -72,7 +75,24 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
     confirmButtonRef.current?.focus();
 
     function handleKey(event: KeyboardEvent) {
-      if (event.key === "Escape") close(false);
+      if (event.key === "Escape") {
+        close(false);
+        return;
+      }
+      if (event.key !== "Tab" || !dialogRef.current) return;
+      const focusable = dialogRef.current.querySelectorAll<HTMLElement>(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+      );
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
     }
     window.addEventListener("keydown", handleKey);
     return () => {
@@ -89,7 +109,7 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
       {children}
       {pending &&
         createPortal(
-          <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-[90] flex items-center justify-center p-4">
             <button
               type="button"
               aria-label="Hủy"
@@ -97,9 +117,11 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
               className="absolute inset-0 h-full w-full cursor-default bg-stone-900/40 animate-[overlay-in_160ms_ease]"
             />
             <div
+              ref={dialogRef}
               role="alertdialog"
               aria-modal="true"
               aria-label={pending.title}
+              aria-describedby={pending.description ? "confirm-dialog-description" : undefined}
               className="relative w-full max-w-sm rounded-2xl bg-white p-5 shadow-xl animate-[sheet-up_200ms_cubic-bezier(0.32,0.72,0,1)] dark:bg-stone-900"
             >
               <div className="flex items-start gap-3">
@@ -113,7 +135,10 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
                     {pending.title}
                   </h2>
                   {pending.description && (
-                    <p className="mt-1 text-sm text-stone-600 dark:text-stone-400">
+                    <p
+                      id="confirm-dialog-description"
+                      className="mt-1 text-sm text-stone-600 dark:text-stone-400"
+                    >
                       {pending.description}
                     </p>
                   )}
