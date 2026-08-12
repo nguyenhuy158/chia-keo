@@ -1,5 +1,5 @@
 import { Download, X } from "lucide-react";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 
 function useBodyScrollLock(open: boolean) {
@@ -22,6 +22,24 @@ function useEscToClose(open: boolean, onClose: () => void) {
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
   }, [open, onClose]);
+}
+
+/**
+ * Nho phan tu dang focus truoc khi mo overlay, tra lai focus cho no sau khi
+ * dong — khong co dong nay, nguoi dung ban phim mat tieu diem, phai Tab lai
+ * tu dau trang.
+ */
+export function useRestoreFocus(open: boolean) {
+  const previouslyFocused = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    if (open) {
+      previouslyFocused.current = document.activeElement as HTMLElement | null;
+      return;
+    }
+    previouslyFocused.current?.focus();
+    previouslyFocused.current = null;
+  }, [open]);
 }
 
 function CloseButton({ onClose }: { onClose: () => void }) {
@@ -51,6 +69,7 @@ type BottomSheetProps = {
 export function BottomSheet({ open, onClose, title, children }: BottomSheetProps) {
   useBodyScrollLock(open);
   useEscToClose(open, onClose);
+  useRestoreFocus(open);
 
   if (!open) return null;
 
@@ -91,6 +110,7 @@ type DrawerProps = {
 export function Drawer({ open, onClose, title, children }: DrawerProps) {
   useBodyScrollLock(open);
   useEscToClose(open, onClose);
+  useRestoreFocus(open);
 
   if (!open) return null;
 
@@ -136,6 +156,7 @@ type ImageLightboxProps = {
 export function ImageLightbox({ open, src, alt, onClose, onDownload }: ImageLightboxProps) {
   useBodyScrollLock(open);
   useEscToClose(open, onClose);
+  useRestoreFocus(open);
 
   if (!open) return null;
 
