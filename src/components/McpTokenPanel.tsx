@@ -18,6 +18,7 @@ import {
   useRevokeMcpToken,
 } from "../adapters/react-query/queries";
 import { useConfirm } from "./ConfirmDialog";
+import { formatDateTime } from "./format-datetime";
 import { SkeletonCard } from "./ui";
 
 /** Nhan tieng Viet cho tung quyen, kem tool ma quyen do mo ra. */
@@ -69,16 +70,6 @@ const ERROR_MESSAGE: Record<string, string> = {
   too_many_mcp_tokens: `Đã đủ ${MAX_MCP_TOKENS_PER_USER} token chưa thu hồi, thu hồi bớt rồi tạo lại.`,
   rate_limited: "Tạo quá nhanh, chờ một phút rồi thử lại.",
 };
-
-function formatDateTime(iso: string) {
-  return new Date(iso).toLocaleString("vi-VN", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
 
 function tokenStatus(token: ApiMcpToken) {
   if (token.revokedAt) return { label: "Đã thu hồi", tone: "rose" as const };
