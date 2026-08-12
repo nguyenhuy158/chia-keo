@@ -4,6 +4,17 @@ import type { GameRepository, GameRow } from "../ports/game-repository";
 import { NotFoundError } from "./errors";
 import { getAccessibleGame, loadGameDetail, loadShareView } from "./game-detail";
 
+const SHARE_TOKEN_RETRY_LIMIT = 5;
+
+/** Token chi 4 ky tu nen dung trung nhau la co that; thu lai vai lan neu dung. */
+async function createUniqueShareToken(repo: GameRepository): Promise<string> {
+  for (let attempt = 0; attempt < SHARE_TOKEN_RETRY_LIMIT; attempt += 1) {
+    const token = createShareToken();
+    if (!(await repo.shareLinks.findByToken(token))) return token;
+  }
+  throw new Error("Khong tao duoc share token khong trung sau nhieu lan thu");
+}
+
 export async function rotateShareLink(
   repo: GameRepository,
   userId: string,
@@ -15,7 +26,7 @@ export async function rotateShareLink(
   await repo.shareLinks.replace(game.id, {
     id: createId("share"),
     gameId: game.id,
-    token: createShareToken(),
+    token: await createUniqueShareToken(repo),
     enabled: true,
     createdAt: nowIso(),
     expiresAt: null,

@@ -3,7 +3,7 @@ import { cors } from "hono/cors";
 import { BUILD_INFO } from "../../shared/build-info";
 import { AUTH_BASE_PATH, createAuth, getTrustedOrigins } from "./auth";
 import type { Env } from "./env";
-import { rateLimitPost } from "./lib/rate-limit-middleware";
+import { rateLimitMethods, rateLimitPost } from "./lib/rate-limit-middleware";
 import { aiRouter } from "./routes/ai";
 import { crossBalancesRouter } from "./routes/cross-balances";
 import { funStatsRouter } from "./routes/fun-stats";
@@ -26,6 +26,8 @@ const PHOTO_UPLOAD_RATE_LIMIT = { limit: 60, windowMs: 60_000 };
 // MCP goi nhieu lan moi phien (initialize, tools/list, roi tung tools/call) nen
 // nguong cao; muc dich chi la chan do token, khong phai tiet kiem tai nguyen.
 const MCP_RATE_LIMIT = { limit: 120, windowMs: 60_000 };
+// Share token ngan (4 ky tu) nen phai chan brute-force doan token qua GET.
+const SHARE_VIEW_RATE_LIMIT = { limit: 20, windowMs: 60_000 };
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -70,6 +72,8 @@ app.use("/api/games/:gameId/share-links", rateLimitPost("share-link", CREATE_RAT
 app.use("/api/games/:gameId/photos", rateLimitPost("photo-upload", PHOTO_UPLOAD_RATE_LIMIT));
 app.use("/api/mcp", rateLimitPost("mcp", MCP_RATE_LIMIT));
 app.use("/api/mcp-tokens", rateLimitPost("mcp-token", CREATE_RATE_LIMIT));
+app.use("/api/share/:token", rateLimitMethods(["GET"], "share-view", SHARE_VIEW_RATE_LIMIT));
+app.use("/api/share/:token/*", rateLimitMethods(["GET"], "share-view", SHARE_VIEW_RATE_LIMIT));
 
 app.on(["GET", "POST"], `${AUTH_BASE_PATH}/*`, (c) =>
   createAuth(c.env, c.req.url).handler(c.req.raw),

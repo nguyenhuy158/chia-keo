@@ -58,6 +58,8 @@ export type SummaryDocument = {
   subtitle: string;
   sections: SummarySection[];
   footer?: string;
+  /** Link xem chi tiet (chua co nhan "Chi tiết:") — anh ve rieng, canh le phai. */
+  shareUrl?: string;
   /** Chi co o che do gom mot nguoi: nguoi nhan tien, chu nhan cua QR duy nhat. */
   hostParticipantId?: string;
 };
@@ -345,6 +347,7 @@ export function buildSummaryDocument(
     subtitle: code,
     sections,
     footer: shareUrl ? `Chi tiết: ${shareUrl}` : undefined,
+    shareUrl,
     hostParticipantId,
   };
 }

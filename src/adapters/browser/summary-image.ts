@@ -318,6 +318,28 @@ function buildTextBlocks(
   });
 }
 
+/**
+ * Footer canh le phai, khac cac block khac (canh le trai) — de link share
+ * dung nhu mot chu ky nho o day the, khong lan vao noi dung chinh.
+ */
+function buildRightAlignedTextBlocks(
+  context: CanvasRenderingContext2D,
+  text: string,
+  style: TextStyle,
+): Block[] {
+  const maxWidth = CARD_WIDTH - PADDING * 2;
+
+  return wrapText(context, text, style, maxWidth).map((part, index) => ({
+    height: style.lineHeight,
+    gapBefore: index === 0 ? style.gapBefore : 0,
+    draw(target, y) {
+      target.font = style.font;
+      const x = CARD_WIDTH - PADDING - target.measureText(part).width;
+      drawText(target, part, style, x, y);
+    },
+  }));
+}
+
 function buildQrBlock(card: QrCard, palette: SummaryImagePalette): Block {
   const textX = PADDING + QR_SIZE + QR_TEXT_GAP;
   const textHeight = card.lines.reduce((total, [, style]) => total + style.lineHeight, 0);
@@ -403,7 +425,7 @@ function buildBlocks(
     });
   }
 
-  if (doc.footer) blocks.push(...buildTextBlocks(context, doc.footer, styles.footer));
+  if (doc.shareUrl) blocks.push(...buildRightAlignedTextBlocks(context, doc.shareUrl, styles.footer));
 
   return blocks;
 }
