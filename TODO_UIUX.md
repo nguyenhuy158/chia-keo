@@ -209,20 +209,38 @@ về `stone-400` (~6.9:1). 3 card còn lại đã đo contrast, đạt chuẩn.
 
 # Đợt 3 (2026-08-12) — perf & UX sau khi rà xong Đợt 2
 
-## D1. Không code-split theo route
+## D1. ~~Không code-split theo route~~ — Đã làm (2026-08-12)
 Toàn bộ route (`AppLayout.tsx` và các trang con) static-import — build ra
 đúng 1 chunk JS 718KB (Vite tự cảnh báo "larger than 500 kB"). Trang ít dùng
 (`FunStatsPage`, `McpTokenPanel`, `SharePage`) vẫn tải cùng bundle chính dù
-người dùng không vào. Fix: `React.lazy()` + `Suspense` cho từng route,
-tách riêng chunk.
+người dùng không vào. ~~Fix: `React.lazy()` + `Suspense` cho từng route,
+tách riêng chunk.~~ Đã dùng `lazyRouteComponent` của TanStack Router cho
+`GamePage`/`SettingsPage`/`FunStatsPage`/`SharePage` (`src/router.tsx`),
+kèm `defaultPendingComponent: LoadingState`. Main chunk 718KB → 587KB, thêm
+4 chunk riêng (GamePage 71KB, SettingsPage 14KB, SharePage 12KB, FunStatsPage
+3KB). Rủi ro kèm theo: sau deploy, client cũ giữ `index.html` cũ có thể gọi
+chunk đã bị xoá trên CDN → `import()` reject. Đã kiểm bằng tay (xoá chunk,
+curl lại): request rơi vào SPA fallback trả `index.html` (200, không phải
+404 sạch), trình duyệt parse HTML như JS sẽ throw — promise vẫn reject nên
+`rootRoute.errorComponent` ("Thử tải lại trang") vẫn bắt được. Chưa xác nhận
+bằng mắt trên trình duyệt thật (không có công cụ browser trong phiên này).
 
-## D2. Chỉ 1/20+ mutation có optimistic update
-`src/adapters/react-query/queries.ts`: chỉ `useUpdatePreferences` (dòng 102)
-có `onMutate` cập nhật UI ngay rồi rollback nếu lỗi. Toàn bộ mutation còn lại
-(thêm/sửa/xoá khoản chi, người tham gia, chuyển tiền, sắp thứ tự...) đợi
-round-trip Worker xong mới cập nhật UI — chậm rõ trên mạng yếu hoặc Worker
-cold start. Fix: thêm `onMutate`/rollback cho các mutation hay dùng nhất
-(thêm khoản chi, thêm người, xoá).
+## D2. Chỉ 1/20+ mutation có optimistic update — làm phần an toàn, phần còn lại hoãn có lý do
+`src/adapters/react-query/queries.ts`: chỉ `useUpdatePreferences` có
+`onMutate` cập nhật UI ngay rồi rollback nếu lỗi. Đã thêm `onMutate`/rollback
+(qua option `optimistic` mới trong `useGameDetailMutation`) cho 4 mutation
+KHÔNG đụng vào `summary` (balances/settlements do server tính bằng
+`shared/split`, tự bịa optimistic dễ sai số): `useReorderExpenses`,
+`useReorderParticipants`, `useRenameGame`, `useSetShareLinkEnabled`.
+
+Còn lại — thêm/xoá khoản chi, thêm/xoá người tham gia — CHỦ ĐỘNG CHƯA LÀM:
+`worker/src/core/application/game-detail.ts` gọi `calculateBalances`/
+`calculateSettlements` từ `shared/split` để tính `summary`, nên về lý thuyết
+FE có thể tái dùng đúng hàm đó để tự tính optimistic summary khớp server —
+nhưng ghép đúng input (`ExpenseInput` → `ApiExpense` đầy đủ splits, id tạm
+không đụng id thật khi reconcile...) là một thay đổi lớn, rủi ro sai số tiền
+hiển thị sai trong lúc chờ. Để lại `isPending` (nút disable + spinner, form
+giữ nguyên) thay vì optimistic giả — an toàn hơn cho app tiền bạc.
 
 ## D3. Trang full-page vẫn dùng loader chữ, không phải skeleton
 `GamePage.tsx`/`SharePage.tsx` còn "Đang tải..." (cố tình bỏ ở Đợt 1 mục 1

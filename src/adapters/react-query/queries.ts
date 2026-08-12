@@ -246,7 +246,7 @@ export function usePurgeGame() {
   });
 }
 
-type GameDetailMutationOptions = {
+type GameDetailMutationOptions<TVariables> = {
   /**
    * Lam moi luon danh sach anh: dung cho cac thao tac co the xoa khoan chi,
    * vi anh dinh kem se tro thanh anh chung cua cuoc chia.
@@ -254,6 +254,16 @@ type GameDetailMutationOptions = {
   refreshPhotos?: boolean;
   /** Lam moi danh ba: dung cho thao tac them/sua/xoa nguoi tham gia. */
   refreshContacts?: boolean;
+  /**
+   * Cap nhat cache ngay truoc khi server tra loi. Chi dung cho thao tac
+   * khong dong den so tien da tinh (summary) — thu tu, ten, cong tac chia
+   * se — vi ApiGameDetail.summary do server tinh (shared/split), doan
+   * optimistic khong the tu bien ra dung so.
+   */
+  optimistic?: {
+    gameId: string;
+    apply: (detail: ApiGameDetail, variables: TVariables) => ApiGameDetail;
+  };
 };
 
 /**
@@ -262,12 +272,36 @@ type GameDetailMutationOptions = {
  */
 function useGameDetailMutation<TVariables>(
   mutationFn: (variables: TVariables) => Promise<ApiGameDetail>,
-  options: GameDetailMutationOptions = {},
+  options: GameDetailMutationOptions<TVariables> = {},
 ) {
   const queryClient = useQueryClient();
+  const optimistic = options.optimistic;
 
   return useMutation({
     mutationFn,
+    onMutate: optimistic
+      ? async (variables: TVariables) => {
+          await queryClient.cancelQueries({ queryKey: gameKeys.detail(optimistic.gameId) });
+          const previous = queryClient.getQueryData<ApiGameDetail>(
+            gameKeys.detail(optimistic.gameId),
+          );
+          if (previous) {
+            queryClient.setQueryData(
+              gameKeys.detail(optimistic.gameId),
+              optimistic.apply(previous, variables),
+            );
+          }
+          return { previous };
+        }
+      : undefined,
+    onError: optimistic
+      ? (_error, _variables, context) => {
+          const ctx = context as { previous?: ApiGameDetail } | undefined;
+          if (ctx?.previous) {
+            queryClient.setQueryData(gameKeys.detail(optimistic.gameId), ctx.previous);
+          }
+        }
+      : undefined,
     onSuccess: (detail) => {
       queryClient.setQueryData(gameKeys.detail(detail.id), detail);
       queryClient.invalidateQueries({ queryKey: gameKeys.all });
@@ -332,15 +366,36 @@ export function useRemoveExpense() {
   });
 }
 
+/** Sap lai mang theo thu tu id moi; id la nao khong co trong danh sach thi bo qua. */
+function reorderBy<T extends { id: string }>(items: T[], ids: string[]): T[] {
+  const byId = new Map(items.map((item) => [item.id, item]));
+  return ids.map((id) => byId.get(id)).filter((item): item is T => Boolean(item));
+}
+
 export function useReorderExpenses(gameId: string) {
-  return useGameDetailMutation((expenseIds: string[]) =>
-    getGameApi().expenses.reorder(gameId, expenseIds),
-  );
+  return useGameDetailMutation((expenseIds: string[]) => getGameApi().expenses.reorder(gameId, expenseIds), {
+    optimistic: {
+      gameId,
+      apply: (detail, expenseIds) => ({
+        ...detail,
+        expenses: reorderBy(detail.expenses, expenseIds),
+      }),
+    },
+  });
 }
 
 export function useReorderParticipants(gameId: string) {
-  return useGameDetailMutation((participantIds: string[]) =>
-    getGameApi().participants.reorder(gameId, participantIds),
+  return useGameDetailMutation(
+    (participantIds: string[]) => getGameApi().participants.reorder(gameId, participantIds),
+    {
+      optimistic: {
+        gameId,
+        apply: (detail, participantIds) => ({
+          ...detail,
+          participants: reorderBy(detail.participants, participantIds),
+        }),
+      },
+    },
   );
 }
 
@@ -351,7 +406,9 @@ export function useAddTransfer(gameId: string) {
 }
 
 export function useRenameGame(gameId: string) {
-  return useGameDetailMutation((name: string) => getGameApi().games.update(gameId, { name }));
+  return useGameDetailMutation((name: string) => getGameApi().games.update(gameId, { name }), {
+    optimistic: { gameId, apply: (detail, name) => ({ ...detail, name }) },
+  });
 }
 
 export function useSetSettlementMode(gameId: string) {
@@ -491,8 +548,15 @@ export function useRotateShareLink(gameId: string) {
 }
 
 export function useSetShareLinkEnabled(gameId: string) {
-  return useGameDetailMutation((enabled: boolean) =>
-    getGameApi().shareLinks.setEnabled(gameId, enabled),
+  return useGameDetailMutation(
+    (enabled: boolean) => getGameApi().shareLinks.setEnabled(gameId, enabled),
+    {
+      optimistic: {
+        gameId,
+        apply: (detail, enabled) =>
+          detail.shareLink ? { ...detail, shareLink: { ...detail.shareLink, enabled } } : detail,
+      },
+    },
   );
 }
 
