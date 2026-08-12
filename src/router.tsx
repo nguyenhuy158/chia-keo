@@ -4,15 +4,12 @@ import {
   createRootRoute,
   createRoute,
   createRouter,
+  lazyRouteComponent,
 } from "@tanstack/react-router";
-import { EmptyState, PageShell } from "./components/ui";
+import { EmptyState, LoadingState, PageShell } from "./components/ui";
 import { AppLayout } from "./routes/AppLayout";
-import { FunStatsPage } from "./routes/FunStatsPage";
-import { GamePage } from "./routes/GamePage";
 import { HomePage } from "./routes/HomePage";
 import { LoginPage } from "./routes/LoginPage";
-import { SettingsPage } from "./routes/SettingsPage";
-import { SharePage } from "./routes/SharePage";
 
 function ErrorScreen({ title, description }: { title: string; description: string }) {
   return (
@@ -55,7 +52,7 @@ const loginRoute = createRoute({
 const shareRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/share/$token",
-  component: SharePage,
+  component: lazyRouteComponent(() => import("./routes/SharePage"), "SharePage"),
 });
 
 const appRoute = createRoute({
@@ -73,19 +70,19 @@ const homeRoute = createRoute({
 const gameRoute = createRoute({
   getParentRoute: () => appRoute,
   path: "/games/$gameId",
-  component: GamePage,
+  component: lazyRouteComponent(() => import("./routes/GamePage"), "GamePage"),
 });
 
 const settingsRoute = createRoute({
   getParentRoute: () => appRoute,
   path: "/settings",
-  component: SettingsPage,
+  component: lazyRouteComponent(() => import("./routes/SettingsPage"), "SettingsPage"),
 });
 
 const funStatsRoute = createRoute({
   getParentRoute: () => appRoute,
   path: "/fun",
-  component: FunStatsPage,
+  component: lazyRouteComponent(() => import("./routes/FunStatsPage"), "FunStatsPage"),
 });
 
 const routeTree = rootRoute.addChildren([
@@ -94,7 +91,11 @@ const routeTree = rootRoute.addChildren([
   appRoute.addChildren([homeRoute, gameRoute, settingsRoute, funStatsRoute]),
 ]);
 
-export const router = createRouter({ routeTree });
+export const router = createRouter({
+  routeTree,
+  defaultPendingComponent: LoadingState,
+  defaultPendingMs: 200,
+});
 
 declare module "@tanstack/react-router" {
   interface Register {

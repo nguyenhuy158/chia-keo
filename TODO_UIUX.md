@@ -199,6 +199,42 @@ phân cấp thông tin, hai nơi không liên kết trực quan với nhau.
 
 ---
 
-Việc cũ chưa làm, gộp vào đây cho gọn: kiểm tra lại contrast ở dark mode sau
-khi các card mới (Danh bạ, Lịch sử, Thùng rác, ConfirmDialog) được thêm dồn
-dập — chưa có ai xem qua bằng mắt trên thiết bị thật.
+Việc cũ chưa làm, gộp vào đây cho gọn: ~~kiểm tra lại contrast ở dark mode
+sau khi các card mới (Danh bạ, Lịch sử, Thùng rác, ConfirmDialog) được thêm
+dồn dập~~ — Đã làm (2026-08-12): `HistoryPanel.tsx` timestamp
+`dark:text-stone-500` trên nền `stone-900` chỉ ~3.65:1 (dưới AA 4.5:1), đổi
+về `stone-400` (~6.9:1). 3 card còn lại đã đo contrast, đạt chuẩn.
+
+---
+
+# Đợt 3 (2026-08-12) — perf & UX sau khi rà xong Đợt 2
+
+## D1. Không code-split theo route
+Toàn bộ route (`AppLayout.tsx` và các trang con) static-import — build ra
+đúng 1 chunk JS 718KB (Vite tự cảnh báo "larger than 500 kB"). Trang ít dùng
+(`FunStatsPage`, `McpTokenPanel`, `SharePage`) vẫn tải cùng bundle chính dù
+người dùng không vào. Fix: `React.lazy()` + `Suspense` cho từng route,
+tách riêng chunk.
+
+## D2. Chỉ 1/20+ mutation có optimistic update
+`src/adapters/react-query/queries.ts`: chỉ `useUpdatePreferences` (dòng 102)
+có `onMutate` cập nhật UI ngay rồi rollback nếu lỗi. Toàn bộ mutation còn lại
+(thêm/sửa/xoá khoản chi, người tham gia, chuyển tiền, sắp thứ tự...) đợi
+round-trip Worker xong mới cập nhật UI — chậm rõ trên mạng yếu hoặc Worker
+cold start. Fix: thêm `onMutate`/rollback cho các mutation hay dùng nhất
+(thêm khoản chi, thêm người, xoá).
+
+## D3. Trang full-page vẫn dùng loader chữ, không phải skeleton
+`GamePage.tsx`/`SharePage.tsx` còn "Đang tải..." (cố tình bỏ ở Đợt 1 mục 1
+vì lúc đó các list-level skeleton chưa xong hết). Giờ phần lớn skeleton đã
+có, có thể nâng cấp 2 trang full-page này luôn cho nhất quán.
+
+## D4. Contrast dark mode chưa rà hết toàn app
+Đợt 2 chỉ đo 4 card mới (Danh bạ, Lịch sử, Thùng rác, ConfirmDialog). Còn
+`GamesSidebar`, `McpTokenPanel`, `GameDashboard`, `ExpensePanel`... chưa đo.
+
+## D5. Confirm dialog cho thao tác có thể hoàn tác nên đổi thành toast-undo
+Xoá người/khoản chi hiện chặn bằng `ConfirmDialog` (thêm 1 bước bấm trước
+khi làm), nhưng app đã có sẵn hạ tầng hoàn tác (`HistoryPanel`,
+`useUndoGameEvent`). Kiểu Gmail "Đã xóa — Hoàn tác" (toast có nút undo) đỡ
+chặn luồng hơn modal, vẫn an toàn vì sửa được ngay sau đó.
