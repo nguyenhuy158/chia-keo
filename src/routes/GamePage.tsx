@@ -114,6 +114,17 @@ export function GamePage() {
     navigate({ to: "/" });
   }
 
+  async function handleRotateShareLink() {
+    const ok = await confirm({
+      title: "Tạo link chia sẻ mới?",
+      description: "Link cũ sẽ hết hiệu lực ngay, ai đang xem sẽ mất quyền truy cập.",
+      confirmLabel: "Tạo link mới",
+      destructive: true,
+    });
+    if (!ok) return;
+    rotateShareLink.mutate(undefined, { onSuccess: () => toast.success("Đã tạo link mới") });
+  }
+
   async function handleRenameGame() {
     const name = (nameDraft || "").trim();
     if (!name || name === game.name) {
@@ -180,8 +191,14 @@ export function GamePage() {
       summary={game.summary}
       settlementMode={game.settlementMode}
       settlementHostId={game.settlementHostId}
-      onSettlementModeChange={(mode) => setSettlementMode.mutate(mode)}
-      onSettlementHostChange={(participantId) => setSettlementHost.mutate(participantId)}
+      onSettlementModeChange={(mode) =>
+        setSettlementMode.mutate(mode, { onSuccess: () => toast.success("Đã đổi cách chia tiền") })
+      }
+      onSettlementHostChange={(participantId) =>
+        setSettlementHost.mutate(participantId, {
+          onSuccess: () => toast.success("Đã đổi người giữ tiền"),
+        })
+      }
       expenses={game.expenses}
       onSettle={async (settlement) => {
         const fromName = participantNameById.get(settlement.fromParticipantId) || "Không rõ";
@@ -271,7 +288,11 @@ export function GamePage() {
     <>
       <button
         type="button"
-        onClick={() => setShareLinkEnabled.mutate(!shareLink.enabled)}
+        onClick={() =>
+          setShareLinkEnabled.mutate(!shareLink.enabled, {
+            onSuccess: () => toast.success(shareLink.enabled ? "Đã tắt link" : "Đã bật link"),
+          })
+        }
         disabled={setShareLinkEnabled.isPending}
         className="inline-flex h-11 items-center justify-center gap-2 rounded-md border border-stone-300 bg-white px-3 text-sm font-medium text-stone-700 transition hover:bg-stone-50 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-200 dark:hover:bg-stone-800"
         title={shareLink.enabled ? "Tắt link share" : "Bật link share"}
@@ -288,7 +309,7 @@ export function GamePage() {
       </button>
       <button
         type="button"
-        onClick={() => rotateShareLink.mutate()}
+        onClick={handleRotateShareLink}
         disabled={rotateShareLink.isPending}
         className="inline-flex h-11 items-center justify-center gap-2 rounded-md border border-stone-300 bg-white px-3 text-sm font-medium text-stone-700 transition hover:bg-stone-50 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-200 dark:hover:bg-stone-800"
         title="Tạo token mới, link cũ sẽ hết hiệu lực"
@@ -300,7 +321,9 @@ export function GamePage() {
   ) : (
     <button
       type="button"
-      onClick={() => rotateShareLink.mutate()}
+      onClick={() =>
+        rotateShareLink.mutate(undefined, { onSuccess: () => toast.success("Đã tạo link chia sẻ") })
+      }
       disabled={rotateShareLink.isPending}
       className="inline-flex h-11 items-center justify-center gap-2 rounded-md border border-stone-300 bg-white px-3 text-sm font-medium text-stone-700 transition hover:bg-stone-50 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-200 dark:hover:bg-stone-800"
     >
