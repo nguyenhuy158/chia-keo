@@ -2,6 +2,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Check, ChevronDown, ChevronUp, Pencil, Plus, Trash2, Users, X } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { z } from "zod";
 import type { ApiParticipant } from "../../shared/api-types";
 import type { ParticipantInput } from "../../shared/schemas";
@@ -70,6 +71,7 @@ export function ParticipantPanel({
     if (!ok) return;
 
     onRemove(participant.id);
+    toast.success(`Đã xóa ${participant.name}`);
   }
 
   /** Doi cho voi nguoi ngay tren/duoi trong danh sach hien tai. */
@@ -84,8 +86,13 @@ export function ParticipantPanel({
   }
 
   const handleAdd = form.handleSubmit(async (values) => {
-    await onAdd(values);
-    form.reset(emptyForm);
+    try {
+      await onAdd(values);
+      form.reset(emptyForm);
+      toast.success("Đã thêm người tham gia");
+    } catch {
+      toast.error("Không lưu được");
+    }
   });
 
   function startEdit(participant: ApiParticipant) {
@@ -106,8 +113,13 @@ export function ParticipantPanel({
   const handleSaveEdit = form.handleSubmit(async (values) => {
     if (!editingParticipantId) return;
 
-    await onUpdate(editingParticipantId, values);
-    cancelEdit();
+    try {
+      await onUpdate(editingParticipantId, values);
+      cancelEdit();
+      toast.success("Đã lưu thông tin");
+    } catch {
+      toast.error("Không lưu được");
+    }
   });
 
   return (
