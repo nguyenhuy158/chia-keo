@@ -68,6 +68,7 @@ export function TrashCard() {
         <button
           type="button"
           onClick={() => setOpen((current) => !current)}
+          aria-expanded={open}
           className="rounded-md px-2 py-1 text-xs font-semibold text-violet-700 transition hover:bg-violet-50 dark:text-violet-300 dark:hover:bg-violet-500/10"
         >
           {open ? "Ẩn" : "Xem"}
@@ -104,7 +105,7 @@ export function TrashCard() {
                       type="button"
                       onClick={() => handleRestore(game)}
                       disabled={pending}
-                      className="inline-flex h-9 flex-1 items-center justify-center gap-1.5 rounded-md border border-stone-300 text-xs font-semibold text-stone-700 transition hover:bg-stone-50 disabled:opacity-50 dark:border-stone-700 dark:text-stone-200 dark:hover:bg-stone-800"
+                      className="inline-flex h-11 flex-1 items-center justify-center gap-1.5 rounded-md border border-stone-300 text-xs font-semibold text-stone-700 transition hover:bg-stone-50 disabled:opacity-50 dark:border-stone-700 dark:text-stone-200 dark:hover:bg-stone-800"
                     >
                       <RotateCcw size={13} />
                       Phục hồi
@@ -113,7 +114,7 @@ export function TrashCard() {
                       type="button"
                       onClick={() => handlePurge(game)}
                       disabled={pending}
-                      className="inline-flex h-9 items-center justify-center gap-1.5 rounded-md border border-rose-200 px-2.5 text-xs font-semibold text-rose-600 transition hover:bg-rose-50 disabled:opacity-50 dark:border-rose-500/40 dark:text-rose-400 dark:hover:bg-rose-500/10"
+                      className="inline-flex h-11 items-center justify-center gap-1.5 rounded-md border border-rose-200 px-2.5 text-xs font-semibold text-rose-600 transition hover:bg-rose-50 disabled:opacity-50 dark:border-rose-500/40 dark:text-rose-400 dark:hover:bg-rose-500/10"
                     >
                       <Trash2 size={13} />
                       Xóa hẳn
