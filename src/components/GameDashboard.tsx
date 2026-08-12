@@ -304,7 +304,7 @@ export function GameDashboard({
                         <p className="flex items-center gap-1.5 text-sm font-semibold text-stone-950 dark:text-stone-50">
                           <Avatar name={from.name} size={20} />
                           <span className="min-w-0 truncate">{from.name}</span>
-                          <span className="shrink-0 text-stone-400 dark:text-stone-500">trả</span>
+                          <span className="shrink-0 text-stone-400">trả</span>
                           <Avatar name={to.name} size={20} />
                           <span className="min-w-0 truncate">{to.name}</span>
                         </p>

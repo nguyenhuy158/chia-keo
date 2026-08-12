@@ -251,9 +251,17 @@ có, có thể nâng cấp 2 trang full-page này luôn cho nhất quán.~~ Thê
 thẻ tổng kết (`split` prop: `true` = 2 cột như GamePage, `false` = 1 cột như
 SharePage) để không giật layout khi dữ liệu thật về.
 
-## D4. Contrast dark mode chưa rà hết toàn app
-Đợt 2 chỉ đo 4 card mới (Danh bạ, Lịch sử, Thùng rác, ConfirmDialog). Còn
-`GamesSidebar`, `McpTokenPanel`, `GameDashboard`, `ExpensePanel`... chưa đo.
+## D4. ~~Contrast dark mode chưa rà hết toàn app~~ — Đã làm (2026-08-12)
+Đợt 2 chỉ đo 4 card mới (Danh bạ, Lịch sử, Thùng rác, ConfirmDialog). ~~Còn
+`GamesSidebar`, `McpTokenPanel`, `GameDashboard`, `ExpensePanel`... chưa đo.~~
+Đo bằng công thức WCAG (giống Đợt 2) cho 4 file trên: tìm đúng 1 mẫu lỗi lặp
+lại — `dark:text-stone-500` trên nền card (`stone-900`) chỉ ~3.65:1, dưới AA
+4.5:1 — nhưng chỉ fix ở chỗ là NỘI DUNG thật (không phải icon trang trí/nút
+disable): gợi ý tên "Người 1"…"Người N" (`GamesSidebar.tsx`), chữ "trả" giữa
+2 tên trong khối tất toán (`GameDashboard.tsx`), nhãn "(tùy chọn)"/"(không
+bắt buộc)" (`ExpensePanel.tsx`, 2 chỗ) — cả 4 đổi sang `stone-400` (~6.9:1).
+Icon-only (nút kéo thả, nút xoá, mũi tên) giữ `stone-500`/`stone-600`: quy
+ước có sẵn toàn app cho trạng thái phụ/trang trí, không phải lỗi mới.
 
 ## D5. Confirm dialog cho thao tác có thể hoàn tác nên đổi thành toast-undo
 Xoá người/khoản chi hiện chặn bằng `ConfirmDialog` (thêm 1 bước bấm trước

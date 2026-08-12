@@ -647,7 +647,7 @@ function handleSplitModeChange(mode: SplitMode) {
         >
           <Sparkles size={15} />
           Nhập nhanh bằng AI
-          <span className="font-normal text-stone-400 dark:text-stone-500">(tùy chọn)</span>
+          <span className="font-normal text-stone-400">(tùy chọn)</span>
           <ChevronDown
             size={15}
             className={`text-stone-400 transition ${aiOpen ? "rotate-180" : ""}`}
@@ -924,9 +924,7 @@ function handleSplitModeChange(mode: SplitMode) {
                 >
                   <Paperclip size={15} />
                   Ảnh hóa đơn
-                  <span className="font-normal text-stone-400 dark:text-stone-500">
-                    (không bắt buộc)
-                  </span>
+                  <span className="font-normal text-stone-400">(không bắt buộc)</span>
                   {hasPhotos && ` (${editingPhotos.length + stagedFiles.length})`}
                   <ChevronDown
                     size={15}

@@ -105,7 +105,7 @@ export function GamesSidebar({ onNavigate }: { onNavigate?: () => void }) {
             </button>
           </div>
           {participantCount > 0 && (
-            <span className="text-xs text-stone-400 dark:text-stone-500">
+            <span className="text-xs text-stone-400">
               “Người 1”…“Người {participantCount}”
             </span>
           )}
