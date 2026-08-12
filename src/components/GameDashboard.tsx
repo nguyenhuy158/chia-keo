@@ -303,10 +303,10 @@ export function GameDashboard({
                       <div className="min-w-0">
                         <p className="flex items-center gap-1.5 text-sm font-semibold text-stone-950 dark:text-stone-50">
                           <Avatar name={from.name} size={20} />
-                          <span className="truncate">{from.name}</span>
+                          <span className="min-w-0 truncate">{from.name}</span>
                           <span className="shrink-0 text-stone-400 dark:text-stone-500">trả</span>
                           <Avatar name={to.name} size={20} />
-                          <span className="truncate">{to.name}</span>
+                          <span className="min-w-0 truncate">{to.name}</span>
                         </p>
                         <p className="mt-1 text-sm font-bold text-violet-700 tabular dark:text-violet-400">
                           {formatMoney(settlement.amount)}
