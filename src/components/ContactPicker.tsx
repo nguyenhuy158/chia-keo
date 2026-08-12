@@ -96,7 +96,7 @@ export function ContactPicker({ participants, pending, onAddMany }: ContactPicke
                   ? `${contact.name} đã có trong cuộc chia này`
                   : `${contact.name}${contact.accountNo ? ` · ${getVietQrBankLabel(contact.bankId)} ${contact.accountNo}` : " · chưa có QR"} · ${contact.gameCount} cuộc chia`
               }
-              className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition ${
+              className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-3 text-xs font-medium transition ${
                 inGame
                   ? "cursor-default border-stone-200 bg-stone-100 text-stone-400 dark:border-stone-800 dark:bg-stone-900 dark:text-stone-600"
                   : picked
