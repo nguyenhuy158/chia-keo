@@ -347,3 +347,65 @@ describe("nguoi tra", () => {
     );
   });
 });
+
+describe("goi y bang AI", () => {
+  it("dien san form tu cau nhap", async () => {
+    const api = createFakeGameApi();
+    api.ai.suggestExpense.mockResolvedValue({
+      suggestion: {
+        title: "Ăn tối",
+        amount: 500_000,
+        note: "",
+        payerParticipantId: BINH,
+        splitParticipantIds: [AN, BINH],
+        confidence: 0.9,
+      },
+    } as never);
+    const { user } = setup();
+
+    await user.click(screen.getByRole("button", { name: /Nhập nhanh bằng AI/ }));
+    await user.type(
+      screen.getByPlaceholderText("Ví dụ: ăn tối 500k Huy trả chia 3"),
+      "ăn tối 500k Bình trả",
+    );
+    await user.click(screen.getByRole("button", { name: /Gợi ý/ }));
+
+    await waitFor(() => expect(screen.getByLabelText("Nội dung")).toHaveValue("Ăn tối"));
+    expect(screen.getByLabelText(/Số tiền/)).toHaveValue("500000");
+  });
+
+  it("AI loi thi bao ro, form giu nguyen", async () => {
+    const api = createFakeGameApi();
+    api.ai.suggestExpense.mockRejectedValue(new Error("gemini_not_configured"));
+    const { user } = setup();
+
+    await user.click(screen.getByRole("button", { name: /Nhập nhanh bằng AI/ }));
+    await user.type(screen.getByPlaceholderText("Ví dụ: ăn tối 500k Huy trả chia 3"), "abc");
+    await user.click(screen.getByRole("button", { name: /Gợi ý/ }));
+
+    expect(await screen.findByText(/GEMINI_API_KEY/)).toBeInTheDocument();
+  });
+
+  it("cau nhap rong thi khong goi AI", async () => {
+    const api = createFakeGameApi();
+    const { user } = setup();
+
+    await user.click(screen.getByRole("button", { name: /Nhập nhanh bằng AI/ }));
+    await user.click(screen.getByRole("button", { name: /Gợi ý/ }));
+
+    expect(api.ai.suggestExpense).not.toHaveBeenCalled();
+  });
+
+  it("Enter trong o AI cung goi y", async () => {
+    const api = createFakeGameApi();
+    const { user } = setup();
+
+    await user.click(screen.getByRole("button", { name: /Nhập nhanh bằng AI/ }));
+    await user.type(
+      screen.getByPlaceholderText("Ví dụ: ăn tối 500k Huy trả chia 3"),
+      "cà phê 50k{Enter}",
+    );
+
+    await waitFor(() => expect(api.ai.suggestExpense).toHaveBeenCalled());
+  });
+});

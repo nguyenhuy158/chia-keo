@@ -126,13 +126,12 @@ export default defineConfig({
         "shared/build-info*.ts",
       ],
       // Nguong = muc dang dat, lam chot chong tut lui: them code khong kem
-      // test se lam CI do. Nang dan len khi phu them cac use case con thieu
-      // (muc tieu 90 — xem docs/testing.md).
+      // test se lam CI do. Nang len moi khi phu them (xem docs/testing.md).
       thresholds: {
-        statements: 81,
-        branches: 72,
-        functions: 78,
-        lines: 83,
+        statements: 90,
+        branches: 81,
+        functions: 87,
+        lines: 92,
       },
     },
   },

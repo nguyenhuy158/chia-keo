@@ -5,52 +5,61 @@
 ```bash
 pnpm test        # vitest mot lan
 pnpm test:watch  # vitest che do watch
-pnpm test:cov    # vitest + bao cao coverage (coverage/index.html)
+pnpm test:cov    # vitest + bao cao coverage (mo coverage/index.html)
 ```
 
 CI chay `pnpm check` -> `pnpm test:cov` -> `pnpm build` tren moi PR va moi
 push vao `main`.
 
-## Pham vi do coverage
+## Hai moi truong test
 
-Chi do phan **logic thuan**, khai bao trong `vite.config.ts`:
+`vite.config.ts` khai bao hai project:
 
-- `shared/**` — domain kernel dung chung FE + worker
-- `src/core/**` — FE domain rules
-- `worker/src/core/**` — use case + policy cua backend
+| Project | File | Moi truong | Dung cho |
+| --- | --- | --- | --- |
+| `node` | `**/*.test.ts` | node | domain kernel, use case worker, adapter thuan |
+| `dom` | `src/**/*.test.tsx` | jsdom | component va hook React |
 
-Khong do: component/route React, adapter IO (`src/adapters/*`,
-`worker/src/adapters/*`), `ports/**` (chi co type), file sinh luc build, va
-composition root. Nhung phan do can e2e (`pnpm e2e`) chu khong phai unit test;
-do vao chi lam con so loang.
+Tach bang duoi file nen khong file nao phai gan docblock
+`@vitest-environment`.
+
+## Ha tang test dung chung
+
+| File | Dung de |
+| --- | --- |
+| `worker/src/core/application/fake-game-repository.ts` | `GameRepository` trong bo nho, giu dung ngu nghia D1 (sequence, cascade, split cua nguoi con song) |
+| `worker/src/test-support/sqlite-d1.ts` | `D1Database` chay tren `node:sqlite` da ap het migration — de test adapter D1 tren SQL that, ke ca rang buoc khoa ngoai |
+| `worker/src/test-support/fake-d1.ts` | D1 toi thieu cho cac cho cham thang vao DB (health check, drizzle o route session) |
+| `worker/src/test-support/route-harness.ts` | env gia + `callApi` de goi thang app Hono that |
+| `src/test/fake-game-api.tsx` | `GameApiPort` gia + wrapper React Query |
+| `src/test/fake-canvas.ts` | canvas 2d gia cho jsdom (ve anh tong ket, nen anh) |
+
+Cac file nay khong tinh vao coverage.
 
 ## Nguong hien tai
 
-`vite.config.ts` dat nguong bang **muc dang dat**, lam chot chong tut lui —
-them code khong kem test se lam CI do:
+Nguong dat bang **muc dang dat**, lam chot chong tut lui — them code khong kem
+test se lam CI do:
 
 | Chi so | Nguong | Dang dat |
 | --- | --- | --- |
-| Statements | 81 | 81.33% |
-| Branches | 72 | 72.64% |
-| Functions | 78 | 78.74% |
-| Lines | 83 | 83.53% |
+| Statements | 90 | 90.09% |
+| Branches | 81 | 81.74% |
+| Functions | 87 | 87.85% |
+| Lines | 92 | 92.10% |
 
-## Duong den 90%
+Pham vi do la toan bo code viet tay (`shared/`, `src/`, `worker/`), tru file
+test, ha tang test, `**/ports/**` (chi co type) va file sinh luc build.
 
-`shared/**` da o 97% statements. Khoang cach nam gan het o
-`worker/src/core/application/`, cac file chua co test nao:
+## Vai luu y khi viet test moi
 
-| File | Stmts | Ghi chu |
-| --- | --- | --- |
-| `photos.ts` | 2% | upload/xoa/gan anh vao khoan chi |
-| `ai-suggestions.ts` | 0% | goi AiProvider + chuan hoa ket qua |
-| `contacts.ts` | 0% | danh ba nguoi quen |
-| `fun-stats.ts` | 0% | thong ke vui |
-| `games.ts` | 45% | tao/sua/doi che do chia |
-| `game-events.ts` | 76% | phan undo cua lich su |
-| `profile.ts` | 0% | doi ten hien thi |
-
-`fake-game-repository.ts` trong cung thu muc da co san repo gia trong bo nho —
-viet them test cho cac file tren dung lai duoc, khong can dung ha tang moi.
-Moi lan phu them, nho **nang nguong trong `vite.config.ts`** len muc moi.
+- **Provider**: component co `ThemeToggle` phai boc `ThemeProvider`; component
+  goi `useConfirm` phai boc `ConfirmProvider`; component ve QR can
+  `createFakeGameApi()` (no dang ky luon `QrProviderPort`).
+- **Portal**: menu/overlay ve bang `createPortal(document.body)`. Neu su kien
+  khong toi duoc React, render voi `{ container: document.body }`.
+- **QueryClient trong test**: dung `createTestQueryClient()`, dung dat
+  `gcTime: 0` — cache khong co observer se bi don ngay va `getQueryData` doc ra
+  `undefined`.
+- **Nang nguong**: moi lan phu them dang ke, nang so trong `vite.config.ts` len
+  muc moi va cap nhat bang tren.

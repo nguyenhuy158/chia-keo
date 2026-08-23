@@ -238,3 +238,90 @@ describe("gui email tom tat", () => {
     );
   });
 });
+
+describe("cach chia tien va ghi nhan tra no", () => {
+  const WITH_DEBT = () =>
+    makeDetail({
+      expenses: [EXPENSE],
+      summary: {
+        totalExpense: 90_000,
+        balances: [
+          { participantId: AN, paid: 90_000, owed: 45_000, balance: 45_000 },
+          { participantId: BINH, paid: 0, owed: 45_000, balance: -45_000 },
+        ],
+        settlements: [{ fromParticipantId: BINH, toParticipantId: AN, amount: 45_000 }],
+      },
+    });
+
+  it("ghi nhan mot nguoi da tra sau khi xac nhan", async () => {
+    api.games.detail.mockResolvedValue(WITH_DEBT());
+    const user = userEvent.setup();
+    renderPage();
+    await screen.findByText("DSKVUF");
+
+    const settleButton = screen
+      .getAllByRole("button")
+      .find((node) => /đã trả|ghi nhận/i.test(node.textContent || ""));
+    await user.click(settleButton as HTMLElement);
+
+    const dialog = await screen.findByRole("alertdialog");
+    await user.click(within(dialog).getByRole("button", { name: "Ghi nhận" }));
+
+    await waitFor(() => expect(api.transfers.create).toHaveBeenCalled());
+  });
+
+  it("bam huy thi khong ghi nhan gi", async () => {
+    api.games.detail.mockResolvedValue(WITH_DEBT());
+    const user = userEvent.setup();
+    renderPage();
+    await screen.findByText("DSKVUF");
+
+    const settleButton = screen
+      .getAllByRole("button")
+      .find((node) => /đã trả|ghi nhận/i.test(node.textContent || ""));
+    await user.click(settleButton as HTMLElement);
+
+    const dialog = await screen.findByRole("alertdialog");
+    await user.click(within(dialog).getByRole("button", { name: "Hủy" }));
+
+    expect(api.transfers.create).not.toHaveBeenCalled();
+  });
+
+  it("xoa khoan chi hien toast hoan tac", async () => {
+    api.games.detail.mockResolvedValue(WITH_DEBT());
+    api.gameEvents.list.mockResolvedValue({
+      events: [
+        {
+          id: "event_1",
+          createdAt: "2026-08-01T00:00:00.000Z",
+          undoneAt: null,
+          payload: {
+            kind: "expense_removed",
+            title: "Tiền nước",
+            amount: 90_000,
+            payerName: "An",
+            restore: {
+              payerParticipantId: AN,
+              kind: "expense",
+              title: "Tiền nước",
+              amount: 90_000,
+              note: "",
+              splitMode: "equal",
+              splits: [],
+            },
+          },
+        },
+      ],
+    } as never);
+    const user = userEvent.setup();
+    renderPage();
+    await screen.findByText("DSKVUF");
+
+    // Nut xoa cua tung dong khoan chi mang ten khoan do.
+    // Mobile va desktop cung ve mot bang; lay ban dau tien.
+    await user.click(screen.getAllByRole("button", { name: "Xóa Tiền nước" })[0]);
+
+    await waitFor(() => expect(api.expenses.remove).toHaveBeenCalledWith("expense_1"));
+    await waitFor(() => expect(api.gameEvents.list).toHaveBeenCalled());
+  });
+});
