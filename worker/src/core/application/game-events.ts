@@ -102,6 +102,7 @@ export async function undoGameEvent(
     gameId: row.game.id,
     payerParticipantId: restore.payerParticipantId,
     kind: restore.kind,
+    category: restore.category || "",
     title: restore.title,
     amount: restore.amount,
     note: restore.note,

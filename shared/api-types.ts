@@ -1,4 +1,5 @@
 import type { ResolvedAiExpense } from "./ai";
+import type { ExpenseCategory } from "./expense-categories";
 import type { McpScope, SettlementMode } from "./schemas";
 import type { ShuttleEntryKind } from "./shuttles";
 import type { BalanceRow, ExpenseKind, SettlementRow, SplitMode } from "./split";
@@ -46,6 +47,8 @@ export type ApiExpenseSplit = {
 export type ApiExpense = {
   id: string;
   kind: ExpenseKind;
+  /** Danh muc chi tieu; "" la chua phan loai. Xem shared/expense-categories.ts. */
+  category: ExpenseCategory;
   title: string;
   amount: number;
   note: string;

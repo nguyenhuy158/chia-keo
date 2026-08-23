@@ -35,6 +35,7 @@ function threePeople() {
 function expenseInput(overrides: Partial<ExpenseInput> = {}): ExpenseInput {
   return {
     kind: "expense",
+    category: "",
     title: "Nước",
     amount: 90_000,
     note: "",
@@ -280,6 +281,45 @@ describe("recordTransfer", () => {
       }),
     ).rejects.toThrow(InvalidInputError);
     expect(fake.state.expenses).toEqual([]);
+  });
+});
+
+describe("danh muc chi tieu", () => {
+  it("luu danh muc hop le va bo danh muc la", async () => {
+    const fake = threePeople();
+    await addExpense(fake.repo, FAKE_OWNER, FAKE_GAME_ID, expenseInput({ category: "food" }));
+    await addExpense(
+      fake.repo,
+      FAKE_OWNER,
+      FAKE_GAME_ID,
+      expenseInput({ category: "khong-co-that" }),
+    );
+
+    expect(fake.state.expenses.map((row) => row.category)).toEqual(["food", ""]);
+  });
+
+  it("sua khoan chi khong gui danh muc thi giu nguyen danh muc cu", async () => {
+    const fake = threePeople();
+    await addExpense(fake.repo, FAKE_OWNER, FAKE_GAME_ID, expenseInput({ category: "transport" }));
+    const expenseId = fake.state.expenses[0].id;
+
+    await updateExpense(fake.repo, FAKE_OWNER, expenseId, { amount: 60_000 });
+    expect(fake.state.expenses[0].category).toBe("transport");
+
+    await updateExpense(fake.repo, FAKE_OWNER, expenseId, { category: "" });
+    expect(fake.state.expenses[0].category).toBe("");
+  });
+
+  it("khoan tra no khong mang danh muc", async () => {
+    const fake = threePeople();
+    await recordTransfer(fake.repo, FAKE_OWNER, FAKE_GAME_ID, {
+      fromParticipantId: BINH,
+      toParticipantId: AN,
+      amount: 30_000,
+      note: "",
+    });
+
+    expect(fake.state.expenses[0].category).toBe("");
   });
 });
 

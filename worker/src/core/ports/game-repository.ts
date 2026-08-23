@@ -53,6 +53,7 @@ export type ExpenseRow = {
   gameId: string;
   payerParticipantId: string;
   kind: string;
+  category: string;
   title: string;
   amount: number;
   note: string;
@@ -151,7 +152,10 @@ export type GameEventRow = {
 };
 
 export type ExpenseUpdate = Partial<
-  Pick<ExpenseRow, "kind" | "title" | "note" | "amount" | "payerParticipantId" | "splitMode">
+  Pick<
+    ExpenseRow,
+    "kind" | "category" | "title" | "note" | "amount" | "payerParticipantId" | "splitMode"
+  >
 > & { updatedAt: string };
 
 export type GameRepository = {

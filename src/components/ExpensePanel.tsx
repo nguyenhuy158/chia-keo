@@ -37,6 +37,11 @@ import { Dropdown } from "./Dropdown";
 import { useDragReorder } from "./use-drag-reorder";
 import { MoneyInput } from "./MoneyInput";
 import { PhotoPickerButton } from "./PhotoPanel";
+import {
+  categoryMeta,
+  EXPENSE_CATEGORIES,
+  normalizeCategory,
+} from "../../shared/expense-categories";
 import { Field } from "./ui";
 import { usePhotoViewer } from "./use-photo-viewer";
 
@@ -51,6 +56,8 @@ type FormKind = "expense" | "income" | "transfer";
 const expenseFormSchema = z
   .object({
     kind: z.enum(["expense", "income", "transfer"]),
+    // Rong la chua phan loai; khong bat buoc chon de them khoan chi van nhanh.
+    category: z.string(),
     title: z.string().trim(),
     amount: z.string().refine((value) => parseMoney(value) > 0, "Nhập số tiền hợp lệ"),
     payerId: z.string().min(1, "Chọn người trả"),
@@ -318,6 +325,7 @@ export function ExpensePanel({
     resolver: zodResolver(expenseFormSchema),
     defaultValues: {
       kind: "expense",
+      category: "",
       title: "",
       amount: "",
       payerId: participants[0]?.id || "",
@@ -333,6 +341,7 @@ export function ExpensePanel({
   const payerId = form.watch("payerId");
   const toId = form.watch("toId");
   const splitMode = form.watch("splitMode");
+  const category = form.watch("category");
   const splitValues = form.watch("splitValues");
   const amountValue = form.watch("amount");
 
@@ -529,6 +538,7 @@ function handleSplitModeChange(mode: SplitMode) {
     }
     form.reset({
       kind: expense.kind === "income" ? "income" : "expense",
+      category: expense.category,
       title: expense.title,
       amount: String(expense.amount),
       payerId: expense.payerParticipantId,
@@ -544,6 +554,7 @@ function handleSplitModeChange(mode: SplitMode) {
     setStagedFiles([]);
     form.reset({
       kind: "expense",
+      category: "",
       title: "",
       amount: "",
       payerId: participants[0]?.id || "",
@@ -570,6 +581,7 @@ function handleSplitModeChange(mode: SplitMode) {
       }
       form.reset({
         kind: "transfer",
+        category: "",
         title: "",
         amount: "",
         payerId: values.payerId,
@@ -583,6 +595,7 @@ function handleSplitModeChange(mode: SplitMode) {
 
     const input: ExpenseInput = {
       kind: values.kind,
+      category: values.kind === "income" ? "" : normalizeCategory(values.category),
       title: values.title || (values.kind === "income" ? DEFAULT_INCOME_TITLE : DEFAULT_EXPENSE_TITLE),
       amount: parseMoney(values.amount),
       note: "",
@@ -621,6 +634,8 @@ function handleSplitModeChange(mode: SplitMode) {
     setStagedFiles([]);
     form.reset({
       kind: values.kind,
+      // Giu lai danh muc vua chon: cac khoan lien tiep thuong cung mot loai.
+      category: values.category,
       title: "",
       amount: "",
       payerId: values.payerId,
@@ -739,6 +754,34 @@ function handleSplitModeChange(mode: SplitMode) {
             placeholder={kind === "income" ? "Hoàn tiền" : "Ăn tối"}
           />
         </Field>
+        <div className={`md:col-span-2 ${kind !== "expense" ? "hidden" : ""}`}>
+          <p className="mb-1.5 text-sm font-medium text-stone-700 dark:text-stone-300">
+            Danh mục (không bắt buộc)
+          </p>
+          <div className="flex flex-wrap gap-1.5" role="group" aria-label="Danh mục chi tiêu">
+            {EXPENSE_CATEGORIES.map((option) => {
+              const selected = category === option.id;
+              return (
+                <button
+                  key={option.id}
+                  type="button"
+                  aria-pressed={selected}
+                  // Bam lai danh muc dang chon la bo chon: khong can them nut
+                  // "khong phan loai" rieng.
+                  onClick={() => form.setValue("category", selected ? "" : option.id)}
+                  className={`inline-flex h-9 items-center gap-1.5 rounded-full border px-3 text-sm transition ${
+                    selected
+                      ? "border-violet-500 bg-violet-50 font-semibold text-violet-800 dark:bg-violet-500/15 dark:text-violet-200"
+                      : "border-stone-300 text-stone-700 hover:bg-stone-50 dark:border-stone-700 dark:text-stone-300 dark:hover:bg-stone-800"
+                  }`}
+                >
+                  <span aria-hidden="true">{option.emoji}</span>
+                  {option.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
         <Field label="Số tiền" error={form.formState.errors.amount?.message}>
           <Controller
             control={form.control}
@@ -1071,6 +1114,14 @@ function handleSplitModeChange(mode: SplitMode) {
                       {expense.kind === "income" && (
                         <span className="ml-1.5 rounded bg-emerald-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400">
                           Thu
+                        </span>
+                      )}
+                      {expense.kind !== "income" && categoryMeta(expense.category) && (
+                        <span
+                          className={`ml-1.5 rounded px-1.5 py-0.5 text-[10px] font-semibold ${categoryMeta(expense.category)?.badgeClassName}`}
+                        >
+                          {categoryMeta(expense.category)?.emoji}{" "}
+                          {categoryMeta(expense.category)?.label}
                         </span>
                       )}
                     </p>

@@ -12,6 +12,7 @@ import {
   DEFAULT_SETTLEMENT_MODE,
   settlementModeSchema,
 } from "../../../../shared/schemas";
+import { normalizeCategory } from "../../../../shared/expense-categories";
 import type { ExpenseInput, ExpenseKind } from "../../../../shared/split";
 import { calculateBalances, calculateSettlements } from "../../../../shared/split";
 import type {
@@ -110,6 +111,7 @@ async function loadGameData(repo: GameRepository, gameId: string): Promise<GameD
     return {
       id: row.id,
       kind: toExpenseKind(row.kind),
+      category: normalizeCategory(row.category),
       title: row.title,
       amount: row.amount,
       note: row.note,
