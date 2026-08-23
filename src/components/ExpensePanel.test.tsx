@@ -231,3 +231,119 @@ describe("anh dinh kem", () => {
     expect(screen.getAllByRole("button", { name: /Ảnh|ảnh/ }).length).toBeGreaterThan(0);
   });
 });
+
+describe("chia theo phan va theo so tien", () => {
+  it("chia theo phan: tang phan cua mot nguoi", async () => {
+    const { onAdd, user } = setup();
+
+    await user.type(screen.getByLabelText("Nội dung"), "Ăn tối");
+    await user.type(screen.getByLabelText(/Số tiền/), "300000");
+    await user.click(screen.getByRole("button", { name: "Theo phần" }));
+    await user.click(screen.getByRole("button", { name: "Tăng số phần của An" }));
+    await user.click(screen.getByRole("button", { name: /Thêm khoản chi/ }));
+
+    await waitFor(() => {
+      const input = onAdd.mock.calls[0]?.[0];
+      expect(input?.splitMode).toBe("shares");
+      expect(input?.splits).toEqual([
+        { participantId: AN, value: 2 },
+        { participantId: BINH, value: 1 },
+      ]);
+    });
+  });
+
+  it("chia theo phan: giam phan khong xuong duoi 1", async () => {
+    const { onAdd, user } = setup();
+
+    await user.type(screen.getByLabelText("Nội dung"), "Ăn tối");
+    await user.type(screen.getByLabelText(/Số tiền/), "300000");
+    await user.click(screen.getByRole("button", { name: "Theo phần" }));
+    await user.click(screen.getByRole("button", { name: "Giảm số phần của An" }));
+    await user.click(screen.getByRole("button", { name: /Thêm khoản chi/ }));
+
+    await waitFor(() => {
+      expect(onAdd.mock.calls[0]?.[0].splits[0]).toEqual({ participantId: AN, value: 1 });
+    });
+  });
+
+  it("chia theo so tien: nhap tay tung nguoi", async () => {
+    const { onAdd, user } = setup();
+
+    await user.type(screen.getByLabelText("Nội dung"), "Ăn tối");
+    await user.type(screen.getByLabelText(/Số tiền/), "100000");
+    await user.click(screen.getByRole("button", { name: "Số tiền" }));
+
+    // Mode nay tu dien chia deu lam moc, phai xoa truoc khi go so rieng.
+    const anField = screen.getByLabelText("Phần tiền của An");
+    const binhField = screen.getByLabelText("Phần tiền của Bình");
+    await user.clear(anField);
+    await user.type(anField, "70000");
+    await user.clear(binhField);
+    await user.type(binhField, "30000");
+    await user.click(screen.getByRole("button", { name: /Thêm khoản chi/ }));
+
+    await waitFor(() => {
+      const input = onAdd.mock.calls[0]?.[0];
+      expect(input?.splitMode).toBe("amount");
+      expect(input?.splits).toEqual([
+        { participantId: AN, value: 70_000 },
+        { participantId: BINH, value: 30_000 },
+      ]);
+    });
+  });
+
+  it("chon tat ca / bo chon tat ca", async () => {
+    const { onAdd, user } = setup();
+
+    await user.type(screen.getByLabelText("Nội dung"), "Cà phê");
+    await user.type(screen.getByLabelText(/Số tiền/), "50000");
+
+    await user.click(screen.getByRole("button", { name: "Bỏ chọn" }));
+    await user.click(screen.getByRole("button", { name: "Chọn tất cả" }));
+    await user.click(screen.getByRole("button", { name: /Thêm khoản chi/ }));
+
+    await waitFor(() =>
+      expect(onAdd.mock.calls[0]?.[0].splitParticipantIds).toEqual([AN, BINH]),
+    );
+  });
+
+  it("khong chon ai chia thi khong luu duoc", async () => {
+    const { onAdd, user } = setup();
+
+    await user.type(screen.getByLabelText("Nội dung"), "Cà phê");
+    await user.type(screen.getByLabelText(/Số tiền/), "50000");
+    await user.click(screen.getByRole("button", { name: "Bỏ chọn" }));
+    await user.click(screen.getByRole("button", { name: /Thêm khoản chi/ }));
+
+    await waitFor(() => expect(onAdd).not.toHaveBeenCalled());
+  });
+});
+
+describe("huy sua", () => {
+  it("bam huy thi form ve trang thai them moi", async () => {
+    const { user } = setup({ expenses: [expenseRow()] });
+
+    await user.click(screen.getByRole("button", { name: /Sửa/ }));
+    expect(screen.getByRole("button", { name: /Lưu khoản chi/ })).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Hủy sửa" }));
+
+    expect(screen.getByRole("button", { name: /Thêm khoản chi/ })).toBeInTheDocument();
+  });
+});
+
+describe("nguoi tra", () => {
+  it("doi nguoi tra qua o chon", async () => {
+    const { onAdd, user } = setup();
+
+    await user.type(screen.getByLabelText("Nội dung"), "Cà phê");
+    await user.type(screen.getByLabelText(/Số tiền/), "50000");
+    await user.click(screen.getByRole("button", { name: "Chọn người trả" }));
+    await user.click(screen.getByRole("option", { name: /Bình/ }));
+    await user.click(screen.getByRole("button", { name: /Thêm khoản chi/ }));
+
+    await waitFor(() =>
+      expect(onAdd.mock.calls[0]?.[0].payerParticipantId).toBe(BINH),
+    );
+  });
+});
