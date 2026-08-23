@@ -29,8 +29,10 @@ jobs:
       - name: Typecheck
         run: pnpm check
 
-      - name: Unit tests
-        run: pnpm test
+      # Chay kem coverage: nguong trong vite.config.ts lam CI do neu do phu
+      # tut xuong duoi muc hien tai (them code ma khong kem test).
+      - name: Unit tests + coverage
+        run: pnpm test:cov
 
       # Build sau cung: chan luon ca loi chi lo ra luc bundle (import vong,
       # asset thieu) chu khong chi loi kieu.

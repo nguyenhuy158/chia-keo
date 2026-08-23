@@ -78,5 +78,35 @@ export default defineConfig({
   test: {
     include: ["src/**/*.test.ts", "shared/**/*.test.ts", "worker/**/*.test.ts"],
     environment: "node",
+    coverage: {
+      provider: "v8",
+      // text de doc ngay o terminal/CI log; lcov cho editor va cac cong cu
+      // bao cao; html de mo dist/coverage/index.html xem tung dong.
+      reporter: ["text", "lcov", "html"],
+      reportsDirectory: "coverage",
+      // Chi do phan LOGIC THUAN: domain kernel dung chung, FE domain rules va
+      // core cua worker. Component/route React, adapter IO (fetch, D1, canvas,
+      // Gemini) khong nam trong pham vi vitest node nay — do chung vao chi lam
+      // con so loang, khong noi len dieu gi ve chat luong luoi an toan.
+      include: ["shared/**/*.ts", "src/core/**/*.ts", "worker/src/core/**/*.ts"],
+      exclude: [
+        "**/*.test.ts",
+        // Chi co type/interface, khong co dong lenh nao chay.
+        "**/ports/**",
+        // Sinh ra luc build (commit hash), khong phai code viet tay.
+        "shared/build-info*.ts",
+        // Composition root: chi noi day adapter, do bang e2e chu khong unit.
+        "src/core/container.ts",
+      ],
+      // Nguong = muc dang dat, lam chot chong tut lui: them code khong kem
+      // test se lam CI do. Nang dan len khi phu them cac use case con thieu
+      // (muc tieu 90 — xem docs/testing.md).
+      thresholds: {
+        statements: 81,
+        branches: 72,
+        functions: 78,
+        lines: 83,
+      },
+    },
   },
 });
