@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { MAX_PHOTOS_PER_GAME } from "../../../../shared/schemas";
+import { MAX_PHOTOS_PER_GAME, type PhotoInput } from "../../../../shared/schemas";
 import type { PhotoDetailRow } from "../ports/game-repository";
 import { BadRequestError, InvalidInputError, NotFoundError } from "./errors";
 import { createFakeRepo, FAKE_GAME_ID, FAKE_OWNER, gameRow } from "./fake-game-repository";
@@ -16,7 +16,7 @@ import {
 
 const DATA_URI = "data:image/webp;base64,AAAA";
 
-function photoInput(overrides: Partial<PhotoDetailRow> = {}) {
+function photoInput(overrides: Partial<PhotoInput> = {}): PhotoInput {
   return {
     expenseId: null,
     caption: "Hoá đơn",

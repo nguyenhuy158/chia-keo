@@ -32,6 +32,7 @@ export type FakeState = {
   shareLinks: ShareLinkRow[];
   users: { id: string; name: string; email: string }[];
   photos: PhotoDetailRow[];
+  preferences: { userId: string; key: string; value: string }[];
   contacts: (ContactBookRow & { ownerUserId: string; nameKey: string })[];
 };
 
@@ -81,6 +82,7 @@ function emptyState(): FakeState {
     shareLinks: [],
     users: [],
     photos: [],
+    preferences: [],
     contacts: [],
   };
 }
@@ -204,6 +206,7 @@ export function createFakeRepo(initial: Partial<FakeState> = {}) {
           .map((row) => {
             const payment = state.payments.find((item) => item.participantId === row.id);
             return {
+              gameId: row.gameId,
               name: row.name,
               bankId: payment?.bankId || "",
               accountNo: payment?.accountNo || "",
@@ -328,8 +331,18 @@ export function createFakeRepo(initial: Partial<FakeState> = {}) {
       touchLastUsed: async () => {},
     },
     userPreferences: {
-      listByUser: async () => [],
-      upsert: async () => {},
+      listByUser: async (userId) =>
+        state.preferences
+          .filter((row) => row.userId === userId)
+          .map((row) => ({ key: row.key, value: row.value })),
+      // Moi user mot dong tren moi key: ghi de gia tri cu.
+      upsert: async (userId, key, value) => {
+        const existing = state.preferences.find(
+          (row) => row.userId === userId && row.key === key,
+        );
+        if (existing) existing.value = value;
+        else state.preferences.push({ userId, key, value });
+      },
     },
     contacts: {
       listByOwner: async (userId) =>
