@@ -205,6 +205,34 @@ describe("CollaboratorsPanel", () => {
     expect(screen.getByText(/ban@example.com/)).toBeInTheDocument();
   });
 
+  it("server tu choi thi hien thong bao, khong im lang", async () => {
+    // Panel khong tu doan email hop le hay chua — server la noi quyet dinh.
+    api.collaborators.add.mockRejectedValue(new Error("already_shared"));
+    const user = renderPanel(
+      <CollaboratorsPanel gameId={GAME_ID} isOwner collaborators={[]} />,
+    );
+
+    await user.type(screen.getByPlaceholderText(/Email/), "ban@example.com");
+    await user.click(screen.getByRole("button", { name: /Chia sẻ|Thêm/ }));
+
+    expect(await screen.findByText("Người này đã được chia sẻ rồi.")).toBeInTheDocument();
+  });
+
+  it("go quyen cua mot nguoi sau khi xac nhan", async () => {
+    const user = renderPanel(
+      <CollaboratorsPanel
+        gameId={GAME_ID}
+        isOwner
+        collaborators={[{ userId: "user_ban", name: "Bạn", email: "ban@example.com" }]}
+      />,
+    );
+
+    await user.click(screen.getAllByRole("button").at(-1) as HTMLElement);
+    await confirmDialog(user);
+
+    await waitFor(() => expect(api.collaborators.remove).toHaveBeenCalledWith(GAME_ID, "user_ban"));
+  });
+
   it("nguoi duoc chia se chi xem, khong them duoc", () => {
     renderPanel(
       <CollaboratorsPanel
@@ -251,13 +279,52 @@ describe("ParticipantPanel", () => {
     );
   });
 
+  it("sua tai khoan nhan tien cua mot nguoi", async () => {
+    const props = handlers();
+    const user = renderPanel(
+      <ParticipantPanel participants={makeDetail().participants} pending={false} {...props} />,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Sửa An" }));
+    const accountNo = screen.getByDisplayValue("0123456789");
+    await user.clear(accountNo);
+    await user.type(accountNo, "999");
+    await user.keyboard("{Enter}");
+
+    await waitFor(() =>
+      expect(props.onUpdate).toHaveBeenCalledWith(AN, expect.objectContaining({ accountNo: "999" })),
+    );
+  });
+
+  it("dua mot nguoi len tren / xuong duoi", async () => {
+    const props = handlers();
+    const user = renderPanel(
+      <ParticipantPanel participants={makeDetail().participants} pending={false} {...props} />,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Đưa Bình lên" }));
+
+    expect(props.onReorder).toHaveBeenCalledWith([BINH, AN]);
+  });
+
+  it("nguoi dau danh sach khong the len them", async () => {
+    const props = handlers();
+    const user = renderPanel(
+      <ParticipantPanel participants={makeDetail().participants} pending={false} {...props} />,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Đưa An lên" }));
+
+    expect(props.onReorder).not.toHaveBeenCalled();
+  });
+
   it("xoa mot nguoi sau khi xac nhan", async () => {
     const props = handlers();
     const user = renderPanel(
       <ParticipantPanel participants={makeDetail().participants} pending={false} {...props} />,
     );
 
-    await user.click(screen.getAllByRole("button", { name: /Xóa/ })[0]);
+    await user.click(screen.getByRole("button", { name: "Xóa An" }));
     await confirmDialog(user);
 
     await waitFor(() => expect(props.onRemove).toHaveBeenCalledWith(AN));
@@ -281,16 +348,81 @@ describe("PhotoViewer", () => {
     expect(screen.getByText(/1\s*\/\s*2/)).toBeInTheDocument();
   });
 
-  it("chuyen anh truoc/sau", async () => {
+  it("chuyen anh truoc/sau bang nut", async () => {
     const onNext = vi.fn();
     const onPrev = vi.fn();
     const user = renderPanel(<PhotoViewer {...base} onNext={onNext} onPrev={onPrev} />);
 
-    await user.click(screen.getByRole("button", { name: /sau|tiếp/i }));
-    await user.click(screen.getByRole("button", { name: /trước/i }));
+    await user.click(screen.getByRole("button", { name: "Ảnh sau" }));
+    await user.click(screen.getByRole("button", { name: "Ảnh trước" }));
 
     expect(onNext).toHaveBeenCalled();
     expect(onPrev).toHaveBeenCalled();
+  });
+
+  it("chuyen anh bang phim mui ten", async () => {
+    const onNext = vi.fn();
+    const onPrev = vi.fn();
+    const user = renderPanel(<PhotoViewer {...base} onNext={onNext} onPrev={onPrev} />);
+
+    await user.keyboard("{ArrowRight}{ArrowLeft}");
+
+    expect(onNext).toHaveBeenCalled();
+    expect(onPrev).toHaveBeenCalled();
+  });
+
+  it("Esc dong lop xem anh", async () => {
+    const onClose = vi.fn();
+    const user = renderPanel(<PhotoViewer {...base} onClose={onClose} />);
+
+    await user.keyboard("{Escape}");
+
+    expect(onClose).toHaveBeenCalled();
+  });
+
+  it("chua co anh goc thi tam hien ban thu nho", () => {
+    renderPanel(<PhotoViewer {...base} detail={undefined} />);
+
+    expect(screen.getByRole("img")).toHaveAttribute("src", expect.stringContaining("base64"));
+  });
+
+  it("chi hien nut xoa khi duoc phep xoa", async () => {
+    const onDelete = vi.fn();
+    const user = renderPanel(<PhotoViewer {...base} onDelete={onDelete} />);
+
+    await user.click(screen.getByRole("button", { name: "Xóa ảnh" }));
+
+    expect(onDelete).toHaveBeenCalled();
+  });
+
+  it("ban chi doc thi khong co nut xoa", () => {
+    renderPanel(<PhotoViewer {...base} />);
+
+    expect(screen.queryByRole("button", { name: "Xóa ảnh" })).toBeNull();
+  });
+
+  it("sua chu thich roi luu", async () => {
+    const onSaveCaption = vi.fn(async () => {});
+    const user = renderPanel(<PhotoViewer {...base} onSaveCaption={onSaveCaption} />);
+
+    await user.click(screen.getByRole("button", { name: "Sửa chú thích" }));
+    const input = screen.getByRole("textbox");
+    await user.clear(input);
+    await user.type(input, "Hoá đơn quán");
+    await user.click(screen.getByRole("button", { name: "Lưu chú thích" }));
+
+    await waitFor(() => expect(onSaveCaption).toHaveBeenCalledWith("Hoá đơn quán"));
+  });
+
+  it("huy sua chu thich thi giu nguyen", async () => {
+    const onSaveCaption = vi.fn(async () => {});
+    const user = renderPanel(<PhotoViewer {...base} onSaveCaption={onSaveCaption} />);
+
+    await user.click(screen.getByRole("button", { name: "Sửa chú thích" }));
+    await user.click(screen.getByRole("button", { name: "Hủy sửa chú thích" }));
+
+    expect(onSaveCaption).not.toHaveBeenCalled();
+    expect(screen.queryByRole("textbox")).toBeNull();
   });
 
   it("bam dong thi goi onClose", async () => {
