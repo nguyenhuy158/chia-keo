@@ -135,8 +135,21 @@ export function createFakeGameApi() {
       photo: vi.fn(async () => ({ ...makePhoto(), data: "data:image/webp;base64,AAAA" })),
     },
     mcpTokens: {
-      list: vi.fn(async () => ({ tokens: [] })),
-      create: vi.fn(async () => ({ token: "mcp_abc", id: "token_1" })),
+      list: vi.fn(async () => []),
+      create: vi.fn(async () => ({
+        token: {
+          id: "token_1",
+          name: "token",
+          tokenPrefix: "mcp_ab",
+          scopes: ["games:read"],
+          createdAt: "2026-08-01T00:00:00.000Z",
+          lastUsedAt: null,
+          expiresAt: null,
+          revokedAt: null,
+          active: true,
+        },
+        secret: "mcp_abc123",
+      })),
       revoke: vi.fn(async () => ({ ok: true as const })),
     },
     ai: {
