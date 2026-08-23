@@ -3,6 +3,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { ApiExpense } from "../../shared/api-types";
+import type { ExpenseInput, TransferInput } from "../../shared/schemas";
 import {
   AN,
   BINH,
@@ -36,23 +37,15 @@ function expenseRow(overrides: Partial<ApiExpense> = {}): ApiExpense {
   };
 }
 
-type Handlers = {
-  onAdd: ReturnType<typeof vi.fn>;
-  onUpdate: ReturnType<typeof vi.fn>;
-  onRemove: ReturnType<typeof vi.fn>;
-  onAddTransfer: ReturnType<typeof vi.fn>;
-  onReorder: ReturnType<typeof vi.fn>;
-};
-
 function setup(
   props: { expenses?: ApiExpense[]; participants?: typeof PARTICIPANTS; photos?: ReturnType<typeof makePhoto>[] } = {},
 ) {
-  const handlers: Handlers = {
-    onAdd: vi.fn(async () => makeDetail()),
-    onUpdate: vi.fn(async () => makeDetail()),
-    onRemove: vi.fn(),
-    onAddTransfer: vi.fn(async () => makeDetail()),
-    onReorder: vi.fn(),
+  const handlers = {
+    onAdd: vi.fn(async (_input: ExpenseInput) => makeDetail()),
+    onUpdate: vi.fn(async (_expenseId: string, _input: Partial<ExpenseInput>) => makeDetail()),
+    onRemove: vi.fn((_expenseId: string) => {}),
+    onAddTransfer: vi.fn(async (_input: TransferInput) => makeDetail()),
+    onReorder: vi.fn((_expenseIds: string[]) => {}),
   };
 
   render(
@@ -202,8 +195,7 @@ describe("chia tuy chinh", () => {
     await user.click(screen.getByRole("button", { name: /Thêm khoản chi/ }));
 
     await waitFor(() => {
-      const input = onAdd.mock.calls[0]?.[0] as { splitParticipantIds: string[] };
-      expect(input.splitParticipantIds).toEqual([AN]);
+      expect(onAdd.mock.calls[0]?.[0].splitParticipantIds).toEqual([AN]);
     });
   });
 });

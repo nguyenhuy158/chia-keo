@@ -8,6 +8,7 @@ import type {
   ApiFunStats,
   ApiGameDetail,
   ApiPhoto,
+  ApiShareView,
 } from "../../shared/api-types";
 import { provideGameApi, provideQrProvider } from "../core/container";
 import type { GameApiPort } from "../core/ports/game-api";
@@ -149,15 +150,17 @@ export function createFakeGameApi() {
       remove: vi.fn(async () => ({ ok: true as const })),
     },
     share: {
-      view: vi.fn(async () => ({
-        code: "DSKVUF",
-        name: "Cầu lông",
-        settlementMode: "host" as const,
-        settlementHostId: "",
-        participants: [],
-        expenses: [],
-        summary: { totalExpense: 0, balances: [], settlements: [] },
-      })),
+      view: vi.fn(
+        async (): Promise<ApiShareView> => ({
+          code: "DSKVUF",
+          name: "Cầu lông",
+          settlementMode: "host",
+          settlementHostId: "",
+          participants: [],
+          expenses: [],
+          summary: { totalExpense: 0, balances: [], settlements: [] },
+        }),
+      ),
       photos: vi.fn(async () => [makePhoto()]),
       photo: vi.fn(async () => ({ ...makePhoto(), data: "data:image/webp;base64,AAAA" })),
     },
