@@ -77,6 +77,67 @@ describe("ContactBookCard", () => {
   });
 });
 
+describe("ContactBookCard — sua va phan trang", () => {
+  /** Mot dong danh ba nhu `mergeContacts` tra ve. */
+  function contactRow(name: string, overrides: Record<string, unknown> = {}) {
+    return {
+      key: name.toLowerCase(),
+      name,
+      bankId: "",
+      accountNo: "",
+      accountName: "",
+      gameCount: 0,
+      lastUsedAt: "2026-08-01T00:00:00.000Z",
+      source: "book",
+      id: `contact_${name.toLowerCase()}`,
+      ...overrides,
+    };
+  }
+
+  function manyContacts(count: number) {
+    return Array.from({ length: count }, (_unused, index) => contactRow(`Người ${index + 1}`));
+  }
+
+  it("chi hien 8 dong dau, bam Xem them moi lo tiep", async () => {
+    api.contacts.list.mockResolvedValue({ contacts: manyContacts(12) } as never);
+    const user = renderPanel(<ContactBookCard />);
+
+    expect(await screen.findByText("Người 1")).toBeInTheDocument();
+    expect(screen.queryByText("Người 9")).toBeNull();
+
+    await user.click(screen.getByRole("button", { name: /Xem thêm/ }));
+
+    expect(screen.getByText("Người 9")).toBeInTheDocument();
+  });
+
+  it("sua mot dong trong danh ba", async () => {
+    api.contacts.list.mockResolvedValue({
+      contacts: [contactRow("Hồng", { bankId: "970436", accountNo: "0123", accountName: "HONG" })],
+    } as never);
+    const user = renderPanel(<ContactBookCard />);
+    await screen.findByText("Hồng");
+
+    await user.click(screen.getByRole("button", { name: "Sửa Hồng" }));
+    const accountNo = screen.getByDisplayValue("0123");
+    await user.clear(accountNo);
+    await user.type(accountNo, "999");
+    await user.click(screen.getByRole("button", { name: "Lưu" }));
+
+    await waitFor(() => expect(api.contacts.update).toHaveBeenCalled());
+  });
+
+  it("xoa mot dong sau khi xac nhan", async () => {
+    api.contacts.list.mockResolvedValue({ contacts: [contactRow("Hồng")] } as never);
+    const user = renderPanel(<ContactBookCard />);
+    await screen.findByText("Hồng");
+
+    await user.click(screen.getByRole("button", { name: "Xóa Hồng khỏi danh bạ" }));
+    await confirmDialog(user);
+
+    await waitFor(() => expect(api.contacts.remove).toHaveBeenCalled());
+  });
+});
+
 describe("ContactPicker", () => {
   it("danh dau nguoi da co trong cuoc chia", async () => {
     api.contacts.list.mockResolvedValue({
