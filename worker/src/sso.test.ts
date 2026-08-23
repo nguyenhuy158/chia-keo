@@ -8,11 +8,11 @@ const ISSUER = "https://auth.huyab.click";
  * chay (JWKS -> importKey -> verify), khong gia lap crypto.
  */
 async function createSigner() {
-  const pair = await crypto.subtle.generateKey(
+  const pair = (await crypto.subtle.generateKey(
     { name: "RSASSA-PKCS1-v1_5", modulusLength: 2048, publicExponent: new Uint8Array([1, 0, 1]), hash: "SHA-256" },
     true,
     ["sign", "verify"],
-  );
+  )) as CryptoKeyPair;
   const jwk = await crypto.subtle.exportKey("jwk", pair.publicKey);
 
   function toBase64Url(bytes: Uint8Array) {
