@@ -1,4 +1,9 @@
 import { z } from "zod";
+import {
+  MAX_SHUTTLE_QUANTITY,
+  SHUTTLE_ENTRY_KINDS,
+  SHUTTLE_NOTE_MAX_LENGTH,
+} from "./shuttles";
 
 export const GAME_NAME_MAX_LENGTH = 100;
 /** Do dai toi da cua mot id do server sinh (`createId`), du de chan rac. */
@@ -46,6 +51,8 @@ export const SETTLEMENT_MODES = ["p2p", "host", "pick", "off"] as const;
 export const DEFAULT_SETTLEMENT_MODE = "host";
 
 export const settlementModeSchema = z.enum(SETTLEMENT_MODES);
+
+export const shuttleEntryKindSchema = z.enum(SHUTTLE_ENTRY_KINDS);
 
 const gameNameSchema = z.string().trim().min(1).max(GAME_NAME_MAX_LENGTH);
 /**
@@ -219,6 +226,16 @@ export const mcpTokenInputSchema = z.object({
 });
 
 /**
+ * Mot thao tac tren kho cau. `quantity` luon la so duong: dau do `kind` quyet
+ * dinh (xem shuttleDelta) — nguoi dung bam "-" chu khong go so am.
+ */
+export const shuttleEntryInputSchema = z.object({
+  kind: shuttleEntryKindSchema,
+  quantity: z.number().int().min(0).max(MAX_SHUTTLE_QUANTITY),
+  note: z.string().trim().max(SHUTTLE_NOTE_MAX_LENGTH).default(""),
+});
+
+/**
  * Tuy chon hien thi cua user, luu tren server de doi may/xoa cache van con.
  * Them tuy chon moi: khai bao o day, DB khong can doi (bang key/value).
  */
@@ -285,6 +302,7 @@ export type PhotoInput = z.infer<typeof photoInputSchema>;
 export type PhotoUpdateInput = z.infer<typeof photoUpdateSchema>;
 export type McpScope = z.infer<typeof mcpScopeSchema>;
 export type McpTokenInput = z.input<typeof mcpTokenInputSchema>;
+export type ShuttleEntryInput = z.input<typeof shuttleEntryInputSchema>;
 export type UserPreferences = z.infer<typeof userPreferencesSchema>;
 export type UserPreferenceKey = keyof UserPreferences;
 export type UserPreferencesPatch = z.infer<typeof userPreferencesPatchSchema>;

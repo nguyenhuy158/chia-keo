@@ -16,6 +16,7 @@ import { profileRouter } from "./routes/profile";
 import { qrRouter } from "./routes/qr";
 import { sessionRouter } from "./routes/session";
 import { shareRouter } from "./routes/share";
+import { shuttlesRouter } from "./routes/shuttles";
 import { userPreferencesRouter } from "./routes/user-preferences";
 
 // Chan brute-force login/dang ky va spam tao game/link share (theo IP).
@@ -91,6 +92,7 @@ app.route("/api", crossBalancesRouter);
 app.route("/api", sessionRouter);
 app.route("/api", profileRouter);
 app.route("/api", userPreferencesRouter);
+app.route("/api", shuttlesRouter);
 app.route("/api", emailSummaryRouter);
 
 app.onError((error, c) => {

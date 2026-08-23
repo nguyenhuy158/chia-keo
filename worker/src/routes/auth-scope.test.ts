@@ -4,6 +4,7 @@ import { aiRouter } from "./ai";
 import { gamesRouter } from "./games";
 import { mcpTokensRouter } from "./mcp-tokens";
 import { photosRouter } from "./photos";
+import { shuttlesRouter } from "./shuttles";
 
 /**
  * Cac router can dang nhap deu cam requireUser bang path cua chinh no. Neu ai
@@ -16,19 +17,26 @@ const PROTECTED_ROUTERS: [string, Hono<never>][] = [
   ["ai", aiRouter as unknown as Hono<never>],
   ["photos", photosRouter as unknown as Hono<never>],
   ["games", gamesRouter as unknown as Hono<never>],
+  ["shuttles", shuttlesRouter as unknown as Hono<never>],
 ];
 
 /** Cac path public phai qua duoc, ke ca khi mount sau router can dang nhap. */
 const PUBLIC_PATHS = ["/api/share/tok", "/api/share/tok/photos", "/api/qr", "/api/health"];
 
 /** Route can dang nhap: khong co session phai bi chan tu middleware. */
-const GUARDED_PATHS = ["/api/games", "/api/contacts", "/api/contacts/abc"];
+const GUARDED_PATHS: [string, Hono<never>][] = [
+  ["/api/games", gamesRouter as unknown as Hono<never>],
+  ["/api/contacts", gamesRouter as unknown as Hono<never>],
+  ["/api/contacts/abc", gamesRouter as unknown as Hono<never>],
+  // Kho cau la so lieu ca nhan cua nguoi ung tien mua cau.
+  ["/api/shuttles", shuttlesRouter as unknown as Hono<never>],
+];
 
 describe("pham vi cua requireUser", () => {
-  for (const path of GUARDED_PATHS) {
+  for (const [path, router] of GUARDED_PATHS) {
     it(`${path} chan request khong co session`, async () => {
       const app = new Hono();
-      app.route("/api", gamesRouter as unknown as Hono<never>);
+      app.route("/api", router);
 
       // D1 gia: khong co session nao trong bang nen getSession tra null.
       const statement = {

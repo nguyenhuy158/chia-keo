@@ -14,6 +14,7 @@ import type {
   ParticipantRow,
   PaymentProfileRow,
   ShareLinkRow,
+  ShuttleEntryRow,
 } from "../ports/game-repository";
 
 const OWNER_USER_ID = "user_owner";
@@ -28,6 +29,7 @@ export type FakeState = {
   events: GameEventRow[];
   collaborators: CollaboratorRow[];
   shareLinks: ShareLinkRow[];
+  shuttleEntries: ShuttleEntryRow[];
   users: { id: string; name: string; email: string }[];
 };
 
@@ -75,6 +77,7 @@ function emptyState(): FakeState {
     events: [],
     collaborators: [],
     shareLinks: [],
+    shuttleEntries: [],
     users: [],
   };
 }
@@ -251,6 +254,22 @@ export function createFakeRepo(initial: Partial<FakeState> = {}) {
     userPreferences: {
       listByUser: async () => [],
       upsert: async () => {},
+    },
+    shuttleEntries: {
+      listByOwner: async (userId) =>
+        state.shuttleEntries
+          .filter((row) => row.ownerUserId === userId)
+          .sort((left, right) => left.createdAt.localeCompare(right.createdAt)),
+      getOwned: async (entryId, userId) =>
+        state.shuttleEntries.find(
+          (row) => row.id === entryId && row.ownerUserId === userId,
+        ) || null,
+      insert: async (row) => {
+        state.shuttleEntries.push(row);
+      },
+      delete: async (entryId) => {
+        state.shuttleEntries = state.shuttleEntries.filter((row) => row.id !== entryId);
+      },
     },
     contacts: {
       listByOwner: async () => [],

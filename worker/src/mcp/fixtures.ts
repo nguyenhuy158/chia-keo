@@ -206,6 +206,12 @@ export function fakeRepo(
       listByUser: async () => [],
       upsert: unused("userPreferences.upsert"),
     },
+    shuttleEntries: {
+      listByOwner: async () => [],
+      getOwned: unused("shuttleEntries.getOwned"),
+      insert: unused("shuttleEntries.insert"),
+      delete: unused("shuttleEntries.delete"),
+    },
     contacts: {
       listByOwner: async () => [],
       getOwned: unused("contacts.getOwned"),

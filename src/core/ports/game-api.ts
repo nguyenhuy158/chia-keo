@@ -13,6 +13,7 @@ import type {
   ApiPhotoDetail,
   ApiShareCandidate,
   ApiShareView,
+  ApiShuttleStock,
   ApiTrashGame,
 } from "../../../shared/api-types";
 import type { Contact } from "../../../shared/contacts";
@@ -28,6 +29,7 @@ import type {
   ParticipantInput,
   PhotoInput,
   PhotoUpdateInput,
+  ShuttleEntryInput,
   TransferInput,
   UserPreferences,
   UserPreferencesPatch,
@@ -66,6 +68,14 @@ export type GameApiPort = {
     get(): Promise<{ preferences: UserPreferences }>;
     /** Chi gui field vua doi; tra ve toan bo tuy chon sau khi ghi. */
     update(patch: UserPreferencesPatch): Promise<{ preferences: UserPreferences }>;
+  };
+  shuttles: {
+    /** Kho cau ung truoc cho team: so cau con lai + lich su +/- gan nhat. */
+    get(): Promise<ApiShuttleStock>;
+    /** Them / bo / chot lai so cau; tra ve trang thai kho sau khi ghi. */
+    createEntry(input: ShuttleEntryInput): Promise<ApiShuttleStock>;
+    /** Xoa mot lan bam sai. */
+    removeEntry(entryId: string): Promise<ApiShuttleStock>;
   };
   contacts: {
     /** Danh ba tu nhap gop voi nguoi suy ra tu cac cuoc chia da tao. */

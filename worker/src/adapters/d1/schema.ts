@@ -318,6 +318,28 @@ export const userPreferences = sqliteTable(
   (table) => [uniqueIndex("user_preferences_user_key_idx").on(table.userId, table.key)],
 );
 
+/**
+ * Kho cau ung truoc cho team: luu tung thao tac (+/-) chu khong luu mot con so
+ * "con lai". Nho vay xoa mot lan bam sai khong lam sai cac lan sau, va nguoi
+ * dung con doi chieu duoc hom nao dung bao nhieu trai.
+ */
+export const shuttleEntries = sqliteTable(
+  "shuttle_entries",
+  {
+    id: text("id").primaryKey(),
+    ownerUserId: text("owner_user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    /** ShuttleEntryKind; text tu do de them loai moi khong can migration. */
+    kind: text("kind").notNull(),
+    /** Thay doi len kho: am la bo ra, duong la them vao. */
+    delta: integer("delta").notNull(),
+    note: text("note").notNull().default(""),
+    createdAt: text("created_at").notNull(),
+  },
+  (table) => [index("shuttle_entries_owner_id_idx").on(table.ownerUserId)],
+);
+
 export const paymentProfiles = sqliteTable(
   "payment_profiles",
   {
