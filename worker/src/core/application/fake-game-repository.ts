@@ -13,8 +13,10 @@ import type {
   NewSplitRow,
   ParticipantRow,
   PaymentProfileRow,
+  PhotoDetailRow,
   ShareLinkRow,
 } from "../ports/game-repository";
+import type { ContactBookRow } from "../../../../shared/contacts";
 
 const OWNER_USER_ID = "user_owner";
 const DEFAULT_GAME_ID = "game_1";
@@ -29,6 +31,8 @@ export type FakeState = {
   collaborators: CollaboratorRow[];
   shareLinks: ShareLinkRow[];
   users: { id: string; name: string; email: string }[];
+  photos: PhotoDetailRow[];
+  contacts: (ContactBookRow & { ownerUserId: string; nameKey: string })[];
 };
 
 export function gameRow(overrides: Partial<GameRow> = {}): GameRow {
@@ -76,6 +80,8 @@ function emptyState(): FakeState {
     collaborators: [],
     shareLinks: [],
     users: [],
+    photos: [],
+    contacts: [],
   };
 }
 
@@ -86,27 +92,56 @@ function emptyState(): FakeState {
 export function createFakeRepo(initial: Partial<FakeState> = {}) {
   const state: FakeState = { ...emptyState(), ...initial };
 
-  const findGame = (gameId: string) => state.games.find((row) => row.id === gameId) || null;
+  // Dong dang nam trong state, dung cho cac method GHI.
+  const findGameRow = (gameId: string) => state.games.find((row) => row.id === gameId) || null;
+  // Ban SAO cho cac method DOC: D1 tra ve row moi moi lan query, khong phai
+  // tham chieu toi dong dang song. Tra ve tham chieu se lam use case so sanh
+  // "gia tri cu vs moi" luon thay bang nhau sau khi ghi — che mat bug that.
+  const findGame = (gameId: string) => {
+    const row = findGameRow(gameId);
+    return row ? { ...row } : null;
+  };
 
   const repo: GameRepository = {
     games: {
       listByOwner: async (userId) =>
         state.games.filter((row) => row.ownerUserId === userId && !row.deletedAt),
-      listSharedWithUser: async () => [],
+      listSharedWithUser: async (userId) => {
+        const sharedGameIds = new Set(
+          state.collaborators.filter((row) => row.userId === userId).map((row) => row.gameId),
+        );
+        return state.games.filter(
+          (row) => sharedGameIds.has(row.id) && !row.deletedAt && row.ownerUserId !== userId,
+        );
+      },
       listDeletedByOwner: async (userId) =>
         state.games.filter((row) => row.ownerUserId === userId && row.deletedAt),
-      countParticipants: async () => new Map(),
-      countExpenses: async () => new Map(),
+      countParticipants: async (gameIds) => {
+        const counts = new Map<string, number>();
+        for (const row of state.participants) {
+          if (!gameIds.includes(row.gameId)) continue;
+          counts.set(row.gameId, (counts.get(row.gameId) || 0) + 1);
+        }
+        return counts;
+      },
+      countExpenses: async (gameIds) => {
+        const counts = new Map<string, number>();
+        for (const row of state.expenses) {
+          if (!gameIds.includes(row.gameId) || row.kind === "transfer") continue;
+          counts.set(row.gameId, (counts.get(row.gameId) || 0) + 1);
+        }
+        return counts;
+      },
       insert: async (row) => {
         state.games.push(row);
       },
       getById: async (gameId) => findGame(gameId),
       update: async (gameId, changes, updatedAt) => {
-        const game = findGame(gameId);
+        const game = findGameRow(gameId);
         if (game) Object.assign(game, changes, { updatedAt });
       },
       setDeletedAt: async (gameId, deletedAt) => {
-        const game = findGame(gameId);
+        const game = findGameRow(gameId);
         if (game) game.deletedAt = deletedAt;
       },
       delete: async (gameId) => {
@@ -160,8 +195,31 @@ export function createFakeRepo(initial: Partial<FakeState> = {}) {
         // Cascade nhu FK trong D1: split cua nguoi da xoa bien mat.
         state.splits = state.splits.filter((row) => row.participantId !== participantId);
       },
-      listByOwner: async () => [],
-      listIdNamesByOwner: async () => [],
+      listByOwner: async (userId) => {
+        const ownedGameIds = new Set(
+          state.games.filter((row) => row.ownerUserId === userId).map((row) => row.id),
+        );
+        return state.participants
+          .filter((row) => ownedGameIds.has(row.gameId))
+          .map((row) => {
+            const payment = state.payments.find((item) => item.participantId === row.id);
+            return {
+              name: row.name,
+              bankId: payment?.bankId || "",
+              accountNo: payment?.accountNo || "",
+              accountName: payment?.accountName || "",
+              createdAt: row.createdAt,
+            };
+          });
+      },
+      listIdNamesByOwner: async (userId) => {
+        const ownedGameIds = new Set(
+          state.games.filter((row) => row.ownerUserId === userId).map((row) => row.id),
+        );
+        return state.participants
+          .filter((row) => ownedGameIds.has(row.gameId))
+          .map((row) => ({ id: row.id, name: row.name, gameId: row.gameId }));
+      },
     },
     paymentProfiles: {
       listByParticipantIds: async (participantIds) =>
@@ -231,14 +289,35 @@ export function createFakeRepo(initial: Partial<FakeState> = {}) {
       },
     },
     photos: {
-      listByGame: async () => [],
-      countByGame: async () => 0,
-      getById: async () => null,
-      getWithGame: async () => null,
-      getDetail: async () => null,
-      insert: async () => {},
-      update: async () => {},
-      delete: async () => {},
+      // Moi nhat truoc, giong adapter D1.
+      listByGame: async (gameId) =>
+        state.photos
+          .filter((row) => row.gameId === gameId)
+          .slice()
+          .reverse()
+          .map(stripPhotoData),
+      countByGame: async (gameId) =>
+        state.photos.filter((row) => row.gameId === gameId).length,
+      getById: async (photoId) => {
+        const photo = state.photos.find((row) => row.id === photoId);
+        return photo ? stripPhotoData(photo) : null;
+      },
+      getWithGame: async (photoId) => {
+        const photo = state.photos.find((row) => row.id === photoId);
+        const game = photo ? findGame(photo.gameId) : null;
+        return photo && game ? { photo: stripPhotoData(photo), game } : null;
+      },
+      getDetail: async (photoId) => state.photos.find((row) => row.id === photoId) || null,
+      insert: async (row) => {
+        state.photos.push(row);
+      },
+      update: async (photoId, fields) => {
+        const photo = state.photos.find((row) => row.id === photoId);
+        if (photo) Object.assign(photo, fields);
+      },
+      delete: async (photoId) => {
+        state.photos = state.photos.filter((row) => row.id !== photoId);
+      },
     },
     mcpTokens: {
       listByUser: async () => [],
@@ -253,11 +332,25 @@ export function createFakeRepo(initial: Partial<FakeState> = {}) {
       upsert: async () => {},
     },
     contacts: {
-      listByOwner: async () => [],
-      getOwned: async () => null,
-      upsert: async () => {},
-      update: async () => {},
-      delete: async () => {},
+      listByOwner: async (userId) =>
+        state.contacts.filter((row) => row.ownerUserId === userId),
+      getOwned: async (contactId, userId) =>
+        state.contacts.find((row) => row.id === contactId && row.ownerUserId === userId) || null,
+      upsert: async (row) => {
+        // Cung nameKey thi ghi de dong cu — danh ba khong duoc co hai "Hong".
+        const existing = state.contacts.find(
+          (item) => item.ownerUserId === row.ownerUserId && item.nameKey === row.nameKey,
+        );
+        if (existing) Object.assign(existing, row, { id: existing.id });
+        else state.contacts.push(row);
+      },
+      update: async (contactId, fields, updatedAt) => {
+        const contact = state.contacts.find((row) => row.id === contactId);
+        if (contact) Object.assign(contact, fields, { updatedAt });
+      },
+      delete: async (contactId) => {
+        state.contacts = state.contacts.filter((row) => row.id !== contactId);
+      },
     },
     gameEvents: {
       listByGame: async (gameId, limit) =>
@@ -348,6 +441,12 @@ export function createFakeRepo(initial: Partial<FakeState> = {}) {
   };
 
   return { repo, state };
+}
+
+/** Anh o dang danh sach: bo `data` goc, giong cach adapter D1 chi select cot nhe. */
+function stripPhotoData(row: PhotoDetailRow) {
+  const { data: _data, ...rest } = row;
+  return rest;
 }
 
 /** Split cua mot khoan chi, sap theo participantId de assert on dinh. */
