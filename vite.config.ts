@@ -116,6 +116,7 @@ export default defineConfig({
         // Ha tang test (repo gia, helper render) — do chinh no thi vo nghia.
         "**/fake-game-repository.ts",
         "src/test/**",
+        "**/fake-game-api.tsx",
         "worker/src/test-support/**",
         // Chi co type/interface, khong co dong lenh nao chay.
         "**/ports/**",

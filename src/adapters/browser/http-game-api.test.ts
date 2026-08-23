@@ -110,7 +110,10 @@ describe("duong dan cua tung nhom endpoint", () => {
     ],
     [
       "participants.createMany",
-      () => api.participants.createMany("game_1", { people: [{ name: "An" }] }),
+      () =>
+        api.participants.createMany("game_1", {
+          people: [{ name: "An", bankId: "", accountNo: "", accountName: "" }],
+        }),
       "POST",
       "/api/games/game_1/participants/batch",
     ],
@@ -195,7 +198,7 @@ describe("duong dan cua tung nhom endpoint", () => {
     ["mcpTokens.list", () => api.mcpTokens.list(), "GET", "/api/mcp-tokens"],
     [
       "mcpTokens.create",
-      () => api.mcpTokens.create({ name: "token" }),
+      () => api.mcpTokens.create({ name: "token", scopes: ["games:read"] }),
       "POST",
       "/api/mcp-tokens",
     ],
