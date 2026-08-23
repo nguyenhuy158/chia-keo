@@ -117,6 +117,7 @@ export default defineConfig({
         "**/fake-game-repository.ts",
         "src/test/**",
         "**/fake-game-api.tsx",
+        "**/fake-canvas.ts",
         "worker/src/test-support/**",
         // Chi co type/interface, khong co dong lenh nao chay.
         "**/ports/**",
