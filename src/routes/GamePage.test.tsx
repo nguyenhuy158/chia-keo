@@ -208,7 +208,9 @@ describe("link chia se", () => {
 
 describe("gui email tom tat", () => {
   it("goi endpoint email-summary", async () => {
-    const fetchMock = vi.fn(async () => new Response("{}"));
+    const fetchMock = vi.fn(
+      async (_input: RequestInfo | URL, _init?: RequestInit) => new Response("{}"),
+    );
     vi.stubGlobal("fetch", fetchMock);
     const user = userEvent.setup();
     renderPage();

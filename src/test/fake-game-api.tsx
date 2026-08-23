@@ -3,7 +3,12 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import { vi } from "vitest";
-import type { ApiGameDetail, ApiPhoto } from "../../shared/api-types";
+import type {
+  ApiCrossGameBalances,
+  ApiFunStats,
+  ApiGameDetail,
+  ApiPhoto,
+} from "../../shared/api-types";
 import { provideGameApi, provideQrProvider } from "../core/container";
 import type { GameApiPort } from "../core/ports/game-api";
 import { vietQrProvider } from "../adapters/browser/vietqr";
@@ -47,6 +52,26 @@ export function makePhoto(overrides: Partial<ApiPhoto> = {}): ApiPhoto {
   };
 }
 
+const EMPTY_FUN_STATS: ApiFunStats = {
+  gameCount: 0,
+  totalExpense: 0,
+  topPayer: null,
+  mostActive: null,
+  biggestExpense: null,
+  biggestGame: null,
+  favoriteWeekday: null,
+  omittedGameCount: 0,
+};
+
+const EMPTY_CROSS_BALANCES: ApiCrossGameBalances = {
+  games: [],
+  omittedGameCount: 0,
+  totalExpense: 0,
+  people: [],
+  settlements: [],
+  namesInOneGameOnly: [],
+};
+
 /** GameApiPort gia: moi method la vi.fn() tra ve du lieu hop le. */
 export function createFakeGameApi() {
   const detail = async () => makeDetail();
@@ -73,8 +98,10 @@ export function createFakeGameApi() {
       restore: vi.fn(detail),
       purge: vi.fn(async () => ({ ok: true as const })),
     },
-    funStats: { get: vi.fn(async () => ({ gameCount: 0 })) },
-    crossBalances: { get: vi.fn(async () => ({ people: [] })) },
+    funStats: { get: vi.fn(async (): Promise<ApiFunStats> => EMPTY_FUN_STATS) },
+    crossBalances: {
+      get: vi.fn(async (): Promise<ApiCrossGameBalances> => EMPTY_CROSS_BALANCES),
+    },
     gameEvents: {
       list: vi.fn(async () => ({ events: [] })),
       undo: vi.fn(detail),

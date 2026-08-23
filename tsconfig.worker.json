@@ -11,7 +11,10 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
-    "types": ["@cloudflare/workers-types"]
+    // node: chi cho ha tang test cua worker (worker/src/test-support dung
+    // node:sqlite/fs de chay adapter D1 tren SQLite that). Code worker that
+    // van chay tren Cloudflare, khong duoc dung API node.
+    "types": ["@cloudflare/workers-types", "node"]
   },
   "include": ["worker", "shared"]
 }
