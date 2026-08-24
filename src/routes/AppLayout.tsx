@@ -1,6 +1,7 @@
 import { Link, Navigate, Outlet, useNavigate } from "@tanstack/react-router";
 import { LogOut, Menu, PartyPopper, Settings } from "lucide-react";
 import { useState } from "react";
+import { BrandMark } from "../components/brand";
 import { GamesSidebar } from "../components/GamesSidebar";
 import { MobileShellContext } from "../components/mobile-shell";
 import { Drawer } from "../components/overlays";
@@ -66,13 +67,23 @@ export function AppLayout() {
             {/* Logo la duong ve trang chu. Truoc day no la <h1> tron: vao mot
                 cuoc chia tren mobile la khong con nut nao ve home — sidebar bi
                 thu vao drawer, ma drawer chi liet ke cac cuoc chia. */}
-            <Link to="/" aria-label="Về trang chủ" className="min-w-0">
-              <h1 className="truncate bg-gradient-to-r from-violet-600 to-fuchsia-600 bg-clip-text text-lg font-extrabold text-transparent sm:text-xl">
-                Chia kèo
-              </h1>
-              <p className="hidden text-sm text-stone-600 dark:text-stone-400 sm:block">
-                Tính tiền nhóm và sinh QR nhận tiền.
-              </p>
+            <Link
+              to="/"
+              aria-label="Về trang chủ"
+              className="flex min-w-0 items-center gap-2 sm:gap-2.5"
+            >
+              {/* shrink-0: logo la anh vuong, de nguyen thi flex bop meo no
+                  truoc khi bop chu o man hep. */}
+              <BrandMark size={36} className="shrink-0 sm:hidden" />
+              <BrandMark size={44} className="hidden shrink-0 sm:block" />
+              <div className="min-w-0">
+                <h1 className="truncate bg-gradient-to-r from-violet-600 to-fuchsia-600 bg-clip-text text-lg font-extrabold text-transparent sm:text-xl">
+                  Chia kèo
+                </h1>
+                <p className="hidden text-sm text-stone-600 dark:text-stone-400 sm:block">
+                  Tính tiền nhóm và sinh QR nhận tiền.
+                </p>
+              </div>
             </Link>
           </div>
           {/* gap hep hon logo/hamburger phia trai: cum nay toan nut co dinh

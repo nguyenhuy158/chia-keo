@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="Chia keo">
+  <title>Chia keo</title>
+  <defs>
+    <linearGradient id="ckm-bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#a78bfa"/>
+      <stop offset=".55" stop-color="#c084fc"/>
+      <stop offset="1" stop-color="#e879f9"/>
+    </linearGradient>
+    <linearGradient id="ckm-l" x1=".2" y1="0" x2=".8" y2="1">
+      <stop offset="0" stop-color="#fef9c3"/><stop offset="1" stop-color="#fbbf24"/>
+    </linearGradient>
+    <linearGradient id="ckm-r" x1=".2" y1="0" x2=".8" y2="1">
+      <stop offset="0" stop-color="#fecdd3"/><stop offset="1" stop-color="#fb7185"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Maskable: nen tran vien, moi chi tiet nam trong vung an toan 80% giua
+       (Android co the crop thanh hinh tron) nen khong ve khung bo tron. -->
+  <rect width="512" height="512" fill="url(#ckm-bg)"/>
+  <ellipse cx="180" cy="140" rx="110" ry="60" fill="#ffffff" opacity=".18"/>
+
+  <g transform="translate(75 72) scale(.72)">
+    <path d="M266 104 V408" stroke="#ffffff" stroke-width="15" stroke-linecap="round" stroke-dasharray="4 34" opacity=".9"/>
+    <g transform="rotate(-9 178 214)">
+      <path d="M96 184 L36 162 q-12-5-8 8 l16 44 -16 44 q-4 13 8 8 l60-22 z" fill="#fde68a" stroke="#ffffff" stroke-width="15" stroke-linejoin="round"/>
+      <circle cx="178" cy="214" r="84" fill="url(#ckm-l)" stroke="#ffffff" stroke-width="18"/>
+      <ellipse cx="152" cy="204" rx="9" ry="13" fill="#78350f"/>
+      <ellipse cx="208" cy="204" rx="9" ry="13" fill="#78350f"/>
+      <path d="M164 238 q15 17 30 0" fill="none" stroke="#78350f" stroke-width="9" stroke-linecap="round"/>
+      <ellipse cx="127" cy="232" rx="15" ry="9" fill="#fb7185" opacity=".6"/>
+      <ellipse cx="231" cy="232" rx="15" ry="9" fill="#fb7185" opacity=".6"/>
+    </g>
+    <g transform="rotate(11 344 320)">
+      <path d="M412 296 L468 276 q12-4 8 8 l-14 36 14 36 q4 12-8 8 l-56-20 z" fill="#fecdd3" stroke="#ffffff" stroke-width="14" stroke-linejoin="round"/>
+      <circle cx="344" cy="320" r="70" fill="url(#ckm-r)" stroke="#ffffff" stroke-width="17"/>
+      <ellipse cx="323" cy="311" rx="8" ry="11" fill="#7f1d1d"/>
+      <ellipse cx="365" cy="311" rx="8" ry="11" fill="#7f1d1d"/>
+      <path d="M333 340 q11 14 22 0" fill="none" stroke="#7f1d1d" stroke-width="8" stroke-linecap="round"/>
+      <ellipse cx="302" cy="337" rx="12" ry="7" fill="#e11d48" opacity=".45"/>
+      <ellipse cx="386" cy="337" rx="12" ry="7" fill="#e11d48" opacity=".45"/>
+    </g>
+  </g>
+
+  <g fill="#ffffff">
+    <path d="M356 140 l9 22 22 9 -22 9 -9 22 -9-22 -22-9 22-9 z" opacity=".9"/>
+    <circle cx="150" cy="368" r="9" opacity=".6"/>
+  </g>
+</svg>

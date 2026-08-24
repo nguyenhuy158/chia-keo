@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 320" width="880" height="320" role="img" aria-label="Chia keo - Tinh tien nhom">
+  <title>Chia keo</title>
+  <defs>
+    <linearGradient id="ckw-bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#a78bfa"/>
+      <stop offset=".55" stop-color="#c084fc"/>
+      <stop offset="1" stop-color="#e879f9"/>
+    </linearGradient>
+    <linearGradient id="ckw-l" x1=".2" y1="0" x2=".8" y2="1">
+      <stop offset="0" stop-color="#fef9c3"/><stop offset="1" stop-color="#fbbf24"/>
+    </linearGradient>
+    <linearGradient id="ckw-r" x1=".2" y1="0" x2=".8" y2="1">
+      <stop offset="0" stop-color="#fecdd3"/><stop offset="1" stop-color="#fb7185"/>
+    </linearGradient>
+  </defs>
+
+  <!-- The bo tron kieu kawaii, vien trang day -->
+  <rect x="12" y="12" width="856" height="296" rx="112" fill="url(#ckw-bg)"/>
+  <rect x="12" y="12" width="856" height="296" rx="112" fill="none" stroke="#ffffff" stroke-width="22" stroke-opacity=".9"/>
+  <ellipse cx="250" cy="86" rx="170" ry="44" fill="#ffffff" opacity=".18"/>
+
+  <!-- Mascot: hai nua keo dang duoc chia -->
+  <g transform="translate(46 20) scale(.78)">
+    <path d="M266 104 V330" stroke="#ffffff" stroke-width="14" stroke-linecap="round" stroke-dasharray="4 32" opacity=".9"/>
+    <g transform="rotate(-9 178 178)">
+      <path d="M96 148 L36 126 q-12-5-8 8 l16 44 -16 44 q-4 13 8 8 l60-22 z" fill="#fde68a" stroke="#ffffff" stroke-width="15" stroke-linejoin="round"/>
+      <circle cx="178" cy="178" r="82" fill="url(#ckw-l)" stroke="#ffffff" stroke-width="18"/>
+      <ellipse cx="153" cy="168" rx="9" ry="13" fill="#78350f"/>
+      <ellipse cx="207" cy="168" rx="9" ry="13" fill="#78350f"/>
+      <path d="M165 202 q15 17 30 0" fill="none" stroke="#78350f" stroke-width="9" stroke-linecap="round"/>
+      <ellipse cx="129" cy="196" rx="15" ry="9" fill="#fb7185" opacity=".6"/>
+      <ellipse cx="229" cy="196" rx="15" ry="9" fill="#fb7185" opacity=".6"/>
+    </g>
+    <g transform="rotate(11 340 268)">
+      <path d="M404 246 L458 226 q12-4 8 8 l-13 34 13 34 q4 12-8 8 l-54-19 z" fill="#fecdd3" stroke="#ffffff" stroke-width="14" stroke-linejoin="round"/>
+      <circle cx="340" cy="268" r="66" fill="url(#ckw-r)" stroke="#ffffff" stroke-width="17"/>
+      <ellipse cx="320" cy="259" rx="8" ry="11" fill="#7f1d1d"/>
+      <ellipse cx="360" cy="259" rx="8" ry="11" fill="#7f1d1d"/>
+      <path d="M330 288 q10 13 20 0" fill="none" stroke="#7f1d1d" stroke-width="8" stroke-linecap="round"/>
+      <ellipse cx="300" cy="285" rx="12" ry="7" fill="#e11d48" opacity=".45"/>
+      <ellipse cx="380" cy="285" rx="12" ry="7" fill="#e11d48" opacity=".45"/>
+    </g>
+  </g>
+
+  <!-- Wordmark -->
+  <g font-family="'Be Vietnam Pro','Plus Jakarta Sans',ui-sans-serif,system-ui,sans-serif">
+    <text x="446" y="150" font-size="78" font-weight="800" fill="#ffffff" letter-spacing="-1.5">Chia kèo</text>
+    <g transform="translate(450 180)">
+      <rect x="0" y="0" width="290" height="58" rx="29" fill="#ffffff" opacity=".92"/>
+      <text x="145" y="39" font-size="27" font-weight="700" fill="#7c3aed" text-anchor="middle">Tính tiền nhóm</text>
+    </g>
+  </g>
+
+  <g fill="#ffffff">
+    <path d="M796 194 l9 24 24 9 -24 9 -9 24 -9-24 -24-9 24-9 z" opacity=".95"/>
+    <circle cx="418" cy="72" r="9" opacity=".55"/>
+  </g>
+</svg>

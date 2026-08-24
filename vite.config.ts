@@ -36,9 +36,10 @@ export default defineConfig({
           { src: "/pwa-192.png", sizes: "192x192", type: "image/png" },
           { src: "/app-icon.png", sizes: "512x512", type: "image/png" },
           {
-            // app-icon.png co san khoang dem quanh logo nen dung lai duoc
-            // luon cho maskable, khong can ve rieng mot ban.
-            src: "/app-icon.png",
+            // Ban rieng cho maskable: nen tran vien, mascot nam gon trong vung
+            // an toan 80% giua. app-icon.png co khung bo tron nen bi Android
+            // crop mat goc, khong dung lai duoc cho muc dich nay.
+            src: "/maskable-512.png",
             sizes: "512x512",
             type: "image/png",
             purpose: "maskable",

@@ -2,6 +2,7 @@ import { Navigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { ssoLoginUrl } from "../adapters/browser/sso";
 import { useAppSession } from "../adapters/react-query/session-query";
+import { BrandMark } from "../components/brand";
 import { ThemeToggle } from "../components/theme";
 import { LoadingState } from "../components/ui";
 
@@ -62,6 +63,7 @@ export function LoginPage() {
       <div className="w-full rounded-lg border border-stone-200 bg-white p-6 shadow-sm dark:border-stone-800 dark:bg-stone-900">
         <div className="mb-6 flex items-start justify-between gap-3">
           <div>
+            <BrandMark size={56} className="mb-3" />
             <p className="text-sm font-bold uppercase tracking-wide text-fuchsia-600 dark:text-fuchsia-400">
               Chia kèo
             </p>
