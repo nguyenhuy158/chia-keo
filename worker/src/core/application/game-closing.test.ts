@@ -9,7 +9,7 @@ import {
   gameRow,
   participantRow,
 } from "./fake-game-repository";
-import { closeGame, listClosedGames, listGames, reopenGame } from "./games";
+import { closeGame, listAllGames, listClosedGames, listGames, reopenGame } from "./games";
 import { countRealExpenses } from "./game-closing";
 
 const AN = "participant_an";
@@ -191,5 +191,15 @@ describe("danh sach cuoc choi", () => {
     const closed = await listClosedGames(fake.repo, FAKE_OWNER);
     expect(closed.map((game) => game.id)).toEqual([FAKE_GAME_ID]);
     expect(closed[0].closeMode).toBe("manual");
+  });
+
+  it("duong tra cuu (MCP) van thay cuoc da dong", async () => {
+    const fake = twoPeople();
+    await addDebt(fake);
+    await closeGame(fake.repo, FAKE_OWNER, FAKE_GAME_ID);
+
+    expect((await listAllGames(fake.repo, FAKE_OWNER)).map((game) => game.id)).toEqual([
+      FAKE_GAME_ID,
+    ]);
   });
 });

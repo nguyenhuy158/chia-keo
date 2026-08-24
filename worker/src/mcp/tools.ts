@@ -10,7 +10,7 @@ import {
   getBalancesAcrossGames,
   MAX_CROSS_GAME_GAMES,
 } from "../core/application/cross-game-balances";
-import { findGameByRef, getGameDetailForOwner, listGames } from "../core/application/games";
+import { findGameByRef, getGameDetailForOwner, listAllGames } from "../core/application/games";
 import { getShareViewByToken } from "../core/application/share-links";
 import type { GameRepository } from "../core/ports/game-repository";
 import type { McpTool } from "./protocol";
@@ -61,7 +61,7 @@ function readVariant(args: Record<string, unknown>): SummaryVariant {
  * chu khong biet id. Doi chieu ma khong phan biet hoa thuong.
  */
 async function loadGame(context: McpContext, ref: string): Promise<ApiGameDetail> {
-  const games = await listGames(context.repo, context.userId);
+  const games = await listAllGames(context.repo, context.userId);
   const match = findGameByRef(games, ref);
   if (!match) throw new Error(describeMissingGame(games, ref));
 
@@ -76,7 +76,7 @@ function describeMissingGame(games: ApiGame[], ref: string) {
 
 /** Doi danh sach ma/id thanh gameId, bao loi model doc duoc neu co ma sai. */
 async function resolveGameIds(context: McpContext, refs: string[]) {
-  const games = await listGames(context.repo, context.userId);
+  const games = await listAllGames(context.repo, context.userId);
 
   return refs.map((ref) => {
     const match = findGameByRef(games, ref);
@@ -144,10 +144,11 @@ export const mcpTools: McpTool<McpContext, McpScope>[] = [
     title: "Danh sách cuộc chia",
     description:
       "Liệt kê mọi cuộc chia tiền của chủ tài khoản, kèm mã, số người và số khoản chi. " +
+      "Gồm cả cuộc đã đóng (closedAt khác null là đã chia xong tiền). " +
       "Dùng tool này trước để lấy mã, rồi truyền mã đó cho các tool khác.",
     scope: "games:read",
     inputSchema: { type: "object", properties: {}, additionalProperties: false },
-    run: async (_args, context) => listGames(context.repo, context.userId),
+    run: async (_args, context) => listAllGames(context.repo, context.userId),
   },
   {
     name: "get_game",

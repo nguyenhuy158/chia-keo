@@ -72,6 +72,16 @@ export async function listClosedGames(repo: GameRepository, userId: string): Pro
 }
 
 /**
+ * Ca dang choi va da dong. Dung cho cac duong TRA CUU theo ma/id (MCP): mot
+ * cuoc da chia xong tien van phai tra cuu duoc — an no o day thi hoi lai cuoc
+ * vua tat toan se thanh "khong tim thay". Danh sach cho nguoi dung xem thi
+ * dung `listGames` / `listClosedGames`.
+ */
+export async function listAllGames(repo: GameRepository, userId: string): Promise<ApiGame[]> {
+  return listGamesWhere(repo, userId, () => true);
+}
+
+/**
  * Dò cuộc chia theo mã hoặc id trong một danh sách đã tải. Nhận cả hai vì
  * người dùng (và model) thường chỉ thấy mã in trên thẻ tóm tắt chứ không biết
  * id; mã đối chiếu không phân biệt hoa thường.
