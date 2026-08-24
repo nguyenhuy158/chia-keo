@@ -8,10 +8,6 @@
 // Bien moi truong:
 // - PLAYWRIGHT_CHROMIUM_PATH: duong dan chromium co san; bo trong de
 //   playwright-core tu tim (can `npx playwright install chromium` truoc).
-//
-// Luu y: logo.svg co chu, ve dung font "Be Vietnam Pro" — trang render tai
-// font tu Google Fonts nen may khong co mang se ra font fallback. Cac icon con
-// lai thuan hinh, khong bi anh huong.
 import { chromium } from "playwright-core";
 import { mkdtemp, writeFile, copyFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -28,11 +24,7 @@ const TARGETS = [
   { src: join(BRAND, "logo-mark.svg"), out: join(PUBLIC, "apple-touch-icon.png"), size: 180 },
   { src: join(BRAND, "logo-maskable.svg"), out: join(PUBLIC, "maskable-512.png"), size: 512 },
   { src: join(PUBLIC, "favicon.svg"), out: join(PUBLIC, "favicon-32.png"), size: 32 },
-  { src: join(BRAND, "logo.svg"), out: join(BRAND, "logo.png"), width: 880, height: 320 },
 ];
-
-const FONT_CSS =
-  "https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;800&display=swap";
 
 const browser = await chromium.launch({
   executablePath: process.env.PLAYWRIGHT_CHROMIUM_PATH || undefined,
@@ -51,7 +43,6 @@ try {
     await writeFile(
       page,
       `<!doctype html><html><head><meta charset="utf-8">
-<link href="${FONT_CSS}" rel="stylesheet">
 <style>html,body{margin:0;padding:0;background:transparent;width:${width}px;height:${height}px;overflow:hidden}
 img{display:block;width:${width}px;height:${height}px}</style>
 </head><body><img src="./${basename(t.src)}"></body></html>`,

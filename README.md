@@ -1,6 +1,6 @@
 # Chia Keo
 
-<img src="public/brand/logo.png" alt="Chia keo" width="440">
+<img src="public/app-icon.png" alt="Chia keo" width="128">
 
 Ung dung chia tien nhom cho cac buoi an, di choi, du lich hoac nhom chi tieu nho.
 
@@ -419,20 +419,23 @@ Bo nhan dien ve theo huong *kawaii logo* (tham khao
 [SAWARATSUKI/KawaiiLogos](https://github.com/SAWARATSUKI/KawaiiLogos)): khung bo
 tron, vien trang day, gradient tim - hong, mascot co mat cuoi va ma hong.
 
-Mascot la **hai nua vien keo dang duoc chia doi** qua mot duong cham cham — dung
-nghia ten app, va cung la thu app lam: chia mot khoan cho nhieu nguoi.
+Mascot la **hai nua vien keo nhin nhau** — dung nghia ten app, va cung la thu
+app lam: chia mot khoan cho nhieu nguoi.
+
+Logo dung mot minh, khong kem wordmark: trong app (header, trang dang nhap) chi
+hien logo, ten app giu o `h1` sr-only / `aria-label` de screen reader va SEO
+khong mat heading.
 
 | File | Dung o dau |
 | --- | --- |
-| `public/brand/logo.svg` | Logo ngang co wordmark — README, trang gioi thieu, anh share |
-| `public/brand/logo-mark.svg` | Rieng phan mascot trong khung bo tron — nguon cho app icon |
+| `public/brand/logo-mark.svg` | Ban goc cua logo (mascot trong khung bo tron) — nguon cho app icon |
 | `public/brand/logo-maskable.svg` | Ban maskable: nen tran vien, mascot nam trong vung an toan 80% |
 | `public/favicon.svg` | Favicon — chi mot vien keo, bo bot chi tiet de con doc duoc o 16px |
 | `src/components/brand.tsx` | `<BrandMark />` ve inline trong app (header, trang dang nhap) |
 
 SVG la ban goc; cac file PNG (`app-icon.png`, `pwa-192.png`,
-`apple-touch-icon.png`, `maskable-512.png`, `favicon-32.png`, `brand/logo.png`)
-duoc sinh lai tu SVG:
+`apple-touch-icon.png`, `maskable-512.png`, `favicon-32.png`) duoc sinh lai tu
+SVG:
 
 ```bash
 node scripts/render-brand.mjs
