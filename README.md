@@ -446,6 +446,20 @@ Sua logo thi sua SVG roi chay lai script, dung chinh tay file PNG. `favicon.svg`
 va `logo-mark.svg` cham nhau ve mau nhung la hai ban ve rieng: favicon phai don
 gian hon vi no hien o 16-32px.
 
+Xem truoc (anh trong `docs/brand/`, sinh bang Chromium tu chinh cac file tren):
+
+Favicon o 64 / 32 / 16px, kem ban phong to de kiem tra do doc duoc:
+
+![favicon](docs/brand/preview-favicon.png)
+
+App icon, ban maskable va mo phong Android crop thanh hinh tron:
+
+![app icon](docs/brand/preview-icons.png)
+
+`<BrandMark />` trong app (light, dark va header o 360px):
+
+![trong app](docs/brand/preview-app.png)
+
 Palette:
 
 | Vai tro | Mau |
