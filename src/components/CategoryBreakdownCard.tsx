@@ -38,7 +38,7 @@ export function CategoryBreakdownCard({ expenses }: { expenses: ApiExpense[] }) 
                 </span>
               </span>
               <span className="shrink-0 font-semibold tabular-nums text-stone-950 dark:text-stone-50">
-                {formatMoney(row.total)}đ
+                {formatMoney(row.total)}
               </span>
             </div>
             <div
@@ -57,7 +57,7 @@ export function CategoryBreakdownCard({ expenses }: { expenses: ApiExpense[] }) 
       </ul>
 
       <p className="mt-3 text-xs text-stone-500 dark:text-stone-400">
-        Tổng {formatMoney(breakdown.total)}đ, không tính khoản thu và trả nợ.
+        Tổng {formatMoney(breakdown.total)}, không tính khoản thu và trả nợ.
       </p>
     </section>
   );
