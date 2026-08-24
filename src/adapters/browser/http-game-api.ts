@@ -62,6 +62,11 @@ export function createHttpGameApi(): GameApiPort {
       get: () => request(`/api/preferences`),
       update: (input) => patch(`/api/preferences`, input),
     },
+    shuttles: {
+      get: () => request(`/api/shuttles`),
+      createEntry: (input) => post(`/api/shuttles/entries`, input),
+      removeEntry: (entryId) => destroy(`/api/shuttles/entries/${entryId}`),
+    },
     contacts: {
       list: () => request(`/api/contacts`),
       create: (input) => post(`/api/contacts`, input),

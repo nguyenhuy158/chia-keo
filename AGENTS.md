@@ -31,6 +31,7 @@ shared/                        # Pure domain kernel shared by FE + worker (no IO
   photos.ts                    #   Photo helpers (counts, viewer index, data URI)
   api-types.ts                 #   DTOs exchanged between FE and worker
   rate-limit.ts                #   Pure rate-limit logic
+  shuttles.ts                  #   Kho cau: cong tru so cau, chan kho am/vuot tran
   vietqr.ts                    #   VietQR URL building (worker proxies QR too)
   summary-text.ts              #   Summary document for copy-as-text/image
   build-info.ts                #   Deployed commit (generated at build; GET /api/version)

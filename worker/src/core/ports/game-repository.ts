@@ -122,6 +122,16 @@ export type McpTokenRow = {
   revokedAt: string | null;
 };
 
+/** Mot dong kho cau nhu luu trong DB (chua tinh so con lai). */
+export type ShuttleEntryRow = {
+  id: string;
+  ownerUserId: string;
+  kind: string;
+  delta: number;
+  note: string;
+  createdAt: string;
+};
+
 export type NewSplitRow = {
   id: string;
   expenseId: string;
@@ -265,6 +275,13 @@ export type GameRepository = {
     listByUser(userId: string): Promise<UserPreferenceRow[]>;
     /** Ghi de gia tri cu cua dung key do — moi user mot dong tren moi key. */
     upsert(userId: string, key: string, value: string, updatedAt: string): Promise<void>;
+  };
+  shuttleEntries: {
+    /** Toan bo thao tac cua user, cu nhat truoc — de cong don ra kho hien tai. */
+    listByOwner(userId: string): Promise<ShuttleEntryRow[]>;
+    getOwned(entryId: string, userId: string): Promise<ShuttleEntryRow | null>;
+    insert(row: ShuttleEntryRow): Promise<void>;
+    delete(entryId: string): Promise<void>;
   };
   contacts: {
     listByOwner(userId: string): Promise<ContactBookRow[]>;

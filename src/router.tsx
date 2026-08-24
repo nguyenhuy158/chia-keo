@@ -79,6 +79,12 @@ const settingsRoute = createRoute({
   component: lazyRouteComponent(() => import("./routes/SettingsPage"), "SettingsPage"),
 });
 
+const shuttlesRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: "/shuttles",
+  component: lazyRouteComponent(() => import("./routes/ShuttlesPage"), "ShuttlesPage"),
+});
+
 const funStatsRoute = createRoute({
   getParentRoute: () => appRoute,
   path: "/fun",
@@ -88,7 +94,7 @@ const funStatsRoute = createRoute({
 const routeTree = rootRoute.addChildren([
   loginRoute,
   shareRoute,
-  appRoute.addChildren([homeRoute, gameRoute, settingsRoute, funStatsRoute]),
+  appRoute.addChildren([homeRoute, gameRoute, settingsRoute, shuttlesRoute, funStatsRoute]),
 ]);
 
 export const router = createRouter({

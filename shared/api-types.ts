@@ -1,5 +1,6 @@
 import type { ResolvedAiExpense } from "./ai";
 import type { McpScope, SettlementMode } from "./schemas";
+import type { ShuttleEntryKind } from "./shuttles";
 import type { BalanceRow, ExpenseKind, SettlementRow, SplitMode } from "./split";
 
 export type ApiAiSuggestionResponse = {
@@ -207,6 +208,24 @@ export type ApiCreatedMcpToken = {
   token: ApiMcpToken;
   /** Ban goc, chi tra ve dung lan tao nay. */
   secret: string;
+};
+
+/** Mot dong lich su kho cau, kem so cau con lai ngay sau thao tac do. */
+export type ApiShuttleEntry = {
+  id: string;
+  kind: ShuttleEntryKind;
+  /** Thay doi thuc te len kho: am la bo ra, duong la them vao. */
+  delta: number;
+  /** Kho sau khi ap dong nay — server tinh san de FE khong phai cong don. */
+  stockAfter: number;
+  note: string;
+  createdAt: string;
+};
+
+/** Trang thai kho cau cua user: so hien co + vai thao tac gan nhat. */
+export type ApiShuttleStock = {
+  stock: number;
+  entries: ApiShuttleEntry[];
 };
 
 export type ApiError = {

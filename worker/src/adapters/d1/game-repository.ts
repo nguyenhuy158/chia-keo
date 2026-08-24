@@ -485,6 +485,35 @@ export function createD1GameRepository(d1: D1Database): GameRepository {
       },
     },
 
+    shuttleEntries: {
+      async listByOwner(userId) {
+        return db
+          .select()
+          .from(schema.shuttleEntries)
+          .where(eq(schema.shuttleEntries.ownerUserId, userId))
+          .orderBy(asc(schema.shuttleEntries.createdAt));
+      },
+      async getOwned(entryId, userId) {
+        const rows = await db
+          .select()
+          .from(schema.shuttleEntries)
+          .where(
+            and(
+              eq(schema.shuttleEntries.id, entryId),
+              eq(schema.shuttleEntries.ownerUserId, userId),
+            ),
+          )
+          .limit(1);
+        return rows[0] || null;
+      },
+      async insert(row) {
+        await db.insert(schema.shuttleEntries).values(row);
+      },
+      async delete(entryId) {
+        await db.delete(schema.shuttleEntries).where(eq(schema.shuttleEntries.id, entryId));
+      },
+    },
+
     contacts: {
       async listByOwner(userId) {
         return db
