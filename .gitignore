@@ -30,3 +30,6 @@ yarn-error.log*
 # Cloudflare local dev
 .dev.vars
 .wrangler/
+
+# Anh chup luc E2E that bai
+e2e-failure.png
