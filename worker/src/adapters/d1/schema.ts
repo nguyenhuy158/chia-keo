@@ -84,6 +84,14 @@ export const games = sqliteTable(
      * cascade ca participant, khoan chi va anh — khong co duong nao lay lai.
      */
     deletedAt: text("deleted_at"),
+    /**
+     * Luc cuoc choi duoc dong (da chia xong tien); null la dang choi. Cuoc da
+     * dong bien khoi danh sach mac dinh nhung van sua duoc.
+     */
+    closedAt: text("closed_at"),
+    // "auto" (tu dong khi moi nguoi tra xong) | "manual" (nguoi dung bam dong)
+    // | "" (chua dong). Xem CLOSE_MODES o shared/game-closing.ts.
+    closeMode: text("close_mode").notNull().default(""),
   },
   (table) => [index("games_owner_user_id_idx").on(table.ownerUserId)],
 );

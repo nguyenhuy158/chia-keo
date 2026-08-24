@@ -1,6 +1,7 @@
 import { useNavigate, useParams } from "@tanstack/react-router";
 import {
   Check,
+  CircleCheckBig,
   Images,
   Link as LinkIcon,
   ListChecks,
@@ -9,6 +10,7 @@ import {
   Pencil,
   Power,
   RefreshCw,
+  RotateCcw,
   Trash2,
   X,
 } from "lucide-react";
@@ -30,12 +32,14 @@ import { useConfirm } from "../components/ConfirmDialog";
 import { toast } from "sonner";
 import { EmptyState, GamePageSkeleton } from "../components/ui";
 import { formatMoney } from "../core/domain/money";
+import { describeCloseMode, isClosed } from "../../shared/game-closing";
 import {
   findUndoableExpenseRemoval,
   useAddExpense,
   useAddParticipant,
   useAddParticipants,
   useAddTransfer,
+  useCloseGame,
   useDeleteGame,
   useGame,
   usePhotos,
@@ -44,6 +48,7 @@ import {
   useReorderExpenses,
   useReorderParticipants,
   useRenameGame,
+  useReopenGame,
   useRotateShareLink,
   useSetSettlementHost,
   useSetSettlementMode,
@@ -77,6 +82,8 @@ export function GamePage() {
   const setSettlementMode = useSetSettlementMode(gameId);
   const setSettlementHost = useSetSettlementHost(gameId);
   const deleteGame = useDeleteGame();
+  const closeGame = useCloseGame();
+  const reopenGame = useReopenGame();
 
   const [nameDraft, setNameDraft] = useState<string | null>(null);
   const [activeSection, setActiveSection] = useState<GameSection>("expenses");
@@ -115,6 +122,33 @@ export function GamePage() {
     await deleteGame.mutateAsync(game.id);
     toast.success("Đã chuyển vào thùng rác");
     navigate({ to: "/" });
+  }
+
+  async function handleCloseGame() {
+    // Dong cuoc choi la thao tac "chot lai": noi ro con mo lai duoc de nguoi
+    // dung khong so bam nham la mat cuoc.
+    const ok = await confirm({
+      title: `Đóng "${game.name}"?`,
+      description: "Cuộc chơi rời khỏi danh sách đang chơi, mở lại được ở mục “Đã đóng”.",
+      confirmLabel: "Đóng cuộc chơi",
+    });
+    if (!ok) return;
+
+    try {
+      await closeGame.mutateAsync(game.id);
+      toast.success("Đã đóng cuộc chơi");
+    } catch {
+      toast.error("Không đóng được");
+    }
+  }
+
+  async function handleReopenGame() {
+    try {
+      await reopenGame.mutateAsync(game.id);
+      toast.success("Đã mở lại cuộc chơi");
+    } catch {
+      toast.error("Không mở lại được");
+    }
   }
 
   async function handleRotateShareLink() {
@@ -363,6 +397,33 @@ export function GamePage() {
     </button>
   );
 
+  const closed = isClosed(game);
+
+  /** Chi chu cuoc choi dong / mo lai duoc; nguoi duoc chia se chi thay trang thai. */
+  const closeAction = game.isOwner ? (
+    closed ? (
+      <button
+        type="button"
+        onClick={handleReopenGame}
+        disabled={reopenGame.isPending}
+        className="inline-flex h-11 items-center justify-center gap-2 rounded-md border border-stone-300 bg-white px-3 text-sm font-medium text-stone-700 transition hover:bg-stone-50 disabled:opacity-50 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-200 dark:hover:bg-stone-800"
+      >
+        <RotateCcw size={16} />
+        Mở lại
+      </button>
+    ) : (
+      <button
+        type="button"
+        onClick={handleCloseGame}
+        disabled={closeGame.isPending}
+        className="inline-flex h-11 items-center justify-center gap-2 rounded-md border border-emerald-200 bg-white px-3 text-sm font-medium text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-50 dark:border-emerald-900/60 dark:bg-stone-900 dark:text-emerald-400 dark:hover:bg-emerald-500/10"
+      >
+        <CircleCheckBig size={16} />
+        Đóng
+      </button>
+    )
+  ) : null;
+
   const deleteAction = game.isOwner ? (
     <button
       type="button"
@@ -423,6 +484,12 @@ export function GamePage() {
               <h2 className="truncate text-xl font-semibold text-stone-950 dark:text-stone-50 sm:text-2xl">
                 {game.name}
               </h2>
+              {closed && (
+                <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400">
+                  <CircleCheckBig size={12} />
+                  Đã đóng · {describeCloseMode(game.closeMode)}
+                </span>
+              )}
               <button
                 type="button"
                 onClick={() => setNameDraft(game.name)}
@@ -439,6 +506,7 @@ export function GamePage() {
           {copyAction}
           {emailAction}
           {shareActions}
+          {closeAction}
           {deleteAction}
         </div>
         {/* Mobile: nut chuyen cuoc choi va nut mo bottom sheet tuy chon. */}
@@ -541,6 +609,7 @@ export function GamePage() {
           {copyAction}
           {emailAction}
           {shareActions}
+          {closeAction}
           {deleteAction}
         </div>
       </BottomSheet>

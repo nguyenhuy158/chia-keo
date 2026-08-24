@@ -44,6 +44,8 @@ export function gameRow(overrides: Partial<GameRow> = {}): GameRow {
     createdAt: "2026-08-01T00:00:00.000Z",
     updatedAt: "2026-08-01T00:00:00.000Z",
     deletedAt: null,
+    closedAt: null,
+    closeMode: "",
     ...overrides,
   };
 }
@@ -111,6 +113,12 @@ export function createFakeRepo(initial: Partial<FakeState> = {}) {
       setDeletedAt: async (gameId, deletedAt) => {
         const game = findGame(gameId);
         if (game) game.deletedAt = deletedAt;
+      },
+      setClosed: async (gameId, closedAt, closeMode) => {
+        const game = findGame(gameId);
+        if (!game) return;
+        game.closedAt = closedAt;
+        game.closeMode = closeMode;
       },
       delete: async (gameId) => {
         state.games = state.games.filter((row) => row.id !== gameId);

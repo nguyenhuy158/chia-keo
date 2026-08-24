@@ -1,5 +1,6 @@
 import type { ResolvedAiExpense } from "./ai";
 import type { ExpenseCategory } from "./expense-categories";
+import type { CloseModeValue } from "./game-closing";
 import type { McpScope, SettlementMode } from "./schemas";
 import type { ShuttleEntryKind } from "./shuttles";
 import type { BalanceRow, ExpenseKind, SettlementRow, SplitMode } from "./split";
@@ -21,6 +22,10 @@ export type ApiGame = {
   createdAt: string;
   participantCount: number;
   expenseCount: number;
+  /** Luc cuoc choi duoc dong; null la dang choi. */
+  closedAt: string | null;
+  /** "auto" | "manual" | "" (dang choi). Xem shared/game-closing.ts. */
+  closeMode: CloseModeValue;
   /** false la duoc chia se vao, khong phai cuoc tu tao — an nut xoa o danh sach. */
   isOwner: boolean;
 };
@@ -111,6 +116,9 @@ export type ApiGameDetail = {
   /** Dau moi da chon cho che do "pick"; rong la chua chon. */
   settlementHostId: string;
   createdAt: string;
+  /** Luc cuoc choi duoc dong; null la dang choi. */
+  closedAt: string | null;
+  closeMode: CloseModeValue;
   participants: ApiParticipant[];
   expenses: ApiExpense[];
   summary: ApiSummary;
@@ -125,6 +133,8 @@ export type ApiShareView = {
   name: string;
   settlementMode: SettlementMode;
   settlementHostId: string;
+  /** Luc cuoc choi duoc dong; null la dang choi. Nguoi xem link chi doc. */
+  closedAt: string | null;
   participants: ApiParticipant[];
   expenses: ApiExpense[];
   summary: ApiSummary;

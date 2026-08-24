@@ -117,6 +117,12 @@ export function createD1GameRepository(d1: D1Database): GameRepository {
           .set({ deletedAt })
           .where(eq(schema.games.id, gameId));
       },
+      async setClosed(gameId, closedAt, closeMode) {
+        await db
+          .update(schema.games)
+          .set({ closedAt, closeMode })
+          .where(eq(schema.games.id, gameId));
+      },
       async delete(gameId) {
         await db.delete(schema.games).where(eq(schema.games.id, gameId));
       },

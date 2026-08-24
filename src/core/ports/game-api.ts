@@ -43,6 +43,12 @@ export type GameApiPort = {
     update(gameId: string, input: GameUpdateInput): Promise<ApiGameDetail>;
     remove(gameId: string): Promise<{ ok: boolean }>;
     duplicate(gameId: string): Promise<ApiGameDetail>;
+    /** Cuoc choi da dong (tu dong hoac dong tay), moi dong truoc. */
+    listClosed(): Promise<ApiGame[]>;
+    /** Dong cuoc choi bang tay; chi chu cuoc choi goi duoc. */
+    close(gameId: string): Promise<ApiGameDetail>;
+    /** Mo lai cuoc da dong, ke ca cuoc tu dong dong. */
+    reopen(gameId: string): Promise<ApiGameDetail>;
     /** Cuoc chia trong thung rac; goi day cung don luon cac cuoc qua han giu. */
     trash(): Promise<ApiTrashGame[]>;
     restore(gameId: string): Promise<ApiGameDetail>;

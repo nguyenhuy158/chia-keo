@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { MAX_QUICK_PARTICIPANTS } from "../../shared/schemas";
 import { useCreateGame, useDuplicateGame, useGames } from "../adapters/react-query/queries";
+import { ClosedGamesCard } from "./ClosedGamesCard";
 import { ContactBookCard } from "./ContactBookCard";
 import { SkeletonCard } from "./ui";
 import { TrashCard } from "./TrashCard";
@@ -167,6 +168,7 @@ export function GamesSidebar({ onNavigate }: { onNavigate?: () => void }) {
           <p className="px-1 py-4 text-sm text-stone-500 dark:text-stone-400">Chưa có cuộc chơi nào.</p>
         )}
       </section>
+      <ClosedGamesCard onNavigate={onNavigate} />
       <TrashCard />
     </aside>
   );

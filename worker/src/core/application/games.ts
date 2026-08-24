@@ -5,9 +5,10 @@ import {
   DEFAULT_SETTLEMENT_MODE,
   QUICK_PARTICIPANT_PREFIX,
 } from "../../../../shared/schemas";
+import { CLOSE_MODE_NONE, isClosed, toCloseMode } from "../../../../shared/game-closing";
 import { createGameCode, createId, nowIso } from "../../lib/ids";
 import type { GameChanges, GameRepository, GameRow } from "../ports/game-repository";
-import { InvalidInputError, NotFoundError } from "./errors";
+import { BadRequestError, InvalidInputError, NotFoundError } from "./errors";
 import {
   getAccessibleGame,
   getOwnedGame,
@@ -16,12 +17,25 @@ import {
 } from "./game-detail";
 import { recordEvent } from "./game-events";
 
-export async function listGames(repo: GameRepository, userId: string): Promise<ApiGame[]> {
+/** Ma loi tra ve khi trang thai dong khong khop voi thao tac. */
+export const GAME_ALREADY_CLOSED = "game_already_closed";
+export const GAME_NOT_CLOSED = "game_not_closed";
+
+/**
+ * Cuoc choi cua user (tu tao + duoc chia se), da gan san so nguoi/so khoan.
+ * Tach ra vi ca danh sach dang choi va danh sach da dong dung cung mot phep
+ * dem, chi khac dieu kien loc.
+ */
+async function listGamesWhere(
+  repo: GameRepository,
+  userId: string,
+  keep: (row: GameRow) => boolean,
+): Promise<ApiGame[]> {
   const [ownedRows, sharedRows] = await Promise.all([
     repo.games.listByOwner(userId),
     repo.games.listSharedWithUser(userId),
   ]);
-  const gameRows = [...ownedRows, ...sharedRows];
+  const gameRows = [...ownedRows, ...sharedRows].filter(keep);
   const gameIds = gameRows.map((row) => row.id);
 
   const [participantCounts, expenseCounts] = await Promise.all([
@@ -36,8 +50,25 @@ export async function listGames(repo: GameRepository, userId: string): Promise<A
     createdAt: row.createdAt,
     participantCount: participantCounts.get(row.id) || 0,
     expenseCount: expenseCounts.get(row.id) || 0,
+    closedAt: row.closedAt,
+    closeMode: toCloseMode(row.closeMode),
     isOwner: row.ownerUserId === userId,
   }));
+}
+
+/**
+ * Danh sach mac dinh: chi cuoc dang choi (chua dong). Cuoc da chia xong tien
+ * hoac da dong tay nam o `listClosedGames` — mo app ra thay dung viec dang lam
+ * do chu khong phai ca dong cuoc da xong.
+ */
+export async function listGames(repo: GameRepository, userId: string): Promise<ApiGame[]> {
+  return listGamesWhere(repo, userId, (row) => row.closedAt === null);
+}
+
+/** Cuoc choi da dong, moi dong truoc. */
+export async function listClosedGames(repo: GameRepository, userId: string): Promise<ApiGame[]> {
+  const games = await listGamesWhere(repo, userId, (row) => row.closedAt !== null);
+  return games.sort((left, right) => (right.closedAt || "").localeCompare(left.closedAt || ""));
 }
 
 /**
@@ -69,6 +100,8 @@ export async function createGame(
     createdAt: now,
     updatedAt: now,
     deletedAt: null,
+    closedAt: null,
+    closeMode: CLOSE_MODE_NONE,
   };
 
   await repo.games.insert(game);
@@ -181,6 +214,8 @@ export async function duplicateGame(
     createdAt: now,
     updatedAt: now,
     deletedAt: null,
+    closedAt: null,
+    closeMode: CLOSE_MODE_NONE,
   };
 
   await repo.games.insert(game);
@@ -207,6 +242,50 @@ export async function duplicateGame(
   await recordEvent(repo, game.id, { kind: "game_created", name: game.name });
 
   return loadGameDetail(repo, game, userId);
+}
+
+/**
+ * Dong cuoc choi bang tay: nguoi dung bam nut va xac nhan. Khac voi tu dong
+ * dong (`syncAutoClose`), day la y muon nen giu nguyen ca khi con no nhau —
+ * va them khoan chi moi cung khong tu mo lai.
+ */
+export async function closeGame(
+  repo: GameRepository,
+  userId: string,
+  gameId: string,
+): Promise<ApiGameDetail> {
+  const game = await getOwnedGame(repo, gameId, userId);
+  if (!game) throw new NotFoundError();
+  if (isClosed({ closedAt: game.closedAt, closeMode: toCloseMode(game.closeMode) })) {
+    throw new BadRequestError(GAME_ALREADY_CLOSED);
+  }
+
+  const closedAt = nowIso();
+  await repo.games.setClosed(game.id, closedAt, "manual");
+  await recordEvent(repo, game.id, { kind: "game_closed", mode: "manual" });
+
+  return loadGameDetail(repo, { ...game, closedAt, closeMode: "manual" }, userId);
+}
+
+/** Mo lai cuoc da dong (ca cuoc tu dong dong): quay ve danh sach dang choi. */
+export async function reopenGame(
+  repo: GameRepository,
+  userId: string,
+  gameId: string,
+): Promise<ApiGameDetail> {
+  const game = await getOwnedGame(repo, gameId, userId);
+  if (!game) throw new NotFoundError();
+  if (!isClosed({ closedAt: game.closedAt, closeMode: toCloseMode(game.closeMode) })) {
+    throw new BadRequestError(GAME_NOT_CLOSED);
+  }
+
+  await recordEvent(repo, game.id, {
+    kind: "game_reopened",
+    mode: toCloseMode(game.closeMode) === "auto" ? "auto" : "manual",
+  });
+  await repo.games.setClosed(game.id, null, CLOSE_MODE_NONE);
+
+  return loadGameDetail(repo, { ...game, closedAt: null, closeMode: CLOSE_MODE_NONE }, userId);
 }
 
 /**
@@ -258,6 +337,8 @@ export async function listDeletedGames(
     deletedAt: row.deletedAt || "",
     participantCount: participantCounts.get(row.id) || 0,
     expenseCount: expenseCounts.get(row.id) || 0,
+    closedAt: row.closedAt,
+    closeMode: toCloseMode(row.closeMode),
     isOwner: true,
   }));
 }

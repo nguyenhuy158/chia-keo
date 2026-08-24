@@ -16,6 +16,10 @@ export type GameRow = {
   updatedAt: string;
   /** Luc bi cho vao thung rac; null la dang dung. */
   deletedAt: string | null;
+  /** Luc cuoc choi duoc dong; null la dang choi. */
+  closedAt: string | null;
+  /** Text tu do trong DB; application chuan hoa qua `toCloseMode`. */
+  closeMode: string;
 };
 
 /** Cac field cua game duoc phep sua; bo trong field nao thi giu nguyen. */
@@ -175,6 +179,8 @@ export type GameRepository = {
     update(gameId: string, changes: GameChanges, updatedAt: string): Promise<void>;
     /** Xoa mem: dua vao/lay ra khoi thung rac. */
     setDeletedAt(gameId: string, deletedAt: string | null): Promise<void>;
+    /** Dong / mo lai cuoc choi. `closedAt = null` la mo lai (closeMode = ""). */
+    setClosed(gameId: string, closedAt: string | null, closeMode: string): Promise<void>;
     /** Xoa that, keo theo cascade moi thu thuoc cuoc chia. Khong lay lai duoc. */
     delete(gameId: string): Promise<void>;
   };

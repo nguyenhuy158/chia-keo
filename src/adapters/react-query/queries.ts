@@ -51,6 +51,13 @@ export const preferenceKeys = { all: ["preferences"] as const };
 export const trashKeys = { all: ["games-trash"] as const };
 
 /**
+ * Cuoc choi da dong: khoa rieng ngoai ["games"] vi danh sach chinh khong chua
+ * cuoc da dong, nhung moi thao tac doi so du deu co the lam mot cuoc chuyen
+ * qua/tro lai day.
+ */
+export const closedGameKeys = { all: ["games-closed"] as const };
+
+/**
  * Lich su co khoa rieng ngoai ["games"]: moi mutation deu sinh them dong lich
  * su nen phai lam moi, nhung nguoc lai mo tab Lich su khong can tai lai game.
  */
@@ -234,6 +241,24 @@ export function useTrashedGames(enabled: boolean) {
   });
 }
 
+/** Cuoc choi da dong; chi tai khi nguoi dung mo phan "da dong". */
+export function useClosedGames(enabled: boolean) {
+  return useQuery({
+    queryKey: closedGameKeys.all,
+    queryFn: () => getGameApi().games.listClosed(),
+    enabled,
+  });
+}
+
+/** Dong cuoc choi bang tay: cuoc bien khoi danh sach dang choi. */
+export function useCloseGame() {
+  return useGameDetailMutation((gameId: string) => getGameApi().games.close(gameId));
+}
+
+export function useReopenGame() {
+  return useGameDetailMutation((gameId: string) => getGameApi().games.reopen(gameId));
+}
+
 /** Xoa mem: cuoc chia roi vao thung rac chu chua mat. */
 export function useDeleteGame() {
   const queryClient = useQueryClient();
@@ -330,6 +355,8 @@ function useGameDetailMutation<TVariables>(
     onSuccess: (detail) => {
       queryClient.setQueryData(gameKeys.detail(detail.id), detail);
       queryClient.invalidateQueries({ queryKey: gameKeys.all });
+      // Thao tac nao cung co the lam cuoc tu dong dong (hoac tu mo lai).
+      queryClient.invalidateQueries({ queryKey: closedGameKeys.all });
       if (options.refreshPhotos) {
         queryClient.invalidateQueries({ queryKey: photoKeys.list(detail.id) });
       }
