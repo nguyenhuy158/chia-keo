@@ -10,6 +10,7 @@ import {
   Pencil,
   Plus,
   Sparkles,
+  Tag,
   Trash2,
   X,
 } from "lucide-react";
@@ -342,6 +343,7 @@ export function ExpensePanel({
   const toId = form.watch("toId");
   const splitMode = form.watch("splitMode");
   const category = form.watch("category");
+  const selectedCategoryMeta = categoryMeta(category);
   const splitValues = form.watch("splitValues");
   const amountValue = form.watch("amount");
 
@@ -438,6 +440,7 @@ function handleSplitModeChange(mode: SplitMode) {
   const aiReceipt = useAiScanReceipt(gameId);
   const [aiOpen, setAiOpen] = useState(false);
   const [photosOpen, setPhotosOpen] = useState(false);
+  const [categoryOpen, setCategoryOpen] = useState(false);
   const [aiText, setAiText] = useState("");
   const [aiError, setAiError] = useState("");
   const aiPending = aiSuggest.isPending || aiReceipt.isPending;
@@ -755,10 +758,35 @@ function handleSplitModeChange(mode: SplitMode) {
           />
         </Field>
         <div className={`md:col-span-2 ${kind !== "expense" ? "hidden" : ""}`}>
-          <p className="mb-1.5 text-sm font-medium text-stone-700 dark:text-stone-300">
-            Danh mục (không bắt buộc)
-          </p>
-          <div className="flex flex-wrap gap-1.5" role="group" aria-label="Danh mục chi tiêu">
+          {/* Gap san giong "Ảnh hóa đơn": danh muc la tuy chon, mo mac dinh thi
+              day cac o bat buoc (so tien, nguoi tra) xuong duoi man hinh. Da
+              chon roi thi luon mo de con thay minh chon gi. */}
+          <button
+            type="button"
+            onClick={() => setCategoryOpen((current) => !current)}
+            aria-expanded={categoryOpen || Boolean(category)}
+            className="mb-2 flex items-center gap-2 rounded-md px-1 py-1 text-sm font-medium text-stone-700 transition hover:bg-stone-100 dark:text-stone-300 dark:hover:bg-stone-800"
+          >
+            <Tag size={15} />
+            Danh mục
+            <span className="font-normal text-stone-400">(không bắt buộc)</span>
+            {selectedCategoryMeta && (
+              <span
+                className={`rounded px-1.5 py-0.5 text-[10px] font-semibold ${selectedCategoryMeta.badgeClassName}`}
+              >
+                {selectedCategoryMeta.emoji} {selectedCategoryMeta.label}
+              </span>
+            )}
+            <ChevronDown
+              size={15}
+              className={`text-stone-400 transition ${categoryOpen || category ? "rotate-180" : ""}`}
+            />
+          </button>
+          <div
+            className={`flex-wrap gap-1.5 ${categoryOpen || category ? "flex" : "hidden"}`}
+            role="group"
+            aria-label="Danh mục chi tiêu"
+          >
             {EXPENSE_CATEGORIES.map((option) => {
               const selected = category === option.id;
               return (
