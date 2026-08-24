@@ -29,6 +29,8 @@ export const game: GameRow = {
   createdAt: "2026-08-04T00:00:00.000Z",
   updatedAt: "2026-08-04T00:00:00.000Z",
   deletedAt: null,
+  closedAt: null,
+  closeMode: "",
 };
 
 export const participants: ParticipantRow[] = ["Huy", "Hường", "Hồng"].map((name, index) => ({
@@ -80,6 +82,8 @@ export const secondGame: GameRow = {
   createdAt: "2026-08-03T00:00:00.000Z",
   updatedAt: "2026-08-03T00:00:00.000Z",
   deletedAt: null,
+  closedAt: null,
+  closeMode: "",
 };
 
 export const secondParticipants: ParticipantRow[] = ["Huy", "Hường", "Nam"].map(
@@ -188,6 +192,7 @@ export function fakeRepo(
       insert: unused("games.insert"),
       update: unused("games.update"),
       setDeletedAt: unused("games.setDeletedAt"),
+      setClosed: unused("games.setClosed"),
       delete: unused("games.delete"),
     },
     participants: {

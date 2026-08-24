@@ -59,6 +59,13 @@ Tailwind v4 + Cloudflare Worker (Hono) + D1 (Drizzle).
   `MAX_FUN_STATS_GAMES = 20` — mỗi cuộc tốn ~3 truy vấn D1 và Workers giới
   hạn subrequest/request (50 ở gói free). Trần cứng, không phải phân trang.
 - **Xoá mềm + Thùng rác**, giữ `TRASH_RETENTION_DAYS = 30`.
+- **Đóng cuộc chơi có hai đường, KHÔNG trộn** (`shared/game-closing.ts`):
+  `close_mode = 'auto'` là suy ra từ số tiền (mọi số dư về 0) nên tự mở lại
+  khi số dư lệch trở lại; `'manual'` là ý muốn người dùng nên giữ nguyên dù
+  còn nợ. Luật auto cắm ở `loadGameDetail` — chỗ duy nhất mọi mutation đi qua
+  sau khi tính số dư, đừng rải lại ở từng use case. Bẫy: `listGames` giờ CHỈ
+  trả cuộc đang chơi, nên mọi đường **tra cứu theo mã/id** (MCP) phải dùng
+  `listAllGames`, không thì cuộc vừa tất toán thành "không tìm thấy".
 - **Chia sẻ cuộc theo email** (`collaborators.ts`): mời được email chưa từng
   đăng nhập, lưu invite "chờ" (`userId` null), tự điền khi người đó đăng nhập.
 - **Danh mục chi tiêu là enum cố định** (`shared/expense-categories.ts`),

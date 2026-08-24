@@ -1,8 +1,10 @@
 import {
   ArrowLeftRight,
+  CheckCircle2,
   History,
   Pencil,
   PlusCircle,
+  RotateCcw,
   Settings2,
   Trash2,
   Undo2,
@@ -33,6 +35,8 @@ const ICONS: Record<GameEventKind, LucideIcon> = {
   expense_updated: Pencil,
   expense_removed: Trash2,
   expense_restored: Undo2,
+  game_closed: CheckCircle2,
+  game_reopened: RotateCcw,
   transfer_added: ArrowLeftRight,
 };
 

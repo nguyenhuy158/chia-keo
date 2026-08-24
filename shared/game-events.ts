@@ -8,6 +8,7 @@
  * dien dat khong phai viet migration.
  */
 
+import type { CloseMode } from "./game-closing";
 import { formatShortMoney } from "./summary-text";
 
 /** Anh chup du de dung lai mot khoan chi da xoa. */
@@ -53,7 +54,9 @@ export type GameEventPayload =
       restore: RestorableExpense | null;
     }
   | { kind: "expense_restored"; title: string; amount: number }
-  | { kind: "transfer_added"; fromName: string; toName: string; amount: number };
+  | { kind: "transfer_added"; fromName: string; toName: string; amount: number }
+  | { kind: "game_closed"; mode: CloseMode }
+  | { kind: "game_reopened"; mode: CloseMode };
 
 export type GameEventKind = GameEventPayload["kind"];
 
@@ -154,6 +157,18 @@ export function describeGameEvent(payload: GameEventPayload): {
       return {
         title: `Ghi nhận trả nợ ${formatShortMoney(payload.amount)}`,
         detail: `${payload.fromName} → ${payload.toName}`,
+      };
+
+    case "game_closed":
+      return {
+        title: "Đóng cuộc chơi",
+        detail: payload.mode === "auto" ? "mọi người đã trả xong" : "đóng thủ công",
+      };
+
+    case "game_reopened":
+      return {
+        title: "Mở lại cuộc chơi",
+        detail: payload.mode === "auto" ? "số dư lệch trở lại" : "mở thủ công",
       };
   }
 }

@@ -127,6 +127,13 @@
       "when": 1787538511530,
       "tag": "0017_lovely_sally_floyd",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "6",
+      "when": 1787600000000,
+      "tag": "0018_closing_games",
+      "breakpoints": true
     }
   ]
 }

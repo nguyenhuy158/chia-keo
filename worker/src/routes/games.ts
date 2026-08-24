@@ -27,12 +27,15 @@ import {
   updateExpense,
 } from "../core/application/expenses";
 import {
+  closeGame,
   createGame,
   deleteGame,
   duplicateGame,
   getGameDetailForOwner,
+  listClosedGames,
   listDeletedGames,
   listGames,
+  reopenGame,
   purgeGame,
   restoreGame,
   updateGame,
@@ -103,8 +106,20 @@ gamesRouter.post("/games", async (c) => {
   return respond(c, () => createGame(c.get("repo"), c.get("userId"), input), 201);
 });
 
+gamesRouter.get("/games/closed", (c) =>
+  respond(c, () => listClosedGames(c.get("repo"), c.get("userId"))),
+);
+
 gamesRouter.get("/games/trash", (c) =>
   respond(c, () => listDeletedGames(c.get("repo"), c.get("userId"))),
+);
+
+gamesRouter.post("/games/:gameId/close", (c) =>
+  respond(c, () => closeGame(c.get("repo"), c.get("userId"), c.req.param("gameId"))),
+);
+
+gamesRouter.post("/games/:gameId/reopen", (c) =>
+  respond(c, () => reopenGame(c.get("repo"), c.get("userId"), c.req.param("gameId"))),
 );
 
 gamesRouter.get("/games/:gameId", (c) =>

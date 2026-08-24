@@ -14,6 +14,7 @@ import {
 } from "../../../../shared/schemas";
 import { normalizeCategory } from "../../../../shared/expense-categories";
 import type { ExpenseInput, ExpenseKind } from "../../../../shared/split";
+import { toCloseMode } from "../../../../shared/game-closing";
 import { calculateBalances, calculateSettlements } from "../../../../shared/split";
 import type {
   ExpenseRow,
@@ -21,6 +22,7 @@ import type {
   GameRepository,
   GameRow,
 } from "../ports/game-repository";
+import { countRealExpenses, syncAutoClose } from "./game-closing";
 
 /** Cot trong DB la TEXT tu do, ep ve mot gia tri hop le truoc khi tra ve. */
 function toSettlementMode(value: string) {
@@ -32,6 +34,8 @@ type GameData = {
   participants: ApiParticipant[];
   expenses: ApiExpense[];
   summary: ApiSummary;
+  /** So khoan chi/thu thuc (khong tinh tra no), dung cho luat tu dong dong. */
+  realExpenseCount: number;
 };
 
 /**
@@ -139,7 +143,12 @@ async function loadGameData(repo: GameRepository, gameId: string): Promise<GameD
     settlements: calculateSettlements(balances),
   };
 
-  return { participants, expenses, summary };
+  return {
+    participants,
+    expenses,
+    summary,
+    realExpenseCount: countRealExpenses(expenseRows.map((row) => row.kind)),
+  };
 }
 
 export async function loadShareLink(
@@ -161,6 +170,12 @@ export async function loadGameDetail(
     repo.gameCollaborators.listByGame(game.id),
   ]);
 
+  // Moi thao tac lam doi so du deu di qua day, nen day la cho duy nhat can
+  // biet luat tu dong dong — khong phai nho goi o tung use case.
+  const closing = await syncAutoClose(repo, game, data.summary.balances, data.realExpenseCount);
+  const closedAt = closing ? closing.closedAt : game.closedAt;
+  const closeMode = closing ? closing.closeMode : game.closeMode;
+
   const collaborators: ApiCollaborator[] = collaboratorRows.map((row) => ({
     userId: row.userId,
     name: row.name,
@@ -174,22 +189,29 @@ export async function loadGameDetail(
     settlementMode: toSettlementMode(game.settlementMode),
     settlementHostId: game.settlementHostId || "",
     createdAt: game.createdAt,
+    closedAt,
+    closeMode: toCloseMode(closeMode),
     shareLink,
     isOwner: game.ownerUserId === userId,
     collaborators,
-    ...data,
+    participants: data.participants,
+    expenses: data.expenses,
+    summary: data.summary,
   };
 }
 
 export async function loadShareView(repo: GameRepository, game: GameRow): Promise<ApiShareView> {
-  const data = await loadGameData(repo, game.id);
+  const { participants, expenses, summary } = await loadGameData(repo, game.id);
 
   return {
     code: game.code,
     name: game.name,
     settlementMode: toSettlementMode(game.settlementMode),
     settlementHostId: game.settlementHostId || "",
-    ...data,
+    closedAt: game.closedAt,
+    participants,
+    expenses,
+    summary,
   };
 }
 

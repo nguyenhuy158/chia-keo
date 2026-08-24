@@ -1,5 +1,5 @@
 import { useParams } from "@tanstack/react-router";
-import { Check, Images, ListChecks, Square, Table2 } from "lucide-react";
+import { Check, CircleCheckBig, Images, ListChecks, Square, Table2 } from "lucide-react";
 import { useState } from "react";
 import type { ApiExpense, ApiParticipant, ApiSummary } from "../../shared/api-types";
 import { CopyMenu } from "../components/CopyMenu";
@@ -294,9 +294,18 @@ export function SharePage() {
       <div className="flex shrink-0 items-center justify-between gap-3">
         <div className="min-w-0">
           <p className="text-sm font-medium text-violet-600 dark:text-violet-400">{view.code}</p>
-          <h1 className="truncate text-xl font-semibold text-stone-950 dark:text-stone-50">
-            {view.name}
-          </h1>
+          <div className="flex items-center gap-2">
+            <h1 className="truncate text-xl font-semibold text-stone-950 dark:text-stone-50">
+              {view.name}
+            </h1>
+            {/* Nguoi xem link chi doc trang thai: da dong la "chia xong roi". */}
+            {view.closedAt !== null && (
+              <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400">
+                <CircleCheckBig size={12} />
+                Đã đóng
+              </span>
+            )}
+          </div>
         </div>
         <div className="flex shrink-0 items-center gap-2">
           <CopyMenu
