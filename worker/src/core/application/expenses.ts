@@ -12,6 +12,7 @@ import {
   type ComputedSplit,
   type SplitMode,
 } from "../../../../shared/split";
+import { normalizeCategory } from "../../../../shared/expense-categories";
 import { createId, nowIso } from "../../lib/ids";
 import type { GameRepository } from "../ports/game-repository";
 import { InvalidInputError, NotFoundError } from "./errors";
@@ -98,6 +99,7 @@ export async function addExpense(
     gameId: game.id,
     payerParticipantId: input.payerParticipantId,
     kind,
+    category: normalizeCategory(input.category),
     title,
     amount: input.amount,
     note: input.note,
@@ -166,6 +168,10 @@ export async function updateExpense(
 
   await repo.expenses.update(row.expense.id, {
     kind,
+    category:
+      input.category === undefined
+        ? normalizeCategory(row.expense.category)
+        : normalizeCategory(input.category),
     title: title || defaultTitleForKind(kind),
     note: input.note ?? row.expense.note,
     amount,
@@ -210,6 +216,7 @@ export async function removeExpense(
     restore: {
       payerParticipantId: row.expense.payerParticipantId,
       kind: row.expense.kind,
+      category: row.expense.category,
       title: row.expense.title,
       amount: row.expense.amount,
       note: row.expense.note,
@@ -249,6 +256,7 @@ export async function recordTransfer(
     gameId: game.id,
     payerParticipantId: input.fromParticipantId,
     kind: "transfer",
+    category: "",
     title: DEFAULT_TRANSFER_TITLE,
     amount: input.amount,
     note: input.note,

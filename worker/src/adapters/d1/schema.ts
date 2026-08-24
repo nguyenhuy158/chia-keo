@@ -116,6 +116,8 @@ export const expenses = sqliteTable(
       .references(() => participants.id, { onDelete: "cascade" }),
     // "expense": khoan chi thuong; "transfer": ghi nhan tra no giua hai nguoi.
     kind: text("kind").notNull().default("expense"),
+    // Danh muc chi tieu ("food", "transport"...); "" la chua phan loai.
+    category: text("category").notNull().default(""),
     title: text("title").notNull(),
     amount: integer("amount").notNull(),
     note: text("note").notNull().default(""),

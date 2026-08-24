@@ -19,6 +19,7 @@ function makeExpense(
   return {
     id,
     kind: "expense",
+    category: "",
     title,
     amount,
     note: "",

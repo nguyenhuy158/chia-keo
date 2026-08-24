@@ -162,6 +162,10 @@ export const expenseKindSchema = z.enum(["expense", "income"]);
 
 export const expenseInputSchema = z.object({
   kind: expenseKindSchema.default("expense"),
+  // Danh muc chi tieu; chuoi rong la chua phan loai. Danh muc la se bi
+  // normalizeCategory quy ve rong thay vi bao loi — client cu gui gia tri cu
+  // van luu duoc khoan chi.
+  category: z.string().trim().max(ID_MAX_LENGTH).default(""),
   // Bo trong thi application dien ten mac dinh theo `kind`.
   title: z.string().trim().max(EXPENSE_TITLE_MAX_LENGTH).default(""),
   amount: z.number().int().positive().max(MAX_EXPENSE_AMOUNT),

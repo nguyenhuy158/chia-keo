@@ -14,6 +14,8 @@ import { formatShortMoney } from "./summary-text";
 export type RestorableExpense = {
   payerParticipantId: string;
   kind: string;
+  /** Vang mat o su kien cu (truoc khi co danh muc) — hoan tac coi la rong. */
+  category?: string;
   title: string;
   amount: number;
   note: string;

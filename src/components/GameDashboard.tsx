@@ -13,6 +13,7 @@ import {
 import { getQrProvider } from "../core/container";
 import { formatMoney } from "../core/domain/money";
 import { Avatar } from "./Avatar";
+import { CategoryBreakdownCard } from "./CategoryBreakdownCard";
 import { BalancePill, Metric } from "./ui";
 
 /** QR chung cua host khong gan san so tien vi moi nguoi chuyen mot muc khac. */
@@ -115,6 +116,8 @@ export function GameDashboard({
         <Metric label="Số người" value={String(participants.length)} />
         <Metric label="Khoản chi" value={String(expenseCount)} />
       </section>
+
+      <CategoryBreakdownCard expenses={expenses} />
 
       <section className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm dark:border-stone-800 dark:bg-stone-900">
         <h3 className="text-lg font-semibold text-stone-950 dark:text-stone-50">

@@ -18,6 +18,9 @@ Ung dung chia tien nhom cho cac buoi an, di choi, du lich hoac nhom chi tieu nho
   - Album ảnh cho từng cuộc chia (giống Tricount): thêm nhiều ảnh một lượt,
     đính kèm ảnh hóa đơn vào khoản chi, xem toàn màn hình (lướt, chú thích,
     tải về, xóa) và xem lại qua link share.
+  - Gắn danh mục cho khoản chi (ăn uống, đi lại, chỗ ở...) và xem thẻ
+    "Chi theo danh mục" với thanh phần trăm trong phần tổng kết, cả ở link
+    share. Danh mục là danh sách cố định trong `shared/expense-categories.ts`.
   - Lưu mẫu chi tiêu, xuất báo cáo text và xem thống kê nhanh.
   - Trang Cài đặt (`/settings`) để tạo, xem và thu hồi token MCP cho Claude.
 - Tinh `da tra`, `phan chiu`, `con lai`.
