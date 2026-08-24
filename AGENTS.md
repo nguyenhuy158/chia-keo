@@ -69,7 +69,10 @@ worker/src/                    # Backend hexagon (Hono on Cloudflare Worker)
   auth.ts  env.ts  index.ts    #   Better Auth, Env type, app + middleware
 
 drizzle/                       # Generated D1 migrations
-e2e/ui-smoke.mjs               # Playwright smoke suite (pnpm e2e)
+e2e/                           # E2E (Playwright + wrangler dev)
+  run.mjs                      #   `pnpm e2e`: build -> migrate D1 local -> serve -> smoke
+  ui-smoke.mjs                 #   Smoke suite qua UI that (`pnpm e2e:smoke`)
+  chromium.mjs                 #   Tim Chromium co san tren may/CI
 ```
 
 ## Build, Test, and Development Commands
@@ -80,6 +83,12 @@ e2e/ui-smoke.mjs               # Playwright smoke suite (pnpm e2e)
   production build.
 - `pnpm test`: run the Vitest suite.
 - `pnpm preview`: preview the production build locally on `127.0.0.1`.
+- `pnpm e2e`: run the Playwright smoke suite end to end. It builds the
+  frontend, applies D1 migrations locally, boots `wrangler dev`, drives the
+  real UI in Chromium, then shuts the server down. Set `E2E_SKIP_BUILD=1` to
+  reuse an existing `dist/`, `E2E_PORT` to change the port.
+- `pnpm e2e:smoke`: run only the smoke suite against a server you already
+  started (`pnpm dev:api`), via `E2E_BASE_URL`.
 
 Use `pnpm` for all package commands.
 
@@ -115,6 +124,17 @@ example `shared/split.test.ts` for shared domain math,
 `src/core/domain/money.test.ts` for FE domain rules, or
 `src/adapters/browser/vietqr.test.ts` for adapter logic. Prioritize coverage
 for settlement math, split policies, and QR payload generation.
+
+End-to-end coverage lives in `e2e/ui-smoke.mjs` and runs against the real
+worker plus a local D1 database, so it catches wiring the unit tests cannot.
+The suite creates its session through the Better Auth username/password API
+(`/api/auth/sign-up/email`) because the login page only offers external SSO.
+Prefer stable hooks in selectors — `aria-label`, form `placeholder`, or
+`button[type="submit"]` — over bare visible text, which collides with the
+onboarding chips. Confirmations are the in-app `ConfirmDialog`, not
+`window.confirm`; accept them with the `acceptConfirm()` helper. Both CI jobs
+(`check` and `e2e`) must be green before merging; a failed E2E run uploads
+`e2e-failure.png` as an artifact.
 
 ## Commit & Pull Request Guidelines
 

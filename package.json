@@ -19,7 +19,8 @@
     "db:migrate:local": "wrangler d1 migrations apply DB --local",
     "db:migrate:remote": "wrangler d1 migrations apply DB --remote",
     "deploy": "pnpm build && wrangler deploy",
-    "e2e": "node e2e/ui-smoke.mjs"
+    "e2e": "node e2e/run.mjs",
+    "e2e:smoke": "node e2e/ui-smoke.mjs"
   },
   "dependencies": {
     "@dicebear/collection": "^9.4.2",

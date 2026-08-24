@@ -1,17 +1,20 @@
 // E2E smoke test: chay app that (wrangler dev + D1 local) va bam qua cac flow
-// chinh bang Chromium. Chay: pnpm e2e (can `pnpm dev:api` dang chay san).
+// chinh bang Chromium. Dung `pnpm e2e` de tu bat server; hoac `pnpm e2e:smoke`
+// khi da co server chay san (`pnpm dev:api`).
 //
 // Bien moi truong:
 // - E2E_BASE_URL: mac dinh http://127.0.0.1:8787
 // - PLAYWRIGHT_CHROMIUM_PATH: duong dan chromium co san; bo trong de
-//   playwright-core tu tim (can `npx playwright install chromium` truoc).
+//   playwright-core tu tim (xem e2e/chromium.mjs).
 import { chromium } from "playwright-core";
+import { findChromium } from "./chromium.mjs";
 import { writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 const BASE = process.env.E2E_BASE_URL || "http://127.0.0.1:8787";
 const WAIT = { timeout: 15000 };
+const E2E_PASSWORD = "matkhau123";
 
 let passed = 0;
 let failed = 0;
@@ -43,6 +46,41 @@ async function createJpegFixture() {
   return path;
 }
 
+/**
+ * Tao tai khoan moi qua Better Auth va giu cookie session trong tab hien tai.
+ * Chay trong trang de cookie thuoc dung origin cua app.
+ */
+async function signUp(username) {
+  const result = await page.evaluate(async ({ name, password }) => {
+    const response = await fetch("/api/auth/sign-up/email", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({
+        username: name,
+        name,
+        email: `${name}@e2e.local`,
+        password,
+      }),
+    });
+    return { status: response.status, body: await response.text() };
+  }, { name: username, password: E2E_PASSWORD });
+  if (result.status !== 200) {
+    throw new Error(`sign-up that bai (${result.status}): ${result.body}`);
+  }
+}
+
+/**
+ * Dong y hop thoai xac nhan trong app (ConfirmDialog, khong phai window.confirm):
+ * nut xac nhan la nut cuoi trong role="alertdialog".
+ */
+async function acceptConfirm(target = page) {
+  const dialog = target.locator('[role="alertdialog"]');
+  await dialog.waitFor(WAIT);
+  await dialog.locator("button").last().click();
+  await dialog.waitFor({ state: "detached", timeout: WAIT.timeout });
+}
+
 /** O anh thu `index` trong album (khung co huy hieu so luong dang "n/60"). */
 function albumTile(index) {
   // Layout boc ngoai cung cung la <section>, lay khung trong cung bang .last().
@@ -50,7 +88,7 @@ function albumTile(index) {
 }
 
 const browser = await chromium.launch({
-  executablePath: process.env.PLAYWRIGHT_CHROMIUM_PATH || undefined,
+  executablePath: findChromium(),
 });
 const page = await browser.newPage();
 page.on("pageerror", (error) => console.log("PAGE ERROR:", error.message));
@@ -63,13 +101,13 @@ try {
   await page.waitForURL("**/login", WAIT);
   ok("redirect to /login when logged out");
 
-  // 2. Dang ky tai khoan moi
-  await page.click("text=Chưa có tài khoản? Đăng ký");
-  await page.fill('input[name="username"]', username);
-  await page.fill('input[name="password"]', "matkhau123");
-  await page.click('button[type="submit"]');
-  await page.waitForURL(BASE + "/", WAIT);
-  ok("sign up + redirect to home");
+  // 2. Dang ky tai khoan moi. Trang /login chi con nut SSO Google (di ra
+  // auth.huyab.click, khong chay duoc trong test), nen tao session bang API
+  // username/mat khau cua Better Auth - van bat trong worker/src/auth.ts.
+  await signUp(username);
+  await page.goto(BASE + "/");
+  await page.waitForSelector("#game-name", WAIT);
+  ok("sign up + land on home");
 
   // 3. Tao cuoc choi
   await page.fill("#game-name", "E2E Trip");
@@ -79,20 +117,21 @@ try {
 
   // 4. Them 2 nguoi (1 nguoi co thong tin ngan hang)
   await page.fill('input[placeholder="Huy"]', "An");
-  await page.fill('input[placeholder="VCB, TCB, MBB..."]', "VCB");
+  await page.click('button:has-text("Chọn ngân hàng")');
+  await page.click('[role="option"]:has-text("Vietcombank (VCB)")');
   await page.fill('input[placeholder="0123456789"]', "111222333");
   await page.fill('input[placeholder="NGUYEN VAN A"]', "LE AN");
-  await page.click("text=Thêm người");
-  await page.waitForSelector("text=VCB - 111222333", WAIT);
+  await page.click('button[type="submit"]:has-text("Thêm người")');
+  await page.waitForSelector("text=Vietcombank · 111222333", WAIT);
   await page.fill('input[placeholder="Huy"]', "Binh");
-  await page.click("text=Thêm người");
+  await page.click('button[type="submit"]:has-text("Thêm người")');
   await page.waitForSelector("text=Chưa có thông tin QR", WAIT);
   ok("add 2 participants");
 
   // 5. Them khoan chi chia doi
   await page.fill('input[placeholder="Ăn tối"]', "An trua");
   await page.fill('input[placeholder="500.000"]', "100000");
-  await page.click("text=Thêm khoản chi");
+  await page.click('button[type="submit"]:has-text("Thêm khoản chi")');
   await page.waitForSelector("text=An trua", WAIT);
   ok("add expense");
 
@@ -108,7 +147,7 @@ try {
   await page.fill('input[placeholder="500.000"]', "90000");
   await page.fill('input[aria-label="Phần tiền của An"]', "30000");
   await page.fill('input[aria-label="Phần tiền của Binh"]', "60000");
-  await page.click("text=Thêm khoản chi");
+  await page.click('button[type="submit"]:has-text("Thêm khoản chi")');
   await page.waitForSelector("text=số tiền riêng", WAIT);
   // Balance moi: An +110.000, Binh -110.000
   await page.waitForSelector("text=110.000", WAIT);
@@ -159,17 +198,17 @@ try {
   ok("public share page works without login");
 
   // 7.5 Ghi nhan tra no: bam "Đã trả" -> transfer duoc luu, het cong no
-  page.once("dialog", (dialog) => dialog.accept());
   await page.click('button:has-text("Đã trả")');
+  await acceptConfirm();
   await page.waitForSelector("text=Đã trả nợ", WAIT);
   await page.waitForSelector("text=Binh đã trả An", WAIT);
   await page.waitForSelector("text=Mọi người đã cân bằng", WAIT);
   ok("record settlement as transfer");
 
   // 7.8 Xoa anh khoi album
-  page.once("dialog", (dialog) => dialog.accept());
   await albumTile(0).click();
   await page.click('button[aria-label="Xóa ảnh"]');
+  await acceptConfirm();
   await page.waitForSelector('span:text-is("1/60")', WAIT);
   // Xoa xong van con anh khac nen khung xem mo tiep, dong lai truoc khi thoat.
   await page.click('button[aria-label="Đóng ảnh"]');
@@ -225,8 +264,8 @@ try {
   if (!mcp.outOfScope) throw new Error("tool ngoai scope phai bi tu choi");
   ok("MCP token works and stays inside its scopes");
 
-  page.once("dialog", (dialog) => dialog.accept());
   await page.click('button[aria-label="Thu hồi token"]');
+  await acceptConfirm();
   await page.waitForSelector("text=Đã thu hồi", WAIT);
   const statusAfterRevoke = await page.evaluate(
     (token) =>
