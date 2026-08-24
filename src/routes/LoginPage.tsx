@@ -2,6 +2,7 @@ import { Navigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { ssoLoginUrl } from "../adapters/browser/sso";
 import { useAppSession } from "../adapters/react-query/session-query";
+import { BrandMark } from "../components/brand";
 import { ThemeToggle } from "../components/theme";
 import { LoadingState } from "../components/ui";
 
@@ -62,10 +63,10 @@ export function LoginPage() {
       <div className="w-full rounded-lg border border-stone-200 bg-white p-6 shadow-sm dark:border-stone-800 dark:bg-stone-900">
         <div className="mb-6 flex items-start justify-between gap-3">
           <div>
-            <p className="text-sm font-bold uppercase tracking-wide text-fuchsia-600 dark:text-fuchsia-400">
-              Chia kèo
-            </p>
-            <h1 className="mt-2 text-2xl font-semibold text-stone-950 dark:text-stone-50">
+            {/* Logo thay cho wordmark "Chia keo". Ten app van con trong
+                aria-label cua BrandMark nen screen reader khong mat gi. */}
+            <BrandMark size={64} className="mb-4" />
+            <h1 className="text-2xl font-semibold text-stone-950 dark:text-stone-50">
               Đăng nhập
             </h1>
             <p className="mt-2 text-sm text-stone-600 dark:text-stone-400">

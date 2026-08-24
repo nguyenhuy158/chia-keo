@@ -1,5 +1,7 @@
 # Chia Keo
 
+<img src="public/app-icon.png" alt="Chia keo" width="128">
+
 Ung dung chia tien nhom cho cac buoi an, di choi, du lich hoac nhom chi tieu nho.
 
 ## Hien trang
@@ -413,6 +415,66 @@ Worker:
 
 Con lai: Turnstile cho login/public link (rate limit theo IP da co o Worker),
 dong bo lai tai lieu kien truc (`docs/`) cho khop backend Worker.
+
+## Logo & favicon
+
+Bo nhan dien ve theo huong *kawaii logo* (tham khao
+[SAWARATSUKI/KawaiiLogos](https://github.com/SAWARATSUKI/KawaiiLogos)): khung bo
+tron, vien trang day, gradient tim - hong, mascot co mat cuoi va ma hong.
+
+Mascot la **hai nua vien keo nhin nhau** — dung nghia ten app, va cung la thu
+app lam: chia mot khoan cho nhieu nguoi.
+
+Logo dung mot minh, khong kem wordmark: trong app (header, trang dang nhap) chi
+hien logo, ten app giu o `h1` sr-only / `aria-label` de screen reader va SEO
+khong mat heading.
+
+| File | Dung o dau |
+| --- | --- |
+| `public/brand/logo-mark.svg` | Ban goc cua logo (mascot trong khung bo tron) — nguon cho app icon |
+| `public/brand/logo-maskable.svg` | Ban maskable: nen tran vien, mascot nam trong vung an toan 80% |
+| `public/favicon.svg` | Favicon — chi mot vien keo, bo bot chi tiet de con doc duoc o 16px |
+| `src/components/brand.tsx` | `<BrandMark />` ve inline trong app (header, trang dang nhap) |
+
+SVG la ban goc; cac file PNG (`app-icon.png`, `pwa-192.png`,
+`apple-touch-icon.png`, `maskable-512.png`, `favicon-32.png`) duoc sinh lai tu
+SVG:
+
+```bash
+node scripts/render-brand.mjs
+```
+
+Script rasterize bang Chromium qua `playwright-core` (da co trong
+devDependencies) nen repo khong can them `sharp`/`resvg`. Neu may da co Chromium
+san thi tro vao no bang `PLAYWRIGHT_CHROMIUM_PATH`.
+
+Sua logo thi sua SVG roi chay lai script, dung chinh tay file PNG. `favicon.svg`
+va `logo-mark.svg` cham nhau ve mau nhung la hai ban ve rieng: favicon phai don
+gian hon vi no hien o 16-32px.
+
+Xem truoc (anh trong `docs/brand/`, sinh bang Chromium tu chinh cac file tren):
+
+Favicon o 64 / 32 / 16px, kem ban phong to de kiem tra do doc duoc:
+
+![favicon](docs/brand/preview-favicon.png)
+
+App icon, ban maskable va mo phong Android crop thanh hinh tron:
+
+![app icon](docs/brand/preview-icons.png)
+
+`<BrandMark />` trong app (light, dark va header o 360px):
+
+![trong app](docs/brand/preview-app.png)
+
+Palette:
+
+| Vai tro | Mau |
+| --- | --- |
+| Nen gradient | `#a78bfa` -> `#c084fc` -> `#e879f9` |
+| Nua keo trai | `#fef9c3` -> `#fbbf24`, net mat `#78350f` |
+| Nua keo phai | `#fecdd3` -> `#fb7185`, net mat `#7f1d1d` |
+| Vien & diem nhan | `#ffffff` |
+| Ma hong | `#fb7185` |
 
 ## Lenh local
 

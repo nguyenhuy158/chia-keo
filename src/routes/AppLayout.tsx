@@ -1,6 +1,7 @@
 import { Link, Navigate, Outlet, useNavigate } from "@tanstack/react-router";
 import { LogOut, Menu, PartyPopper, Settings, Volleyball } from "lucide-react";
 import { useState } from "react";
+import { BrandMark } from "../components/brand";
 import { GamesSidebar } from "../components/GamesSidebar";
 import { MobileShellContext } from "../components/mobile-shell";
 import { Drawer } from "../components/overlays";
@@ -65,14 +66,16 @@ export function AppLayout() {
             </button>
             {/* Logo la duong ve trang chu. Truoc day no la <h1> tron: vao mot
                 cuoc chia tren mobile la khong con nut nao ve home — sidebar bi
-                thu vao drawer, ma drawer chi liet ke cac cuoc chia. */}
-            <Link to="/" aria-label="Về trang chủ" className="min-w-0">
-              <h1 className="truncate bg-gradient-to-r from-violet-600 to-fuchsia-600 bg-clip-text text-lg font-extrabold text-transparent sm:text-xl">
-                Chia kèo
-              </h1>
-              <p className="hidden text-sm text-stone-600 dark:text-stone-400 sm:block">
-                Tính tiền nhóm và sinh QR nhận tiền.
-              </p>
+                thu vao drawer, ma drawer chi liet ke cac cuoc chia.
+
+                Chi con logo, khong con wordmark: nhin gon hon va nhuong het cho
+                trong cho ten cuoc choi. Ten app van o trong <h1> sr-only ben
+                duoi — bo han thi trang mat heading, hong ca screen reader lan
+                SEO. */}
+            <Link to="/" aria-label="Về trang chủ" className="shrink-0">
+              <h1 className="sr-only">Chia kèo</h1>
+              <BrandMark size={42} className="sm:hidden" />
+              <BrandMark size={48} className="hidden sm:block" />
             </Link>
           </div>
           {/* gap hep hon logo/hamburger phia trai: cum nay toan nut co dinh
