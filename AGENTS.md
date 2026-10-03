@@ -91,11 +91,20 @@ e2e/                           # E2E (Playwright + wrangler dev)
 ## Build, Test, and Development Commands
 
 - `pnpm install`: install project dependencies.
-- `pnpm dev`: start the Vite development server on `127.0.0.1`.
+- `pnpm dev`: start the Vite development server on `127.0.0.1` (proxies
+  `/api` to `wrangler dev` on `127.0.0.1:8787`).
+- `pnpm dev:api`: run the Worker locally with `wrangler dev`.
+- `pnpm check`: TypeScript project check (`tsc -b`) for app, node and worker.
+- `pnpm lint`: Biome lint + format check (`biome check .`). The codebase
+  predates Biome, so existing findings are not yet a CI gate.
+- `pnpm format`: apply Biome formatting (`biome format --write .`).
 - `pnpm build`: run TypeScript project build checks, then create the Vite
   production build.
-- `pnpm test`: run the Vitest suite.
+- `pnpm test`: run the Vitest suite (`test:watch` for watch mode).
 - `pnpm preview`: preview the production build locally on `127.0.0.1`.
+- `pnpm db:generate`: generate a D1 migration from the Drizzle schema;
+  `pnpm db:migrate:local` / `pnpm db:migrate:remote` apply migrations.
+- `pnpm deploy`: build and `wrangler deploy` (normally CI deploys on push).
 - `pnpm e2e`: run the Playwright smoke suite end to end. It builds the
   frontend, applies D1 migrations locally, boots `wrangler dev`, drives the
   real UI in Chromium, then shuts the server down. Set `E2E_SKIP_BUILD=1` to
@@ -109,8 +118,9 @@ Use `pnpm` for all package commands.
 
 Use TypeScript with strict compiler settings. Prefer named exports for utilities
 and type imports with `import type`. Follow the existing style: two-space
-indentation, double quotes, trailing commas where already used, and concise
-function names such as `calculateBalances` or `formatMoney`. React components
+indentation, double quotes (enforced by `biome.json`), trailing commas where
+already used, and concise function names such as `calculateBalances` or
+`formatMoney`. React components
 should use PascalCase file and component names, for example `App.tsx`. Do not
 leave magic strings or magic numbers in code; extract them into clearly named
 constants near the relevant module or in a shared constants file when reused.

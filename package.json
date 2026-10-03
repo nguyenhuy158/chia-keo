@@ -15,6 +15,8 @@
     "test": "node scripts/build-info.mjs && vitest run",
     "test:watch": "node scripts/build-info.mjs && vitest",
     "check": "node scripts/build-info.mjs && tsc -b",
+    "lint": "biome check .",
+    "format": "biome format --write .",
     "db:generate": "drizzle-kit generate",
     "db:migrate:local": "wrangler d1 migrations apply DB --local",
     "db:migrate:remote": "wrangler d1 migrations apply DB --remote",
@@ -43,6 +45,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@biomejs/biome": "2.5.15",
     "@cloudflare/workers-types": "^5.20260703.1",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
