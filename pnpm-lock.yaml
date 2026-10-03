@@ -69,6 +69,9 @@ importers:
       '@cloudflare/workers-types':
         specifier: ^5.20260703.1
         version: 5.20260703.1
+      '@huyab/config':
+        specifier: github:nguyenhuy158/kit#v0.1.0&path:packages/config
+        version: https://codeload.github.com/nguyenhuy158/kit/tar.gz/dc6d7122964975a8283a12876dafa9ad8cff2c51#path:packages/config
       '@huyab/e2e':
         specifier: github:nguyenhuy158/kit#v0.1.0&path:packages/e2e
         version: https://codeload.github.com/nguyenhuy158/kit/tar.gz/dc6d7122964975a8283a12876dafa9ad8cff2c51#path:packages/e2e
@@ -1529,6 +1532,10 @@ packages:
     resolution: {integrity: sha512-EIsqr/t/qbinPIhGjMdtvutIN1Kk4uwbROE9/UQ93CAVGR7GkA7Y92+fX80OzXi/OB67jVFYwKGO1WzkxmkFZw==}
     peerDependencies:
       react-hook-form: ^7.55.0
+
+  '@huyab/config@https://codeload.github.com/nguyenhuy158/kit/tar.gz/dc6d7122964975a8283a12876dafa9ad8cff2c51#path:packages/config':
+    resolution: {gitHosted: true, path: packages/config, tarball: https://codeload.github.com/nguyenhuy158/kit/tar.gz/dc6d7122964975a8283a12876dafa9ad8cff2c51}
+    version: 0.1.0
 
   '@huyab/e2e@https://codeload.github.com/nguyenhuy158/kit/tar.gz/dc6d7122964975a8283a12876dafa9ad8cff2c51#path:packages/e2e':
     resolution: {gitHosted: true, path: packages/e2e, tarball: https://codeload.github.com/nguyenhuy158/kit/tar.gz/dc6d7122964975a8283a12876dafa9ad8cff2c51}
@@ -4962,6 +4969,8 @@ snapshots:
     dependencies:
       '@standard-schema/utils': 0.3.0
       react-hook-form: 7.80.0(react@19.2.7)
+
+  '@huyab/config@https://codeload.github.com/nguyenhuy158/kit/tar.gz/dc6d7122964975a8283a12876dafa9ad8cff2c51#path:packages/config': {}
 
   '@huyab/e2e@https://codeload.github.com/nguyenhuy158/kit/tar.gz/dc6d7122964975a8283a12876dafa9ad8cff2c51#path:packages/e2e': {}
 
