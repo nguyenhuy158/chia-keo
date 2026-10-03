@@ -84,11 +84,10 @@ worker/src/                    # Backend hexagon (Hono on Cloudflare Worker)
 drizzle/                       # Generated D1 migrations (wrangler migrations_dir)
 scripts/                       # build-info.mjs (commit stamp), render-brand.mjs
 docs/                          # architecture.md, brand/, screenshots/
-e2e/                           # E2E (Playwright + wrangler dev)
+e2e/                           # E2E (Playwright + wrangler dev), plumbing from @huyab/e2e
   run.mjs                      #   `pnpm e2e`: build -> migrate D1 local -> serve -> both smokes
   readonly-smoke.mjs           #   GET-only smoke, safe on prod (`pnpm e2e:prod`)
   ui-smoke.mjs                 #   Smoke suite qua UI that, ghi D1 local (`pnpm e2e:smoke`)
-  chromium.mjs                 #   Tim Chromium co san tren may/CI
 ```
 
 ## Build, Test, and Development Commands
@@ -175,7 +174,7 @@ onboarding chips. Confirmations are the in-app `ConfirmDialog`, not
 read-only (GET only, no sign-up, no form submit) because `pnpm e2e:prod`
 runs it against production; anything that writes belongs in `ui-smoke.mjs`.
 Chromium comes from `PLAYWRIGHT_CHROMIUM_PATH`, the Playwright cache, or a
-system Chrome/Chromium (see `e2e/chromium.mjs`).
+system Chrome/Chromium (`findChromium` from `@huyab/e2e`).
 
 ## Commit & Pull Request Guidelines
 

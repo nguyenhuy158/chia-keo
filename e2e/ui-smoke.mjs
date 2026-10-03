@@ -5,12 +5,12 @@
 // Bien moi truong:
 // - E2E_BASE_URL: mac dinh http://127.0.0.1:8787
 // - PLAYWRIGHT_CHROMIUM_PATH: duong dan chromium co san; bo trong de
-//   playwright-core tu tim (xem e2e/chromium.mjs).
-import { chromium } from "playwright-core";
-import { findChromium } from "./chromium.mjs";
+//   playwright-core tu tim (xem findChromium trong @huyab/e2e).
 import { writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { findChromium } from "@huyab/e2e";
+import { chromium } from "playwright-core";
 
 const BASE = process.env.E2E_BASE_URL || "http://127.0.0.1:8787";
 const WAIT = { timeout: 15000 };

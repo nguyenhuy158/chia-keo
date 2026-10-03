@@ -48,6 +48,7 @@
   "devDependencies": {
     "@biomejs/biome": "2.5.15",
     "@cloudflare/workers-types": "^5.20260703.1",
+    "@huyab/e2e": "github:nguyenhuy158/kit#v0.1.0&path:packages/e2e",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "drizzle-kit": "^0.31.10",
