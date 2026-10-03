@@ -277,6 +277,21 @@ curl https://chiakeo.huyab.click/api/health    # ok:false + hint = migration not
 
 A mismatched commit means the build has not finished yet; wait and re-check.
 
+## Ecosystem
+
+How this repo fits with the other `*.huyab.click` apps:
+[kit/docs/ECOSYSTEM.md](https://github.com/nguyenhuy158/kit/blob/main/docs/ECOSYSTEM.md).
+
+- Kit packages (`github:nguyenhuy158/kit#v0.1.0`): `@huyab/config`
+  (`biome.json`, `tsconfig.*.json` extend it), `@huyab/e2e` (`e2e/run.mjs`
+  server lifecycle, `findChromium`), and the reusable
+  `.github/workflows/check.yml` (CI). `@huyab/sso` is not adopted yet:
+  `worker/src/sso.ts` is still the local verifier.
+- Talks to: `sso` (auth.huyab.click: `huyab_sso` JWT verified against its
+  JWKS) and `mailer` (`MAILER` service binding, `POST /send`).
+- Called by: `chia-keo-ios` (same API with the SSO JWT), Claude MCP clients
+  (`/api/mcp`), and `mytools` (uptime ping).
+
 ## Agent-Specific Instructions
 
 Keep responses short and focused. If a requirement is unclear, ask before making
