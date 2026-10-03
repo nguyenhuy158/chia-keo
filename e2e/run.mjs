@@ -75,6 +75,7 @@ let failed = false;
 try {
   await waitForServer(server);
   console.log(`\nServer san sang tai ${BASE}, bat dau smoke suite\n`);
+  await run("node", ["e2e/readonly-smoke.mjs"], "read-only smoke");
   await run("node", ["e2e/ui-smoke.mjs"], "smoke suite");
 } catch (error) {
   failed = true;

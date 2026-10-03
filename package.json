@@ -22,7 +22,8 @@
     "db:migrate:remote": "wrangler d1 migrations apply DB --remote",
     "deploy": "pnpm build && wrangler deploy",
     "e2e": "node e2e/run.mjs",
-    "e2e:smoke": "node e2e/ui-smoke.mjs"
+    "e2e:smoke": "node e2e/ui-smoke.mjs",
+    "e2e:prod": "E2E_BASE_URL=https://chiakeo.huyab.click node e2e/readonly-smoke.mjs"
   },
   "dependencies": {
     "@dicebear/collection": "^9.4.2",

@@ -84,8 +84,9 @@ drizzle/                       # Generated D1 migrations (wrangler migrations_di
 scripts/                       # build-info.mjs (commit stamp), render-brand.mjs
 docs/                          # architecture.md, brand/, screenshots/
 e2e/                           # E2E (Playwright + wrangler dev)
-  run.mjs                      #   `pnpm e2e`: build -> migrate D1 local -> serve -> smoke
-  ui-smoke.mjs                 #   Smoke suite qua UI that (`pnpm e2e:smoke`)
+  run.mjs                      #   `pnpm e2e`: build -> migrate D1 local -> serve -> both smokes
+  readonly-smoke.mjs           #   GET-only smoke, safe on prod (`pnpm e2e:prod`)
+  ui-smoke.mjs                 #   Smoke suite qua UI that, ghi D1 local (`pnpm e2e:smoke`)
   chromium.mjs                 #   Tim Chromium co san tren may/CI
 ```
 
@@ -106,12 +107,16 @@ e2e/                           # E2E (Playwright + wrangler dev)
 - `pnpm db:generate`: generate a D1 migration from the Drizzle schema;
   `pnpm db:migrate:local` / `pnpm db:migrate:remote` apply migrations.
 - `pnpm deploy`: build and `wrangler deploy` (normally CI deploys on push).
-- `pnpm e2e`: run the Playwright smoke suite end to end. It builds the
-  frontend, applies D1 migrations locally, boots `wrangler dev`, drives the
-  real UI in Chromium, then shuts the server down. Set `E2E_SKIP_BUILD=1` to
+- `pnpm e2e`: run both smoke suites end to end. It builds the frontend,
+  applies D1 migrations locally, boots `wrangler dev`, runs
+  `e2e/readonly-smoke.mjs` then drives the real UI in Chromium with
+  `e2e/ui-smoke.mjs`, then shuts the server down. Set `E2E_SKIP_BUILD=1` to
   reuse an existing `dist/`, `E2E_PORT` to change the port.
-- `pnpm e2e:smoke`: run only the smoke suite against a server you already
+- `pnpm e2e:smoke`: run only the UI smoke suite against a server you already
   started (`pnpm dev:api`), via `E2E_BASE_URL`.
+- `pnpm e2e:prod`: run the read-only smoke against production
+  (`https://chiakeo.huyab.click`): GET `/api/version`, `/api/health`,
+  `/api/session`, the 401 guard on `/api/games`, and the `/login` render.
 
 Use `pnpm` for all package commands.
 
@@ -165,7 +170,11 @@ Prefer stable hooks in selectors — `aria-label`, form `placeholder`, or
 onboarding chips. Confirmations are the in-app `ConfirmDialog`, not
 `window.confirm`; accept them with the `acceptConfirm()` helper. Both CI jobs
 (`check` and `e2e`) must be green before merging; a failed E2E run uploads
-`e2e-failure.png` as an artifact.
+`e2e-failure.png` as an artifact. `e2e/readonly-smoke.mjs` must stay
+read-only (GET only, no sign-up, no form submit) because `pnpm e2e:prod`
+runs it against production; anything that writes belongs in `ui-smoke.mjs`.
+Chromium comes from `PLAYWRIGHT_CHROMIUM_PATH`, the Playwright cache, or a
+system Chrome/Chromium (see `e2e/chromium.mjs`).
 
 ## Commit & Pull Request Guidelines
 
