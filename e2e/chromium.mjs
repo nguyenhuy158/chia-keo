@@ -11,7 +11,7 @@ const BROWSER_ROOTS = [
   join(homedir(), ".cache", "ms-playwright"),
 ].filter(Boolean);
 
-const BINARY_SUBPATHS = ["chrome-linux/chrome", "chrome-linux/headless_shell", "chrome", "headless_shell"];
+const BINARY_SUBPATHS = ["chrome-linux64/chrome", "chrome-linux/chrome", "chrome-linux/headless_shell", "chrome", "headless_shell"];
 
 const SYSTEM_BROWSERS = [
   "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
