@@ -4,7 +4,7 @@ node_modules/
 
 # Build output
 dist/
-.wrangler/
+coverage/
 
 # TypeScript
 *.tsbuildinfo
@@ -28,8 +28,13 @@ yarn-error.log*
 .vscode/
 
 # Cloudflare local dev
-.dev.vars
+.dev.vars*
+!.dev.vars.example
 .wrangler/
+
+# Thu muc rac do pnpm/npm sinh ra khi bien template khong duoc thay
+{{pkgetc}}/
+{{HOMEBREW_PREFIX}}/
 
 # Anh chup luc E2E that bai
 e2e-failure.png
