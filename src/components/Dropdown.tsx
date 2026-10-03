@@ -1,5 +1,6 @@
 import { Check, ChevronDown, Search } from "lucide-react";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { foldText } from "../../shared/text";
 
 export type DropdownOption = { value: string; label: string };
 
@@ -17,15 +18,6 @@ type DropdownProps = {
   searchable?: boolean;
   disabled?: boolean;
 };
-
-/** Bo dau de go "techcom" van ra "Techcombank", "sacom" ra "Sacombank". */
-function foldText(value: string) {
-  return value
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .trim();
-}
 
 /**
  * Dropdown dung chung cho moi cho chon mot muc trong app.

@@ -1,3 +1,5 @@
+import { foldText } from "./text";
+
 export type AiExpenseSuggestion = {
   title: string;
   amount: number;
@@ -43,21 +45,13 @@ export function normalizeAiExpense(value: unknown): AiExpenseSuggestion {
   };
 }
 
-function normalizeName(name: string) {
-  return name
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .trim();
-}
-
 function findParticipantByName(participants: NamedParticipant[], name: string) {
-  const target = normalizeName(name);
+  const target = foldText(name);
   if (!target) return undefined;
 
   return (
-    participants.find((participant) => normalizeName(participant.name) === target) ||
-    participants.find((participant) => normalizeName(participant.name).includes(target))
+    participants.find((participant) => foldText(participant.name) === target) ||
+    participants.find((participant) => foldText(participant.name).includes(target))
   );
 }
 

@@ -44,6 +44,7 @@ shared/                        # Pure domain kernel shared by FE + worker (no IO
   game-closing.ts              #   Dong cuoc choi: auto khi tra xong / dong tay
   vietqr.ts                    #   VietQR URL building (worker proxies QR too)
   summary-text.ts              #   Summary document for copy-as-text/image
+  text.ts                      #   Vietnamese accent folding for fuzzy name/label match
   build-info.ts                #   Deployed commit (generated at build; GET /api/version)
 
 src/                           # Frontend hexagon

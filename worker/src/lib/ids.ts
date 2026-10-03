@@ -8,9 +8,14 @@ export function createId(prefix: string) {
   return `${prefix}_${crypto.randomUUID()}`;
 }
 
+/** Chuoi `length` ky tu ngau nhien (crypto) lay tu `alphabet`. */
+function randomFromAlphabet(alphabet: string, length: number) {
+  const bytes = crypto.getRandomValues(new Uint8Array(length));
+  return Array.from(bytes, (byte) => alphabet[byte % alphabet.length]).join("");
+}
+
 export function createGameCode() {
-  const bytes = crypto.getRandomValues(new Uint8Array(GAME_CODE_LENGTH));
-  return Array.from(bytes, (byte) => GAME_CODE_ALPHABET[byte % GAME_CODE_ALPHABET.length]).join("");
+  return randomFromAlphabet(GAME_CODE_ALPHABET, GAME_CODE_LENGTH);
 }
 
 /**
@@ -19,10 +24,7 @@ export function createGameCode() {
  * (xem SHARE_VIEW_RATE_LIMIT trong worker/src/index.ts).
  */
 export function createShareToken() {
-  const bytes = crypto.getRandomValues(new Uint8Array(SHARE_TOKEN_LENGTH));
-  return Array.from(bytes, (byte) => SHARE_TOKEN_ALPHABET[byte % SHARE_TOKEN_ALPHABET.length]).join(
-    "",
-  );
+  return randomFromAlphabet(SHARE_TOKEN_ALPHABET, SHARE_TOKEN_LENGTH);
 }
 
 export function nowIso() {

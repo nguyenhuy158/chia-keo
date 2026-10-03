@@ -1,4 +1,5 @@
 import type { ApiParticipant } from "./api-types";
+import { stripDiacritics } from "./text";
 
 export type PaymentInfo = Pick<ApiParticipant, "bankId" | "accountNo" | "accountName">;
 
@@ -66,9 +67,7 @@ const vietQrBankAliases = new Map([
 ]);
 
 function normalizeText(value: string) {
-  return value
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
+  return stripDiacritics(value)
     .replace(/[^a-zA-Z0-9 ]/g, " ")
     .replace(/\s+/g, " ")
     .trim()

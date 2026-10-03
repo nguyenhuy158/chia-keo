@@ -1,4 +1,5 @@
 import type { ApiCrossGameBalances, ApiCrossGamePerson } from "../../../../shared/api-types";
+import { normalizeContactName } from "../../../../shared/contacts";
 import { capitalizeName } from "../../../../shared/schemas";
 import type { BalanceRow } from "../../../../shared/split";
 import { calculateBalances, calculateSettlements } from "../../../../shared/split";
@@ -12,15 +13,6 @@ import { groupSplitsByExpenseId, sumTotalExpense, toExpenseInputs } from "./game
  * thay vi de nguoi dung gop het lich su lai.
  */
 export const MAX_CROSS_GAME_GAMES = 8;
-
-/**
- * Khoa gop nguoi giua cac cuoc chia. Chi chuan hoa hoa/thuong va khoang trang;
- * KHONG bo dau, vi "Hương" va "Huong" co the la hai nguoi khac nhau that va
- * gop sai thi ra so tien sai chu khong chi hien thi xau.
- */
-function personKey(name: string) {
-  return name.trim().toLowerCase().replace(/\s+/g, " ");
-}
 
 type PersonAccumulator = {
   name: string;
@@ -101,7 +93,9 @@ export async function getBalancesAcrossGames(
     totalExpense += gameTotal;
 
     for (const row of rows) {
-      const key = personKey(row.name);
+      // Gop nguoi theo ten danh ba: chi chuan hoa hoa/thuong va khoang trang,
+      // KHONG bo dau ("Hương" va "Huong" co the la hai nguoi khac nhau that).
+      const key = normalizeContactName(row.name);
       if (key === "") continue;
 
       const person = byPerson.get(key) || { name: row.name, paid: 0, owed: 0, games: [] };

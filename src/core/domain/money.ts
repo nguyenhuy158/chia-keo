@@ -9,6 +9,11 @@ export function formatMoney(value: number) {
 // Cho phep go bieu thuc cong tru nhan chia (vd "20000+30000") thay vi chi so.
 const EXPRESSION_CHARS = /[^0-9+\-*/.\s]/g;
 
+/** Bo ky tu khong thuoc bieu thuc tien (giu so, + - * /, dau "." va khoang trang). */
+export function sanitizeMoneyInput(raw: string): string {
+  return raw.replace(EXPRESSION_CHARS, "");
+}
+
 /** Parser cong tru nhan chia thu cong (khong dung eval/Function), uu tien nhan chia truoc. */
 function evalArithmetic(expr: string): number | null {
   const tokens = expr.match(/\d+|[+\-*/]/g);
@@ -47,7 +52,7 @@ function evalArithmetic(expr: string): number | null {
  * phap, hoac ket qua am.
  */
 export function parseMoney(value: string): number {
-  const sanitized = value.replace(EXPRESSION_CHARS, "").replace(/\./g, "").trim();
+  const sanitized = sanitizeMoneyInput(value).replace(/\./g, "").trim();
   if (!sanitized) return 0;
   if (/[+\-*/]{2,}|^[+\-*/]|[+\-*/]$/.test(sanitized)) return 0;
 
