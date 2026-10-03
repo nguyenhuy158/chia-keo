@@ -48,7 +48,7 @@ function CloseButton({ onClose }: { onClose: () => void }) {
       type="button"
       onClick={onClose}
       aria-label="Đóng"
-      className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-stone-500 transition hover:bg-stone-100 active:bg-stone-200 dark:text-stone-400 dark:hover:bg-stone-800 dark:active:bg-stone-700"
+      className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-fg-muted transition hover:bg-stone-100 active:bg-stone-200 dark:hover:bg-stone-800 dark:active:bg-stone-700"
     >
       <X size={20} />
     </button>
@@ -85,10 +85,10 @@ export function BottomSheet({ open, onClose, title, children }: BottomSheetProps
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className="safe-bottom relative flex max-h-[90vh] w-full flex-col overflow-hidden rounded-t-2xl bg-white shadow-xl animate-[sheet-up_240ms_cubic-bezier(0.32,0.72,0,1)] dark:bg-stone-900 sm:max-w-lg sm:rounded-2xl"
+        className="safe-bottom relative flex max-h-[90vh] w-full flex-col overflow-hidden rounded-t-2xl bg-surface shadow-xl animate-[sheet-up_240ms_cubic-bezier(0.32,0.72,0,1)] sm:max-w-lg sm:rounded-2xl"
       >
         <div className="mx-auto mt-2 h-1.5 w-10 shrink-0 rounded-full bg-stone-300 dark:bg-stone-700 sm:hidden" />
-        <div className="flex shrink-0 items-center justify-between gap-3 border-b border-stone-200 px-4 py-2.5 dark:border-stone-800">
+        <div className="flex shrink-0 items-center justify-between gap-3 border-b border-border px-4 py-2.5">
           <h3 className="text-base font-semibold text-stone-950 dark:text-stone-50">{title}</h3>
           <CloseButton onClose={onClose} />
         </div>
@@ -128,7 +128,7 @@ export function Drawer({ open, onClose, title, children }: DrawerProps) {
         aria-label={title}
         className="absolute inset-y-0 left-0 flex w-[86%] max-w-xs flex-col bg-violet-50 shadow-xl animate-[drawer-in_240ms_cubic-bezier(0.32,0.72,0,1)] dark:bg-stone-950"
       >
-        <div className="flex shrink-0 items-center justify-between gap-3 border-b border-stone-200 bg-white px-4 py-3 dark:border-stone-800 dark:bg-stone-900">
+        <div className="flex shrink-0 items-center justify-between gap-3 border-b border-border bg-surface px-4 py-3">
           <h2 className="text-base font-semibold text-stone-950 dark:text-stone-50">{title}</h2>
           <CloseButton onClose={onClose} />
         </div>

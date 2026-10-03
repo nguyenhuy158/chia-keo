@@ -171,9 +171,9 @@ export function SummaryImageCard({ input }: { input: SummaryTextInput }) {
   }
 
   return (
-    <section className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm dark:border-stone-800 dark:bg-stone-900">
+    <section className="rounded-lg border border-border bg-surface p-4 shadow-sm">
       <h3 className="text-lg font-semibold text-stone-950 dark:text-stone-50">Xem trước</h3>
-      <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">
+      <p className="mt-1 text-xs text-fg-muted">
         {viewMode === "image"
           ? "Đúng ảnh sẽ được copy — bấm vào ảnh để xem to."
           : "Bản chữ để dán vào Zalo/Messenger."}
@@ -203,7 +203,7 @@ export function SummaryImageCard({ input }: { input: SummaryTextInput }) {
       {viewMode === "image" ? (
         <div className="mt-3 overflow-hidden rounded-md border border-stone-200 dark:border-stone-700">
           {failed ? (
-            <p className="p-4 text-sm text-stone-500 dark:text-stone-400">
+            <p className="p-4 text-sm text-fg-muted">
               Không vẽ được ảnh trên trình duyệt này. Chuyển sang bản Chữ vẫn dùng được.
             </p>
           ) : previewUrl ? (
@@ -224,7 +224,7 @@ export function SummaryImageCard({ input }: { input: SummaryTextInput }) {
               </span>
             </button>
           ) : (
-            <p className="p-4 text-sm text-stone-500 dark:text-stone-400">Đang vẽ ảnh...</p>
+            <p className="p-4 text-sm text-fg-muted">Đang vẽ ảnh...</p>
           )}
         </div>
       ) : (

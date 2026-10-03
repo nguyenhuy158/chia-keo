@@ -219,7 +219,7 @@ export function CopyMenu({ input, className }: CopyMenuProps) {
             ref={menuRef}
             role="menu"
             style={{ position: "fixed", width: MENU_WIDTH, ...position }}
-            className="z-[70] overflow-hidden rounded-xl border border-stone-200 bg-white p-1 shadow-xl animate-[overlay-in_120ms_ease] dark:border-stone-700 dark:bg-stone-900"
+            className="z-[70] overflow-hidden rounded-xl border border-stone-200 bg-surface p-1 shadow-xl animate-[overlay-in_120ms_ease] dark:border-stone-700"
           >
             <div className="border-b border-stone-200 px-3 pb-2.5 pt-2 dark:border-stone-700">
               <SummaryBackgroundPicker value={backgroundId} onChange={chooseBackground} />
@@ -240,7 +240,7 @@ export function CopyMenu({ input, className }: CopyMenuProps) {
                     <span className="block text-sm font-medium text-stone-950 dark:text-stone-50">
                       {action.label}
                     </span>
-                    <span className="block text-xs text-stone-500 dark:text-stone-400">
+                    <span className="block text-xs text-fg-muted">
                       {action.hint}
                     </span>
                   </span>

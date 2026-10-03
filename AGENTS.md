@@ -14,8 +14,9 @@ adapters into ports via `src/core/container.ts`. Pure FE-only rules live in
 QrProviderPort). Implementations live in `src/adapters/browser/` (fetch API,
 VietQR, Better Auth client, theme) and `src/adapters/react-query/` (React
 Query hooks over GameApiPort). UI lives in `src/components/` and
-`src/routes/`. Global styles live in `src/styles.css`; the HTML shell is
-`index.html`.
+`src/routes/`. Global styles live in `src/styles.css`, which imports the
+design tokens in `src/styles/tokens.css` (a copy of ui-kit's tokens with
+chia-keo's own violet/stone values); the HTML shell is `index.html`.
 
 Worker: port interfaces in `worker/src/core/ports/` (GameRepository,
 AiProvider), use cases and policies in `worker/src/core/application/`,
@@ -125,6 +126,13 @@ should use PascalCase file and component names, for example `App.tsx`. Do not
 leave magic strings or magic numbers in code; extract them into clearly named
 constants near the relevant module or in a shared constants file when reused.
 Split complex logic into small, named functions with one clear responsibility.
+
+Colors: use the ui-kit token classes (`bg-surface`, `bg-surface-muted`,
+`border-border`, `text-fg-muted`, `bg-primary`, `text-danger`, `bg-*-soft`)
+instead of a palette class + `dark:` pair whenever a token matches; dark mode
+is the `.dark` class on `<html>` and the tokens switch with it. Keep token
+names in sync with `ui-kit/src/styles/tokens.css`; change only values here.
+Palette classes remain only where no token exists yet.
 
 Hexagonal boundaries:
 

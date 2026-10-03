@@ -324,7 +324,7 @@ export function GamePage() {
           setEmailPending(false);
         }
       }}
-      className="inline-flex h-11 items-center justify-center gap-2 rounded-md border border-stone-300 bg-white px-3 text-sm font-medium text-stone-700 transition hover:bg-stone-50 disabled:opacity-50 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-200 dark:hover:bg-stone-800"
+      className="inline-flex h-11 items-center justify-center gap-2 rounded-md border border-stone-300 bg-surface px-3 text-sm font-medium text-stone-700 transition hover:bg-surface-muted disabled:opacity-50 dark:border-stone-700 dark:text-stone-200"
     >
       <Mail size={15} />
       {emailPending ? "Đang gửi..." : "Email cho tôi"}
@@ -359,7 +359,7 @@ export function GamePage() {
           })
         }
         disabled={setShareLinkEnabled.isPending}
-        className="inline-flex h-11 items-center justify-center gap-2 rounded-md border border-stone-300 bg-white px-3 text-sm font-medium text-stone-700 transition hover:bg-stone-50 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-200 dark:hover:bg-stone-800"
+        className="inline-flex h-11 items-center justify-center gap-2 rounded-md border border-stone-300 bg-surface px-3 text-sm font-medium text-stone-700 transition hover:bg-surface-muted dark:border-stone-700 dark:text-stone-200"
         title={shareLink.enabled ? "Tắt link share" : "Bật link share"}
       >
         <Power
@@ -376,7 +376,7 @@ export function GamePage() {
         type="button"
         onClick={handleRotateShareLink}
         disabled={rotateShareLink.isPending}
-        className="inline-flex h-11 items-center justify-center gap-2 rounded-md border border-stone-300 bg-white px-3 text-sm font-medium text-stone-700 transition hover:bg-stone-50 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-200 dark:hover:bg-stone-800"
+        className="inline-flex h-11 items-center justify-center gap-2 rounded-md border border-stone-300 bg-surface px-3 text-sm font-medium text-stone-700 transition hover:bg-surface-muted dark:border-stone-700 dark:text-stone-200"
         title="Tạo token mới, link cũ sẽ hết hiệu lực"
       >
         <RefreshCw size={16} />
@@ -390,7 +390,7 @@ export function GamePage() {
         rotateShareLink.mutate(undefined, { onSuccess: () => toast.success("Đã tạo link chia sẻ") })
       }
       disabled={rotateShareLink.isPending}
-      className="inline-flex h-11 items-center justify-center gap-2 rounded-md border border-stone-300 bg-white px-3 text-sm font-medium text-stone-700 transition hover:bg-stone-50 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-200 dark:hover:bg-stone-800"
+      className="inline-flex h-11 items-center justify-center gap-2 rounded-md border border-stone-300 bg-surface px-3 text-sm font-medium text-stone-700 transition hover:bg-surface-muted dark:border-stone-700 dark:text-stone-200"
     >
       <LinkIcon size={16} />
       Tạo link share
@@ -406,7 +406,7 @@ export function GamePage() {
         type="button"
         onClick={handleReopenGame}
         disabled={reopenGame.isPending}
-        className="inline-flex h-11 items-center justify-center gap-2 rounded-md border border-stone-300 bg-white px-3 text-sm font-medium text-stone-700 transition hover:bg-stone-50 disabled:opacity-50 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-200 dark:hover:bg-stone-800"
+        className="inline-flex h-11 items-center justify-center gap-2 rounded-md border border-stone-300 bg-surface px-3 text-sm font-medium text-stone-700 transition hover:bg-surface-muted disabled:opacity-50 dark:border-stone-700 dark:text-stone-200"
       >
         <RotateCcw size={16} />
         Mở lại
@@ -416,7 +416,7 @@ export function GamePage() {
         type="button"
         onClick={handleCloseGame}
         disabled={closeGame.isPending}
-        className="inline-flex h-11 items-center justify-center gap-2 rounded-md border border-emerald-200 bg-white px-3 text-sm font-medium text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-50 dark:border-emerald-900/60 dark:bg-stone-900 dark:text-emerald-400 dark:hover:bg-emerald-500/10"
+        className="inline-flex h-11 items-center justify-center gap-2 rounded-md border border-emerald-200 bg-surface px-3 text-sm font-medium text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-50 dark:border-emerald-900/60 dark:text-emerald-400 dark:hover:bg-emerald-500/10"
       >
         <CircleCheckBig size={16} />
         Đóng
@@ -429,7 +429,7 @@ export function GamePage() {
       type="button"
       onClick={handleDeleteGame}
       disabled={deleteGame.isPending}
-      className="inline-flex h-11 items-center justify-center gap-2 rounded-md border border-rose-200 bg-white px-3 text-sm font-medium text-rose-600 transition hover:bg-rose-50 dark:border-rose-900/60 dark:bg-stone-900 dark:text-rose-400 dark:hover:bg-rose-500/10"
+      className="inline-flex h-11 items-center justify-center gap-2 rounded-md border border-rose-200 bg-surface px-3 text-sm font-medium text-danger transition hover:bg-danger-soft dark:border-rose-900/60"
     >
       <Trash2 size={16} />
       Xóa
@@ -446,7 +446,7 @@ export function GamePage() {
 
   return (
     <>
-      <div className="mb-5 flex items-center justify-between gap-3 rounded-lg border border-stone-200 bg-white p-4 shadow-sm dark:border-stone-800 dark:bg-stone-900">
+      <div className="mb-5 flex items-center justify-between gap-3 rounded-lg border border-border bg-surface p-4 shadow-sm">
         <div className="min-w-0">
           <p className="text-sm font-medium text-violet-600 dark:text-violet-400">{game.code}</p>
           {nameDraft !== null ? (
@@ -465,7 +465,7 @@ export function GamePage() {
                 type="button"
                 onClick={handleRenameGame}
                 disabled={renameGame.isPending}
-                className="inline-flex h-11 w-11 items-center justify-center rounded-md bg-violet-600 text-white transition hover:bg-violet-700"
+                className="inline-flex h-11 w-11 items-center justify-center rounded-md bg-primary text-white transition hover:bg-primary-hover"
                 aria-label="Lưu tên cuộc chơi"
               >
                 <Check size={16} />
@@ -473,7 +473,7 @@ export function GamePage() {
               <button
                 type="button"
                 onClick={() => setNameDraft(null)}
-                className="inline-flex h-11 w-11 items-center justify-center rounded-md border border-stone-300 text-stone-600 transition hover:bg-stone-50 dark:border-stone-700 dark:text-stone-300 dark:hover:bg-stone-800"
+                className="inline-flex h-11 w-11 items-center justify-center rounded-md border border-stone-300 text-stone-600 transition hover:bg-surface-muted dark:border-stone-700 dark:text-stone-300"
                 aria-label="Hủy đổi tên"
               >
                 <X size={16} />
@@ -485,7 +485,7 @@ export function GamePage() {
                 {game.name}
               </h2>
               {closed && (
-                <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400">
+                <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-success-soft px-2 py-0.5 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
                   <CircleCheckBig size={12} />
                   Đã đóng · {describeCloseMode(game.closeMode)}
                 </span>
@@ -493,7 +493,7 @@ export function GamePage() {
               <button
                 type="button"
                 onClick={() => setNameDraft(game.name)}
-                className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md text-stone-500 transition hover:bg-stone-100 hover:text-stone-800 dark:text-stone-400 dark:hover:bg-stone-800 dark:hover:text-stone-100"
+                className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md text-fg-muted transition hover:bg-stone-100 hover:text-stone-800 dark:hover:bg-stone-800 dark:hover:text-stone-100"
                 aria-label="Đổi tên cuộc chơi"
               >
                 <Pencil size={15} />
@@ -514,7 +514,7 @@ export function GamePage() {
           type="button"
           onClick={() => shell?.openGames()}
           aria-label="Danh sách cuộc chơi"
-          className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-stone-300 text-stone-700 transition hover:bg-stone-50 active:bg-stone-100 dark:border-stone-700 dark:text-stone-200 dark:hover:bg-stone-800 dark:active:bg-stone-700 lg:hidden"
+          className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-stone-300 text-stone-700 transition hover:bg-surface-muted active:bg-stone-100 dark:border-stone-700 dark:text-stone-200 dark:active:bg-stone-700 lg:hidden"
         >
           <ListChecks size={20} />
         </button>
@@ -522,7 +522,7 @@ export function GamePage() {
           type="button"
           onClick={() => setActionsOpen(true)}
           aria-label="Tùy chọn cuộc chơi"
-          className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-stone-300 text-stone-700 transition hover:bg-stone-50 active:bg-stone-100 dark:border-stone-700 dark:text-stone-200 dark:hover:bg-stone-800 dark:active:bg-stone-700 lg:hidden"
+          className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-stone-300 text-stone-700 transition hover:bg-surface-muted active:bg-stone-100 dark:border-stone-700 dark:text-stone-200 dark:active:bg-stone-700 lg:hidden"
         >
           <MoreHorizontal size={20} />
         </button>
@@ -563,7 +563,7 @@ export function GamePage() {
                 onClick={() => setMoreTab("photos")}
                 className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition ${
                   moreTab === "photos"
-                    ? "bg-violet-600 text-white"
+                    ? "bg-primary text-white"
                     : "border border-stone-300 text-stone-600 dark:border-stone-700 dark:text-stone-300"
                 }`}
               >
@@ -575,7 +575,7 @@ export function GamePage() {
                 onClick={() => setMoreTab("history")}
                 className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition ${
                   moreTab === "history"
-                    ? "bg-violet-600 text-white"
+                    ? "bg-primary text-white"
                     : "border border-stone-300 text-stone-600 dark:border-stone-700 dark:text-stone-300"
                 }`}
               >
@@ -587,7 +587,7 @@ export function GamePage() {
           </div>
         )}
         {activeSection === "summary" && (
-          <div className="flex flex-col gap-2 rounded-lg border border-stone-200 bg-white p-3 shadow-sm dark:border-stone-800 dark:bg-stone-900 [&>button]:w-full">
+          <div className="flex flex-col gap-2 rounded-lg border border-border bg-surface p-3 shadow-sm [&>button]:w-full">
             {copyAction}
             {emailAction}
           </div>

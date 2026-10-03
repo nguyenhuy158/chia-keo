@@ -21,7 +21,7 @@ export function PhotoGrid({ photos, expenseTitleById, onOpen }: PhotoGridProps) 
             key={photo.id}
             type="button"
             onClick={() => onOpen(index)}
-            className="group relative aspect-square overflow-hidden rounded-md border border-stone-200 bg-stone-100 transition active:scale-[0.98] dark:border-stone-800 dark:bg-stone-800"
+            className="group relative aspect-square overflow-hidden rounded-md border border-border bg-stone-100 transition active:scale-[0.98] dark:bg-stone-800"
             aria-label={photo.caption || expenseTitle || `Ảnh ${index + 1}`}
           >
             <img

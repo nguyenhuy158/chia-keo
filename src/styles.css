@@ -1,63 +1,14 @@
-@import "tailwindcss";
+/* Tailwind, dark variant theo class .dark, bien mau --ui-* va base (box-sizing,
+   font: inherit chong iOS zoom, touch-action, .tabular, reduced motion) deu nam
+   trong tokens.css (ban sao tu ui-kit). File nay chi giu phan rieng chia-keo. */
+@import "./styles/tokens.css";
 
-/* Bat che do dark theo class .dark tren <html> de co the toggle thu cong. */
-@custom-variant dark (&:where(.dark, .dark *));
-
-:root {
-  color-scheme: light;
-  color: #1d1d1f;
-  background: #faf5ff;
+/* index.html nap them Plus Jakarta Sans lam font du phong. */
+body {
   font-family:
     "Be Vietnam Pro", "Plus Jakarta Sans", Inter, ui-sans-serif, system-ui,
     -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-synthesis: none;
-  text-rendering: optimizeLegibility;
-}
-
-/* Chi cho keo doc/ngang: khong pinch-zoom, khong double-tap zoom.
-   Khong dung chu tu gian khi xoay ngang may. */
-html {
-  touch-action: pan-x pan-y;
-  -webkit-text-size-adjust: 100%;
-  text-size-adjust: 100%;
-}
-
-html.dark {
-  color-scheme: dark;
-  color: #e7e5e4;
-  background: #0c0a09;
-}
-
-/* So tien thang cot, de doc trong bang chi tieu */
-.tabular {
-  font-variant-numeric: tabular-nums;
-}
-
-* {
-  box-sizing: border-box;
-}
-
-body {
-  min-width: 320px;
-  min-height: 100vh;
-  margin: 0;
-}
-
-/* Co tinh de KHONG layer: `font: inherit` chan moi utility text-* / font-* tren
-   button va input, nho vay input luon >= 16px va iOS Safari khong tu zoom khi focus.
-   Dua vao @layer base se lam text-sm/text-xs song lai tren toan bo button trong app. */
-button,
-input,
-select,
-textarea {
-  font: inherit;
-}
-
-/* Bo do tre 300ms va chan double-tap zoom tren mobile. */
-button,
-a,
-[role="button"] {
-  touch-action: manipulation;
 }
 
 /* Nam trong @layer components de utility cua Tailwind (w-32, bg-white, text-lg...)
@@ -68,7 +19,7 @@ a,
   .field {
     height: 2.75rem;
     width: 100%;
-    border-radius: 0.5rem;
+    border-radius: var(--ui-radius);
     border: 1px solid #d6d3d1;
     padding: 0 0.75rem;
     /* 16px de iOS Safari khong tu dong zoom khi focus input. */
@@ -80,8 +31,8 @@ a,
   }
 
   .field:focus {
-    border-color: #7c3aed;
-    box-shadow: 0 0 0 2px #ede9fe;
+    border-color: var(--ui-primary);
+    box-shadow: 0 0 0 2px var(--ui-ring);
   }
 
   /* Ve desktop tra lai mat do gon hon. Chi ap khi co chuot: iPad rong hon 640px
@@ -99,28 +50,25 @@ a,
   }
 
   .dark .field {
-    background: #1c1917;
+    background: var(--ui-surface);
     border-color: #44403c;
-    color: #e7e5e4;
+    color: var(--ui-fg);
   }
 
   .dark .field::placeholder {
     color: #78716c;
   }
 
+  /* `.dark .field` cung do uu tien va dung sau `.field:focus`, nen phai nhac
+     lai mau vien luc focus; vong focus tu doi theo --ui-ring. */
   .dark .field:focus {
-    border-color: #7c3aed;
-    box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.35);
+    border-color: var(--ui-primary);
   }
 }
 
-/* Padding an toan cho tai (notch, home indicator). */
+/* chia-keo can dem day rong hon mac dinh ui-kit (0.5rem) cho thanh dieu huong. */
 .safe-bottom {
   padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
-}
-
-.safe-top {
-  padding-top: calc(0.5rem + env(safe-area-inset-top));
 }
 
 @keyframes overlay-in {
@@ -147,14 +95,5 @@ a,
   }
   to {
     transform: translateX(0);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
   }
 }

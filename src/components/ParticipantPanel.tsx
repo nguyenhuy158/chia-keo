@@ -123,7 +123,7 @@ export function ParticipantPanel({
   });
 
   return (
-    <section className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm dark:border-stone-800 dark:bg-stone-900">
+    <section className="rounded-lg border border-border bg-surface p-4 shadow-sm">
       <div className="mb-4 flex items-center gap-2">
         <Users size={18} className="text-violet-600 dark:text-violet-400" />
         <h3 className="text-lg font-semibold text-stone-950 dark:text-stone-50">Người tham gia</h3>
@@ -154,7 +154,7 @@ export function ParticipantPanel({
           <button
             type="submit"
             disabled={pending}
-            className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-md bg-violet-600 px-4 text-sm font-semibold text-white transition hover:bg-violet-700 active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-stone-300 dark:disabled:bg-stone-700 sm:w-auto"
+            className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-semibold text-white transition hover:bg-primary-hover active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-stone-300 dark:disabled:bg-stone-700 sm:w-auto"
           >
             {editingParticipantId ? <Check size={17} /> : <Plus size={17} />}
             {editingParticipantId ? "Lưu thông tin" : "Thêm người"}
@@ -164,7 +164,7 @@ export function ParticipantPanel({
               type="button"
               onClick={cancelEdit}
               disabled={pending}
-              className="mt-2 inline-flex h-11 w-full items-center justify-center gap-2 rounded-md border border-stone-300 bg-white px-4 text-sm font-semibold text-stone-700 transition hover:bg-stone-50 active:scale-[0.99] disabled:cursor-not-allowed disabled:text-stone-400 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-200 dark:hover:bg-stone-800 sm:ml-2 sm:mt-0 sm:w-auto"
+              className="mt-2 inline-flex h-11 w-full items-center justify-center gap-2 rounded-md border border-stone-300 bg-surface px-4 text-sm font-semibold text-stone-700 transition hover:bg-surface-muted active:scale-[0.99] disabled:cursor-not-allowed disabled:text-stone-400 dark:border-stone-700 dark:text-stone-200 sm:ml-2 sm:mt-0 sm:w-auto"
             >
               <X size={17} />
               Hủy
@@ -177,7 +177,7 @@ export function ParticipantPanel({
         {participants.map((participant, index) => (
           <div key={participant.id}>
             <SwipeToDelete onDelete={() => handleRemove(participant)}>
-              <div className="rounded-md border border-stone-200 p-3 dark:border-stone-800">
+              <div className="rounded-md border border-border p-3">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex min-w-0 items-center gap-1">
                     <div className="flex shrink-0 flex-col">
@@ -205,7 +205,7 @@ export function ParticipantPanel({
                       <p className="truncate text-sm font-semibold text-stone-950 dark:text-stone-50">
                         {participant.name}
                       </p>
-                      <p className="mt-1 truncate text-xs text-stone-500 dark:text-stone-400">
+                      <p className="mt-1 truncate text-xs text-fg-muted">
                         {participant.bankId && participant.accountNo
                           ? `${getVietQrBankLabel(participant.bankId)} · ${participant.accountNo}`
                           : "Chưa có thông tin QR"}
@@ -217,7 +217,7 @@ export function ParticipantPanel({
                       type="button"
                       onClick={() => startEdit(participant)}
                       disabled={pending}
-                      className="inline-flex h-11 w-11 items-center justify-center rounded-md text-stone-600 transition hover:bg-stone-50 active:bg-stone-100 disabled:cursor-not-allowed disabled:text-stone-300 dark:text-stone-300 dark:hover:bg-stone-800 dark:active:bg-stone-700"
+                      className="inline-flex h-11 w-11 items-center justify-center rounded-md text-stone-600 transition hover:bg-surface-muted active:bg-stone-100 disabled:cursor-not-allowed disabled:text-stone-300 dark:text-stone-300 dark:active:bg-stone-700"
                       aria-label={`Sửa ${participant.name}`}
                     >
                       <Pencil size={16} />
@@ -226,7 +226,7 @@ export function ParticipantPanel({
                       type="button"
                       onClick={() => handleRemove(participant)}
                       disabled={pending}
-                      className="inline-flex h-11 w-11 items-center justify-center rounded-md text-rose-600 transition hover:bg-rose-50 active:bg-rose-100 disabled:cursor-not-allowed disabled:text-rose-300 dark:text-rose-400 dark:hover:bg-rose-500/10 dark:active:bg-rose-500/20"
+                      className="inline-flex h-11 w-11 items-center justify-center rounded-md text-rose-600 transition hover:bg-danger-soft active:bg-rose-100 disabled:cursor-not-allowed disabled:text-rose-300 dark:text-rose-400 dark:active:bg-rose-500/20"
                       aria-label={`Xóa ${participant.name}`}
                     >
                       <Trash2 size={16} />

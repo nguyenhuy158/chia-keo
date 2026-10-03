@@ -79,10 +79,10 @@ function EventRow({
       <div className="min-w-0 flex-1">
         <p className="text-sm text-stone-900 dark:text-stone-100">{title}</p>
         {detail && (
-          <p className="mt-0.5 break-words text-xs text-stone-500 dark:text-stone-400">{detail}</p>
+          <p className="mt-0.5 break-words text-xs text-fg-muted">{detail}</p>
         )}
         {event.undoneAt && (
-          <p className="mt-0.5 text-xs font-medium text-emerald-600 dark:text-emerald-400">
+          <p className="mt-0.5 text-xs font-medium text-success">
             đã hoàn tác
           </p>
         )}
@@ -96,7 +96,7 @@ function EventRow({
             type="button"
             onClick={() => onUndo(event.id)}
             disabled={pending}
-            className="inline-flex items-center gap-1 rounded-md border border-stone-300 px-2 py-1 text-xs font-medium text-stone-700 transition hover:bg-stone-50 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 dark:border-stone-700 dark:text-stone-200 dark:hover:bg-stone-800"
+            className="inline-flex items-center gap-1 rounded-md border border-stone-300 px-2 py-1 text-xs font-medium text-stone-700 transition hover:bg-surface-muted active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 dark:border-stone-700 dark:text-stone-200"
           >
             <Undo2 size={13} />
             Hoàn tác
@@ -138,7 +138,7 @@ export function HistoryPanel({ gameId, collapsible = false }: HistoryPanelProps)
   const events = eventsQuery.data || [];
 
   return (
-    <section className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm dark:border-stone-800 dark:bg-stone-900">
+    <section className="rounded-lg border border-border bg-surface p-4 shadow-sm">
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <History size={18} className="text-violet-600 dark:text-violet-400" />
@@ -149,7 +149,7 @@ export function HistoryPanel({ gameId, collapsible = false }: HistoryPanelProps)
             type="button"
             onClick={() => setPersistedOpen((current) => !current)}
             aria-expanded={open}
-            className="rounded-md px-2 py-1 text-xs font-semibold text-violet-700 transition hover:bg-violet-50 dark:text-violet-300 dark:hover:bg-violet-500/10"
+            className="rounded-md px-2 py-1 text-xs font-semibold text-violet-700 transition hover:bg-primary-soft dark:text-violet-300"
           >
             {open ? "Ẩn" : "Xem"}
           </button>
@@ -158,7 +158,7 @@ export function HistoryPanel({ gameId, collapsible = false }: HistoryPanelProps)
 
       {open && (
         <>
-          <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">
+          <p className="mt-1 text-xs text-fg-muted">
             Ai đã làm gì trong cuộc chia này. Khoản chi bị xóa có thể dựng lại.
           </p>
 

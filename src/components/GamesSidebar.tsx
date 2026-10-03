@@ -56,7 +56,7 @@ export function GamesSidebar({ onNavigate }: { onNavigate?: () => void }) {
     <aside className="space-y-4">
       <form
         onSubmit={handleCreate}
-        className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm dark:border-stone-800 dark:bg-stone-900"
+        className="rounded-lg border border-border bg-surface p-4 shadow-sm"
       >
         <label className="text-sm font-medium text-stone-700 dark:text-stone-300" htmlFor="game-name">
           Tạo cuộc chơi
@@ -65,13 +65,13 @@ export function GamesSidebar({ onNavigate }: { onNavigate?: () => void }) {
           <input
             id="game-name"
             {...form.register("name")}
-            className="h-11 min-w-0 flex-1 rounded-md border border-stone-300 bg-white px-3 text-base text-stone-950 sm:text-sm outline-none transition placeholder:text-stone-400 focus:border-violet-600 focus:ring-2 focus:ring-violet-100 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-100 dark:placeholder:text-stone-500 dark:focus:ring-violet-900/40 sm:h-10"
+            className="h-11 min-w-0 flex-1 rounded-md border border-stone-300 bg-white px-3 text-base text-stone-950 sm:text-sm outline-none transition placeholder:text-stone-400 focus:border-primary focus:ring-2 focus:ring-violet-100 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-100 dark:placeholder:text-stone-500 dark:focus:ring-violet-900/40 sm:h-10"
             placeholder="Đà Nẵng 2026"
           />
           <button
             type="submit"
             disabled={createGame.isPending}
-            className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-violet-600 text-white transition hover:bg-violet-700 active:scale-95 disabled:cursor-not-allowed disabled:bg-stone-300 dark:disabled:bg-stone-700 sm:h-10 sm:w-10"
+            className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-primary text-white transition hover:bg-primary-hover active:scale-95 disabled:cursor-not-allowed disabled:bg-stone-300 dark:disabled:bg-stone-700 sm:h-10 sm:w-10"
             aria-label="Tạo cuộc chơi"
           >
             <Plus size={18} />
@@ -81,7 +81,7 @@ export function GamesSidebar({ onNavigate }: { onNavigate?: () => void }) {
         {/* Tao san N nguoi "Người 1", "Người 2"... de vao viec ngay, sua ten
             sau. 0 nguoi thi khong tao ai (hanh vi cu, tu them tay). */}
         <div className="mt-2 flex items-center gap-2">
-          <span className="text-xs text-stone-500 dark:text-stone-400">Tạo sẵn số người</span>
+          <span className="text-xs text-fg-muted">Tạo sẵn số người</span>
           <div className="flex h-9 items-center overflow-hidden rounded-lg border border-stone-300 dark:border-stone-700">
             <button
               type="button"
@@ -112,7 +112,7 @@ export function GamesSidebar({ onNavigate }: { onNavigate?: () => void }) {
           )}
         </div>
         {form.formState.errors.name && (
-          <p className="mt-1 text-xs text-rose-600 dark:text-rose-400">
+          <p className="mt-1 text-xs text-danger">
             {form.formState.errors.name.message}
           </p>
         )}
@@ -120,7 +120,7 @@ export function GamesSidebar({ onNavigate }: { onNavigate?: () => void }) {
 
       <ContactBookCard />
 
-      <section className="rounded-lg border border-stone-200 bg-white p-3 shadow-sm dark:border-stone-800 dark:bg-stone-900">
+      <section className="rounded-lg border border-border bg-surface p-3 shadow-sm">
         <div className="mb-2 flex items-center gap-2 px-1 text-sm font-semibold text-stone-800 dark:text-stone-200">
           <ReceiptText size={17} />
           Cuộc chơi
@@ -148,7 +148,7 @@ export function GamesSidebar({ onNavigate }: { onNavigate?: () => void }) {
                 <span className="block text-sm font-semibold text-stone-950 dark:text-stone-50">
                   {game.name}
                 </span>
-                <span className="mt-1 block text-xs text-stone-500 dark:text-stone-400">
+                <span className="mt-1 block text-xs text-fg-muted">
                   {game.participantCount} người, {game.expenseCount} khoản
                 </span>
                 <button
@@ -165,7 +165,7 @@ export function GamesSidebar({ onNavigate }: { onNavigate?: () => void }) {
             ))}
           </div>
         ) : (
-          <p className="px-1 py-4 text-sm text-stone-500 dark:text-stone-400">Chưa có cuộc chơi nào.</p>
+          <p className="px-1 py-4 text-sm text-fg-muted">Chưa có cuộc chơi nào.</p>
         )}
       </section>
       <ClosedGamesCard onNavigate={onNavigate} />

@@ -21,7 +21,7 @@ export function SummaryBackgroundPicker({
   return (
     <div>
       {showLabel && (
-        <p className="text-xs font-medium text-stone-500 dark:text-stone-400">
+        <p className="text-xs font-medium text-fg-muted">
           Nền ảnh · {selected.label}
         </p>
       )}

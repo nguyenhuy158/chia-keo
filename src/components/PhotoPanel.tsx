@@ -86,7 +86,7 @@ export function PhotoPanel({ gameId, photos, expenses, loading = false }: PhotoP
   );
 
   return (
-    <section className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm dark:border-stone-800 dark:bg-stone-900">
+    <section className="rounded-lg border border-border bg-surface p-4 shadow-sm">
       <div className="mb-4 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <Images size={18} className="text-sky-500" />
@@ -99,10 +99,10 @@ export function PhotoPanel({ gameId, photos, expenses, loading = false }: PhotoP
       </div>
 
       {uploader.error && (
-        <p className="mb-3 text-xs text-rose-600 dark:text-rose-400">{uploader.error}</p>
+        <p className="mb-3 text-xs text-danger">{uploader.error}</p>
       )}
       {isFull && (
-        <p className="mb-3 text-xs text-amber-600 dark:text-amber-400">
+        <p className="mb-3 text-xs text-warning">
           Đã đủ {MAX_PHOTOS_PER_GAME} ảnh, xóa bớt ảnh cũ để thêm ảnh mới.
         </p>
       )}
@@ -116,7 +116,7 @@ export function PhotoPanel({ gameId, photos, expenses, loading = false }: PhotoP
       ) : (
         <div className="flex flex-col items-center gap-3 rounded-md border border-dashed border-stone-300 p-6 text-center dark:border-stone-700">
           <Images size={28} className="text-stone-400" />
-          <p className="text-sm text-stone-500 dark:text-stone-400">
+          <p className="text-sm text-fg-muted">
             Lưu ảnh hóa đơn, ảnh kỷ niệm của cả nhóm ở đây.
           </p>
           {addButton}

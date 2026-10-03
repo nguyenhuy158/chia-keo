@@ -69,7 +69,7 @@ export function ContactPicker({ participants, pending, onAddMany }: ContactPicke
   }
 
   return (
-    <div className="mb-4 rounded-md border border-stone-200 bg-stone-50 p-3 dark:border-stone-800 dark:bg-stone-950">
+    <div className="mb-4 rounded-md border border-border bg-stone-50 p-3 dark:bg-stone-950">
       <div className="flex items-center gap-2">
         <BookUser size={15} className="text-violet-600 dark:text-violet-400" />
         <p className="text-xs font-semibold text-stone-700 dark:text-stone-200">
@@ -98,10 +98,10 @@ export function ContactPicker({ participants, pending, onAddMany }: ContactPicke
               }
               className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-3 text-xs font-medium transition ${
                 inGame
-                  ? "cursor-default border-stone-200 bg-stone-100 text-stone-400 dark:border-stone-800 dark:bg-stone-900 dark:text-stone-600"
+                  ? "cursor-default border-border bg-stone-100 text-stone-400 dark:bg-stone-900 dark:text-stone-600"
                   : picked
-                    ? "border-violet-500 bg-violet-600 text-white"
-                    : "border-stone-300 bg-white text-stone-700 hover:border-violet-400 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-200"
+                    ? "border-violet-500 bg-primary text-white"
+                    : "border-stone-300 bg-surface text-stone-700 hover:border-violet-400 dark:border-stone-700 dark:text-stone-200"
               }`}
             >
               <Avatar name={contact.name} size={16} />
@@ -117,7 +117,7 @@ export function ContactPicker({ participants, pending, onAddMany }: ContactPicke
           type="button"
           onClick={handleAdd}
           disabled={pending}
-          className="mt-3 inline-flex h-11 w-full items-center justify-center gap-2 rounded-md bg-violet-600 px-4 text-sm font-semibold text-white transition hover:bg-violet-700 active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-stone-300 dark:disabled:bg-stone-700 sm:w-auto"
+          className="mt-3 inline-flex h-11 w-full items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-semibold text-white transition hover:bg-primary-hover active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-stone-300 dark:disabled:bg-stone-700 sm:w-auto"
         >
           <UserPlus size={16} />
           Thêm {activeChosen.length} người

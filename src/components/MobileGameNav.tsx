@@ -18,7 +18,7 @@ type MobileGameNavProps = {
 /** Thanh dieu huong duoi man hinh cho mot cuoc choi, chi hien tren mobile. */
 export function MobileGameNav({ active, onChange }: MobileGameNavProps) {
   return (
-    <nav className="safe-bottom fixed inset-x-0 bottom-0 z-40 border-t border-stone-200 bg-white/95 backdrop-blur dark:border-stone-800 dark:bg-stone-900/95 lg:hidden">
+    <nav className="safe-bottom fixed inset-x-0 bottom-0 z-40 border-t border-border bg-surface/95 backdrop-blur lg:hidden">
       <div className="mx-auto grid max-w-md grid-cols-4">
         {SECTIONS.map((section) => {
           const Icon = section.icon;
@@ -32,7 +32,7 @@ export function MobileGameNav({ active, onChange }: MobileGameNavProps) {
               className={`flex min-h-[3.5rem] flex-col items-center justify-center gap-0.5 transition active:bg-stone-100 dark:active:bg-stone-800 ${
                 isActive
                   ? "text-violet-600 dark:text-violet-400"
-                  : "text-stone-500 dark:text-stone-400"
+                  : "text-fg-muted"
               }`}
             >
               <Icon size={20} />

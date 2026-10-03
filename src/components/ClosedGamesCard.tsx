@@ -36,7 +36,7 @@ export function ClosedGamesCard({ onNavigate }: { onNavigate?: () => void }) {
   }
 
   return (
-    <section className="rounded-lg border border-stone-200 bg-white p-3 shadow-sm dark:border-stone-800 dark:bg-stone-900">
+    <section className="rounded-lg border border-border bg-surface p-3 shadow-sm">
       <div className="flex items-center justify-between gap-2 px-1">
         <div className="flex items-center gap-2 text-sm font-semibold text-stone-800 dark:text-stone-200">
           <CircleCheckBig size={16} />
@@ -46,7 +46,7 @@ export function ClosedGamesCard({ onNavigate }: { onNavigate?: () => void }) {
           type="button"
           onClick={() => setOpen((current) => !current)}
           aria-expanded={open}
-          className="rounded-md px-2 py-1 text-xs font-semibold text-violet-700 transition hover:bg-violet-50 dark:text-violet-300 dark:hover:bg-violet-500/10"
+          className="rounded-md px-2 py-1 text-xs font-semibold text-violet-700 transition hover:bg-primary-soft dark:text-violet-300"
         >
           {open ? "Ẩn" : "Xem"}
         </button>
@@ -60,7 +60,7 @@ export function ClosedGamesCard({ onNavigate }: { onNavigate?: () => void }) {
               <SkeletonCard />
             </div>
           ) : games.length === 0 ? (
-            <p className="px-1 py-3 text-sm text-stone-500 dark:text-stone-400">
+            <p className="px-1 py-3 text-sm text-fg-muted">
               Chưa có cuộc chơi nào đóng. Trả xong tiền là cuộc tự đóng.
             </p>
           ) : (
@@ -68,7 +68,7 @@ export function ClosedGamesCard({ onNavigate }: { onNavigate?: () => void }) {
               {games.map((game) => (
                 <div
                   key={game.id}
-                  className="rounded-md border border-stone-200 p-2.5 dark:border-stone-800"
+                  className="rounded-md border border-border p-2.5"
                 >
                   <button
                     type="button"
@@ -78,7 +78,7 @@ export function ClosedGamesCard({ onNavigate }: { onNavigate?: () => void }) {
                     <p className="truncate text-sm font-medium text-stone-900 dark:text-stone-100">
                       {game.name}
                     </p>
-                    <p className="mt-0.5 text-xs text-stone-500 dark:text-stone-400">
+                    <p className="mt-0.5 text-xs text-fg-muted">
                       {game.participantCount} người, {game.expenseCount} khoản ·{" "}
                       {describeCloseMode(game.closeMode)}
                       {game.closedAt ? ` · ${formatDateTime(game.closedAt)}` : ""}
@@ -89,7 +89,7 @@ export function ClosedGamesCard({ onNavigate }: { onNavigate?: () => void }) {
                       type="button"
                       onClick={() => handleReopen(game)}
                       disabled={reopenGame.isPending}
-                      className="mt-2 inline-flex h-11 w-full items-center justify-center gap-1.5 rounded-md border border-stone-300 text-xs font-semibold text-stone-700 transition hover:bg-stone-50 disabled:opacity-50 dark:border-stone-700 dark:text-stone-200 dark:hover:bg-stone-800"
+                      className="mt-2 inline-flex h-11 w-full items-center justify-center gap-1.5 rounded-md border border-stone-300 text-xs font-semibold text-stone-700 transition hover:bg-surface-muted disabled:opacity-50 dark:border-stone-700 dark:text-stone-200"
                     >
                       <RotateCcw size={13} />
                       Mở lại

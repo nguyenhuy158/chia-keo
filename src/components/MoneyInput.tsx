@@ -49,7 +49,7 @@ export const MoneyInput = forwardRef<HTMLInputElement, MoneyInputProps>(function
         onBlur={onBlur}
       />
       {showPreview && (
-        <span className="text-xs text-stone-500 dark:text-stone-400">
+        <span className="text-xs text-fg-muted">
           {preview > 0 ? `= ${formatMoney(preview)}` : "Biểu thức chưa hợp lệ"}
         </span>
       )}

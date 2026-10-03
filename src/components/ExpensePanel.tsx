@@ -255,7 +255,7 @@ function SharesStepper({
           <Plus size={16} />
         </button>
       </div>
-      <span className="text-xs text-stone-500 dark:text-stone-400">phần</span>
+      <span className="text-xs text-fg-muted">phần</span>
     </div>
   );
 }
@@ -650,7 +650,7 @@ function handleSplitModeChange(mode: SplitMode) {
   });
 
   return (
-    <section className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm dark:border-stone-800 dark:bg-stone-900">
+    <section className="rounded-lg border border-border bg-surface p-4 shadow-sm">
       <div className="mb-4 flex items-center gap-2">
         <Banknote size={18} className="text-amber-500" />
         <h3 className="text-lg font-semibold text-stone-950 dark:text-stone-50">Khoản chi</h3>
@@ -661,7 +661,7 @@ function handleSplitModeChange(mode: SplitMode) {
           type="button"
           onClick={() => setAiOpen((current) => !current)}
           aria-expanded={aiOpen}
-          className="flex items-center gap-2 rounded-md px-1 py-1 text-sm font-medium text-violet-700 transition hover:bg-violet-50 dark:text-violet-400 dark:hover:bg-violet-500/10"
+          className="flex items-center gap-2 rounded-md px-1 py-1 text-sm font-medium text-violet-700 transition hover:bg-primary-soft dark:text-violet-400"
         >
           <Sparkles size={15} />
           Nhập nhanh bằng AI
@@ -673,7 +673,7 @@ function handleSplitModeChange(mode: SplitMode) {
         </button>
       </div>
       <div
-        className={`mb-4 rounded-md border border-violet-200 bg-violet-50 p-3 dark:border-violet-500/30 dark:bg-violet-500/10 ${
+        className={`mb-4 rounded-md border border-violet-200 bg-primary-soft p-3 dark:border-violet-500/30 ${
           aiOpen ? "" : "hidden"
         }`}
       >
@@ -695,7 +695,7 @@ function handleSplitModeChange(mode: SplitMode) {
             type="button"
             onClick={handleAiSuggest}
             disabled={aiPending || participants.length === 0}
-            className="inline-flex h-11 shrink-0 items-center gap-2 rounded-md bg-violet-700 px-3 text-sm font-semibold text-white transition hover:bg-violet-800 active:scale-95 disabled:cursor-not-allowed disabled:bg-stone-300 dark:disabled:bg-stone-700 sm:h-10"
+            className="inline-flex h-11 shrink-0 items-center gap-2 rounded-md bg-primary-hover px-3 text-sm font-semibold text-white transition hover:bg-violet-800 active:scale-95 disabled:cursor-not-allowed disabled:bg-stone-300 dark:disabled:bg-stone-700 sm:h-10"
           >
             <Sparkles size={15} />
             {aiSuggest.isPending ? "Đang đọc..." : "Gợi ý"}
@@ -719,7 +719,7 @@ function handleSplitModeChange(mode: SplitMode) {
             />
           </label>
         </div>
-        {aiError && <p className="mt-2 text-xs text-rose-600 dark:text-rose-400">{aiError}</p>}
+        {aiError && <p className="mt-2 text-xs text-danger">{aiError}</p>}
         <p className="mt-2 text-xs text-violet-700 dark:text-violet-300/80">
           AI điền sẵn form bên dưới, kiểm tra lại trước khi thêm.
         </p>
@@ -739,10 +739,10 @@ function handleSplitModeChange(mode: SplitMode) {
               className={`flex-1 rounded px-2.5 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-40 ${
                 kind === option
                   ? option === "income"
-                    ? "bg-white text-emerald-700 shadow-sm dark:bg-stone-900 dark:text-emerald-400"
+                    ? "bg-surface text-emerald-700 shadow-sm dark:text-emerald-400"
                     : option === "transfer"
-                      ? "bg-white text-sky-700 shadow-sm dark:bg-stone-900 dark:text-sky-400"
-                      : "bg-white text-violet-700 shadow-sm dark:bg-stone-900 dark:text-violet-300"
+                      ? "bg-surface text-sky-700 shadow-sm dark:text-sky-400"
+                      : "bg-surface text-violet-700 shadow-sm dark:text-violet-300"
                   : "text-stone-600 hover:text-stone-950 dark:text-stone-400 dark:hover:text-stone-100"
               }`}
             >
@@ -800,7 +800,7 @@ function handleSplitModeChange(mode: SplitMode) {
                   className={`inline-flex h-9 items-center gap-1.5 rounded-full border px-3 text-sm transition ${
                     selected
                       ? "border-violet-500 bg-violet-50 font-semibold text-violet-800 dark:bg-violet-500/15 dark:text-violet-200"
-                      : "border-stone-300 text-stone-700 hover:bg-stone-50 dark:border-stone-700 dark:text-stone-300 dark:hover:bg-stone-800"
+                      : "border-stone-300 text-stone-700 hover:bg-surface-muted dark:border-stone-700 dark:text-stone-300"
                   }`}
                 >
                   <span aria-hidden="true">{option.emoji}</span>
@@ -855,7 +855,7 @@ function handleSplitModeChange(mode: SplitMode) {
                 <button
                   type="button"
                   onClick={() => setAllSplit(!allSelected)}
-                  className="rounded-md px-2 py-1 text-xs font-semibold text-violet-700 underline decoration-violet-300 underline-offset-2 transition hover:bg-violet-50 active:bg-violet-100 dark:text-violet-400 dark:decoration-violet-500/50 dark:hover:bg-violet-500/10 dark:active:bg-violet-500/20"
+                  className="rounded-md px-2 py-1 text-xs font-semibold text-violet-700 underline decoration-violet-300 underline-offset-2 transition hover:bg-primary-soft active:bg-violet-100 dark:text-violet-400 dark:decoration-violet-500/50 dark:active:bg-violet-500/20"
                 >
                   {allSelected ? "Bỏ chọn" : "Chọn tất cả"}
                 </button>
@@ -870,7 +870,7 @@ function handleSplitModeChange(mode: SplitMode) {
                     onClick={() => handleSplitModeChange(option.id)}
                     className={`rounded px-2.5 py-1.5 text-xs font-semibold transition ${
                       splitMode === option.id
-                        ? "bg-white text-violet-700 shadow-sm dark:bg-stone-900 dark:text-violet-300"
+                        ? "bg-surface text-violet-700 shadow-sm dark:text-violet-300"
                         : "text-stone-600 hover:text-stone-950 dark:text-stone-400 dark:hover:text-stone-100"
                     }`}
                   >
@@ -935,7 +935,7 @@ function handleSplitModeChange(mode: SplitMode) {
                               )
                             }
                           />
-                          <span className="tabular text-xs text-stone-500 dark:text-stone-400">
+                          <span className="tabular text-xs text-fg-muted">
                             ≈ {formatMoney(sharesPreviewById.get(participant.id) || 0)}
                           </span>
                         </div>
@@ -970,12 +970,12 @@ function handleSplitModeChange(mode: SplitMode) {
             />
           )}
           {form.formState.errors.splitParticipantIds && (
-            <p className="mt-1 text-xs text-rose-600 dark:text-rose-400">
+            <p className="mt-1 text-xs text-danger">
               {form.formState.errors.splitParticipantIds.message}
             </p>
           )}
           {form.formState.errors.splitValues && (
-            <p className="mt-1 text-xs text-rose-600 dark:text-rose-400">
+            <p className="mt-1 text-xs text-danger">
               {(form.formState.errors.splitValues as { message?: string }).message}
             </p>
           )}
@@ -1059,10 +1059,10 @@ function handleSplitModeChange(mode: SplitMode) {
             </div>
           )}
           {uploader.error && (
-            <p className="mt-2 text-xs text-rose-600 dark:text-rose-400">{uploader.error}</p>
+            <p className="mt-2 text-xs text-danger">{uploader.error}</p>
           )}
           {stagedFiles.length > 0 && (
-            <p className="mt-2 text-xs text-stone-500 dark:text-stone-400">
+            <p className="mt-2 text-xs text-fg-muted">
               Ảnh sẽ được lưu kèm sau khi thêm khoản chi.
             </p>
           )}
@@ -1072,7 +1072,7 @@ function handleSplitModeChange(mode: SplitMode) {
           <button
             type="submit"
             disabled={participants.length === 0 || pending}
-            className="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-violet-600 px-4 text-sm font-semibold text-white transition hover:bg-violet-700 active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-stone-300 dark:disabled:bg-stone-700"
+            className="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-semibold text-white transition hover:bg-primary-hover active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-stone-300 dark:disabled:bg-stone-700"
           >
             {editingExpenseId ? <Check size={17} /> : <Plus size={17} />}
             {editingExpenseId
@@ -1089,7 +1089,7 @@ function handleSplitModeChange(mode: SplitMode) {
             <button
               type="button"
               onClick={cancelEditExpense}
-              className="inline-flex h-11 items-center justify-center gap-2 rounded-md border border-stone-300 bg-white px-4 text-sm font-medium text-stone-700 transition hover:bg-stone-50 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-200 dark:hover:bg-stone-800"
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-md border border-stone-300 bg-surface px-4 text-sm font-medium text-stone-700 transition hover:bg-surface-muted dark:border-stone-700 dark:text-stone-200"
             >
               Hủy sửa
             </button>
@@ -1119,8 +1119,8 @@ function handleSplitModeChange(mode: SplitMode) {
                   : "transition-shadow"
               } ${
                 isEditing
-                  ? "border-violet-500 bg-violet-50 dark:border-violet-500 dark:bg-violet-500/10"
-                  : "border-stone-200 dark:border-stone-800"
+                  ? "border-violet-500 bg-primary-soft dark:border-violet-500"
+                  : "border-border"
               }`}
             >
               <div className="flex items-start justify-between gap-3">
@@ -1153,7 +1153,7 @@ function handleSplitModeChange(mode: SplitMode) {
                         </span>
                       )}
                     </p>
-                    <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">
+                    <p className="mt-1 text-xs text-fg-muted">
                       {payer?.name || "Không rõ"} {expense.kind === "income" ? "nhận" : "trả"}, chia{" "}
                       {expense.splitParticipantIds.length} người
                       {SPLIT_MODE_BADGES[expense.splitMode] &&
@@ -1175,7 +1175,7 @@ function handleSplitModeChange(mode: SplitMode) {
                   <button
                     type="button"
                     onClick={() => (isEditing ? cancelEditExpense() : startEditExpense(expense))}
-                    className="inline-flex h-11 w-11 items-center justify-center rounded-md text-violet-700 transition hover:bg-violet-50 active:bg-violet-100 dark:text-violet-400 dark:hover:bg-violet-500/10 dark:active:bg-violet-500/20"
+                    className="inline-flex h-11 w-11 items-center justify-center rounded-md text-violet-700 transition hover:bg-primary-soft active:bg-violet-100 dark:text-violet-400 dark:active:bg-violet-500/20"
                     aria-label={`Sửa ${expense.title}`}
                   >
                     <Pencil size={16} />
@@ -1183,7 +1183,7 @@ function handleSplitModeChange(mode: SplitMode) {
                   <button
                     type="button"
                     onClick={() => onRemove(expense.id)}
-                    className="inline-flex h-11 w-11 items-center justify-center rounded-md text-rose-600 transition hover:bg-rose-50 active:bg-rose-100 dark:text-rose-400 dark:hover:bg-rose-500/10 dark:active:bg-rose-500/20"
+                    className="inline-flex h-11 w-11 items-center justify-center rounded-md text-danger transition hover:bg-danger-soft active:bg-rose-100 dark:active:bg-rose-500/20"
                     aria-label={`Xóa ${expense.title}`}
                   >
                     <Trash2 size={16} />

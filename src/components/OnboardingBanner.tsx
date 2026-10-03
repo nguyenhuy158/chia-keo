@@ -39,7 +39,7 @@ export function OnboardingBanner({ participantCount, expenseCount }: OnboardingB
                 className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 font-medium ${
                   step.done
                     ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300"
-                    : "bg-white text-violet-800 shadow-sm dark:bg-stone-900 dark:text-violet-200"
+                    : "bg-surface text-violet-800 shadow-sm dark:text-violet-200"
                 }`}
               >
                 {step.done ? <Check size={14} /> : <Icon size={14} />}

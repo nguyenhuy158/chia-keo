@@ -101,7 +101,7 @@ export function GameDashboard({
   return (
     <aside className="space-y-5">
       {showHeader && (
-        <section className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm dark:border-stone-800 dark:bg-stone-900">
+        <section className="rounded-lg border border-border bg-surface p-4 shadow-sm">
           <p className="text-sm font-medium text-violet-600 dark:text-violet-400">
             {code}
           </p>
@@ -119,7 +119,7 @@ export function GameDashboard({
 
       <CategoryBreakdownCard expenses={expenses} />
 
-      <section className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm dark:border-stone-800 dark:bg-stone-900">
+      <section className="rounded-lg border border-border bg-surface p-4 shadow-sm">
         <h3 className="text-lg font-semibold text-stone-950 dark:text-stone-50">
           Cân bằng
         </h3>
@@ -132,7 +132,7 @@ export function GameDashboard({
               return (
                 <div
                   key={row.participantId}
-                  className="rounded-md border border-stone-200 p-3 dark:border-stone-800"
+                  className="rounded-md border border-border p-3"
                 >
                   <div className="flex items-center justify-between gap-3">
                     <p className="min-w-0 truncate text-sm font-semibold text-stone-950 dark:text-stone-50">
@@ -140,7 +140,7 @@ export function GameDashboard({
                     </p>
                     <BalancePill value={row.balance} />
                   </div>
-                  <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-stone-500 dark:text-stone-400">
+                  <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-fg-muted">
                     <span>Đã trả: {formatMoney(row.paid)}</span>
                     <span>Phải chịu: {formatMoney(row.owed)}</span>
                   </div>
@@ -148,7 +148,7 @@ export function GameDashboard({
               );
             })
           ) : (
-            <p className="text-sm text-stone-500 dark:text-stone-400">
+            <p className="text-sm text-fg-muted">
               Chưa có người tham gia.
             </p>
           )}
@@ -156,7 +156,7 @@ export function GameDashboard({
       </section>
 
       {(canEditMode || settlementMode !== "off") && (
-        <section className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm dark:border-stone-800 dark:bg-stone-900">
+        <section className="rounded-lg border border-border bg-surface p-4 shadow-sm">
           <h3 className="text-lg font-semibold text-stone-950 dark:text-stone-50">
             {isHostMode && host ? `Gom về ${host.name}` : "Chuyển khoản tối ưu"}
           </h3>
@@ -184,13 +184,13 @@ export function GameDashboard({
 
           {settlementMode === "pick" && onSettlementHostChange && (
             <label className="mt-3 block">
-              <span className="text-xs font-medium text-stone-500 dark:text-stone-400">
+              <span className="text-xs font-medium text-fg-muted">
                 Người nhận tiền
               </span>
               <select
                 value={settlementHostId}
                 onChange={(event) => onSettlementHostChange(event.target.value)}
-                className="mt-1 h-11 w-full rounded-md border border-stone-300 bg-white px-2 text-sm text-stone-950 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-50"
+                className="mt-1 h-11 w-full rounded-md border border-stone-300 bg-surface px-2 text-sm text-stone-950 dark:border-stone-700 dark:text-stone-50"
               >
                 <option value="">Tự chọn (người ứng nhiều nhất)</option>
                 {participants.map((participant) => (
@@ -200,7 +200,7 @@ export function GameDashboard({
                 ))}
               </select>
               {settlementHostId && settlementHostId !== hostId && (
-                <span className="mt-1 block text-xs text-amber-600 dark:text-amber-400">
+                <span className="mt-1 block text-xs text-warning">
                   Người đã chọn không còn trong cuộc, đang tạm gom về{" "}
                   {host?.name || "người ứng nhiều nhất"}.
                 </span>
@@ -210,18 +210,18 @@ export function GameDashboard({
 
           <div className="mt-4 space-y-3">
             {settlementMode === "off" ? (
-              <p className="text-sm text-stone-500 dark:text-stone-400">
+              <p className="text-sm text-fg-muted">
                 Đang tắt. Bảng tổng kết và ảnh cũng sẽ không có phần chuyển
                 khoản.
               </p>
             ) : isHostMode ? (
               host && hostTransfers.length > 0 ? (
                 <>
-                  <div className="rounded-md border border-stone-200 p-3 dark:border-stone-800">
+                  <div className="rounded-md border border-border p-3">
                     <p className="text-sm font-semibold text-stone-950 dark:text-stone-50">
                       Chuyển cho {host.name}
                     </p>
-                    <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">
+                    <p className="mt-1 text-xs text-fg-muted">
                       Quét rồi tự nhập số tiền của mình
                     </p>
                     {qr.canBuild(host) && (
@@ -242,7 +242,7 @@ export function GameDashboard({
                     return (
                       <div
                         key={transfer.participantId}
-                        className="flex items-center justify-between gap-3 rounded-md border border-stone-200 p-3 dark:border-stone-800"
+                        className="flex items-center justify-between gap-3 rounded-md border border-border p-3"
                       >
                         <p className="min-w-0 truncate text-sm font-medium text-stone-950 dark:text-stone-50">
                           {transfer.toHost
@@ -285,7 +285,7 @@ export function GameDashboard({
                   })}
                 </>
               ) : (
-                <p className="text-sm text-stone-500 dark:text-stone-400">
+                <p className="text-sm text-fg-muted">
                   {transfers.length > 0
                     ? "Mọi người đã cân bằng, không còn ai nợ ai."
                     : "Thêm khoản chi để tính tiền."}
@@ -300,7 +300,7 @@ export function GameDashboard({
                 return (
                   <div
                     key={`${settlement.fromParticipantId}-${settlement.toParticipantId}-${settlement.amount}`}
-                    className="rounded-md border border-stone-200 p-3 dark:border-stone-800"
+                    className="rounded-md border border-border p-3"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
@@ -339,7 +339,7 @@ export function GameDashboard({
                 );
               })
             ) : (
-              <p className="text-sm text-stone-500 dark:text-stone-400">
+              <p className="text-sm text-fg-muted">
                 {transfers.length > 0
                   ? "Mọi người đã cân bằng, không còn ai nợ ai."
                   : "Thêm khoản chi để tính tiền."}
@@ -350,7 +350,7 @@ export function GameDashboard({
       )}
 
       {transfers.length > 0 && (
-        <section className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm dark:border-stone-800 dark:bg-stone-900">
+        <section className="rounded-lg border border-border bg-surface p-4 shadow-sm">
           <h3 className="text-lg font-semibold text-stone-950 dark:text-stone-50">
             Đã trả nợ
           </h3>
@@ -364,14 +364,14 @@ export function GameDashboard({
               return (
                 <div
                   key={transfer.id}
-                  className="flex items-center justify-between gap-3 rounded-md border border-stone-200 p-3 dark:border-stone-800"
+                  className="flex items-center justify-between gap-3 rounded-md border border-border p-3"
                 >
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium text-stone-950 dark:text-stone-50">
                       {from?.name || "Không rõ"} đã trả {to?.name || "Không rõ"}
                     </p>
                     {transfer.note && (
-                      <p className="mt-0.5 truncate text-xs text-stone-500 dark:text-stone-400">
+                      <p className="mt-0.5 truncate text-xs text-fg-muted">
                         {transfer.note}
                       </p>
                     )}
@@ -384,7 +384,7 @@ export function GameDashboard({
                       <button
                         type="button"
                         onClick={() => onRemoveTransfer(transfer.id)}
-                        className="inline-flex h-9 w-9 items-center justify-center rounded-md text-rose-600 transition hover:bg-rose-50 active:bg-rose-100 dark:text-rose-400 dark:hover:bg-rose-500/10 dark:active:bg-rose-500/20"
+                        className="inline-flex h-9 w-9 items-center justify-center rounded-md text-danger transition hover:bg-danger-soft active:bg-rose-100 dark:active:bg-rose-500/20"
                         aria-label="Xóa khoản trả nợ"
                       >
                         <Trash2 size={15} />

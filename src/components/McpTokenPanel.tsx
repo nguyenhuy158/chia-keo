@@ -118,7 +118,7 @@ function SecretCard({ secret, onDismiss }: { secret: string; onDismiss: () => vo
   const command = `claude mcp add --transport http chia-keo ${window.location.origin}/api/mcp --header "Authorization: Bearer ${secret}"`;
 
   return (
-    <div className="rounded-lg border border-amber-300 bg-amber-50 p-4 dark:border-amber-500/40 dark:bg-amber-500/10">
+    <div className="rounded-lg border border-amber-300 bg-warning-soft p-4 dark:border-amber-500/40">
       <div className="flex items-start gap-2">
         <TriangleAlert size={18} className="mt-0.5 shrink-0 text-amber-600 dark:text-amber-400" />
         <div className="min-w-0 flex-1">
@@ -131,7 +131,7 @@ function SecretCard({ secret, onDismiss }: { secret: string; onDismiss: () => vo
 
           <div className="mt-3 flex items-center gap-2">
             {/* break-all: token la mot "tu" 67 ky tu, phai cho xuong dong. */}
-            <code className="min-w-0 flex-1 break-all rounded-md border border-amber-300 bg-white px-2.5 py-2 text-xs text-stone-900 dark:border-amber-500/40 dark:bg-stone-900 dark:text-stone-100">
+            <code className="min-w-0 flex-1 break-all rounded-md border border-amber-300 bg-surface px-2.5 py-2 text-xs text-stone-900 dark:border-amber-500/40 dark:text-stone-100">
               {secret}
             </code>
             <CopyButton value={secret} label="token" />
@@ -141,7 +141,7 @@ function SecretCard({ secret, onDismiss }: { secret: string; onDismiss: () => vo
             Gắn vào Claude Code
           </p>
           <div className="mt-1.5 flex items-center gap-2">
-            <code className="min-w-0 flex-1 overflow-x-auto whitespace-pre rounded-md border border-amber-300 bg-white px-2.5 py-2 text-xs text-stone-900 dark:border-amber-500/40 dark:bg-stone-900 dark:text-stone-100">
+            <code className="min-w-0 flex-1 overflow-x-auto whitespace-pre rounded-md border border-amber-300 bg-surface px-2.5 py-2 text-xs text-stone-900 dark:border-amber-500/40 dark:text-stone-100">
               {command}
             </code>
             <CopyButton value={command} label="lệnh" />
@@ -150,7 +150,7 @@ function SecretCard({ secret, onDismiss }: { secret: string; onDismiss: () => vo
           <button
             type="button"
             onClick={onDismiss}
-            className="mt-3 inline-flex h-9 items-center rounded-md border border-amber-400 bg-white px-3 text-xs font-semibold text-amber-900 transition hover:bg-amber-100 dark:border-amber-500/40 dark:bg-stone-900 dark:text-amber-200 dark:hover:bg-stone-800"
+            className="mt-3 inline-flex h-9 items-center rounded-md border border-amber-400 bg-surface px-3 text-xs font-semibold text-amber-900 transition hover:bg-amber-100 dark:border-amber-500/40 dark:text-amber-200 dark:hover:bg-stone-800"
           >
             Tôi đã lưu token
           </button>
@@ -179,13 +179,13 @@ function TokenRow({ token }: { token: ApiMcpToken }) {
   }
 
   return (
-    <li className="rounded-md border border-stone-200 bg-white p-3 dark:border-stone-800 dark:bg-stone-900">
+    <li className="rounded-md border border-border bg-surface p-3">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="truncate text-sm font-semibold text-stone-950 dark:text-stone-50">
             {token.name}
           </p>
-          <code className="mt-0.5 block text-xs text-stone-500 dark:text-stone-400">
+          <code className="mt-0.5 block text-xs text-fg-muted">
             {token.tokenPrefix}…
           </code>
         </div>
@@ -202,7 +202,7 @@ function TokenRow({ token }: { token: ApiMcpToken }) {
               disabled={revokeToken.isPending}
               aria-label="Thu hồi token"
               title="Thu hồi"
-              className="inline-flex h-8 w-8 items-center justify-center rounded-md text-stone-400 transition hover:bg-rose-50 hover:text-rose-600 disabled:opacity-40 dark:text-stone-500 dark:hover:bg-rose-500/10 dark:hover:text-rose-400"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-md text-stone-400 transition hover:bg-danger-soft hover:text-danger disabled:opacity-40 dark:text-stone-500"
             >
               <Trash2 size={15} />
             </button>
@@ -222,7 +222,7 @@ function TokenRow({ token }: { token: ApiMcpToken }) {
         ))}
       </div>
 
-      <p className="mt-2 text-xs text-stone-500 dark:text-stone-400">
+      <p className="mt-2 text-xs text-fg-muted">
         Tạo {formatDateTime(token.createdAt)}
         {" · "}
         {token.lastUsedAt ? `dùng lần cuối ${formatDateTime(token.lastUsedAt)}` : "chưa dùng lần nào"}
@@ -271,7 +271,7 @@ function CreateTokenForm({ onCreated }: { onCreated: (secret: string) => void })
   return (
     <form
       onSubmit={handleSubmit}
-      className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm dark:border-stone-800 dark:bg-stone-900"
+      className="rounded-lg border border-border bg-surface p-4 shadow-sm"
     >
       <button
         type="button"
@@ -302,7 +302,7 @@ function CreateTokenForm({ onCreated }: { onCreated: (secret: string) => void })
           className="field mt-1.5 w-full"
         />
         {form.formState.errors.name && (
-          <p className="mt-1 text-xs text-rose-600 dark:text-rose-400">
+          <p className="mt-1 text-xs text-danger">
             {form.formState.errors.name.message}
           </p>
         )}
@@ -312,7 +312,7 @@ function CreateTokenForm({ onCreated }: { onCreated: (secret: string) => void })
           {MCP_SCOPES.map((scope) => (
             <label
               key={scope}
-              className="flex cursor-pointer items-start gap-2.5 rounded-md border border-stone-200 p-2 transition hover:bg-stone-50 dark:border-stone-800 dark:hover:bg-stone-800"
+              className="flex cursor-pointer items-start gap-2.5 rounded-md border border-border p-2 transition hover:bg-surface-muted"
             >
               <input
                 type="checkbox"
@@ -324,7 +324,7 @@ function CreateTokenForm({ onCreated }: { onCreated: (secret: string) => void })
                 <span className="block text-sm font-medium text-stone-900 dark:text-stone-100">
                   {SCOPE_INFO[scope].label}
                 </span>
-                <span className="mt-0.5 block text-xs text-stone-500 dark:text-stone-400">
+                <span className="mt-0.5 block text-xs text-fg-muted">
                   {SCOPE_INFO[scope].hint}
                 </span>
               </span>
@@ -332,7 +332,7 @@ function CreateTokenForm({ onCreated }: { onCreated: (secret: string) => void })
           ))}
         </div>
         {form.formState.errors.scopes && (
-          <p className="mt-1 text-xs text-rose-600 dark:text-rose-400">
+          <p className="mt-1 text-xs text-danger">
             {form.formState.errors.scopes.message}
           </p>
         )}
@@ -347,7 +347,7 @@ function CreateTokenForm({ onCreated }: { onCreated: (secret: string) => void })
               className={`inline-flex h-9 items-center rounded-full border px-3 text-xs font-medium transition ${
                 expiresInDays === option.value
                   ? "border-violet-600 bg-violet-50 text-violet-700 dark:border-violet-500 dark:bg-violet-500/15 dark:text-violet-300"
-                  : "border-stone-300 bg-white text-stone-600 hover:bg-stone-50 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-300 dark:hover:bg-stone-800"
+                  : "border-stone-300 bg-surface text-stone-600 hover:bg-surface-muted dark:border-stone-700 dark:text-stone-300"
               }`}
             >
               {option.label}
@@ -355,12 +355,12 @@ function CreateTokenForm({ onCreated }: { onCreated: (secret: string) => void })
           ))}
         </div>
 
-        {error && <p className="mt-3 text-xs text-rose-600 dark:text-rose-400">{error}</p>}
+        {error && <p className="mt-3 text-xs text-danger">{error}</p>}
 
         <button
           type="submit"
           disabled={createToken.isPending}
-          className="mt-3 inline-flex h-11 w-full items-center justify-center gap-2 rounded-md bg-violet-600 px-4 text-sm font-semibold text-white transition hover:bg-violet-700 active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-stone-300 dark:disabled:bg-stone-700"
+          className="mt-3 inline-flex h-11 w-full items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-semibold text-white transition hover:bg-primary-hover active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-stone-300 dark:disabled:bg-stone-700"
         >
           <KeyRound size={16} />
           {createToken.isPending ? "Đang tạo..." : "Tạo token"}
@@ -385,7 +385,7 @@ export function McpTokenPanel() {
 
   return (
     <div className="space-y-3">
-      <section className="rounded-lg border border-stone-200 bg-white px-4 py-3 shadow-sm dark:border-stone-800 dark:bg-stone-900">
+      <section className="rounded-lg border border-border bg-surface px-4 py-3 shadow-sm">
         <div className="flex items-center gap-2">
           <Plug size={17} className="shrink-0 text-violet-600 dark:text-violet-400" />
           <h2 className="text-sm font-semibold text-stone-950 dark:text-stone-50">
@@ -403,12 +403,12 @@ export function McpTokenPanel() {
       <div className="grid gap-3 lg:grid-cols-2">
         <CreateTokenForm onCreated={setSecret} />
 
-        <section className="flex min-h-0 flex-col rounded-lg border border-stone-200 bg-white p-4 shadow-sm dark:border-stone-800 dark:bg-stone-900">
+        <section className="flex min-h-0 flex-col rounded-lg border border-border bg-surface p-4 shadow-sm">
           <div className="mb-3 flex shrink-0 items-center justify-between gap-2">
             <h3 className="text-sm font-semibold text-stone-800 dark:text-stone-200">
               Token của tôi
             </h3>
-            <span className="tabular text-xs text-stone-500 dark:text-stone-400">
+            <span className="tabular text-xs text-fg-muted">
               {usedSlots}/{MAX_MCP_TOKENS_PER_USER} chưa thu hồi
             </span>
           </div>
@@ -419,11 +419,11 @@ export function McpTokenPanel() {
               <SkeletonCard />
             </div>
           ) : tokensQuery.isError ? (
-            <p className="py-4 text-sm text-rose-600 dark:text-rose-400">
+            <p className="py-4 text-sm text-danger">
               Không tải được danh sách token.
             </p>
           ) : tokens.length === 0 ? (
-            <p className="py-4 text-sm text-stone-500 dark:text-stone-400">
+            <p className="py-4 text-sm text-fg-muted">
               Chưa có token nào. Tạo một token rồi dán lệnh vào Claude Code.
             </p>
           ) : (

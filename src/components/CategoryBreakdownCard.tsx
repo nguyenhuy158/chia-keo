@@ -19,7 +19,7 @@ export function CategoryBreakdownCard({ expenses }: { expenses: ApiExpense[] }) 
   if (breakdown.rows.length === 0) return null;
 
   return (
-    <section className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm dark:border-stone-800 dark:bg-stone-900">
+    <section className="rounded-lg border border-border bg-surface p-4 shadow-sm">
       <div className="flex items-center gap-2">
         <PieChart size={18} className="text-violet-600 dark:text-violet-400" />
         <h3 className="text-lg font-semibold text-stone-950 dark:text-stone-50">
@@ -33,7 +33,7 @@ export function CategoryBreakdownCard({ expenses }: { expenses: ApiExpense[] }) 
             <div className="flex items-baseline justify-between gap-2 text-sm">
               <span className="truncate text-stone-700 dark:text-stone-300">
                 <span aria-hidden="true">{row.emoji}</span> {row.label}
-                <span className="ml-1 text-xs text-stone-500 dark:text-stone-400">
+                <span className="ml-1 text-xs text-fg-muted">
                   ({row.count})
                 </span>
               </span>
@@ -56,7 +56,7 @@ export function CategoryBreakdownCard({ expenses }: { expenses: ApiExpense[] }) 
         ))}
       </ul>
 
-      <p className="mt-3 text-xs text-stone-500 dark:text-stone-400">
+      <p className="mt-3 text-xs text-fg-muted">
         Tổng {formatMoney(breakdown.total)}, không tính khoản thu và trả nợ.
       </p>
     </section>

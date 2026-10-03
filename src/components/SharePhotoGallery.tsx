@@ -31,7 +31,7 @@ export function SharePhotoGallery({ token, expenses }: SharePhotoGalleryProps) {
   }
 
   return (
-    <section className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm dark:border-stone-800 dark:bg-stone-900">
+    <section className="rounded-lg border border-border bg-surface p-4 shadow-sm">
       <div className="mb-4 flex items-center gap-2">
         <Images size={18} className="text-sky-500" />
         <h2 className="text-sm font-semibold text-stone-950 dark:text-stone-50">

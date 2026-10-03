@@ -63,11 +63,11 @@ function EntryRow({
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-medium text-stone-950 dark:text-stone-50">
           {KIND_LABELS[entry.kind]}
-          <span className="ml-1 font-normal text-stone-500 dark:text-stone-400">
+          <span className="ml-1 font-normal text-fg-muted">
             · còn {entry.stockAfter}
           </span>
         </p>
-        <p className="truncate text-xs text-stone-500 dark:text-stone-400">
+        <p className="truncate text-xs text-fg-muted">
           {formatDateTime(entry.createdAt, { includeYear: false })}
           {entry.note && ` · ${entry.note}`}
         </p>
@@ -77,7 +77,7 @@ function EntryRow({
         onClick={onDelete}
         disabled={deleting}
         aria-label="Xóa lần ghi này"
-        className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-stone-300 text-stone-500 transition hover:bg-stone-50 disabled:opacity-50 dark:border-stone-700 dark:text-stone-400 dark:hover:bg-stone-800"
+        className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-stone-300 text-fg-muted transition hover:bg-surface-muted disabled:opacity-50 dark:border-stone-700"
       >
         <Trash2 size={15} />
       </button>
@@ -155,12 +155,12 @@ export function ShuttlesPage() {
         <h1 className="text-sm font-semibold text-stone-950 dark:text-stone-50">Kho cầu</h1>
       </div>
 
-      <section className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm dark:border-stone-800 dark:bg-stone-900">
+      <section className="rounded-lg border border-border bg-surface p-4 shadow-sm">
         {stockQuery.isPending ? (
           <LoadingState label="Đang đếm cầu..." />
         ) : (
           <>
-            <p className="text-center text-sm text-stone-500 dark:text-stone-400">
+            <p className="text-center text-sm text-fg-muted">
               Trong ống còn
             </p>
             <p
@@ -169,11 +169,11 @@ export function ShuttlesPage() {
             >
               {stock}
             </p>
-            <p className="text-center text-sm text-stone-500 dark:text-stone-400">trái cầu</p>
+            <p className="text-center text-sm text-fg-muted">trái cầu</p>
 
             <div className="mt-4 grid grid-cols-2 gap-3">
               <div>
-                <p className="mb-1.5 text-xs font-medium text-stone-500 dark:text-stone-400">
+                <p className="mb-1.5 text-xs font-medium text-fg-muted">
                   Đã dùng
                 </p>
                 <div className="grid grid-cols-4 gap-1.5">
@@ -193,7 +193,7 @@ export function ShuttlesPage() {
                 </div>
               </div>
               <div>
-                <p className="mb-1.5 text-xs font-medium text-stone-500 dark:text-stone-400">
+                <p className="mb-1.5 text-xs font-medium text-fg-muted">
                   Mua thêm
                 </p>
                 <div className="grid grid-cols-4 gap-1.5">
@@ -232,7 +232,7 @@ export function ShuttlesPage() {
               <button
                 type="submit"
                 disabled={pending || countDraft === ""}
-                className="inline-flex h-11 items-center gap-1.5 rounded-md border border-stone-300 bg-white px-3 text-sm font-medium text-stone-700 transition hover:bg-stone-50 disabled:opacity-50 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-200 dark:hover:bg-stone-800"
+                className="inline-flex h-11 items-center gap-1.5 rounded-md border border-stone-300 bg-surface px-3 text-sm font-medium text-stone-700 transition hover:bg-surface-muted disabled:opacity-50 dark:border-stone-700 dark:text-stone-200"
               >
                 <Check size={15} />
                 Chốt lại
@@ -251,7 +251,7 @@ export function ShuttlesPage() {
         )}
       </section>
 
-      <section className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm dark:border-stone-800 dark:bg-stone-900">
+      <section className="rounded-lg border border-border bg-surface p-4 shadow-sm">
         <h2 className="text-sm font-semibold text-stone-950 dark:text-stone-50">Lịch sử</h2>
         {stockQuery.isPending ? (
           <div className="divide-y divide-stone-100 dark:divide-stone-800">
@@ -260,7 +260,7 @@ export function ShuttlesPage() {
             <SkeletonListRow />
           </div>
         ) : entries.length === 0 ? (
-          <p className="mt-2 text-sm text-stone-500 dark:text-stone-400">
+          <p className="mt-2 text-sm text-fg-muted">
             Chưa ghi gì. Bấm "Chốt lại" để nhập số cầu đang có trong ống.
           </p>
         ) : (

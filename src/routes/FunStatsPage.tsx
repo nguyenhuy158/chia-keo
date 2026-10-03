@@ -27,13 +27,13 @@ function StatCard({
   detail?: string;
 }) {
   return (
-    <div className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm dark:border-stone-800 dark:bg-stone-900">
+    <div className="rounded-lg border border-border bg-surface p-4 shadow-sm">
       <div className="flex items-center gap-2 text-violet-600 dark:text-violet-400">
         {icon}
-        <span className="text-sm font-medium text-stone-500 dark:text-stone-400">{label}</span>
+        <span className="text-sm font-medium text-fg-muted">{label}</span>
       </div>
       <p className="mt-2 truncate text-2xl font-bold text-stone-950 dark:text-stone-50">{value}</p>
-      {detail && <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">{detail}</p>}
+      {detail && <p className="mt-1 text-sm text-fg-muted">{detail}</p>}
     </div>
   );
 }
@@ -75,7 +75,7 @@ export function FunStatsPage() {
         <PartyPopper className="text-violet-600 dark:text-violet-400" size={22} />
         <h1 className="text-xl font-bold text-stone-950 dark:text-stone-50">Thống kê vui</h1>
       </div>
-      <p className="-mt-3 text-sm text-stone-500 dark:text-stone-400">
+      <p className="-mt-3 text-sm text-fg-muted">
         Gộp {stats.gameCount} cuộc chơi gần nhất. Chỉ để xem cho vui, không dùng để tất toán.
       </p>
 

@@ -182,7 +182,7 @@ export function Dropdown({
 
           <ul role="listbox" aria-label={ariaLabel} className="max-h-60 overflow-auto p-1">
             {visible.length === 0 ? (
-              <li className="px-3 py-2.5 text-sm text-stone-500 dark:text-stone-400">
+              <li className="px-3 py-2.5 text-sm text-fg-muted">
                 Không tìm thấy
               </li>
             ) : (

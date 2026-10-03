@@ -1,0 +1,214 @@
+/* ===========================================================================
+   ui-kit design tokens (ban sao tu personal-projects/ui-kit/src/styles/
+   tokens.css). Nguon chuan nam o ui-kit; ban nay chi khac GIA TRI o muc 1.
+   File CSS goc cua app import file nay thay cho `@import "tailwindcss"`.
+
+   Hop dong:
+   - Ten bien `--ui-*` va ten utility trong `@theme inline` la co dinh. Them /
+     doi ten / xoa token thi sua o day truoc roi dong bo sang cac app.
+   - Project chi duoc doi GIA TRI trong `:root` (sang) va `.dark` (toi), vi du
+     hue thuong hieu. Dark mode theo class `.dark` tren <html>.
+   - Component chi dung class ngu nghia (bg-surface, text-fg-muted,
+     bg-primary...), khong hardcode mau palette (violet-600, stone-200...).
+=========================================================================== */
+
+@import "tailwindcss";
+
+/* Dark theo class .dark tren <html> de toggle thu cong duoc (khong phu thuoc OS). */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* May co chuot that. Dung de thu nho chu/chieu cao control tren desktop:
+   iPad rong hon 640px nhung Safari van tu zoom neu chu duoi 16px, nen chi dua
+   vao breakpoint la khong du. */
+@custom-variant pointer-fine (@media (hover: hover) and (pointer: fine));
+
+/* ---------------------------------------------------------------------------
+   1. Bien mau. Ten bien giu dung ui-kit; GIA TRI la bang mau rieng cua
+   chia-keo (tim violet + xam am stone cua Tailwind), co y khac ui-kit:
+   moi gia tri bang DUNG mot mau palette Tailwind v4 dang dung trong app
+   (ghi o cuoi dong), nen thay class palette bang class token khong doi mau.
+   --ui-bg / --ui-fg / --ui-ring lay tu style goc cu cua app (hex).
+--------------------------------------------------------------------------- */
+:root {
+  color-scheme: light;
+
+  /* Nen va chu */
+  --ui-bg: #faf5ff; /* trung meta theme-color */
+  --ui-surface: #fff; /* white */
+  --ui-surface-muted: oklch(98.5% 0.001 106.423); /* stone-50 */
+  --ui-border: oklch(92.3% 0.003 48.717); /* stone-200 */
+  --ui-fg: #1d1d1f;
+  --ui-fg-muted: oklch(55.3% 0.013 58.071); /* stone-500 */
+
+  /* Mau thuong hieu: nut chinh giu violet-600 o ca hai che do */
+  --ui-primary: oklch(54.1% 0.281 293.009); /* violet-600 */
+  --ui-primary-hover: oklch(49.1% 0.27 292.581); /* violet-700 */
+  --ui-primary-fg: #fff; /* white */
+  --ui-primary-soft: oklch(96.9% 0.016 293.756); /* violet-50 */
+
+  /* Mau trang thai */
+  --ui-success: oklch(59.6% 0.145 163.225); /* emerald-600 */
+  --ui-success-soft: oklch(97.9% 0.021 166.113); /* emerald-50 */
+  --ui-warning: oklch(66.6% 0.179 58.318); /* amber-600 */
+  --ui-warning-soft: oklch(98.7% 0.022 95.277); /* amber-50 */
+  --ui-danger: oklch(58.6% 0.253 17.585); /* rose-600 */
+  --ui-danger-soft: oklch(96.9% 0.015 12.422); /* rose-50 */
+
+  --ui-ring: #ede9fe;
+  --ui-radius: 0.5rem;
+}
+
+.dark {
+  color-scheme: dark;
+
+  --ui-bg: #0c0a09;
+  --ui-surface: oklch(21.6% 0.006 56.043); /* stone-900 */
+  --ui-surface-muted: oklch(26.8% 0.007 34.298); /* stone-800 */
+  --ui-border: oklch(26.8% 0.007 34.298); /* stone-800 */
+  --ui-fg: #e7e5e4;
+  --ui-fg-muted: oklch(70.9% 0.01 56.259); /* stone-400 */
+
+  --ui-primary: oklch(54.1% 0.281 293.009); /* violet-600 */
+  --ui-primary-hover: oklch(49.1% 0.27 292.581); /* violet-700 */
+  --ui-primary-fg: #fff; /* white */
+  --ui-primary-soft: oklch(60.6% 0.25 292.717 / 10%); /* violet-500/10 */
+
+  --ui-success: oklch(76.5% 0.177 163.223); /* emerald-400 */
+  --ui-success-soft: oklch(69.6% 0.17 162.48 / 15%); /* emerald-500/15 */
+  --ui-warning: oklch(82.8% 0.189 84.429); /* amber-400 */
+  --ui-warning-soft: oklch(76.9% 0.188 70.08 / 10%); /* amber-500/10 */
+  --ui-danger: oklch(71.2% 0.194 13.428); /* rose-400 */
+  --ui-danger-soft: oklch(64.5% 0.246 16.439 / 10%); /* rose-500/10 */
+
+  --ui-ring: rgba(124, 58, 237, 0.35);
+}
+
+/* ---------------------------------------------------------------------------
+   2. Dang ky bien thanh utility cua Tailwind: bg-surface, text-fg-muted,
+   border-border, ring-ring, rounded-ui...
+   `inline` de Tailwind tra thang var(--ui-*) vao class, nho vay .dark doi mau
+   ma khong can sinh lai utility.
+--------------------------------------------------------------------------- */
+@theme inline {
+  --color-bg: var(--ui-bg);
+  --color-surface: var(--ui-surface);
+  --color-surface-muted: var(--ui-surface-muted);
+  --color-border: var(--ui-border);
+  --color-fg: var(--ui-fg);
+  --color-fg-muted: var(--ui-fg-muted);
+
+  --color-primary: var(--ui-primary);
+  --color-primary-hover: var(--ui-primary-hover);
+  --color-primary-fg: var(--ui-primary-fg);
+  --color-primary-soft: var(--ui-primary-soft);
+
+  --color-success: var(--ui-success);
+  --color-success-soft: var(--ui-success-soft);
+  --color-warning: var(--ui-warning);
+  --color-warning-soft: var(--ui-warning-soft);
+  --color-danger: var(--ui-danger);
+  --color-danger-soft: var(--ui-danger-soft);
+
+  --color-ring: var(--ui-ring);
+  --radius-ui: var(--ui-radius);
+}
+
+/* ---------------------------------------------------------------------------
+   3. Base
+--------------------------------------------------------------------------- */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100dvh;
+  background: var(--ui-bg);
+  color: var(--ui-fg);
+  font-family:
+    "Be Vietnam Pro", Inter, ui-sans-serif, system-ui, -apple-system,
+    BlinkMacSystemFont, "Segoe UI", sans-serif;
+  text-rendering: optimizeLegibility;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  touch-action: pan-x pan-y;
+}
+
+/* Co tinh KHONG boc @layer: `font: inherit` phai thang moi utility co chu text-
+   va font- tren control, nho vay input luon >= 16px va iOS Safari khong tu zoom
+   khi focus. */
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button,
+a,
+[role="button"] {
+  touch-action: manipulation;
+}
+
+/* So thang cot, dung cho bang tien/so lieu. */
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Padding an toan cho notch va home indicator. */
+.safe-top {
+  padding-top: calc(0.5rem + env(safe-area-inset-top));
+}
+
+.safe-bottom {
+  padding-bottom: calc(0.5rem + env(safe-area-inset-bottom));
+}
+
+/* ---------------------------------------------------------------------------
+   4. Animation dung chung cho Modal / Sheet / Toast
+--------------------------------------------------------------------------- */
+@keyframes ui-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes ui-zoom-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}
+
+@keyframes ui-slide-up {
+  from {
+    transform: translateY(100%);
+  }
+}
+
+@keyframes ui-slide-down {
+  from {
+    opacity: 0;
+    transform: translateY(-0.5rem);
+  }
+}
+
+@keyframes ui-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

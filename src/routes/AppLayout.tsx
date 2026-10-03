@@ -53,14 +53,14 @@ export function AppLayout() {
 
   return (
     <MobileShellContext.Provider value={{ openGames: () => setGamesOpen(true) }}>
-      <header className="sticky top-0 z-30 border-b border-stone-200 bg-white dark:border-stone-800 dark:bg-stone-900">
+      <header className="sticky top-0 z-30 border-b border-border bg-surface">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 px-4 py-3 sm:gap-3 sm:px-5 sm:py-4">
           <div className="flex min-w-0 items-center gap-2">
             <button
               type="button"
               onClick={() => setGamesOpen(true)}
               aria-label="Danh sách cuộc chơi"
-              className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-stone-300 text-stone-700 transition hover:bg-stone-50 active:bg-stone-100 dark:border-stone-700 dark:text-stone-200 dark:hover:bg-stone-800 dark:active:bg-stone-700 lg:hidden"
+              className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-stone-300 text-stone-700 transition hover:bg-surface-muted active:bg-stone-100 dark:border-stone-700 dark:text-stone-200 dark:active:bg-stone-700 lg:hidden"
             >
               <Menu size={20} />
             </button>
@@ -125,7 +125,7 @@ export function AppLayout() {
             <button
               type="button"
               onClick={handleLogout}
-              className="inline-flex h-11 items-center gap-2 rounded-md border border-stone-300 bg-white px-2 text-sm font-medium text-stone-700 transition hover:bg-stone-50 active:bg-stone-100 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-200 dark:hover:bg-stone-800 dark:active:bg-stone-700 sm:px-3"
+              className="inline-flex h-11 items-center gap-2 rounded-md border border-stone-300 bg-surface px-2 text-sm font-medium text-stone-700 transition hover:bg-surface-muted active:bg-stone-100 dark:border-stone-700 dark:text-stone-200 dark:active:bg-stone-700 sm:px-3"
             >
               <LogOut size={16} />
               <span className="hidden sm:inline">Thoát</span>

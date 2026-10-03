@@ -47,15 +47,15 @@ function ExpenseMatrix({ participants, expenses, summary }: ExpenseMatrixProps) 
   const visibleExpenses = expenses.filter((expense) => expense.kind !== "transfer");
 
   return (
-    <section className="min-h-0 overflow-hidden rounded-lg border border-stone-200 bg-white shadow-sm dark:border-stone-800 dark:bg-stone-900">
-      <div className="flex items-center justify-between gap-3 border-b border-stone-200 px-3 py-3 dark:border-stone-800">
+    <section className="min-h-0 overflow-hidden rounded-lg border border-border bg-surface shadow-sm">
+      <div className="flex items-center justify-between gap-3 border-b border-border px-3 py-3">
         <div>
           <h2 className="text-sm font-semibold text-stone-950 dark:text-stone-50">Bảng chia</h2>
-          <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">
+          <p className="mt-1 text-xs text-fg-muted">
             Ô vàng là phần tiền từng người trong khoản chi.
           </p>
         </div>
-        <span className="shrink-0 text-xs font-semibold text-stone-500 tabular dark:text-stone-400">
+        <span className="shrink-0 text-xs font-semibold text-fg-muted tabular">
           {visibleExpenses.length} khoản
         </span>
       </div>
@@ -67,7 +67,7 @@ function ExpenseMatrix({ participants, expenses, summary }: ExpenseMatrixProps) 
           return (
             <article
               key={expense.id}
-              className="rounded-md border border-stone-200 bg-white p-3 dark:border-stone-800 dark:bg-stone-900"
+              className="rounded-md border border-border bg-surface p-3"
             >
               <div className="flex items-start justify-between gap-3">
                 <h3 className="min-w-0 text-sm font-semibold text-stone-950 dark:text-stone-50">
@@ -80,13 +80,13 @@ function ExpenseMatrix({ participants, expenses, summary }: ExpenseMatrixProps) 
 
               <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
                 <div className="rounded-md bg-stone-50 px-2 py-2 dark:bg-stone-950">
-                  <p className="font-medium text-stone-500 dark:text-stone-400">Người</p>
+                  <p className="font-medium text-fg-muted">Người</p>
                   <p className="mt-1 font-semibold tabular text-stone-950 dark:text-stone-50">
                     {splitCount}
                   </p>
                 </div>
                 <div className="rounded-md bg-stone-50 px-2 py-2 dark:bg-stone-950">
-                  <p className="font-medium text-stone-500 dark:text-stone-400">/người</p>
+                  <p className="font-medium text-fg-muted">/người</p>
                   <p className="mt-1 font-semibold tabular text-stone-950 dark:text-stone-50">
                     {shareAmount === null ? "Tùy chỉnh" : formatPlainMoney(shareAmount)}
                   </p>
@@ -173,7 +173,7 @@ function ExpenseMatrix({ participants, expenses, summary }: ExpenseMatrixProps) 
                     style={{ minWidth: 112 }}
                   >
                     <span className="block truncate">{participant.name}</span>
-                    <span className="mt-1 block text-xs font-medium text-stone-500 tabular dark:text-stone-400">
+                    <span className="mt-1 block text-xs font-medium text-fg-muted tabular">
                       {formatMoney(balance?.owed || 0)}
                     </span>
                   </th>
@@ -188,13 +188,13 @@ function ExpenseMatrix({ participants, expenses, summary }: ExpenseMatrixProps) 
               return (
                 <tr key={expense.id}>
                   <td
-                    className="sticky left-0 z-20 max-w-0 border-b border-r border-dashed border-stone-300 bg-white px-3 py-2 font-medium text-stone-950 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-50"
+                    className="sticky left-0 z-20 max-w-0 border-b border-r border-dashed border-stone-300 bg-surface px-3 py-2 font-medium text-stone-950 dark:border-stone-700 dark:text-stone-50"
                     style={{ width: STICKY_DESCRIPTION_WIDTH, minWidth: STICKY_DESCRIPTION_WIDTH }}
                   >
                     <span className="block truncate">{expense.title}</span>
                   </td>
                   <td
-                    className="sticky z-10 border-b border-r border-dashed border-stone-300 bg-white px-2 py-2 text-right text-stone-950 tabular dark:border-stone-700 dark:bg-stone-900 dark:text-stone-50"
+                    className="sticky z-10 border-b border-r border-dashed border-stone-300 bg-surface px-2 py-2 text-right text-stone-950 tabular dark:border-stone-700 dark:text-stone-50"
                     style={{
                       left: STICKY_DESCRIPTION_WIDTH,
                       width: STICKY_TOTAL_WIDTH,
@@ -204,7 +204,7 @@ function ExpenseMatrix({ participants, expenses, summary }: ExpenseMatrixProps) 
                     {formatPlainMoney(expense.amount)}
                   </td>
                   <td
-                    className="sticky z-10 border-b border-r border-dashed border-stone-300 bg-white px-2 py-2 text-right text-stone-950 tabular dark:border-stone-700 dark:bg-stone-900 dark:text-stone-50"
+                    className="sticky z-10 border-b border-r border-dashed border-stone-300 bg-surface px-2 py-2 text-right text-stone-950 tabular dark:border-stone-700 dark:text-stone-50"
                     style={{
                       left: STICKY_DESCRIPTION_WIDTH + STICKY_TOTAL_WIDTH,
                       width: STICKY_COUNT_WIDTH,
@@ -214,7 +214,7 @@ function ExpenseMatrix({ participants, expenses, summary }: ExpenseMatrixProps) 
                     {splitCount}
                   </td>
                   <td
-                    className="sticky z-10 border-b border-r border-dashed border-stone-300 bg-white px-2 py-2 text-right text-stone-950 tabular dark:border-stone-700 dark:bg-stone-900 dark:text-stone-50"
+                    className="sticky z-10 border-b border-r border-dashed border-stone-300 bg-surface px-2 py-2 text-right text-stone-950 tabular dark:border-stone-700 dark:text-stone-50"
                     style={{
                       left: STICKY_DESCRIPTION_WIDTH + STICKY_TOTAL_WIDTH + STICKY_COUNT_WIDTH,
                       width: STICKY_SHARE_WIDTH,
@@ -300,7 +300,7 @@ export function SharePage() {
             </h1>
             {/* Nguoi xem link chi doc trang thai: da dong la "chia xong roi". */}
             {view.closedAt !== null && (
-              <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400">
+              <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-success-soft px-2 py-0.5 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
                 <CircleCheckBig size={12} />
                 Đã đóng
               </span>
@@ -366,7 +366,7 @@ export function SharePage() {
               expenses={view.expenses}
             />
 
-            <section className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm dark:border-stone-800 dark:bg-stone-900">
+            <section className="rounded-lg border border-border bg-surface p-4 shadow-sm">
               <h3 className="text-lg font-semibold text-stone-950 dark:text-stone-50">
                 Các khoản chi
               </h3>
@@ -379,14 +379,14 @@ export function SharePage() {
                     return (
                       <div
                         key={expense.id}
-                        className="rounded-md border border-stone-200 p-3 dark:border-stone-800"
+                        className="rounded-md border border-border p-3"
                       >
                         <div className="flex items-start justify-between gap-3">
                           <div className="min-w-0">
                             <p className="truncate text-sm font-semibold text-stone-950 dark:text-stone-50">
                               {expense.title}
                             </p>
-                            <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">
+                            <p className="mt-1 text-xs text-fg-muted">
                               {payer?.name || "Không rõ"} trả, chia{" "}
                               {expense.splitParticipantIds.length} người
                             </p>
@@ -399,7 +399,7 @@ export function SharePage() {
                     );
                   })
                 ) : (
-                  <p className="text-sm text-stone-500 dark:text-stone-400">
+                  <p className="text-sm text-fg-muted">
                     Chưa có khoản chi nào.
                   </p>
                 )}

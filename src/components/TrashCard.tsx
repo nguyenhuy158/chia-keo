@@ -59,7 +59,7 @@ export function TrashCard() {
   }
 
   return (
-    <section className="rounded-lg border border-stone-200 bg-white p-3 shadow-sm dark:border-stone-800 dark:bg-stone-900">
+    <section className="rounded-lg border border-border bg-surface p-3 shadow-sm">
       <div className="flex items-center justify-between gap-2 px-1">
         <div className="flex items-center gap-2 text-sm font-semibold text-stone-800 dark:text-stone-200">
           <Trash2 size={16} />
@@ -69,7 +69,7 @@ export function TrashCard() {
           type="button"
           onClick={() => setOpen((current) => !current)}
           aria-expanded={open}
-          className="rounded-md px-2 py-1 text-xs font-semibold text-violet-700 transition hover:bg-violet-50 dark:text-violet-300 dark:hover:bg-violet-500/10"
+          className="rounded-md px-2 py-1 text-xs font-semibold text-violet-700 transition hover:bg-primary-soft dark:text-violet-300"
         >
           {open ? "Ẩn" : "Xem"}
         </button>
@@ -83,7 +83,7 @@ export function TrashCard() {
               <SkeletonCard />
             </div>
           ) : games.length === 0 ? (
-            <p className="px-1 py-3 text-sm text-stone-500 dark:text-stone-400">
+            <p className="px-1 py-3 text-sm text-fg-muted">
               Trống. Cuộc chơi đã xóa nằm ở đây {TRASH_RETENTION_DAYS} ngày.
             </p>
           ) : (
@@ -91,12 +91,12 @@ export function TrashCard() {
               {games.map((game) => (
                 <div
                   key={game.id}
-                  className="rounded-md border border-stone-200 p-2.5 dark:border-stone-800"
+                  className="rounded-md border border-border p-2.5"
                 >
                   <p className="truncate text-sm font-medium text-stone-900 dark:text-stone-100">
                     {game.name}
                   </p>
-                  <p className="mt-0.5 text-xs text-stone-500 dark:text-stone-400">
+                  <p className="mt-0.5 text-xs text-fg-muted">
                     {game.participantCount} người, {game.expenseCount} khoản · còn{" "}
                     {daysLeft(game.deletedAt)} ngày
                   </p>
@@ -105,7 +105,7 @@ export function TrashCard() {
                       type="button"
                       onClick={() => handleRestore(game)}
                       disabled={pending}
-                      className="inline-flex h-11 flex-1 items-center justify-center gap-1.5 rounded-md border border-stone-300 text-xs font-semibold text-stone-700 transition hover:bg-stone-50 disabled:opacity-50 dark:border-stone-700 dark:text-stone-200 dark:hover:bg-stone-800"
+                      className="inline-flex h-11 flex-1 items-center justify-center gap-1.5 rounded-md border border-stone-300 text-xs font-semibold text-stone-700 transition hover:bg-surface-muted disabled:opacity-50 dark:border-stone-700 dark:text-stone-200"
                     >
                       <RotateCcw size={13} />
                       Phục hồi
@@ -114,7 +114,7 @@ export function TrashCard() {
                       type="button"
                       onClick={() => handlePurge(game)}
                       disabled={pending}
-                      className="inline-flex h-11 items-center justify-center gap-1.5 rounded-md border border-rose-200 px-2.5 text-xs font-semibold text-rose-600 transition hover:bg-rose-50 disabled:opacity-50 dark:border-rose-500/40 dark:text-rose-400 dark:hover:bg-rose-500/10"
+                      className="inline-flex h-11 items-center justify-center gap-1.5 rounded-md border border-rose-200 px-2.5 text-xs font-semibold text-danger transition hover:bg-danger-soft disabled:opacity-50 dark:border-rose-500/40"
                     >
                       <Trash2 size={13} />
                       Xóa hẳn

@@ -102,7 +102,7 @@ export function SwipeToDelete({ children, onDelete, deleteLabel = "Xóa" }: Swip
         // Nen duc BAT BUOC: nut xoa do nam duoi lop nay (absolute inset-y-0
         // right-0). Thieu nen thi mau do xuyen qua, de len ten va nuot hai nut
         // sua/xoa cua tung dong ngay ca khi chua vuot.
-        className="relative bg-white dark:bg-stone-900"
+        className="relative bg-surface"
       >
         {children}
         {open && (

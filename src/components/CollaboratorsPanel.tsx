@@ -92,11 +92,11 @@ export function CollaboratorsPanel({ gameId, isOwner, collaborators }: Collabora
   }
 
   return (
-    <section className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm dark:border-stone-800 dark:bg-stone-900">
+    <section className="rounded-lg border border-border bg-surface p-4 shadow-sm">
       <h3 className="text-lg font-semibold text-stone-950 dark:text-stone-50">
         Chia sẻ cuộc chơi
       </h3>
-      <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">
+      <p className="mt-1 text-xs text-fg-muted">
         Người được chia sẻ sửa được mọi thứ, trừ xóa cuộc chơi. Email chưa từng đăng nhập vẫn
         chia sẻ được — họ đăng nhập vào là thấy ngay.
       </p>
@@ -121,14 +121,14 @@ export function CollaboratorsPanel({ gameId, isOwner, collaborators }: Collabora
               type="button"
               onClick={handleAdd}
               disabled={addCollaborator.isPending || !email.trim()}
-              className="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-violet-600 px-3 text-sm font-medium text-white transition hover:bg-violet-700 disabled:opacity-50"
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-primary px-3 text-sm font-medium text-white transition hover:bg-primary-hover disabled:opacity-50"
             >
               <UserPlus size={15} />
               Chia sẻ
             </button>
 
             {dropdownOpen && filteredCandidates.length > 0 && (
-              <ul className="absolute inset-x-0 top-full z-10 mt-1 max-h-60 overflow-y-auto rounded-md border border-stone-200 bg-white py-1 shadow-lg dark:border-stone-700 dark:bg-stone-900">
+              <ul className="absolute inset-x-0 top-full z-10 mt-1 max-h-60 overflow-y-auto rounded-md border border-stone-200 bg-surface py-1 shadow-lg dark:border-stone-700">
                 {filteredCandidates.map((candidate) => (
                   <li key={candidate.id}>
                     <button
@@ -145,7 +145,7 @@ export function CollaboratorsPanel({ gameId, isOwner, collaborators }: Collabora
                           {candidate.name || candidate.email}
                         </p>
                         {candidate.name && (
-                          <p className="truncate text-xs text-stone-500 dark:text-stone-400">
+                          <p className="truncate text-xs text-fg-muted">
                             {candidate.email}
                           </p>
                         )}
@@ -156,7 +156,7 @@ export function CollaboratorsPanel({ gameId, isOwner, collaborators }: Collabora
               </ul>
             )}
           </div>
-          {error && <p className="mt-2 text-xs text-rose-600 dark:text-rose-400">{error}</p>}
+          {error && <p className="mt-2 text-xs text-danger">{error}</p>}
         </div>
       )}
 
@@ -165,7 +165,7 @@ export function CollaboratorsPanel({ gameId, isOwner, collaborators }: Collabora
           {collaborators.map((collaborator) => (
             <li
               key={collaborator.userId}
-              className="flex items-center justify-between gap-3 rounded-md border border-stone-200 p-2 dark:border-stone-800"
+              className="flex items-center justify-between gap-3 rounded-md border border-border p-2"
             >
               <div className="flex min-w-0 items-center gap-2">
                 <Avatar name={collaborator.name || collaborator.email} size={28} />
@@ -175,12 +175,12 @@ export function CollaboratorsPanel({ gameId, isOwner, collaborators }: Collabora
                   </p>
                   {collaborator.userId ? (
                     collaborator.name && (
-                      <p className="truncate text-xs text-stone-500 dark:text-stone-400">
+                      <p className="truncate text-xs text-fg-muted">
                         {collaborator.email}
                       </p>
                     )
                   ) : (
-                    <p className="flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400">
+                    <p className="flex items-center gap-1 text-xs text-warning">
                       <Clock size={11} />
                       Chờ đăng nhập
                     </p>
@@ -192,7 +192,7 @@ export function CollaboratorsPanel({ gameId, isOwner, collaborators }: Collabora
                   type="button"
                   onClick={() => handleRemove(collaborator)}
                   disabled={removeCollaborator.isPending || removePendingCollaborator.isPending}
-                  className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-rose-600 transition hover:bg-rose-50 active:bg-rose-100 dark:text-rose-400 dark:hover:bg-rose-500/10 dark:active:bg-rose-500/20"
+                  className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-danger transition hover:bg-danger-soft active:bg-rose-100 dark:active:bg-rose-500/20"
                   aria-label={`Bỏ chia sẻ với ${collaborator.name || collaborator.email}`}
                 >
                   <UserMinus size={15} />

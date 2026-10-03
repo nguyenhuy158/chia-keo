@@ -75,7 +75,7 @@ function DraftForm({
         <button
           type="submit"
           disabled={pending || draft.name.trim() === ""}
-          className="inline-flex h-10 flex-1 items-center justify-center gap-1.5 rounded-md bg-violet-600 px-3 text-sm font-semibold text-white transition hover:bg-violet-700 active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-stone-300 dark:disabled:bg-stone-700"
+          className="inline-flex h-10 flex-1 items-center justify-center gap-1.5 rounded-md bg-primary px-3 text-sm font-semibold text-white transition hover:bg-primary-hover active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-stone-300 dark:disabled:bg-stone-700"
         >
           <Check size={15} />
           {submitLabel}
@@ -85,7 +85,7 @@ function DraftForm({
             type="button"
             onClick={onCancel}
             disabled={pending}
-            className="inline-flex h-10 items-center justify-center gap-1.5 rounded-md border border-stone-300 px-3 text-sm font-medium text-stone-700 transition hover:bg-stone-50 dark:border-stone-700 dark:text-stone-200 dark:hover:bg-stone-800"
+            className="inline-flex h-10 items-center justify-center gap-1.5 rounded-md border border-stone-300 px-3 text-sm font-medium text-stone-700 transition hover:bg-surface-muted dark:border-stone-700 dark:text-stone-200"
           >
             <X size={15} />
             Hủy
@@ -115,7 +115,7 @@ function ContactRow({
           <p className="truncate text-sm font-medium text-stone-900 dark:text-stone-100">
             {contact.name}
           </p>
-          <p className="mt-0.5 truncate text-xs text-stone-500 dark:text-stone-400">
+          <p className="mt-0.5 truncate text-xs text-fg-muted">
             {/* Khong ro ngan hang thi chi hien so tai khoan. Truoc day fallback
                 ra "?" nen dong nao thieu bankId cung hien "? · 0123..." — trong
                 nhu du lieu hong chu khong phai thieu mot truong. */}
@@ -132,7 +132,7 @@ function ContactRow({
           onClick={onEdit}
           disabled={pending}
           aria-label={`Sửa ${contact.name}`}
-          className="inline-flex h-11 w-11 items-center justify-center rounded-md text-stone-500 transition hover:bg-stone-100 hover:text-stone-800 disabled:opacity-40 dark:text-stone-400 dark:hover:bg-stone-800 dark:hover:text-stone-100"
+          className="inline-flex h-11 w-11 items-center justify-center rounded-md text-fg-muted transition hover:bg-stone-100 hover:text-stone-800 disabled:opacity-40 dark:hover:bg-stone-800 dark:hover:text-stone-100"
         >
           <Pencil size={14} />
         </button>
@@ -144,7 +144,7 @@ function ContactRow({
             onClick={onDelete}
             disabled={pending}
             aria-label={`Xóa ${contact.name} khỏi danh bạ`}
-            className="inline-flex h-11 w-11 items-center justify-center rounded-md text-rose-500 transition hover:bg-rose-50 disabled:opacity-40 dark:text-rose-400 dark:hover:bg-rose-500/10"
+            className="inline-flex h-11 w-11 items-center justify-center rounded-md text-rose-500 transition hover:bg-danger-soft disabled:opacity-40 dark:text-rose-400"
           >
             <Trash2 size={14} />
           </button>
@@ -222,7 +222,7 @@ export function ContactBookCard() {
   }
 
   return (
-    <section className="rounded-lg border border-stone-200 bg-white p-3 shadow-sm dark:border-stone-800 dark:bg-stone-900">
+    <section className="rounded-lg border border-border bg-surface p-3 shadow-sm">
       <div className="mb-2 flex items-center justify-between gap-2 px-1">
         <div className="flex items-center gap-2 text-sm font-semibold text-stone-800 dark:text-stone-200">
           <BookUser size={17} />
@@ -237,14 +237,14 @@ export function ContactBookCard() {
           }}
           aria-label="Thêm vào danh bạ"
           title="Thêm người"
-          className="inline-flex h-11 w-11 items-center justify-center rounded-md bg-violet-600 text-white transition hover:bg-violet-700 active:scale-95"
+          className="inline-flex h-11 w-11 items-center justify-center rounded-md bg-primary text-white transition hover:bg-primary-hover active:scale-95"
         >
           {adding ? <X size={15} /> : <Plus size={15} />}
         </button>
       </div>
 
       {adding && (
-        <div className="mb-2 rounded-md border border-stone-200 p-2 dark:border-stone-800">
+        <div className="mb-2 rounded-md border border-border p-2">
           <DraftForm
             draft={draft}
             onChange={setDraft}
@@ -263,7 +263,7 @@ export function ContactBookCard() {
           <SkeletonListRow />
         </div>
       ) : contacts.length === 0 ? (
-        <p className="px-1 py-3 text-sm text-stone-500 dark:text-stone-400">
+        <p className="px-1 py-3 text-sm text-fg-muted">
           Chưa có ai. Thêm sẵn người hay đi cùng để mỗi cuộc chơi chỉ cần tick chọn.
         </p>
       ) : (
@@ -309,7 +309,7 @@ export function ContactBookCard() {
         <button
           type="button"
           onClick={() => setVisibleCount((current) => current + PAGE_SIZE)}
-          className="mt-2 w-full rounded-md py-2 text-center text-sm font-medium text-violet-600 transition hover:bg-violet-50 dark:text-violet-400 dark:hover:bg-violet-500/10"
+          className="mt-2 w-full rounded-md py-2 text-center text-sm font-medium text-violet-600 transition hover:bg-primary-soft dark:text-violet-400"
         >
           Xem thêm ({remainingCount})
         </button>

@@ -11,17 +11,17 @@ export function PageShell({ children }: { children: ReactNode }) {
 
 export function EmptyState({ title, description }: { title: string; description: string }) {
   return (
-    <div className="rounded-lg border border-dashed border-stone-300 bg-white p-8 text-center dark:border-stone-700 dark:bg-stone-900">
+    <div className="rounded-lg border border-dashed border-stone-300 bg-surface p-8 text-center dark:border-stone-700">
       <h2 className="text-lg font-semibold text-stone-950 dark:text-stone-50">{title}</h2>
-      <p className="mt-2 text-sm text-stone-500 dark:text-stone-400">{description}</p>
+      <p className="mt-2 text-sm text-fg-muted">{description}</p>
     </div>
   );
 }
 
 export function LoadingState({ label = "Đang tải..." }: { label?: string }) {
   return (
-    <div className="flex min-h-40 items-center justify-center rounded-lg border border-stone-200 bg-white p-8 dark:border-stone-800 dark:bg-stone-900">
-      <p className="text-sm text-stone-500 dark:text-stone-400">{label}</p>
+    <div className="flex min-h-40 items-center justify-center rounded-lg border border-border bg-surface p-8">
+      <p className="text-sm text-fg-muted">{label}</p>
     </div>
   );
 }
@@ -43,7 +43,7 @@ export function Skeleton({ className = "" }: { className?: string }) {
  */
 export function SkeletonCard() {
   return (
-    <div className="rounded-md border border-stone-200 p-3 dark:border-stone-800">
+    <div className="rounded-md border border-border p-3">
       <Skeleton className="h-4 w-2/3" />
       <Skeleton className="mt-2 h-3 w-1/3" />
     </div>
@@ -75,14 +75,14 @@ export function SkeletonListRow({ icon = false }: { icon?: boolean }) {
 export function GamePageSkeleton({ split = true }: { split?: boolean }) {
   const listCards = (
     <>
-      <div className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm dark:border-stone-800 dark:bg-stone-900">
+      <div className="rounded-lg border border-border bg-surface p-4 shadow-sm">
         <div className="divide-y divide-stone-100 dark:divide-stone-800">
           <SkeletonListRow icon />
           <SkeletonListRow icon />
           <SkeletonListRow icon />
         </div>
       </div>
-      <div className="space-y-2 rounded-lg border border-stone-200 bg-white p-4 shadow-sm dark:border-stone-800 dark:bg-stone-900">
+      <div className="space-y-2 rounded-lg border border-border bg-surface p-4 shadow-sm">
         <SkeletonCard />
         <SkeletonCard />
         <SkeletonCard />
@@ -91,7 +91,7 @@ export function GamePageSkeleton({ split = true }: { split?: boolean }) {
   );
 
   const summaryCard = (
-    <div className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm dark:border-stone-800 dark:bg-stone-900">
+    <div className="rounded-lg border border-border bg-surface p-4 shadow-sm">
       <Skeleton className="h-24 w-full" />
       <div className="mt-3 space-y-2">
         <SkeletonListRow />
@@ -102,7 +102,7 @@ export function GamePageSkeleton({ split = true }: { split?: boolean }) {
 
   return (
     <div className="space-y-5">
-      <div className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm dark:border-stone-800 dark:bg-stone-900">
+      <div className="rounded-lg border border-border bg-surface p-4 shadow-sm">
         <Skeleton className="h-3 w-16" />
         <Skeleton className="mt-2 h-6 w-40" />
       </div>
@@ -147,15 +147,15 @@ export function Field({
         {label}
       </span>
       {children}
-      {error && <span className="mt-1 block text-xs text-rose-600 dark:text-rose-400">{error}</span>}
+      {error && <span className="mt-1 block text-xs text-danger">{error}</span>}
     </label>
   );
 }
 
 export function Metric({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg border border-stone-200 bg-white p-3 shadow-sm dark:border-stone-800 dark:bg-stone-900">
-      <p className="text-xs font-medium uppercase text-stone-500 dark:text-stone-400">{label}</p>
+    <div className="rounded-lg border border-border bg-surface p-3 shadow-sm">
+      <p className="text-xs font-medium uppercase text-fg-muted">{label}</p>
       <p className="mt-2 text-base font-semibold leading-tight text-stone-950 tabular dark:text-stone-50 sm:text-lg">
         {value}
       </p>
@@ -183,7 +183,7 @@ export function Switch({
     >
       <span
         className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${
-          checked ? "bg-violet-600" : "bg-stone-300 dark:bg-stone-700"
+          checked ? "bg-primary" : "bg-stone-300 dark:bg-stone-700"
         }`}
       >
         <span
@@ -200,7 +200,7 @@ export function Switch({
 export function BalancePill({ value }: { value: number }) {
   if (value > 0) {
     return (
-      <span className="shrink-0 rounded-full bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-700 tabular dark:bg-emerald-500/15 dark:text-emerald-300">
+      <span className="shrink-0 rounded-full bg-success-soft px-2 py-1 text-xs font-semibold text-emerald-700 tabular dark:text-emerald-300">
         Nhận {formatMoney(value)}
       </span>
     );

@@ -122,11 +122,11 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
               aria-modal="true"
               aria-label={pending.title}
               aria-describedby={pending.description ? "confirm-dialog-description" : undefined}
-              className="relative w-full max-w-sm rounded-2xl bg-white p-5 shadow-xl animate-[sheet-up_200ms_cubic-bezier(0.32,0.72,0,1)] dark:bg-stone-900"
+              className="relative w-full max-w-sm rounded-2xl bg-surface p-5 shadow-xl animate-[sheet-up_200ms_cubic-bezier(0.32,0.72,0,1)]"
             >
               <div className="flex items-start gap-3">
                 {pending.destructive && (
-                  <span className="mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-rose-100 text-rose-600 dark:bg-rose-500/15 dark:text-rose-400">
+                  <span className="mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-rose-100 text-danger dark:bg-rose-500/15">
                     <TriangleAlert size={18} />
                   </span>
                 )}
@@ -149,7 +149,7 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
                 <button
                   type="button"
                   onClick={() => close(false)}
-                  className="inline-flex h-10 items-center justify-center rounded-md border border-stone-300 px-4 text-sm font-medium text-stone-700 transition hover:bg-stone-50 active:scale-[0.98] dark:border-stone-700 dark:text-stone-200 dark:hover:bg-stone-800"
+                  className="inline-flex h-10 items-center justify-center rounded-md border border-stone-300 px-4 text-sm font-medium text-stone-700 transition hover:bg-surface-muted active:scale-[0.98] dark:border-stone-700 dark:text-stone-200"
                 >
                   {pending.cancelLabel || "Hủy"}
                 </button>
@@ -160,7 +160,7 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
                   className={`inline-flex h-10 items-center justify-center rounded-md px-4 text-sm font-semibold text-white transition active:scale-[0.98] ${
                     pending.destructive
                       ? "bg-rose-600 hover:bg-rose-700"
-                      : "bg-violet-600 hover:bg-violet-700"
+                      : "bg-primary hover:bg-primary-hover"
                   }`}
                 >
                   {pending.confirmLabel || "Đồng ý"}

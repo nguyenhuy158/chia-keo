@@ -60,7 +60,7 @@ export function LoginPage() {
 
   return (
     <section className="mx-auto flex min-h-screen w-full max-w-md items-center px-5">
-      <div className="w-full rounded-lg border border-stone-200 bg-white p-6 shadow-sm dark:border-stone-800 dark:bg-stone-900">
+      <div className="w-full rounded-lg border border-border bg-surface p-6 shadow-sm">
         <div className="mb-6 flex items-start justify-between gap-3">
           <div>
             {/* Logo thay cho wordmark "Chia keo". Ten app van con trong

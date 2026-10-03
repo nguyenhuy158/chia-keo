@@ -44,7 +44,7 @@ function Section({
   children: ReactNode;
 }) {
   return (
-    <section className="rounded-xl border border-stone-200 bg-white p-4 shadow-sm dark:border-stone-800 dark:bg-stone-900">
+    <section className="rounded-xl border border-border bg-surface p-4 shadow-sm">
       <div className="mb-3 flex items-center justify-between gap-2">
         <h2 className="flex items-center gap-2 text-sm font-semibold text-stone-950 dark:text-stone-50">
           <span className="text-violet-600 dark:text-violet-400">{icon}</span>
@@ -59,10 +59,10 @@ function Section({
 
 function StatTile({ icon, label, value }: { icon: ReactNode; label: string; value: string }) {
   return (
-    <div className="rounded-lg border border-stone-200 bg-stone-50 p-3 dark:border-stone-800 dark:bg-stone-950">
+    <div className="rounded-lg border border-border bg-stone-50 p-3 dark:bg-stone-950">
       <div className="flex items-center gap-1.5 text-violet-600 dark:text-violet-400">
         {icon}
-        <span className="truncate text-xs font-medium text-stone-500 dark:text-stone-400">
+        <span className="truncate text-xs font-medium text-fg-muted">
           {label}
         </span>
       </div>
@@ -115,7 +115,7 @@ export function HomePage() {
         <button
           type="button"
           onClick={() => shell?.openGames()}
-          className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-md bg-violet-600 px-4 text-sm font-semibold text-white transition hover:bg-violet-700 active:scale-[0.99] lg:hidden"
+          className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-semibold text-white transition hover:bg-primary-hover active:scale-[0.99] lg:hidden"
         >
           <ListChecks size={18} />
           Mở danh sách cuộc chơi
@@ -130,7 +130,7 @@ export function HomePage() {
         <h1 className="text-xl font-bold text-stone-950 dark:text-stone-50">
           {greet(new Date().getHours())} 👋
         </h1>
-        <p className="mt-0.5 text-sm text-stone-500 dark:text-stone-400">
+        <p className="mt-0.5 text-sm text-fg-muted">
           {games.length} cuộc chơi · nhấn để tiếp tục chỗ đang dở.
         </p>
       </div>
@@ -147,7 +147,7 @@ export function HomePage() {
               <p className="truncate text-sm font-semibold text-stone-950 dark:text-stone-50">
                 {game.name}
               </p>
-              <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">
+              <p className="mt-1 text-xs text-fg-muted">
                 {game.participantCount} người · {game.expenseCount} khoản
               </p>
             </Link>
@@ -160,7 +160,7 @@ export function HomePage() {
           <div className="grid gap-4 sm:grid-cols-2">
             {owedToMe.length > 0 && (
               <div>
-                <p className="mb-2 flex items-center gap-1.5 text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                <p className="mb-2 flex items-center gap-1.5 text-xs font-medium text-success">
                   <TrendingUp size={14} />
                   Được nhận lại
                 </p>
@@ -171,7 +171,7 @@ export function HomePage() {
                       <span className="min-w-0 flex-1 truncate text-sm text-stone-900 dark:text-stone-100">
                         {person.name}
                       </span>
-                      <span className="shrink-0 text-sm font-semibold text-emerald-600 dark:text-emerald-400">
+                      <span className="shrink-0 text-sm font-semibold text-success">
                         {formatMoney(person.net)}
                       </span>
                     </li>
@@ -181,7 +181,7 @@ export function HomePage() {
             )}
             {owedByMe.length > 0 && (
               <div>
-                <p className="mb-2 flex items-center gap-1.5 text-xs font-medium text-rose-600 dark:text-rose-400">
+                <p className="mb-2 flex items-center gap-1.5 text-xs font-medium text-danger">
                   <TrendingDown size={14} />
                   Còn phải trả
                 </p>
@@ -192,7 +192,7 @@ export function HomePage() {
                       <span className="min-w-0 flex-1 truncate text-sm text-stone-900 dark:text-stone-100">
                         {person.name}
                       </span>
-                      <span className="shrink-0 text-sm font-semibold text-rose-600 dark:text-rose-400">
+                      <span className="shrink-0 text-sm font-semibold text-danger">
                         {formatMoney(Math.abs(person.net))}
                       </span>
                     </li>
@@ -244,7 +244,7 @@ export function HomePage() {
       <button
         type="button"
         onClick={() => shell?.openGames()}
-        className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-md bg-violet-600 px-4 text-sm font-semibold text-white transition hover:bg-violet-700 active:scale-[0.99] lg:hidden"
+        className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-semibold text-white transition hover:bg-primary-hover active:scale-[0.99] lg:hidden"
       >
         <ListChecks size={18} />
         Mở danh sách cuộc chơi

@@ -30,7 +30,7 @@ export function ProfileNamePanel() {
   }
 
   return (
-    <section className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm dark:border-stone-800 dark:bg-stone-900">
+    <section className="rounded-lg border border-border bg-surface p-4 shadow-sm">
       <h3 className="text-sm font-semibold text-stone-950 dark:text-stone-50">Tên hiển thị</h3>
       <div className="mt-3 flex items-center gap-2">
         <input
@@ -46,7 +46,7 @@ export function ProfileNamePanel() {
           type="button"
           onClick={handleSave}
           disabled={!dirty || updateName.isPending}
-          className="inline-flex h-11 items-center justify-center rounded-md bg-violet-600 px-4 text-sm font-medium text-white transition hover:bg-violet-700 disabled:opacity-50"
+          className="inline-flex h-11 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-white transition hover:bg-primary-hover disabled:opacity-50"
         >
           Lưu
         </button>
