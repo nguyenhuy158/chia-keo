@@ -1,5 +1,6 @@
 // Tim Chromium cho Playwright: uu tien bien moi truong, sau do cac thu muc
-// browser cai san (image CI/dev container), cuoi cung de playwright-core tu tim.
+// browser cai san (image CI/dev container), roi Chrome/Chromium cai tren he
+// thong (may dev), cuoi cung de playwright-core tu tim.
 import { existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { homedir } from "node:os";
@@ -11,6 +12,14 @@ const BROWSER_ROOTS = [
 ].filter(Boolean);
 
 const BINARY_SUBPATHS = ["chrome-linux/chrome", "chrome-linux/headless_shell", "chrome", "headless_shell"];
+
+const SYSTEM_BROWSERS = [
+  "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+  "/Applications/Chromium.app/Contents/MacOS/Chromium",
+  "/usr/bin/chromium",
+  "/usr/bin/chromium-browser",
+  "/usr/bin/google-chrome",
+];
 
 /** Duong dan Chromium tim duoc, hoac undefined de playwright-core tu quyet. */
 export function findChromium() {
@@ -27,5 +36,5 @@ export function findChromium() {
       }
     }
   }
-  return undefined;
+  return SYSTEM_BROWSERS.find((candidate) => existsSync(candidate));
 }

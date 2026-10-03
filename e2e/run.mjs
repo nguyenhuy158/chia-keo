@@ -16,7 +16,7 @@ const POLL_INTERVAL_MS = 500;
 /** Chay mot lenh den khi ket thuc; loi thi nem. */
 function run(command, args, label) {
   return new Promise((resolve, reject) => {
-    const child = spawn(command, args, { stdio: "inherit" });
+    const child = spawn(command, args, { stdio: "inherit", env: { ...process.env, E2E_BASE_URL: BASE } });
     child.on("error", reject);
     child.on("exit", (code) =>
       code === 0 ? resolve() : reject(new Error(`${label} that bai (exit ${code})`)),
@@ -48,11 +48,28 @@ if (process.env.E2E_SKIP_BUILD !== "1") {
 }
 await run("pnpm", ["exec", "wrangler", "d1", "migrations", "apply", "DB", "--local"], "migration D1");
 
+// `detached` cho server mot process group rieng: `pnpm exec` sinh them tang
+// node con, kill rieng PID cha se bo mo coi wrangler/workerd giu cong.
 const server = spawn(
   "pnpm",
   ["exec", "wrangler", "dev", "--ip", "127.0.0.1", "--port", PORT],
-  { stdio: ["ignore", "inherit", "inherit"], env: { ...process.env, CI: "1" } },
+  { stdio: ["ignore", "inherit", "inherit"], env: { ...process.env, CI: "1" }, detached: true },
 );
+
+/** Gui signal toi ca process group cua server (bo qua neu da tat). */
+function killServer(signal) {
+  try {
+    process.kill(-server.pid, signal);
+  } catch {
+    // Group da tat.
+  }
+}
+
+// Group tach rieng nen Ctrl-C khong toi server: tu don truoc khi thoat.
+process.once("SIGINT", () => {
+  killServer("SIGKILL");
+  process.exit(130);
+});
 
 let failed = false;
 try {
@@ -63,13 +80,16 @@ try {
   failed = true;
   console.error("E2E FAIL:", error.message);
 } finally {
-  server.kill("SIGTERM");
+  const exited = new Promise((resolve) => server.once("exit", () => resolve(true)));
+  killServer("SIGTERM");
   // Cho wrangler don dep; qua han thi ket lieu de process khong treo.
-  const stopped = await Promise.race([
-    new Promise((resolve) => server.once("exit", () => resolve(true))),
+  const stopped = server.exitCode !== null || (await Promise.race([
+    exited,
     new Promise((resolve) => setTimeout(() => resolve(false), 5000)),
-  ]);
-  if (!stopped) server.kill("SIGKILL");
+  ]));
+  // Ket lieu ca group: wrangler co the tat truoc khi workerd con kip don.
+  killServer("SIGKILL");
+  if (!stopped) console.error("wrangler khong tat sau SIGTERM, da SIGKILL");
 }
 
 process.exit(failed ? 1 : 0);
