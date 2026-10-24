@@ -31,10 +31,9 @@ export function usePhotoViewer(
   const detail = usePhoto(photo?.id || "");
 
   async function handleDelete() {
-    if (!photo) return;
     if (!(await confirm({ title: "Xóa ảnh này?", destructive: true }))) return;
 
-    await removePhoto.mutateAsync(photo.id);
+    await removePhoto.mutateAsync(photo!.id);
     setIndex(indexAfterRemove(index, photos.length - 1));
     toast.success("Đã xóa ảnh");
   }
