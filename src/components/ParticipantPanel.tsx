@@ -78,8 +78,6 @@ export function ParticipantPanel({
   function move(participantId: string, direction: -1 | 1) {
     const index = participants.findIndex((participant) => participant.id === participantId);
     const targetIndex = index + direction;
-    if (index === -1 || targetIndex < 0 || targetIndex >= participants.length) return;
-
     const order = participants.map((participant) => participant.id);
     [order[index], order[targetIndex]] = [order[targetIndex], order[index]];
     onReorder(order);
@@ -111,10 +109,8 @@ export function ParticipantPanel({
   }
 
   const handleSaveEdit = form.handleSubmit(async (values) => {
-    if (!editingParticipantId) return;
-
     try {
-      await onUpdate(editingParticipantId, values);
+      await onUpdate(editingParticipantId!, values);
       cancelEdit();
       toast.success("Đã lưu thông tin");
     } catch {
@@ -176,7 +172,7 @@ export function ParticipantPanel({
       <div className="mt-5 space-y-2">
         {participants.map((participant, index) => (
           <div key={participant.id}>
-            <SwipeToDelete onDelete={() => handleRemove(participant)}>
+            <SwipeToDelete onDelete={handleRemove.bind(null, participant)}>
               <div className="rounded-md border border-border p-3">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex min-w-0 items-center gap-1">
