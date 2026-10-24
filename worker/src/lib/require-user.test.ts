@@ -5,21 +5,21 @@ import type { Env } from "../env";
 const {
   getSession,
   createAuth,
-  readSsoCookie,
+  readSsoToken,
   verifySsoToken,
   resolveSsoUserId,
   createRepo,
 } = vi.hoisted(() => ({
   getSession: vi.fn(),
   createAuth: vi.fn(),
-  readSsoCookie: vi.fn(),
+  readSsoToken: vi.fn(),
   verifySsoToken: vi.fn(),
   resolveSsoUserId: vi.fn(),
   createRepo: vi.fn(),
 }));
 
 vi.mock("../auth", () => ({ createAuth }));
-vi.mock("../sso", () => ({ readSsoCookie, verifySsoToken }));
+vi.mock("../sso", () => ({ readSsoToken, verifySsoToken }));
 vi.mock("../sso-user", () => ({ resolveSsoUserId }));
 vi.mock("../adapters/d1/game-repository", () => ({
   createD1GameRepository: createRepo,
@@ -32,7 +32,7 @@ const env = { DB: { kind: "test-database" } } as unknown as Env;
 beforeEach(() => {
   getSession.mockReset().mockResolvedValue(null);
   createAuth.mockReset().mockReturnValue({ api: { getSession } });
-  readSsoCookie.mockReset().mockReturnValue(null);
+  readSsoToken.mockReset().mockReturnValue(null);
   verifySsoToken.mockReset().mockResolvedValue(null);
   resolveSsoUserId.mockReset().mockResolvedValue("sso-user");
   createRepo.mockReset().mockReturnValue({ kind: "test-repo" });
@@ -45,13 +45,13 @@ describe("resolveUserId", () => {
     expect(await resolveUserId(env, request)).toBe("password-user");
     expect(createAuth).toHaveBeenCalledWith(env, request.url);
     expect(getSession).toHaveBeenCalledWith({ headers: request.headers });
-    expect(readSsoCookie).not.toHaveBeenCalled();
+    expect(readSsoToken).not.toHaveBeenCalled();
   });
 
-  it("returns anonymous without a session or valid SSO cookie", async () => {
+  it("returns anonymous without a session or valid SSO token", async () => {
     const request = new Request("https://example.test/api/private");
     expect(await resolveUserId(env, request)).toBeNull();
-    readSsoCookie.mockReturnValue("bad-token");
+    readSsoToken.mockReturnValue("bad-token");
     expect(await resolveUserId(env, request)).toBeNull();
     expect(verifySsoToken).toHaveBeenCalledWith("bad-token");
     expect(resolveSsoUserId).not.toHaveBeenCalled();
@@ -59,11 +59,16 @@ describe("resolveUserId", () => {
 
   it("maps valid SSO claims to the local user", async () => {
     const claims = { sub: "google-user", email: "owner@example.test" };
-    readSsoCookie.mockReturnValue("signed-token");
+    readSsoToken.mockReturnValue("signed-token");
     verifySsoToken.mockResolvedValue(claims);
     expect(
-      await resolveUserId(env, new Request("https://example.test/api/private")),
+      await resolveUserId(env, new Request("https://example.test/api/private", {
+        headers: { Authorization: "Bearer signed-token" },
+      })),
     ).toBe("sso-user");
+    expect(readSsoToken).toHaveBeenCalledWith(new Headers({
+      Authorization: "Bearer signed-token",
+    }));
     expect(resolveSsoUserId).toHaveBeenCalledWith(env.DB, claims);
   });
 });
