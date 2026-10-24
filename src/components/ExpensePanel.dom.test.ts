@@ -604,8 +604,10 @@ describe("ExpensePanel", () => {
       }),
     );
     await vi.waitFor(() => expect(input("Ăn tối").value).toBe("Hóa đơn sân"));
-    expect(host.textContent).toContain(
-      "Ảnh sẽ được lưu kèm sau khi thêm khoản chi",
+    await vi.waitFor(() =>
+      expect(host.textContent).toContain(
+        "Ảnh sẽ được lưu kèm sau khi thêm khoản chi",
+      ),
     );
   });
 
