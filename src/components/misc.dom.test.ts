@@ -7,7 +7,9 @@ import { SUMMARY_IMAGE_BACKGROUNDS } from "../adapters/browser/summary-image-bac
 import { BrandMark } from "./brand";
 import { formatDateTime, formatTime } from "./format-datetime";
 import { MobileShellContext, useMobileShell } from "./mobile-shell";
+import { OnboardingBanner } from "./OnboardingBanner";
 import { PhotoGrid } from "./PhotoGrid";
+import { SummaryBackgroundPicker } from "./SummaryBackgroundPicker";
 import { usePersistentOpen } from "./use-persistent-open";
 import { useSummaryImageBackground } from "./use-summary-image-background";
 
@@ -36,6 +38,84 @@ afterEach(() => {
 });
 
 describe("shared display widgets", () => {
+  it("shows onboarding progress until both a person and expense exist", () => {
+    act(() =>
+      root.render(
+        createElement(OnboardingBanner, {
+          participantCount: 0,
+          expenseCount: 0,
+        }),
+      ),
+    );
+    expect(host.textContent).toContain("Thêm người");
+    expect(host.textContent).toContain("Thêm khoản chi");
+    expect(host.querySelectorAll("svg.lucide-check")).toHaveLength(0);
+    act(() =>
+      root.render(
+        createElement(OnboardingBanner, {
+          participantCount: 1,
+          expenseCount: 0,
+        }),
+      ),
+    );
+    expect(host.querySelectorAll("svg.lucide-check")).toHaveLength(1);
+    act(() =>
+      root.render(
+        createElement(OnboardingBanner, {
+          participantCount: 0,
+          expenseCount: 1,
+        }),
+      ),
+    );
+    expect(host.querySelectorAll("svg.lucide-check")).toHaveLength(1);
+    act(() =>
+      root.render(
+        createElement(OnboardingBanner, {
+          participantCount: 1,
+          expenseCount: 1,
+        }),
+      ),
+    );
+    expect(host.textContent).toBe("");
+  });
+
+  it("labels and changes the summary background", () => {
+    const onChange = vi.fn();
+    const selected = SUMMARY_IMAGE_BACKGROUNDS[0];
+    act(() =>
+      root.render(
+        createElement(SummaryBackgroundPicker, {
+          value: selected.id,
+          onChange,
+        }),
+      ),
+    );
+    expect(host.textContent).toContain(`Nền ảnh · ${selected.label}`);
+    expect(host.querySelectorAll("button")).toHaveLength(
+      SUMMARY_IMAGE_BACKGROUNDS.length,
+    );
+    expect(
+      host
+        .querySelector("button[aria-pressed='true']")
+        ?.getAttribute("aria-label"),
+    ).toBe(`Nền ${selected.label}`);
+    act(() =>
+      (host.querySelectorAll("button")[1] as HTMLButtonElement).click(),
+    );
+    expect(onChange).toHaveBeenCalledWith(SUMMARY_IMAGE_BACKGROUNDS[1].id);
+    act(() =>
+      root.render(
+        createElement(SummaryBackgroundPicker, {
+          value: "unknown",
+          onChange,
+          showLabel: false,
+        }),
+      ),
+    );
+    expect(host.textContent).not.toContain("Nền ảnh ·");
+    expect(host.querySelector("button[aria-pressed='true']")).toBeNull();
+  });
+
   it("opens the selected photo and labels receipt photos accessibly", () => {
     const photos = [
       {
