@@ -91,6 +91,9 @@ export default defineConfig({
         },
       },
       {
+        resolve: {
+          alias: { "virtual:pwa-register": "/src/test/pwa-register.ts" },
+        },
         test: {
           name: "dom",
           include: ["src/**/*.dom.test.ts"],
