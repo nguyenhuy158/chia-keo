@@ -112,8 +112,7 @@ export function CopyMenu({ input, className }: CopyMenuProps) {
   }
 
   async function copyShareLink() {
-    if (!input.shareUrl) return;
-    const ok = await copyText(input.shareUrl);
+    const ok = await copyText(input.shareUrl!);
     (ok ? toast.success : toast.error)(ok ? "Đã sao chép link" : "Không sao chép được link");
   }
 
