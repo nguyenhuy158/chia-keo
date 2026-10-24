@@ -16,8 +16,7 @@ export function sanitizeMoneyInput(raw: string): string {
 
 /** Parser cong tru nhan chia thu cong (khong dung eval/Function), uu tien nhan chia truoc. */
 function evalArithmetic(expr: string): number | null {
-  const tokens = expr.match(/\d+|[+\-*/]/g);
-  if (!tokens || tokens.length === 0) return null;
+  const tokens = Array.from(expr.matchAll(/\d+|[+\-*/]/g), (match) => match[0]);
 
   // Rut gon * va / truoc theo thu tu toan hoc.
   const terms: number[] = [Number(tokens[0])];
