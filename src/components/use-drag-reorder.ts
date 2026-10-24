@@ -80,7 +80,7 @@ export function useDragReorder<T>(
     prevRectsRef.current = rects;
 
     setDragOrder((current) => {
-      const order = current ? [...current] : items.map(getId);
+      const order = [...(current as string[])];
       const fromIndex = order.indexOf(draggingId);
       const toIndex = order.indexOf(closestId as string);
       if (fromIndex === -1 || toIndex === -1) return order;

@@ -91,8 +91,11 @@ describe("useDragReorder", () => {
     expect(drag.dragTranslateY).toBe(100);
     expect(rowIds()).toEqual(["b", "c", "a"]);
     expect(onReorder).not.toHaveBeenCalled();
+    act(() => drag.handleDragPointerMove(pointer(25)));
+    act(() => drag.handleDragPointerMove(pointer(75)));
+    expect(rowIds()).toEqual(["b", "a", "c"]);
     act(() => drag.handleDragPointerUp());
-    expect(onReorder).toHaveBeenCalledWith(["b", "c", "a"]);
+    expect(onReorder).toHaveBeenCalledWith(["b", "a", "c"]);
     expect(rowIds()).toEqual(["a", "b", "c"]);
     expect(drag.draggingId).toBeNull();
   });
