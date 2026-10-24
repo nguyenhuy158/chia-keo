@@ -56,8 +56,6 @@ export function ContactPicker({ participants, pending, onAddMany }: ContactPicke
     const people = selectable
       .filter((contact) => activeChosen.includes(contact.key))
       .map(toInput);
-    if (people.length === 0) return;
-
     await onAddMany(people);
     setChosen([]);
   }
