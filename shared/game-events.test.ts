@@ -111,6 +111,15 @@ describe("describeGameEvent", () => {
     expect(describeGameEvent({ kind: "game_reopened", mode: "manual" }).detail).toBe("mở thủ công");
   });
 
+  it("giữ mã settlement chưa biết trong lịch sử cũ", () => {
+    const payload = { kind: "settlement_changed", mode: "legacy", hostName: "" } as GameEventPayload;
+
+    expect(describeGameEvent(payload).detail).toBe("legacy");
+    expect(describeGameEvent({ ...payload, hostName: "Huy" } as GameEventPayload).detail).toBe(
+      "legacy · Huy",
+    );
+  });
+
   it("moi kind deu co cau chu, khong kind nao ra rong", () => {
     const payloads: GameEventPayload[] = [
       { kind: "game_created", name: "DSKVUF" },
