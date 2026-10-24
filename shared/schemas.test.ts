@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { gameInputSchema, gameUpdateSchema } from "./schemas";
+import { defaultTitleForKind, gameInputSchema, gameUpdateSchema, transferInputSchema } from "./schemas";
 
 describe("gameUpdateSchema", () => {
   it("khong tu bồi thêm field nao ngoai field duoc gui", () => {
@@ -30,5 +30,23 @@ describe("gameInputSchema", () => {
       settlementHostId: "",
       participantCount: 0,
     });
+  });
+});
+
+describe("defaultTitleForKind", () => {
+  it("phân biệt tên mặc định của khoản thu và khoản chi", () => {
+    expect(defaultTitleForKind("income")).toBe("Khoản thu");
+    expect(defaultTitleForKind("expense")).toBe("Khoản chi");
+  });
+});
+
+describe("transferInputSchema", () => {
+  it("chặn chuyển tiền cho chính người trả", () => {
+    const transfer = { fromParticipantId: "p1", toParticipantId: "p1", amount: 10_000 };
+
+    expect(transferInputSchema.safeParse(transfer).success).toBe(false);
+    expect(transferInputSchema.safeParse({ ...transfer, toParticipantId: "p2" }).success).toBe(
+      true,
+    );
   });
 });
