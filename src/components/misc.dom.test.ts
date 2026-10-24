@@ -6,6 +6,7 @@ import type { ApiPhoto } from "../../shared/api-types";
 import { SUMMARY_IMAGE_BACKGROUNDS } from "../adapters/browser/summary-image-backgrounds";
 import { BrandMark } from "./brand";
 import { formatDateTime, formatTime } from "./format-datetime";
+import { ExpenseFab, MobileGameNav } from "./MobileGameNav";
 import { MobileShellContext, useMobileShell } from "./mobile-shell";
 import { OnboardingBanner } from "./OnboardingBanner";
 import { PhotoGrid } from "./PhotoGrid";
@@ -38,6 +39,36 @@ afterEach(() => {
 });
 
 describe("shared display widgets", () => {
+  it("switches mobile sections and invokes the expense action", () => {
+    const onChange = vi.fn();
+    const onClick = vi.fn();
+    act(() =>
+      root.render(
+        createElement(
+          Fragment,
+          null,
+          createElement(MobileGameNav, { active: "people", onChange }),
+          createElement(ExpenseFab, { onClick }),
+        ),
+      ),
+    );
+    expect(host.querySelector("button[aria-current='page']")?.textContent).toBe(
+      "Người",
+    );
+    act(() =>
+      (host.querySelectorAll("nav button")[2] as HTMLButtonElement).click(),
+    );
+    expect(onChange).toHaveBeenCalledWith("summary");
+    act(() =>
+      (
+        host.querySelector(
+          "button[aria-label='Thêm khoản chi']",
+        ) as HTMLButtonElement
+      ).click(),
+    );
+    expect(onClick).toHaveBeenCalledOnce();
+  });
+
   it("shows onboarding progress until both a person and expense exist", () => {
     act(() =>
       root.render(
