@@ -28,4 +28,16 @@ describe("createFixedWindowLimiter", () => {
     expect(limiter.isAllowed("ip1", 1)).toBe(false);
     expect(limiter.isAllowed("ip2", 1)).toBe(false);
   });
+
+  it("don cac key het han khi bo dem dat gioi han", () => {
+    const limiter = createFixedWindowLimiter({ limit: 1, windowMs: 1000 });
+
+    for (let index = 0; index < 10_000; index += 1) {
+      expect(limiter.isAllowed(`ip${index}`, index === 0 ? 1 : 0)).toBe(true);
+    }
+
+    expect(limiter.isAllowed("new-ip", 1000)).toBe(true);
+    expect(limiter.isAllowed("ip0", 1000)).toBe(false);
+    expect(limiter.isAllowed("ip1", 1000)).toBe(true);
+  });
 });

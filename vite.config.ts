@@ -79,5 +79,23 @@ export default defineConfig({
   test: {
     include: ["src/**/*.test.ts", "shared/**/*.test.ts", "worker/**/*.test.ts"],
     environment: "node",
+    coverage: {
+      provider: "v8",
+      include: ["src/**/*.{ts,tsx}", "shared/**/*.ts", "worker/src/**/*.ts"],
+      exclude: [
+        "**/*.test.ts",
+        "**/*.test.tsx",
+        "**/*.d.ts",
+        "src/test/**",
+        "shared/build-info.ts",
+      ],
+      reporter: ["text", "json-summary"],
+      thresholds: {
+        statements: 100,
+        branches: 100,
+        functions: 100,
+        lines: 100,
+      },
+    },
   },
 });
