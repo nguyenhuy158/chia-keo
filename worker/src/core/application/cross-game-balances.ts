@@ -40,7 +40,7 @@ async function loadGameBalances(repo: GameRepository, game: GameRow) {
   return {
     totalExpense: sumTotalExpense(expenseRows),
     rows: balances.map((row) => ({
-      name: nameByParticipantId.get(row.participantId) || "",
+      name: nameByParticipantId.get(row.participantId) as string,
       paid: row.paid,
       owed: row.owed,
       balance: row.balance,

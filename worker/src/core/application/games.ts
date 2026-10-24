@@ -68,7 +68,7 @@ export async function listGames(repo: GameRepository, userId: string): Promise<A
 /** Cuoc choi da dong, moi dong truoc. */
 export async function listClosedGames(repo: GameRepository, userId: string): Promise<ApiGame[]> {
   const games = await listGamesWhere(repo, userId, (row) => row.closedAt !== null);
-  return games.sort((left, right) => (right.closedAt || "").localeCompare(left.closedAt || ""));
+  return games.sort((left, right) => (right.closedAt as string).localeCompare(left.closedAt as string));
 }
 
 /**
@@ -236,7 +236,7 @@ export async function duplicateGame(
     const participantNow = nowIso();
     await repo.participants.insert(
       {
-        id: newIdByOldId.get(participant.id) || createId("participant"),
+        id: newIdByOldId.get(participant.id) as string,
         gameId: game.id,
         name: participant.name,
         createdAt: participantNow,
@@ -345,7 +345,7 @@ export async function listDeletedGames(
     code: row.code,
     name: row.name,
     createdAt: row.createdAt,
-    deletedAt: row.deletedAt || "",
+    deletedAt: row.deletedAt as string,
     participantCount: participantCounts.get(row.id) || 0,
     expenseCount: expenseCounts.get(row.id) || 0,
     closedAt: row.closedAt,
