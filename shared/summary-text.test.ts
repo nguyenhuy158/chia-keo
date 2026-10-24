@@ -298,4 +298,29 @@ describe("buildSummaryText", () => {
     expect(text).not.toContain("khoản · tổng");
     expect(text).toContain("- Thu: 0k");
   });
+
+  it("hien ten du phong khi khoan chi tham chieu nguoi da bi xoa", () => {
+    const staleExpense: ApiExpense = {
+      ...makeExpense("e-stale", "Nước", 20_000, "deleted-payer", [thu.id, "deleted-split"]),
+      splitMode: "amount",
+    };
+    const text = buildSummaryText({
+      ...input,
+      expenses: [staleExpense],
+      summary: makeSummary(participants, [staleExpense]),
+    });
+
+    expect(text).toContain("Nước (Không rõ trả)");
+    expect(text).toContain("(Không rõ)");
+  });
+
+  it("hien ten du phong cho giao dich tham chieu nguoi da bi xoa", () => {
+    const staleSummary: ApiSummary = {
+      ...summary,
+      settlements: [{ fromParticipantId: "deleted-from", toParticipantId: "deleted-to", amount: 1000 }],
+    };
+    const text = buildSummaryText({ ...input, summary: staleSummary, settlementMode: "p2p" });
+
+    expect(text).toContain("- Không rõ → Không rõ: 1k");
+  });
 });
