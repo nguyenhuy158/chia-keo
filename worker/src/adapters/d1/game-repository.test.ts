@@ -1,7 +1,8 @@
 import { drizzle } from "drizzle-orm/d1";
 import { migrate } from "drizzle-orm/d1/migrator";
 import { Miniflare } from "miniflare";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+import { MAX_PHOTOS_PER_GAME } from "../../../../shared/schemas";
 import { shareGame } from "../../core/application/collaborators";
 import { addExpense, recordTransfer } from "../../core/application/expenses";
 import {
@@ -15,6 +16,15 @@ import {
   reopenGame,
   restoreGame,
 } from "../../core/application/games";
+import {
+  addGamePhoto,
+  getPhotoForOwner,
+  getSharedPhoto,
+  listGamePhotos,
+  listSharedPhotos,
+  removePhoto,
+  updatePhoto,
+} from "../../core/application/photos";
 import { createD1GameRepository } from "./game-repository";
 import * as schema from "./schema";
 
@@ -488,5 +498,136 @@ describe("D1 game repository", () => {
     });
     expect(await repo.gameCollaborators.listByGame(game.id)).toEqual([]);
     await repo.gameCollaborators.remove(game.id, {});
+  });
+
+  it("quản lý ảnh qua use case và D1 với phân quyền chủ cuộc", async () => {
+    const repo = createD1GameRepository(database);
+    const game = await createGame(repo, "owner", {
+      name: "Kèo ảnh",
+      participantCount: 2,
+    });
+    const [payer, other] = game.participants;
+    const expense = (
+      await addExpense(repo, "owner", game.id, {
+        kind: "expense",
+        category: "",
+        title: "Sân",
+        amount: 100_000,
+        note: "",
+        payerParticipantId: payer.id,
+        splitMode: "equal",
+        splitParticipantIds: [payer.id, other.id],
+        splits: [],
+      })
+    ).expenses[0];
+    const input = {
+      mimeType: "image/png" as const,
+      data: "full-image",
+      thumbData: "thumbnail",
+      width: 2,
+      height: 2,
+      caption: "Sân",
+      expenseId: null,
+    };
+    await expect(listGamePhotos(repo, "friend", game.id)).rejects.toThrow();
+    await expect(
+      addGamePhoto(repo, "friend", game.id, input),
+    ).rejects.toThrow();
+    await expect(
+      addGamePhoto(repo, "owner", game.id, { ...input, expenseId: "missing" }),
+    ).rejects.toThrow();
+    const otherExpense = await repo.expenses.getById(expense.id);
+    if (!otherExpense) throw new Error("Expected expense in D1");
+    const differentGame = vi
+      .spyOn(repo.expenses, "getById")
+      .mockResolvedValueOnce({
+        ...otherExpense,
+        gameId: "different-game",
+      });
+    await expect(
+      addGamePhoto(repo, "owner", game.id, { ...input, expenseId: expense.id }),
+    ).rejects.toThrow();
+    differentGame.mockRestore();
+    const photo = await addGamePhoto(repo, "owner", game.id, input);
+    expect(photo.caption).toBe("Sân");
+    expect(
+      (await listGamePhotos(repo, "owner", game.id)).map((row) => row.id),
+    ).toContain(photo.id);
+    expect((await getPhotoForOwner(repo, "owner", photo.id)).data).toBe(
+      "full-image",
+    );
+    await expect(getPhotoForOwner(repo, "friend", photo.id)).rejects.toThrow();
+    await expect(getPhotoForOwner(repo, "owner", "missing")).rejects.toThrow();
+    expect((await updatePhoto(repo, "owner", photo.id, {})).caption).toBe(
+      "Sân",
+    );
+    expect(
+      (await updatePhoto(repo, "owner", photo.id, { caption: "Sân mới" }))
+        .caption,
+    ).toBe("Sân mới");
+    const linked = await addGamePhoto(repo, "owner", game.id, {
+      ...input,
+      expenseId: expense.id,
+    });
+    expect(linked.expenseId).toBe(expense.id);
+    expect(
+      (await updatePhoto(repo, "owner", photo.id, { expenseId: expense.id }))
+        .expenseId,
+    ).toBe(expense.id);
+    const missingDetail = vi
+      .spyOn(repo.photos, "getDetail")
+      .mockResolvedValueOnce(null);
+    await expect(getPhotoForOwner(repo, "owner", photo.id)).rejects.toThrow();
+    missingDetail.mockRestore();
+    const missingPhoto = vi
+      .spyOn(repo.photos, "getById")
+      .mockResolvedValueOnce(null);
+    await expect(updatePhoto(repo, "owner", photo.id, {})).rejects.toThrow();
+    missingPhoto.mockRestore();
+    await expect(
+      updatePhoto(repo, "friend", photo.id, { caption: "Sai" }),
+    ).rejects.toThrow();
+    await expect(
+      updatePhoto(repo, "owner", photo.id, { expenseId: "missing" }),
+    ).rejects.toThrow();
+    const count = vi
+      .spyOn(repo.photos, "countByGame")
+      .mockResolvedValueOnce(MAX_PHOTOS_PER_GAME);
+    await expect(addGamePhoto(repo, "owner", game.id, input)).rejects.toThrow();
+    count.mockRestore();
+    expect(await removePhoto(repo, "owner", photo.id)).toEqual({ ok: true });
+    await expect(removePhoto(repo, "owner", photo.id)).rejects.toThrow();
+  });
+
+  it("chỉ cho xem ảnh qua link chia sẻ của đúng cuộc", async () => {
+    const repo = createD1GameRepository(database);
+    const game = await createGame(repo, "owner", { name: "Kèo xem ảnh" });
+    const photo = await addGamePhoto(repo, "owner", game.id, {
+      mimeType: "image/png",
+      data: "full-image",
+      thumbData: "thumbnail",
+      width: 2,
+      height: 2,
+      caption: "Ảnh chung",
+      expenseId: null,
+    });
+    await repo.shareLinks.replace(game.id, {
+      id: "photo-share",
+      gameId: game.id,
+      token: "photo-share-token",
+      enabled: true,
+      createdAt: "2026-07-01T00:00:00.000Z",
+      expiresAt: null,
+    });
+    expect((await listSharedPhotos(repo, "photo-share-token"))[0]?.id).toBe(
+      photo.id,
+    );
+    expect(
+      (await getSharedPhoto(repo, "photo-share-token", photo.id)).data,
+    ).toBe("full-image");
+    await expect(
+      getSharedPhoto(repo, "photo-share-token", "missing"),
+    ).rejects.toThrow();
+    await expect(listSharedPhotos(repo, "missing-token")).rejects.toThrow();
   });
 });
