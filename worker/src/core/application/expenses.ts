@@ -91,7 +91,7 @@ export async function addExpense(
 
   const now = nowIso();
   const expenseId = createId("expense");
-  const kind = input.kind ?? "expense";
+  const kind = input.kind;
   const title = input.title || defaultTitleForKind(kind);
 
   await repo.expenses.insert({
@@ -116,8 +116,8 @@ export async function addExpense(
     kind: "expense_added",
     title,
     amount: input.amount,
-    payerName: nameById.get(input.payerParticipantId) || "Không rõ",
-    splitNames: rows.map((row) => nameById.get(row.participantId) || "Không rõ"),
+    payerName: nameById.get(input.payerParticipantId) as string,
+    splitNames: rows.map((row) => nameById.get(row.participantId) as string),
   });
 
   return detail;
@@ -278,8 +278,8 @@ export async function recordTransfer(
   const nameById = new Map(detail.participants.map((person) => [person.id, person.name]));
   await recordEvent(repo, game.id, {
     kind: "transfer_added",
-    fromName: nameById.get(input.fromParticipantId) || "Không rõ",
-    toName: nameById.get(input.toParticipantId) || "Không rõ",
+    fromName: nameById.get(input.fromParticipantId) as string,
+    toName: nameById.get(input.toParticipantId) as string,
     amount: input.amount,
   });
 

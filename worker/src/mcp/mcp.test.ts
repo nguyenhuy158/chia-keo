@@ -3,7 +3,11 @@ import type { ApiCrossGameBalances } from "../../../shared/api-types";
 import { MCP_SCOPES, type McpScope } from "../../../shared/schemas";
 import { MAX_CROSS_GAME_GAMES } from "../core/application/cross-game-balances";
 import { ALL_SCOPES, APP_ORIGIN, fakeRepo, OWNER, shareLink } from "./fixtures";
-import { handleMcpMessage, JSON_RPC_ERROR, MCP_PROTOCOL_VERSION } from "./protocol";
+import {
+  handleMcpMessage,
+  JSON_RPC_ERROR,
+  MCP_PROTOCOL_VERSION,
+} from "./protocol";
 import { mcpTools, type McpContext } from "./tools";
 
 function makeContext(overrides: Partial<McpContext> = {}): McpContext {
@@ -37,7 +41,12 @@ async function callTool(
   options: { context?: McpContext; scopes?: McpScope[] } = {},
 ) {
   const response = await send(
-    { jsonrpc: "2.0", id: 1, method: "tools/call", params: { name, arguments: args } },
+    {
+      jsonrpc: "2.0",
+      id: 1,
+      method: "tools/call",
+      params: { name, arguments: args },
+    },
     options,
   );
   return response?.result as {
@@ -74,18 +83,26 @@ describe("MCP protocol", () => {
       params: { protocolVersion: "1999-01-01" },
     });
 
-    expect((response?.result as { protocolVersion: string }).protocolVersion).toBe(
-      MCP_PROTOCOL_VERSION,
-    );
+    expect(
+      (response?.result as { protocolVersion: string }).protocolVersion,
+    ).toBe(MCP_PROTOCOL_VERSION);
   });
 
   it("khong tra loi gi cho notification", async () => {
-    expect(await send({ jsonrpc: "2.0", method: "notifications/initialized" })).toBeNull();
+    expect(
+      await send({ jsonrpc: "2.0", method: "notifications/initialized" }),
+    ).toBeNull();
   });
 
   it("liet ke du bon tool kem inputSchema", async () => {
-    const response = await send({ jsonrpc: "2.0", id: 1, method: "tools/list" });
-    const { tools } = response?.result as { tools: { name: string; inputSchema: unknown }[] };
+    const response = await send({
+      jsonrpc: "2.0",
+      id: 1,
+      method: "tools/list",
+    });
+    const { tools } = response?.result as {
+      tools: { name: string; inputSchema: unknown }[];
+    };
 
     expect(tools.map((tool) => tool.name)).toEqual([
       "get_version",
@@ -106,7 +123,10 @@ describe("MCP protocol", () => {
     const { tools } = response?.result as { tools: { name: string }[] };
 
     // get_version khong doi scope nen luon co mat.
-    expect(tools.map((tool) => tool.name)).toEqual(["get_version", "get_shared_game"]);
+    expect(tools.map((tool) => tool.name)).toEqual([
+      "get_version",
+      "get_shared_game",
+    ]);
   });
 
   it("chan tool ngoai quyen va noi ro thieu scope nao", async () => {
@@ -119,14 +139,20 @@ describe("MCP protocol", () => {
       },
       { scopes: ["share:read"] },
     );
-    const result = response?.result as { isError: boolean; content: { text: string }[] };
+    const result = response?.result as {
+      isError: boolean;
+      content: { text: string }[];
+    };
 
     expect(result.isError).toBe(true);
     expect(result.content[0].text).toContain("games:read");
   });
 
   it("token khong scope nao chi thay tool khong can quyen", async () => {
-    const response = await send({ jsonrpc: "2.0", id: 1, method: "tools/list" }, { scopes: [] });
+    const response = await send(
+      { jsonrpc: "2.0", id: 1, method: "tools/list" },
+      { scopes: [] },
+    );
     const { tools } = response?.result as { tools: { name: string }[] };
 
     expect(tools.map((tool) => tool.name)).toEqual(["get_version"]);
@@ -141,7 +167,11 @@ describe("MCP protocol", () => {
 
   it("get_version tra commit dang chay, khong can scope nao", async () => {
     const result = await callTool("get_version", {}, { scopes: [] });
-    const info = parsed<{ commit: string; shortCommit: string; appOrigin: string }>(result);
+    const info = parsed<{
+      commit: string;
+      shortCommit: string;
+      appOrigin: string;
+    }>(result);
 
     expect(result.isError).toBeFalsy();
     expect(info.shortCommit).toBe(info.commit.slice(0, 7));
@@ -149,12 +179,18 @@ describe("MCP protocol", () => {
   });
 
   it("bao method khong ho tro thay vi im lang", async () => {
-    const response = await send({ jsonrpc: "2.0", id: 1, method: "resources/list" });
+    const response = await send({
+      jsonrpc: "2.0",
+      id: 1,
+      method: "resources/list",
+    });
     expect(response?.error?.code).toBe(JSON_RPC_ERROR.methodNotFound);
   });
 
   it("bao invalidRequest khi message khong phai JSON-RPC", async () => {
-    expect((await send("xin chào"))?.error?.code).toBe(JSON_RPC_ERROR.invalidRequest);
+    expect((await send("xin chào"))?.error?.code).toBe(
+      JSON_RPC_ERROR.invalidRequest,
+    );
     expect((await send({ jsonrpc: "2.0", id: 1 }))?.error?.code).toBe(
       JSON_RPC_ERROR.invalidRequest,
     );
@@ -170,13 +206,61 @@ describe("MCP protocol", () => {
 
     expect(response?.error?.code).toBe(JSON_RPC_ERROR.methodNotFound);
   });
+
+  it("rejects tool calls without a name", async () => {
+    for (const params of [undefined, null, {}]) {
+      const response = await send({
+        jsonrpc: "2.0",
+        id: 1,
+        method: "tools/call",
+        params,
+      });
+      expect(response?.error?.code).toBe(JSON_RPC_ERROR.invalidParams);
+    }
+  });
+
+  it("returns a readable result when a tool throws a non-Error value", async () => {
+    const response = await handleMcpMessage(
+      {
+        jsonrpc: "2.0",
+        id: 1,
+        method: "tools/call",
+        params: { name: "broken" },
+      },
+      {
+        tools: [
+          {
+            name: "broken",
+            title: "Broken",
+            description: "Broken",
+            inputSchema: {},
+            run: async () => {
+              throw "plain failure";
+            },
+          },
+        ],
+        scopes: [],
+        context: {},
+        serverInfo: {
+          name: "test",
+          title: "Test",
+          version: "1",
+          instructions: "",
+        },
+      },
+    );
+    expect(response?.result).toMatchObject({
+      isError: true,
+      content: [{ type: "text", text: "plain failure" }],
+    });
+  });
 });
 
 describe("MCP tools", () => {
   it("list_games tra ma va so lieu dem", async () => {
-    const games = parsed<{ code: string; participantCount: number; expenseCount: number }[]>(
-      await callTool("list_games"),
-    );
+    const games = parsed<
+      { code: string; participantCount: number; expenseCount: number }[]
+    >(await callTool("list_games"));
 
     expect(games).toHaveLength(1);
     expect(games[0].code).toBe("DSKVUF");
@@ -200,8 +284,12 @@ describe("MCP tools", () => {
   });
 
   it("get_game nhan ca ma viet thuong va id", async () => {
-    expect((await callTool("get_game", { game: "dskvuf" })).isError).toBeUndefined();
-    expect((await callTool("get_game", { game: "game_1" })).isError).toBeUndefined();
+    expect(
+      (await callTool("get_game", { game: "dskvuf" })).isError,
+    ).toBeUndefined();
+    expect(
+      (await callTool("get_game", { game: "game_1" })).isError,
+    ).toBeUndefined();
   });
 
   it("get_game bao ma nao dang co khi tra sai", async () => {
@@ -212,7 +300,8 @@ describe("MCP tools", () => {
   });
 
   it("get_summary_text dung dung dinh dang cua nut Copy", async () => {
-    const compact = (await callTool("get_summary_text", { game: "DSKVUF" })).content[0].text;
+    const compact = (await callTool("get_summary_text", { game: "DSKVUF" }))
+      .content[0].text;
 
     expect(compact).toContain("ăn chơi 4/8 · DSKVUF");
     expect(compact).toContain("CÁC KHOẢN CHI (1 khoản · tổng 300k)");
@@ -224,7 +313,10 @@ describe("MCP tools", () => {
 
   it("get_summary_text ban detailed ghi them so da ung", async () => {
     const detailed = (
-      await callTool("get_summary_text", { game: "DSKVUF", variant: "detailed" })
+      await callTool("get_summary_text", {
+        game: "DSKVUF",
+        variant: "detailed",
+      })
     ).content[0].text;
 
     expect(detailed).toContain("TỪNG NGƯỜI (phần phải chịu)");
@@ -232,7 +324,10 @@ describe("MCP tools", () => {
   });
 
   it("get_summary_text chan variant la", async () => {
-    const result = await callTool("get_summary_text", { game: "DSKVUF", variant: "xyz" });
+    const result = await callTool("get_summary_text", {
+      game: "DSKVUF",
+      variant: "xyz",
+    });
 
     expect(result.isError).toBe(true);
     expect(result.content[0].text).toContain("compact");
@@ -242,8 +337,9 @@ describe("MCP tools", () => {
     const context = makeContext({
       repo: fakeRepo({ shareLink: { ...shareLink, enabled: false } }),
     });
-    const text = (await callTool("get_summary_text", { game: "DSKVUF" }, { context }))
-      .content[0].text;
+    const text = (
+      await callTool("get_summary_text", { game: "DSKVUF" }, { context })
+    ).content[0].text;
 
     expect(text).not.toContain("Chi tiết:");
   });
@@ -258,16 +354,21 @@ describe("MCP tools", () => {
   });
 
   it("get_shared_game tu choi token sai", async () => {
-    expect((await callTool("get_shared_game", { token: "sai" })).isError).toBe(true);
+    expect((await callTool("get_shared_game", { token: "sai" })).isError).toBe(
+      true,
+    );
   });
-
 
   it("khong doc duoc cuoc chia cua nguoi khac", async () => {
     const context = makeContext({ userId: "user-khac" });
-    const games = parsed<unknown[]>(await callTool("list_games", {}, { context }));
+    const games = parsed<unknown[]>(
+      await callTool("list_games", {}, { context }),
+    );
 
     expect(games).toEqual([]);
-    expect((await callTool("get_game", { game: "DSKVUF" }, { context })).isError).toBe(true);
+    expect(
+      (await callTool("get_game", { game: "DSKVUF" }, { context })).isError,
+    ).toBe(true);
   });
 
   it("bao thieu tham so bat buoc", async () => {
@@ -287,8 +388,8 @@ describe("get_balances_across_games", () => {
   const twoGames = () => makeContext({ repo: fakeRepo({ twoGames: true }) });
 
   function balances(args: Record<string, unknown> = {}, context = twoGames()) {
-    return callTool("get_balances_across_games", args, { context }).then((result) =>
-      parsed<ApiCrossGameBalances>(result),
+    return callTool("get_balances_across_games", args, { context }).then(
+      (result) => parsed<ApiCrossGameBalances>(result),
     );
   }
 
@@ -371,7 +472,10 @@ describe("get_balances_across_games", () => {
   });
 
   it("chan khi gop qua nhieu cuoc mot luot", async () => {
-    const refs = Array.from({ length: MAX_CROSS_GAME_GAMES + 1 }, () => "DSKVUF");
+    const refs = Array.from(
+      { length: MAX_CROSS_GAME_GAMES + 1 },
+      () => "DSKVUF",
+    );
     const result = await callTool(
       "get_balances_across_games",
       { games: refs },
@@ -392,7 +496,10 @@ describe("get_balances_across_games", () => {
   });
 
   it("nguoi khac khong gop duoc du lieu cua chu", async () => {
-    const context = makeContext({ repo: fakeRepo({ twoGames: true }), userId: "user-khac" });
+    const context = makeContext({
+      repo: fakeRepo({ twoGames: true }),
+      userId: "user-khac",
+    });
     const result = await balances({}, context);
 
     expect(result.games).toEqual([]);

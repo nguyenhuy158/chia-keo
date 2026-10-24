@@ -1,9 +1,9 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { McpScope } from "../../../shared/schemas";
 import { createMcpToken } from "../core/application/mcp-tokens";
 import type { GameRepository } from "../core/ports/game-repository";
-import { handleMcpHttpRequest } from "./http";
 import { fakeRepo } from "./fixtures";
+import { handleMcpHttpRequest } from "./http";
 
 const ENDPOINT = "https://chiakeo.test/api/mcp";
 
@@ -12,13 +12,20 @@ let secret: string;
 let tokenId: string;
 
 async function issueToken(scopes: McpScope[]) {
-  const created = await createMcpToken(repo, "user-1", { name: "Claude Code", scopes });
+  const created = await createMcpToken(repo, "user-1", {
+    name: "Claude Code",
+    scopes,
+  });
   return created;
 }
 
 beforeEach(async () => {
   repo = fakeRepo({ tokens: [] });
-  const created = await issueToken(["games:read", "summary:read", "share:read"]);
+  const created = await issueToken([
+    "games:read",
+    "summary:read",
+    "share:read",
+  ]);
   secret = created.secret;
   tokenId = created.token.id;
 });
@@ -28,7 +35,9 @@ function call(
   options: { token?: string | null; method?: string } = {},
 ) {
   const token = options.token === undefined ? secret : options.token;
-  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
   if (token !== null) headers.Authorization = `Bearer ${token}`;
 
   const method = options.method || "POST";
@@ -49,11 +58,17 @@ function call(
 
 describe("handleMcpHttpRequest", () => {
   it("tra 401 khi thieu header, sai scheme, hoac token sai", async () => {
-    expect((await call({ jsonrpc: "2.0", id: 1, method: "ping" }, { token: null })).status).toBe(
-      401,
-    );
     expect(
-      (await call({ jsonrpc: "2.0", id: 1, method: "ping" }, { token: "ck_saibet" })).status,
+      (await call({ jsonrpc: "2.0", id: 1, method: "ping" }, { token: null }))
+        .status,
+    ).toBe(401);
+    expect(
+      (
+        await call(
+          { jsonrpc: "2.0", id: 1, method: "ping" },
+          { token: "ck_saibet" },
+        )
+      ).status,
     ).toBe(401);
 
     const wrongScheme = await handleMcpHttpRequest({
@@ -68,7 +83,10 @@ describe("handleMcpHttpRequest", () => {
   });
 
   it("401 kem WWW-Authenticate va khong he token sai o dau", async () => {
-    const response = await call({ jsonrpc: "2.0", id: 1, method: "ping" }, { token: null });
+    const response = await call(
+      { jsonrpc: "2.0", id: 1, method: "ping" },
+      { token: null },
+    );
     const body = (await response.json()) as Record<string, unknown>;
 
     expect(response.headers.get("WWW-Authenticate")).toContain("Bearer");
@@ -96,15 +114,26 @@ describe("handleMcpHttpRequest", () => {
   });
 
   it("liet ke tool qua HTTP", async () => {
-    const response = await call({ jsonrpc: "2.0", id: 1, method: "tools/list" });
-    const body = (await response.json()) as { result: { tools: { name: string }[] } };
+    const response = await call({
+      jsonrpc: "2.0",
+      id: 1,
+      method: "tools/list",
+    });
+    const body = (await response.json()) as {
+      result: { tools: { name: string }[] };
+    };
 
     expect(response.status).toBe(200);
-    expect(body.result.tools.map((tool) => tool.name)).toContain("get_summary_text");
+    expect(body.result.tools.map((tool) => tool.name)).toContain(
+      "get_summary_text",
+    );
   });
 
   it("tra 202 khong body cho notification", async () => {
-    const response = await call({ jsonrpc: "2.0", method: "notifications/initialized" });
+    const response = await call({
+      jsonrpc: "2.0",
+      method: "notifications/initialized",
+    });
 
     expect(response.status).toBe(202);
     expect(await response.text()).toBe("");
@@ -120,6 +149,45 @@ describe("handleMcpHttpRequest", () => {
 
     // Notification khong sinh phan hoi nen chi con hai.
     expect(body.map((entry) => entry.id)).toEqual([1, 2]);
+  });
+
+  it("returns 202 for a batch containing only notifications", async () => {
+    const response = await call([
+      { jsonrpc: "2.0", method: "notifications/initialized" },
+    ]);
+    expect(response.status).toBe(202);
+  });
+
+  it("logs a failed last-used write and still answers", async () => {
+    vi.spyOn(repo.mcpTokens, "touchLastUsed").mockRejectedValue(
+      new Error("write failed"),
+    );
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    const response = await call({ jsonrpc: "2.0", id: 1, method: "ping" });
+    expect(response.status).toBe(200);
+    expect(error).toHaveBeenCalledWith(
+      "Không ghi được lastUsedAt cho token MCP:",
+      expect.any(Error),
+    );
+    error.mockRestore();
+  });
+
+  it("passes the last-used write to waitUntil when available", async () => {
+    const waitUntil = vi.fn();
+    const response = await handleMcpHttpRequest({
+      request: new Request(ENDPOINT, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${secret}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "ping" }),
+      }),
+      repo,
+      waitUntil,
+    });
+    expect(response.status).toBe(200);
+    expect(waitUntil).toHaveBeenCalledWith(expect.any(Promise));
   });
 
   it("ghi lai lan cuoi token duoc dung", async () => {
@@ -139,7 +207,9 @@ describe("handleMcpHttpRequest", () => {
       { jsonrpc: "2.0", id: 1, method: "tools/list" },
       { token: limited.secret },
     );
-    const body = (await response.json()) as { result: { tools: { name: string }[] } };
+    const body = (await response.json()) as {
+      result: { tools: { name: string }[] };
+    };
 
     // get_version khong doi quyen nen token nao cung thay.
     expect(body.result.tools.map((tool) => tool.name)).toEqual([
@@ -161,7 +231,12 @@ describe("handleMcpHttpRequest", () => {
       params: { name: "list_games", arguments: {} },
     });
     const theirs = await call(
-      { jsonrpc: "2.0", id: 1, method: "tools/call", params: { name: "list_games" } },
+      {
+        jsonrpc: "2.0",
+        id: 1,
+        method: "tools/call",
+        params: { name: "list_games" },
+      },
       { token: other.secret },
     );
 

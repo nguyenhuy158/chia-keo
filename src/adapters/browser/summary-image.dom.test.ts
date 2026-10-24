@@ -226,6 +226,20 @@ describe("summary PNG rendering", () => {
     ).resolves.toBeInstanceOf(Blob);
   });
 
+  it("wraps a long footer onto multiple aligned lines", async () => {
+    await renderSummaryImage(
+      { ...input, shareUrl: Array(40).fill("segment").join(" ") },
+      "compact",
+      "trang",
+      false,
+      false,
+    );
+    expect(
+      fillText.mock.calls.filter(([text]) => String(text).includes("segment"))
+        .length,
+    ).toBeGreaterThan(1);
+  });
+
   it("keeps the payment text when the QR image fails", async () => {
     imageFails = (source) => source.includes("/api/qr");
     await renderSummaryImage(input, "compact", "trang", true, false);

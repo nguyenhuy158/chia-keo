@@ -1,4 +1,4 @@
-import type { ApiGame, ApiGameDetail, ApiShareView } from "../../../shared/api-types";
+import type { ApiGame, ApiGameDetail } from "../../../shared/api-types";
 import { BUILD_INFO } from "../../../shared/build-info";
 import type { McpScope } from "../../../shared/schemas";
 import {
@@ -104,10 +104,10 @@ function readGameRefs(args: Record<string, unknown>): string[] {
 }
 
 function toSummaryInput(
-  game: ApiGameDetail | ApiShareView,
+  game: ApiGameDetail,
   appOrigin: string,
 ): SummaryTextInput {
-  const shareLink = "shareLink" in game ? game.shareLink : null;
+  const shareLink = game.shareLink;
 
   return {
     code: game.code,

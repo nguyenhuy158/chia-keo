@@ -272,7 +272,7 @@ function wrapText(
     }
   }
 
-  if (current) lines.push(current);
+  lines.push(current);
   return lines;
 }
 
@@ -413,7 +413,7 @@ function buildBlocks(
       // nen zip theo index la lay dung nguoi cho dong do.
       const avatar =
         section.id === "people"
-          ? avatarsByParticipantId.get(participants[index]?.id || "")
+          ? avatarsByParticipantId.get(participants[index].id)
           : section.id === "settlements"
             ? avatarsByParticipantId.get(section.lineParticipantIds?.[index] || "")
             : undefined;
