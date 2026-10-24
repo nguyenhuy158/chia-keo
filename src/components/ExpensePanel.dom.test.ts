@@ -13,18 +13,16 @@ import type { GameApiPort } from "../core/ports/game-api";
 import { ConfirmProvider } from "./ConfirmDialog";
 import { ExpensePanel } from "./ExpensePanel";
 
-const { uploadMock, photoViewerOpen } = vi.hoisted(() => ({
+const { uploadMock, photoViewerOpen, uploadState } = vi.hoisted(() => ({
   uploadMock: vi.fn().mockResolvedValue([]),
   photoViewerOpen: vi.fn(),
+  uploadState: { pending: false, done: 0, total: 0, error: "" },
 }));
 
 vi.mock("../adapters/react-query/photo-upload", () => ({
   usePhotoUploader: () => ({
     upload: uploadMock,
-    pending: false,
-    done: 0,
-    total: 0,
-    error: "",
+    ...uploadState,
   }),
 }));
 
@@ -137,6 +135,13 @@ function button(label: string) {
   ) as HTMLButtonElement;
 }
 
+function splitButton(name: string) {
+  return [...host.querySelectorAll("button")].find(
+    (item) =>
+      item.textContent?.trim() === name && item.className.includes("min-h-11"),
+  ) as HTMLButtonElement;
+}
+
 function chooseFile(target: HTMLInputElement, file: File) {
   Object.defineProperty(target, "files", { configurable: true, value: [file] });
   act(() => target.dispatchEvent(new Event("change", { bubbles: true })));
@@ -146,6 +151,7 @@ beforeEach(() => {
   Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
   uploadMock.mockClear();
   photoViewerOpen.mockClear();
+  Object.assign(uploadState, { pending: false, done: 0, total: 0, error: "" });
   Object.defineProperty(URL, "createObjectURL", {
     configurable: true,
     value: vi.fn(() => "blob:test"),
@@ -170,6 +176,7 @@ afterEach(() => {
   host.remove();
   Reflect.deleteProperty(URL, "createObjectURL");
   Reflect.deleteProperty(URL, "revokeObjectURL");
+  vi.unstubAllGlobals();
 });
 
 describe("ExpensePanel", () => {
@@ -736,6 +743,451 @@ describe("ExpensePanel", () => {
         payerParticipantId: "binh",
         splitParticipantIds: ["binh", "chi"],
       }),
+    );
+  });
+
+  it("hiển thị khoản thu, danh mục, ảnh và cho đính kèm ảnh từ dòng khoản chi", () => {
+    const photos: ApiPhoto[] = [
+      {
+        id: "photo",
+        expenseId: "expense-a",
+        caption: "",
+        mimeType: "image/png",
+        width: 2,
+        height: 2,
+        thumbData: "thumb",
+        createdAt: "2026-01-01T00:00:00.000Z",
+      },
+    ];
+    panel({
+      expenses: [
+        expense({ category: "food" }),
+        expense({
+          id: "income",
+          title: "Hoàn tiền",
+          kind: "income",
+          payerParticipantId: "missing",
+          splitMode: "shares",
+        }),
+      ],
+      photos,
+    });
+    expect(host.textContent).toContain("Thu");
+    expect(host.textContent).toContain("Không rõ");
+    expect(host.textContent).toContain("theo phần");
+    act(() =>
+      (
+        host.querySelector(
+          "button[aria-label='Xem ảnh của Tiền sân']",
+        ) as HTMLButtonElement
+      ).click(),
+    );
+    expect(photoViewerOpen).toHaveBeenCalledWith(0);
+    const picker = host.querySelector(
+      "label[aria-label='Thêm ảnh cho Tiền sân'] input[type='file']",
+    ) as HTMLInputElement;
+    const file = new File(["image"], "new.png", { type: "image/png" });
+    chooseFile(picker, file);
+    expect(uploadMock).toHaveBeenCalledWith([file], { expenseId: "expense-a" });
+    act(() =>
+      (
+        host.querySelector(
+          "button[aria-label='Sửa Hoàn tiền']",
+        ) as HTMLButtonElement
+      ).click(),
+    );
+    expect(button("Lưu khoản thu")).toBeDefined();
+    expect(button("Khoản chi").disabled).toBe(true);
+  });
+
+  it("bỏ ảnh tạm trước khi lưu khoản chi", async () => {
+    const { onAdd } = panel();
+    const toggle = [...host.querySelectorAll("button")].find((item) =>
+      item.textContent?.includes("Ảnh hóa đơn"),
+    ) as HTMLButtonElement;
+    act(() => toggle.click());
+    const picker = host.querySelector(
+      "label[aria-label='Đính kèm ảnh hóa đơn'] input[type='file']",
+    ) as HTMLInputElement;
+    Object.defineProperty(picker, "files", { configurable: true, value: [] });
+    act(() => picker.dispatchEvent(new Event("change", { bubbles: true })));
+    expect(host.textContent).not.toContain("Ảnh sẽ được lưu kèm");
+    chooseFile(
+      picker,
+      new File(["image"], "receipt.png", { type: "image/png" }),
+    );
+    expect(host.textContent).toContain("Ảnh sẽ được lưu kèm");
+    act(() =>
+      (
+        host.querySelector(
+          "button[aria-label='Bỏ ảnh đính kèm 1']",
+        ) as HTMLButtonElement
+      ).click(),
+    );
+    expect(host.textContent).not.toContain("Ảnh sẽ được lưu kèm");
+    type(input("500.000"), "10000");
+    await act(async () => {
+      host
+        .querySelector("form")
+        ?.dispatchEvent(
+          new Event("submit", { bubbles: true, cancelable: true }),
+        );
+    });
+    expect(onAdd).toHaveBeenCalled();
+    expect(uploadMock).not.toHaveBeenCalled();
+  });
+
+  it("không tải ảnh tạm nếu API không trả khoản chi mới", async () => {
+    const existing = expense();
+    const onAdd = vi
+      .fn<PanelHandlers["onAdd"]>()
+      .mockResolvedValue({ expenses: [existing] } as ApiGameDetail);
+    panel({ expenses: [existing], onAdd });
+    const toggle = [...host.querySelectorAll("button")].find((item) =>
+      item.textContent?.includes("Ảnh hóa đơn"),
+    ) as HTMLButtonElement;
+    act(() => toggle.click());
+    const picker = host.querySelector(
+      "label[aria-label='Đính kèm ảnh hóa đơn'] input[type='file']",
+    ) as HTMLInputElement;
+    chooseFile(
+      picker,
+      new File(["image"], "receipt.png", { type: "image/png" }),
+    );
+    type(input("500.000"), "10000");
+    await act(async () => {
+      host
+        .querySelector("form")
+        ?.dispatchEvent(
+          new Event("submit", { bubbles: true, cancelable: true }),
+        );
+    });
+    expect(onAdd).toHaveBeenCalled();
+    expect(uploadMock).not.toHaveBeenCalled();
+  });
+
+  it("gợi ý AI khi nhấn Enter và bỏ qua câu trống", async () => {
+    const suggestExpense = vi.fn().mockResolvedValue({
+      suggestion: {
+        title: "",
+        amount: 0,
+        payerParticipantId: "",
+        splitParticipantIds: [],
+      },
+    });
+    provideGameApi({ ai: { suggestExpense } } as unknown as GameApiPort);
+    panel();
+    const aiInput = input("Ví dụ: ăn tối 500k Huy trả chia 3");
+    act(() =>
+      aiInput.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          key: "Enter",
+          bubbles: true,
+          cancelable: true,
+        }),
+      ),
+    );
+    expect(suggestExpense).not.toHaveBeenCalled();
+    type(aiInput, "Ăn tối");
+    await act(async () => {
+      aiInput.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          key: "Enter",
+          bubbles: true,
+          cancelable: true,
+        }),
+      );
+    });
+    expect(suggestExpense).toHaveBeenCalledWith("game", "Ăn tối");
+    expect(input("Ăn tối").value).toBe("");
+  });
+
+  it("bỏ rồi chọn lại từng người ở chế độ chia đều và theo phần", async () => {
+    const { onAdd } = panel();
+    act(() => splitButton("An").click());
+    type(input("500.000"), "10000");
+    await act(async () => {
+      host
+        .querySelector("form")
+        ?.dispatchEvent(
+          new Event("submit", { bubbles: true, cancelable: true }),
+        );
+    });
+    expect(onAdd).toHaveBeenLastCalledWith(
+      expect.objectContaining({ splitParticipantIds: ["binh"] }),
+    );
+    act(() => splitButton("An").click());
+    act(() => button("Theo phần").click());
+    act(() => splitButton("Bình").click());
+    expect(
+      host.querySelector("input[aria-label='Số phần của Bình']"),
+    ).toBeNull();
+    act(() => splitButton("Bình").click());
+    const weight = host.querySelector(
+      "input[aria-label='Số phần của An']",
+    ) as HTMLInputElement;
+    act(() =>
+      (
+        host.querySelector(
+          "button[aria-label='Tăng số phần của An']",
+        ) as HTMLButtonElement
+      ).click(),
+    );
+    act(() =>
+      (
+        host.querySelector(
+          "button[aria-label='Giảm số phần của An']",
+        ) as HTMLButtonElement
+      ).click(),
+    );
+    type(weight, "0");
+    act(() => {
+      weight.focus();
+      weight.blur();
+    });
+    expect(weight.value).toBe("1");
+    type(weight, "");
+    act(() => {
+      weight.focus();
+      weight.blur();
+    });
+    expect(weight.value).toBe("1");
+  });
+
+  it("bắt buộc chọn một người để chia khoản chi", async () => {
+    const { onAdd } = panel();
+    act(() => button("Bỏ chọn").click());
+    type(input("500.000"), "10000");
+    await act(async () => {
+      host
+        .querySelector("form")
+        ?.dispatchEvent(
+          new Event("submit", { bubbles: true, cancelable: true }),
+        );
+    });
+    expect(onAdd).not.toHaveBeenCalled();
+    expect(host.textContent).toContain("Chọn ít nhất một người cùng chia");
+  });
+
+  it("bỏ qua file hóa đơn chưa chọn và hiển thị lỗi khi không đọc được file", async () => {
+    panel();
+    const picker = host.querySelector(
+      "label[title='Quét ảnh hóa đơn'] input[type='file']",
+    ) as HTMLInputElement;
+    Object.defineProperty(picker, "files", { configurable: true, value: [] });
+    act(() => picker.dispatchEvent(new Event("change", { bubbles: true })));
+    class BrokenReader {
+      onload: (() => void) | null = null;
+      onerror: (() => void) | null = null;
+      error = new Error("unreadable");
+      readAsDataURL() {
+        queueMicrotask(() => this.onerror?.());
+      }
+    }
+    vi.stubGlobal("FileReader", BrokenReader);
+    chooseFile(picker, new File(["bad"], "receipt.png", { type: "image/png" }));
+    await vi.waitFor(() =>
+      expect(host.textContent).toContain("Gọi AI thất bại"),
+    );
+  });
+
+  it("kéo khoản chi để đổi thứ tự", () => {
+    const onReorder = vi.fn<PanelHandlers["onReorder"]>();
+    panel({
+      expenses: [expense(), expense({ id: "expense-b", title: "Ăn tối" })],
+      onReorder,
+    });
+    const handle = host.querySelector(
+      "button[aria-label='Kéo để đổi thứ tự Tiền sân']",
+    ) as HTMLButtonElement;
+    handle.setPointerCapture = vi.fn();
+    const rows = [
+      ...host.querySelectorAll("button[aria-label^='Kéo để đổi thứ tự']"),
+    ].map(
+      (button) =>
+        button.parentElement?.parentElement?.parentElement as HTMLElement,
+    );
+    rows[0].getBoundingClientRect = () => ({ top: 0, height: 50 }) as DOMRect;
+    rows[1].getBoundingClientRect = () => ({ top: 100, height: 50 }) as DOMRect;
+    const pointer = (kind: string, clientY: number) => {
+      const event = new MouseEvent(kind, {
+        bubbles: true,
+        clientY,
+        cancelable: true,
+      });
+      Object.defineProperty(event, "pointerId", { value: 1 });
+      act(() => handle.dispatchEvent(event));
+    };
+    pointer("pointerdown", 10);
+    pointer("pointermove", 120);
+    pointer("pointerup", 120);
+    expect(onReorder).toHaveBeenCalledWith(["expense-b", "expense-a"]);
+  });
+
+  it("hiển thị số tiền còn thiếu hoặc vượt khi chia tiền riêng", () => {
+    panel();
+    act(() => button("Số tiền").click());
+    expect(host.textContent).toContain("nhập số tiền ở trên trước");
+    type(input("500.000"), "100000");
+    const binhAmount = host.querySelector(
+      "input[aria-label='Phần tiền của Bình']",
+    ) as HTMLInputElement;
+    type(binhAmount, "70000");
+    expect(host.textContent).toContain("vượt 20.000");
+  });
+
+  it("hiển thị tiến độ và lỗi tải ảnh trong form", () => {
+    panel();
+    Object.assign(uploadState, {
+      pending: true,
+      done: 1,
+      total: 2,
+      error: "Không đọc được ảnh",
+    });
+    panel();
+    const toggle = [...host.querySelectorAll("button")].find((item) =>
+      item.textContent?.includes("Ảnh hóa đơn"),
+    ) as HTMLButtonElement;
+    act(() => toggle.click());
+    expect(host.textContent).toContain("Đang tải 2/2");
+    expect(host.textContent).toContain("Không đọc được ảnh");
+  });
+
+  it("báo lỗi AI không xác định và không gửi khi nhấn phím khác Enter", async () => {
+    const suggestExpense = vi.fn().mockRejectedValue("offline");
+    provideGameApi({ ai: { suggestExpense } } as unknown as GameApiPort);
+    panel();
+    const aiInput = input("Ví dụ: ăn tối 500k Huy trả chia 3");
+    type(aiInput, "Ăn tối");
+    act(() =>
+      aiInput.dispatchEvent(
+        new KeyboardEvent("keydown", { key: "Tab", bubbles: true }),
+      ),
+    );
+    expect(suggestExpense).not.toHaveBeenCalled();
+    await act(async () => button("Gợi ý").click());
+    expect(host.textContent).toContain("Gọi AI thất bại");
+  });
+
+  it("bấm sửa lần nữa để hủy sửa", () => {
+    panel({ expenses: [expense()] });
+    const edit = host.querySelector(
+      "button[aria-label='Sửa Tiền sân']",
+    ) as HTMLButtonElement;
+    act(() => edit.click());
+    expect(button("Lưu khoản chi")).toBeDefined();
+    act(() => edit.click());
+    expect(button("Thêm khoản chi")).toBeDefined();
+  });
+
+  it("kiểm tra phần tiền của người mới trước khi lưu", async () => {
+    const onAdd = vi.fn<PanelHandlers["onAdd"]>();
+    panel({ onAdd });
+    type(input("500.000"), "100000");
+    act(() => button("Số tiền").click());
+    const chi: ApiParticipant = {
+      id: "chi",
+      name: "Chi",
+      bankId: "",
+      accountNo: "",
+      accountName: "",
+    };
+    panel({ onAdd, participants: [...participants, chi] });
+    expect(
+      host.querySelector("input[aria-label='Phần tiền của Chi']"),
+    ).not.toBeNull();
+    await act(async () => {
+      host
+        .querySelector("form")
+        ?.dispatchEvent(
+          new Event("submit", { bubbles: true, cancelable: true }),
+        );
+    });
+    expect(onAdd).not.toHaveBeenCalled();
+    expect(host.textContent).toContain("phần lớn hơn 0");
+  });
+
+  it("đổi về người trả trống khi hủy sửa sau lúc xóa hết người", () => {
+    panel({ expenses: [expense()] });
+    act(() =>
+      (
+        host.querySelector(
+          "button[aria-label='Sửa Tiền sân']",
+        ) as HTMLButtonElement
+      ).click(),
+    );
+    panel({ expenses: [expense()], participants: [] });
+    act(() => button("Hủy sửa").click());
+    expect(button("Thêm khoản chi").disabled).toBe(true);
+  });
+
+  it("đọc được sự kiện ảnh nhưng nội dung ảnh rỗng", async () => {
+    const scanReceipt = vi
+      .fn()
+      .mockResolvedValue({
+        suggestion: {
+          title: "",
+          amount: 0,
+          payerParticipantId: "",
+          splitParticipantIds: [],
+        },
+      });
+    provideGameApi({ ai: { scanReceipt } } as unknown as GameApiPort);
+    class EmptyReader {
+      result = null;
+      onload: (() => void) | null = null;
+      onerror: (() => void) | null = null;
+      readAsDataURL() {
+        queueMicrotask(() => this.onload?.());
+      }
+    }
+    vi.stubGlobal("FileReader", EmptyReader);
+    panel();
+    const picker = host.querySelector(
+      "label[title='Quét ảnh hóa đơn'] input[type='file']",
+    ) as HTMLInputElement;
+    chooseFile(
+      picker,
+      new File(["image"], "receipt.png", { type: "image/png" }),
+    );
+    await vi.waitFor(() =>
+      expect(scanReceipt).toHaveBeenCalledWith("game", {
+        mimeType: "image/png",
+        data: "",
+      }),
+    );
+  });
+
+  it("không gửi thêm ảnh quét khi lần quét đầu đang chạy", async () => {
+    let finish!: (result: unknown) => void;
+    const scanReceipt = vi.fn().mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          finish = resolve;
+        }),
+    );
+    provideGameApi({ ai: { scanReceipt } } as unknown as GameApiPort);
+    panel();
+    const picker = host.querySelector(
+      "label[title='Quét ảnh hóa đơn'] input[type='file']",
+    ) as HTMLInputElement;
+    chooseFile(picker, new File(["first"], "first.png", { type: "image/png" }));
+    await vi.waitFor(() => expect(host.textContent).toContain("Đang quét..."));
+    chooseFile(
+      picker,
+      new File(["second"], "second.png", { type: "image/png" }),
+    );
+    expect(scanReceipt).toHaveBeenCalledOnce();
+    finish({
+      suggestion: {
+        title: "",
+        amount: 0,
+        payerParticipantId: "",
+        splitParticipantIds: [],
+      },
+    });
+    await vi.waitFor(() =>
+      expect(host.textContent).not.toContain("Đang quét..."),
     );
   });
 });
