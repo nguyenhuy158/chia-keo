@@ -102,6 +102,15 @@ describe("buildContacts", () => {
     expect(contacts.map((contact) => contact.name)).toEqual(["Hay", "Moi", "Cu"]);
   });
 
+  it("cung so lan va cung thoi diem thi xep theo ten tieng Viet", () => {
+    const contacts = buildContacts([
+      row({ name: "Tâm", gameId: "g1" }),
+      row({ name: "An", gameId: "g2" }),
+    ]);
+
+    expect(contacts.map((contact) => contact.name)).toEqual(["An", "Tâm"]);
+  });
+
   it("khong co ai thi tra danh sach rong", () => {
     expect(buildContacts([])).toEqual([]);
   });
@@ -165,5 +174,9 @@ describe("mergeContacts", () => {
     const derived = buildContacts([row({ name: "hồng ", gameId: "g1" })]);
 
     expect(mergeContacts(book, derived)).toHaveLength(1);
+  });
+
+  it("bo dong danh ba ten rong", () => {
+    expect(mergeContacts([{ ...book[0], name: "  " }], [])).toEqual([]);
   });
 });
