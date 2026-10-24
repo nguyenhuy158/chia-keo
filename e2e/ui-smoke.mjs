@@ -9,6 +9,7 @@
 import { writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import assert from "node:assert/strict";
 import { findChromium } from "@huyab/e2e";
 import { chromium } from "playwright-core";
 
@@ -50,8 +51,8 @@ async function createJpegFixture() {
  * Tao tai khoan moi qua Better Auth va giu cookie session trong tab hien tai.
  * Chay trong trang de cookie thuoc dung origin cua app.
  */
-async function signUp(username) {
-  const result = await page.evaluate(async ({ name, password }) => {
+async function signUp(target, username) {
+  const result = await target.evaluate(async ({ name, password }) => {
     const response = await fetch("/api/auth/sign-up/email", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -68,6 +69,15 @@ async function signUp(username) {
   if (result.status !== 200) {
     throw new Error(`sign-up that bai (${result.status}): ${result.body}`);
   }
+}
+
+async function getGameDetail(target, gameId) {
+  const result = await target.evaluate(async (id) => {
+    const response = await fetch(`/api/games/${id}`, { credentials: "include" });
+    return { status: response.status, body: await response.json() };
+  }, gameId);
+  assert.equal(result.status, 200);
+  return result.body;
 }
 
 /**
@@ -104,7 +114,7 @@ try {
   // 2. Dang ky tai khoan moi. Trang /login chi con nut SSO Google (di ra
   // auth.huyab.click, khong chay duoc trong test), nen tao session bang API
   // username/mat khau cua Better Auth - van bat trong worker/src/auth.ts.
-  await signUp(username);
+  await signUp(page, username);
   await page.goto(BASE + "/");
   await page.waitForSelector("#game-name", WAIT);
   ok("sign up + land on home");
@@ -113,6 +123,7 @@ try {
   await page.fill("#game-name", "E2E Trip");
   await page.click('button[aria-label="Tạo cuộc chơi"]');
   await page.waitForURL("**/games/**", WAIT);
+  const gameId = new URL(page.url()).pathname.split("/").pop();
   ok("create game navigates to game page");
 
   // 4. Them 2 nguoi (1 nguoi co thong tin ngan hang)
@@ -151,7 +162,83 @@ try {
   await page.waitForSelector("text=số tiền riêng", WAIT);
   // Balance moi: An +110.000, Binh -110.000
   await page.waitForSelector("text=110.000", WAIT);
+  const beforeInvalid = await getGameDetail(page, gameId);
+  const an = beforeInvalid.participants.find((person) => person.name === "An");
+  const binh = beforeInvalid.participants.find((person) => person.name === "Binh");
+  assert.ok(an);
+  assert.ok(binh);
+  const lunch = beforeInvalid.expenses.find((expense) => expense.title === "An trua");
+  const karaoke = beforeInvalid.expenses.find((expense) => expense.title === "Karaoke");
+  assert.ok(lunch);
+  assert.ok(karaoke);
+  assert.deepEqual(
+    lunch.splits.map(({ participantId, amount }) => [participantId, amount]).sort(),
+    [[an.id, 50000], [binh.id, 50000]].sort(),
+  );
+  assert.deepEqual(
+    karaoke.splits.map(({ participantId, amount }) => [participantId, amount]).sort(),
+    [[an.id, 30000], [binh.id, 60000]].sort(),
+  );
+  assert.equal(beforeInvalid.summary.totalExpense, 190000);
+  assert.equal(beforeInvalid.summary.balances.find((row) => row.participantId === an.id).balance, 110000);
+  assert.equal(beforeInvalid.summary.balances.find((row) => row.participantId === binh.id).balance, -110000);
+  assert.deepEqual(beforeInvalid.summary.settlements, [{
+    fromParticipantId: binh.id,
+    toParticipantId: an.id,
+    amount: 110000,
+  }]);
+  await page.reload();
+  await page.waitForSelector("text=110.000", WAIT);
+  const reloaded = await getGameDetail(page, gameId);
+  assert.deepEqual(reloaded.summary, beforeInvalid.summary);
+  assert.deepEqual(reloaded.expenses, beforeInvalid.expenses);
   ok("add expense with custom amounts");
+
+  const invalidSplit = await page.evaluate(async ({ id, payerId, anId, binhId }) => {
+    const response = await fetch(`/api/games/${id}/expenses`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({
+        title: "Invalid split",
+        amount: 100000,
+        payerParticipantId: payerId,
+        splitMode: "amount",
+        splits: [
+          { participantId: anId, value: 10000 },
+          { participantId: binhId, value: 10000 },
+        ],
+      }),
+    });
+    return response.status;
+  }, { id: gameId, payerId: an.id, anId: an.id, binhId: binh.id });
+  assert.equal(invalidSplit, 400);
+  const afterInvalid = await getGameDetail(page, gameId);
+  assert.equal(afterInvalid.expenses.length, beforeInvalid.expenses.length);
+  assert.deepEqual(afterInvalid.summary, beforeInvalid.summary);
+  ok("invalid split is rejected without changing the game");
+
+  const outsiderPage = await browser.newPage();
+  await outsiderPage.goto(BASE + "/");
+  await signUp(outsiderPage, `outsider${username}`);
+  const outsiderAccess = await outsiderPage.evaluate(async ({ id, payerId, anId, binhId }) => {
+    const read = await fetch(`/api/games/${id}`, { credentials: "include" });
+    const write = await fetch(`/api/games/${id}/expenses`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({
+        title: "Unauthorized expense",
+        amount: 1000,
+        payerParticipantId: payerId,
+        splitParticipantIds: [anId, binhId],
+      }),
+    });
+    return { read: read.status, write: write.status };
+  }, { id: gameId, payerId: an.id, anId: an.id, binhId: binh.id });
+  assert.deepEqual(outsiderAccess, { read: 404, write: 404 });
+  await outsiderPage.close();
+  ok("another account cannot read or write the game");
 
   // 6.8 Anh: them vao album, sua chu thich, dinh kem vao khoan chi
   const jpegPath = await createJpegFixture();
@@ -194,7 +281,22 @@ try {
   await anonPage.waitForSelector('button[aria-label="Đóng ảnh"]', WAIT);
   const deleteCount = await anonPage.locator('button[aria-label="Xóa ảnh"]').count();
   if (deleteCount !== 0) throw new Error("share view must not allow deleting photos");
+  const shareWriteStatus = await anonPage.evaluate(async ({ id, payerId, anId, binhId }) => {
+    const response = await fetch(`/api/games/${id}/expenses`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title: "Share write",
+        amount: 1000,
+        payerParticipantId: payerId,
+        splitParticipantIds: [anId, binhId],
+      }),
+    });
+    return response.status;
+  }, { id: gameId, payerId: an.id, anId: an.id, binhId: binh.id });
+  assert.equal(shareWriteStatus, 401);
   await anonPage.close();
+  assert.equal((await getGameDetail(page, gameId)).expenses.length, 3);
   ok("public share page works without login");
 
   // 7.5 Ghi nhan tra no: bam "Đã trả" -> transfer duoc luu, het cong no
@@ -203,6 +305,24 @@ try {
   await page.waitForSelector("text=Đã trả nợ", WAIT);
   await page.waitForSelector("text=Binh đã trả An", WAIT);
   await page.waitForSelector("text=Mọi người đã cân bằng", WAIT);
+  const settled = await getGameDetail(page, gameId);
+  const transfers = settled.expenses.filter((expense) => expense.kind === "transfer");
+  assert.equal(transfers.length, 1);
+  assert.equal(transfers[0].amount, 120000);
+  assert.equal(transfers[0].payerParticipantId, binh.id);
+  assert.deepEqual(transfers[0].splits.map(({ participantId, amount }) => ({ participantId, amount })), [{
+    participantId: an.id,
+    amount: 120000,
+  }]);
+  assert.equal(settled.summary.totalExpense, 210000);
+  assert.equal(settled.summary.balances.length, 2);
+  assert.ok(settled.summary.balances.every((row) => row.balance === 0));
+  assert.deepEqual(settled.summary.settlements, []);
+  await page.reload();
+  await page.waitForSelector("text=Mọi người đã cân bằng", WAIT);
+  const persisted = await getGameDetail(page, gameId);
+  assert.deepEqual(persisted.summary, settled.summary);
+  assert.equal(persisted.expenses.filter((expense) => expense.kind === "transfer").length, 1);
   ok("record settlement as transfer");
 
   // 7.8 Xoa anh khoi album
