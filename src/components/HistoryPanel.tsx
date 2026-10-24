@@ -64,7 +64,7 @@ function EventRow({
   now: Date;
 }) {
   const { title, detail } = describeGameEvent(event.payload);
-  const Icon = ICONS[event.payload.kind] || History;
+  const Icon = ICONS[event.payload.kind];
   const destructive = DESTRUCTIVE.includes(event.payload.kind);
 
   return (

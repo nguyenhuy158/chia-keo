@@ -190,8 +190,8 @@ export function GamePage() {
     });
   }
 
-  async function handleRenameGame() {
-    const name = (nameDraft || "").trim();
+  async function handleRenameGame(draft: string) {
+    const name = draft.trim();
     if (!name || name === game.name) {
       setNameDraft(null);
       return;
@@ -455,7 +455,7 @@ export function GamePage() {
                 value={nameDraft}
                 onChange={(event) => setNameDraft(event.target.value)}
                 onKeyDown={(event) => {
-                  if (event.key === "Enter") handleRenameGame();
+                  if (event.key === "Enter") handleRenameGame(nameDraft);
                   if (event.key === "Escape") setNameDraft(null);
                 }}
                 className="field max-w-xs text-lg font-semibold"
@@ -463,7 +463,7 @@ export function GamePage() {
               />
               <button
                 type="button"
-                onClick={handleRenameGame}
+                onClick={() => handleRenameGame(nameDraft)}
                 disabled={renameGame.isPending}
                 className="inline-flex h-11 w-11 items-center justify-center rounded-md bg-primary text-white transition hover:bg-primary-hover"
                 aria-label="Lưu tên cuộc chơi"

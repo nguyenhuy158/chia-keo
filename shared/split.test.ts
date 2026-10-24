@@ -198,6 +198,24 @@ describe("calculateBalances", () => {
     ]);
   });
 
+  it("bo qua share cua nguoi da bi xoa khoi cuoc chia", () => {
+    const expenses: ExpenseInput[] = [
+      {
+        payerParticipantId: "a",
+        amount: 100,
+        shares: [
+          { participantId: "b", amount: 50 },
+          { participantId: "deleted", amount: 50 },
+        ],
+      },
+    ];
+
+    expect(calculateBalances(["a", "b"], expenses)).toEqual([
+      { participantId: "a", paid: 100, owed: 0, balance: 100 },
+      { participantId: "b", paid: 0, owed: 50, balance: -50 },
+    ]);
+  });
+
   it("bo qua khoan chi khong co shares", () => {
     const expenses: ExpenseInput[] = [
       { payerParticipantId: "a", amount: 100, shares: [] },
@@ -326,6 +344,10 @@ describe("resolveHostParticipantId", () => {
 
   it("lay nguoi ung nhieu nhat o che do host, bo qua nguoi da chon", () => {
     expect(resolveHostParticipantId(balances, "host", "thieu")).toBe("ung-nhieu");
+  });
+
+  it("khong chon host khi cuoc chia khong co nguoi", () => {
+    expect(resolveHostParticipantId([], "host")).toBe("");
   });
 
   it("lay dung nguoi da chon o che do pick, ke ca nguoi dang no", () => {

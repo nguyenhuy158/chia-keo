@@ -23,6 +23,11 @@ describe("resolveVietQrBankId", () => {
     expect(resolveVietQrBankId("MBBank")).toBe("MB");
   });
 
+  it("nhận mã BIN sáu số và bỏ khoảng trắng, dấu gạch trong alias", () => {
+    expect(resolveVietQrBankId(" 970436 ")).toBe("970436");
+    expect(resolveVietQrBankId("mb-bank")).toBe("MB");
+  });
+
   it("danh sách dropdown chỉ chứa mã ngân hàng tạo được VietQR", () => {
     for (const bank of VIETQR_BANK_OPTIONS) {
       expect(resolveVietQrBankId(bank.value)).toBe(bank.value);
@@ -43,6 +48,12 @@ describe("canBuildVietQr", () => {
 
     expect(canBuildVietQr(payment)).toBe(false);
     expect(getVietQrPaymentIssue(payment)).toContain("chưa hỗ trợ VietQR");
+  });
+
+  it("báo thiếu thông tin nhận tiền và chấp nhận tài khoản đủ dữ liệu", () => {
+    expect(getVietQrPaymentIssue(undefined)).toContain("chưa nhập");
+    expect(getVietQrPaymentIssue({ ...fullPayment, accountNo: "" })).toContain("chưa nhập");
+    expect(getVietQrPaymentIssue(fullPayment)).toBe("");
   });
 });
 
@@ -70,6 +81,13 @@ describe("buildVietQrUrl", () => {
 
     expect(addInfo).toMatch(/^[a-zA-Z0-9 ]*$/);
   });
+
+  it("không khóa số tiền khi amount bằng không và giới hạn nội dung chuyển khoản", () => {
+    const url = new URL(buildVietQrUrl(fullPayment, 0, "A".repeat(100)));
+
+    expect(url.searchParams.has("amount")).toBe(false);
+    expect(url.searchParams.get("addInfo")?.length).toBe(50);
+  });
 });
 
 describe("getVietQrBankLabel", () => {
@@ -80,6 +98,7 @@ describe("getVietQrBankLabel", () => {
 
   it("giữ nguyên giá trị nhập khi không nhận ra mã", () => {
     expect(getVietQrBankLabel("khong-co")).toBe("khong-co");
+    expect(getVietQrBankLabel("970436")).toBe("970436");
   });
 });
 

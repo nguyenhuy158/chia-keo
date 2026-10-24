@@ -65,6 +65,23 @@ describe("buildCategoryBreakdown", () => {
     expect(result.rows[1]).toMatchObject({ total: 950_000, count: 2, label: UNCATEGORIZED_LABEL });
   });
 
+  it("giu nhom chua phan loai o cuoi khi no duoc nhap sau cac nhom khac", () => {
+    const result = buildCategoryBreakdown([
+      expense("food", 10_000),
+      expense("", 50_000),
+      expense("transport", 30_000),
+    ]);
+
+    expect(result.rows.map((row) => row.category)).toEqual(["transport", "food", ""]);
+  });
+
+  it("khong hien phan tram duong khi du lieu chi phi am lam tong khong duong", () => {
+    const result = buildCategoryBreakdown([expense("food", 100), expense("transport", -200)]);
+
+    expect(result.total).toBe(-100);
+    expect(result.rows[0].percent).toBe(0);
+  });
+
   it("khong co khoan chi nao thi tra ve rong, khong chia cho 0", () => {
     expect(buildCategoryBreakdown([])).toEqual({ total: 0, rows: [] });
     expect(buildCategoryBreakdown([expense("food", 1000, "transfer")])).toEqual({

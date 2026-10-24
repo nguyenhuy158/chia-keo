@@ -135,17 +135,15 @@ export function SummaryImageCard({ input }: { input: SummaryTextInput }) {
   const summaryText = buildSummaryText(input, variant);
 
   async function copyPreview() {
-    if (!blob) return;
-
     // copyImage nhan Promise vi Safari huy quyen clipboard neu await truoc; anh
     // o day da co san nen boc lai cho dung chu ky.
-    if (await copyImage(Promise.resolve(blob))) {
+    if (await copyImage(Promise.resolve(blob!))) {
       toast.success("Đã sao chép ảnh tổng kết");
       return;
     }
 
     try {
-      downloadBlob(blob, fileName);
+      downloadBlob(blob!, fileName);
       toast("Trình duyệt không copy được ảnh, đã tải ảnh về máy");
     } catch {
       toast.error("Không sao chép được ảnh");
@@ -160,10 +158,8 @@ export function SummaryImageCard({ input }: { input: SummaryTextInput }) {
   }
 
   function savePreview() {
-    if (!blob) return;
-
     try {
-      downloadBlob(blob, fileName);
+      downloadBlob(blob!, fileName);
       toast.success("Đã tải ảnh tổng kết");
     } catch {
       toast.error("Không tải được ảnh");

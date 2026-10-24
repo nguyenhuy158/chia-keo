@@ -111,7 +111,7 @@ export function normalizeCategory(value: string | null | undefined): ExpenseCate
 
 export function categoryMeta(value: string | null | undefined): ExpenseCategoryMeta | null {
   const id = normalizeCategory(value);
-  return id ? CATEGORY_BY_ID.get(id) || null : null;
+  return id ? (CATEGORY_BY_ID.get(id) as ExpenseCategoryMeta) : null;
 }
 
 export function categoryLabel(value: string | null | undefined) {
@@ -177,7 +177,7 @@ export function buildCategoryBreakdown(expenses: CategoryExpenseInput[]): Catego
       if (right[0] === "") return -1;
       if (right[1].total !== left[1].total) return right[1].total - left[1].total;
       // Tong bang nhau thi giu thu tu khai bao cho on dinh giua cac lan render.
-      return (order.get(left[0]) ?? 0) - (order.get(right[0]) ?? 0);
+      return (order.get(left[0]) as number) - (order.get(right[0]) as number);
     })
     .map(([category, entry]) => {
       const meta = category ? CATEGORY_BY_ID.get(category) : null;

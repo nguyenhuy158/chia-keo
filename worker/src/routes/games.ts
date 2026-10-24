@@ -59,7 +59,17 @@ import { invalidInput, readJson, respond } from "../lib/http";
 import { protectPaths, type AuthedEnv } from "../lib/require-user";
 
 const participantUpdateSchema = participantInputSchema.partial();
-const expenseUpdateSchema = expenseInputSchema.partial();
+const expenseUpdateSchema = expenseInputSchema
+  .extend({
+    kind: expenseInputSchema.shape.kind.removeDefault(),
+    category: expenseInputSchema.shape.category.removeDefault(),
+    title: expenseInputSchema.shape.title.removeDefault(),
+    note: expenseInputSchema.shape.note.removeDefault(),
+    splitMode: expenseInputSchema.shape.splitMode.removeDefault(),
+    splitParticipantIds: expenseInputSchema.shape.splitParticipantIds.removeDefault(),
+    splits: expenseInputSchema.shape.splits.removeDefault(),
+  })
+  .partial();
 
 // Driving adapter: chi parse HTTP, goi use case va map ket qua/loi ve JSON.
 export const gamesRouter = new Hono<AuthedEnv>();

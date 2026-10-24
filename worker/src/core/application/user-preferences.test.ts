@@ -43,4 +43,11 @@ describe("user preferences", () => {
     expect(result).toEqual({ preferences: { summaryShowQr: false, summaryShowAvatar: true } });
     expect(stored.get("summaryShowQr")).toBe("false");
   });
+
+  it("ignores invalid stored types and undefined patch values", async () => {
+    const { repo, stored } = createRepo([{ key: "summaryShowQr", value: '"invalid"' }]);
+    expect((await getUserPreferences(repo, "u1")).preferences.summaryShowQr).toBe(true);
+    await updateUserPreferences(repo, "u1", { summaryShowQr: undefined });
+    expect(stored.get("summaryShowQr")).toBe('"invalid"');
+  });
 });

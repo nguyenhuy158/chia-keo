@@ -284,12 +284,12 @@ export function ContactBookCard() {
               // Chi nguoi thuoc danh ba (co id) moi xoa duoc, nen chi nguoi
               // do moi vuot xoa duoc — vuot nguoi chi suy ra tu lich su se
               // lo mot nut khong lam gi ca.
-              <SwipeToDelete key={contact.key} onDelete={() => handleDelete(contact)}>
+              <SwipeToDelete key={contact.key} onDelete={handleDelete.bind(null, contact)}>
                 <ContactRow
                   contact={contact}
                   pending={pending}
                   onEdit={() => startEdit(contact)}
-                  onDelete={() => handleDelete(contact)}
+                  onDelete={handleDelete.bind(null, contact)}
                 />
               </SwipeToDelete>
             ) : (
@@ -298,7 +298,7 @@ export function ContactBookCard() {
                 contact={contact}
                 pending={pending}
                 onEdit={() => startEdit(contact)}
-                onDelete={() => handleDelete(contact)}
+                onDelete={handleDelete.bind(null, contact)}
               />
             ),
           )}

@@ -83,7 +83,7 @@ export function FunStatsPage() {
         <StatCard
           icon={<Receipt size={18} />}
           label="Tổng đã chi"
-          value={`${formatMoney(stats.totalExpense)}đ`}
+          value={formatMoney(stats.totalExpense)}
           detail={`trên ${stats.gameCount} cuộc chơi`}
         />
 
@@ -92,7 +92,7 @@ export function FunStatsPage() {
             icon={<Crown size={18} />}
             label="Đại gia của hội"
             value={stats.topPayer.name}
-            detail={`ứng ${formatMoney(stats.topPayer.totalPaid)}đ`}
+            detail={`ứng ${formatMoney(stats.topPayer.totalPaid)}`}
           />
         )}
 
@@ -118,7 +118,7 @@ export function FunStatsPage() {
           <StatCard
             icon={<Sparkles size={18} />}
             label="Khoản chi khủng nhất"
-            value={`${formatMoney(stats.biggestExpense.amount)}đ`}
+            value={formatMoney(stats.biggestExpense.amount)}
             detail={`${stats.biggestExpense.title} · ${stats.biggestExpense.gameName}`}
           />
         )}

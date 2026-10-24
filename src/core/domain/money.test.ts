@@ -29,6 +29,8 @@ describe("parseMoney", () => {
     expect(parseMoney("100-200")).toBe(0);
     expect(parseMoney("+1000")).toBe(0);
     expect(parseMoney("1000++2000")).toBe(0);
+    expect(parseMoney("1 2")).toBe(0);
+    expect(parseMoney("1 2 3")).toBe(0);
   });
 });
 

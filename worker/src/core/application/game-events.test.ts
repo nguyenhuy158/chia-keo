@@ -2,7 +2,8 @@ import { describe, expect, it } from "vitest";
 import type { GameEventPayload, RestorableExpense } from "../../../../shared/game-events";
 import type { ExpenseRow, GameEventRow, GameRepository, NewSplitRow } from "../ports/game-repository";
 import { InvalidInputError, NotFoundError } from "./errors";
-import { undoGameEvent } from "./game-events";
+import { createFakeRepo, FAKE_GAME_ID, FAKE_OWNER } from "./fake-game-repository";
+import { listGameEvents, undoGameEvent } from "./game-events";
 
 const OWNER = "user_1";
 
@@ -163,5 +164,18 @@ describe("undoGameEvent", () => {
 
     await expect(undoGameEvent(stub.repo, OWNER, "ev_1")).rejects.toThrow(NotFoundError);
     expect(stub.inserted).toHaveLength(0);
+  });
+});
+
+describe("listGameEvents", () => {
+  it("skips a corrupted payload while keeping valid events", async () => {
+    const { repo } = createFakeRepo({
+      events: [
+        { id: "bad", gameId: FAKE_GAME_ID, kind: "game_closed", payload: "{broken", createdAt: "2026-01-01", undoneAt: null },
+        { id: "good", gameId: FAKE_GAME_ID, kind: "game_closed", payload: '{"kind":"game_closed","mode":"manual"}', createdAt: "2026-01-02", undoneAt: null },
+      ],
+    });
+    const result = await listGameEvents(repo, FAKE_OWNER, FAKE_GAME_ID);
+    expect(result.events.map((event) => event.id)).toEqual(["good"]);
   });
 });

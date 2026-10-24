@@ -110,7 +110,7 @@ const expenseFormSchema = z
       }
 
       const assigned = values.splitParticipantIds.reduce(
-        (sum, id) => sum + parseMoney(values.splitValues[id] || ""),
+        (sum, id) => sum + parseMoney(values.splitValues[id]),
         0,
       );
       const total = parseMoney(values.amount);
@@ -613,7 +613,7 @@ function handleSplitModeChange(mode: SplitMode) {
               value:
                 values.splitMode === "shares"
                   ? parseWeight(values.splitValues[participantId])
-                  : parseMoney(values.splitValues[participantId] || ""),
+                  : parseMoney(values.splitValues[participantId]),
             })),
     };
 
@@ -731,10 +731,7 @@ function handleSplitModeChange(mode: SplitMode) {
             <button
               key={option}
               type="button"
-              onClick={() => {
-                if (editingExpenseId) return;
-                form.setValue("kind", option);
-              }}
+              onClick={() => form.setValue("kind", option)}
               disabled={Boolean(editingExpenseId)}
               className={`flex-1 rounded px-2.5 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-40 ${
                 kind === option

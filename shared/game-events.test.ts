@@ -98,6 +98,28 @@ describe("describeGameEvent", () => {
     expect(describeGameEvent({ kind: "participant_added", names: ["Huy"] }).title).toBe("Thêm người");
   });
 
+  it("phan biet ly do dong va mo lai cuoc choi", () => {
+    expect(describeGameEvent({ kind: "game_closed", mode: "auto" })).toEqual({
+      title: "Đóng cuộc chơi",
+      detail: "mọi người đã trả xong",
+    });
+    expect(describeGameEvent({ kind: "game_closed", mode: "manual" }).detail).toBe("đóng thủ công");
+    expect(describeGameEvent({ kind: "game_reopened", mode: "auto" })).toEqual({
+      title: "Mở lại cuộc chơi",
+      detail: "số dư lệch trở lại",
+    });
+    expect(describeGameEvent({ kind: "game_reopened", mode: "manual" }).detail).toBe("mở thủ công");
+  });
+
+  it("giữ mã settlement chưa biết trong lịch sử cũ", () => {
+    const payload = { kind: "settlement_changed", mode: "legacy", hostName: "" } as GameEventPayload;
+
+    expect(describeGameEvent(payload).detail).toBe("legacy");
+    expect(describeGameEvent({ ...payload, hostName: "Huy" } as GameEventPayload).detail).toBe(
+      "legacy · Huy",
+    );
+  });
+
   it("moi kind deu co cau chu, khong kind nao ra rong", () => {
     const payloads: GameEventPayload[] = [
       { kind: "game_created", name: "DSKVUF" },

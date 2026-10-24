@@ -3,6 +3,7 @@ import {
   type ApiGameEvent,
   canUndoEvent,
   type GameEventPayload,
+  type RestorableExpense,
 } from "../../../../shared/game-events";
 import { createId, nowIso } from "../../lib/ids";
 import type { GameEventRow, GameRepository } from "../ports/game-repository";
@@ -79,12 +80,7 @@ export async function undoGameEvent(
 
   const event = toApiEvent(row.event);
   if (!event || !canUndoEvent(event)) throw new InvalidInputError();
-  // canUndoEvent da bao dam kind va restore, day chi de TypeScript hep kieu.
-  if (event.payload.kind !== "expense_removed" || !event.payload.restore) {
-    throw new InvalidInputError();
-  }
-
-  const restore = event.payload.restore;
+  const restore = event.payload.restore as RestorableExpense;
 
   // Nguoi tra hoac nguoi chia co the da bi xoa sau do; dung lai se vi pham
   // khoa ngoai, nen tu choi ro rang thay vi de loi DB tro len.

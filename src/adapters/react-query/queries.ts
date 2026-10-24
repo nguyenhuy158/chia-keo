@@ -120,7 +120,10 @@ export function useUpdatePreferences() {
       return { previous };
     },
     onError: (_error, _patch, context) => {
-      if (context?.previous) queryClient.setQueryData(preferenceKeys.all, context.previous);
+      queryClient.setQueryData(
+        preferenceKeys.all,
+        context?.previous || { preferences: DEFAULT_USER_PREFERENCES },
+      );
     },
     onSuccess: (data) => {
       queryClient.setQueryData(preferenceKeys.all, data);
@@ -199,7 +202,6 @@ export async function findUndoableExpenseRemoval(
   if (
     latest &&
     canUndoEvent(latest) &&
-    latest.payload.kind === "expense_removed" &&
     latest.payload.title === match.title &&
     latest.payload.amount === match.amount
   ) {

@@ -280,13 +280,11 @@ export function calculateSettlements(balances: BalanceRow[]): SettlementRow[] {
     const creditor = creditors[creditorIndex];
     const amount = Math.min(debtor.amount, creditor.amount);
 
-    if (amount > 0) {
-      settlements.push({
-        fromParticipantId: debtor.participantId,
-        toParticipantId: creditor.participantId,
-        amount,
-      });
-    }
+    settlements.push({
+      fromParticipantId: debtor.participantId,
+      toParticipantId: creditor.participantId,
+      amount,
+    });
 
     debtor.amount -= amount;
     creditor.amount -= amount;

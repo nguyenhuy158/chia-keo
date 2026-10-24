@@ -161,6 +161,21 @@ describe("buildFunStats — cuoc chia dong nguoi nhat va thu quen", () => {
     // 2026-07-07 va 2026-07-14 deu la Thu Ba (getDay() = 2).
     expect(stats.favoriteWeekday).toBe(2);
   });
+
+  it("bo ngay tao khong hop le khoi thong ke thu", () => {
+    const invalidDateGame = { ...gameA, createdAt: "invalid-date" };
+    const stats = buildFunStats([invalidDateGame], [], gameById, names, 0);
+
+    expect(stats.favoriteWeekday).toBeNull();
+    expect(stats.gameCount).toBe(1);
+  });
+
+  it("chon thu co nhieu cuoc hon khi du lieu co nhieu thu", () => {
+    const wednesdayGame = { ...gameA, code: "CCC333", createdAt: "2026-07-15T10:00:00.000Z" };
+    const stats = buildFunStats([gameA, gameB, wednesdayGame], [], gameById, names, 0);
+
+    expect(stats.favoriteWeekday).toBe(2);
+  });
 });
 
 describe("buildFunStats — omittedGameCount di qua nguyen ven", () => {

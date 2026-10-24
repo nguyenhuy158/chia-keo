@@ -77,7 +77,49 @@ export default defineConfig({
     },
   },
   test: {
-    include: ["src/**/*.test.ts", "shared/**/*.test.ts", "worker/**/*.test.ts"],
-    environment: "node",
+    projects: [
+      {
+        test: {
+          name: "node",
+          include: [
+            "src/**/*.test.ts",
+            "shared/**/*.test.ts",
+            "worker/**/*.test.ts",
+          ],
+          exclude: ["**/*.dom.test.ts"],
+          environment: "node",
+        },
+      },
+      {
+        resolve: {
+          alias: { "virtual:pwa-register": "/src/test/pwa-register.ts" },
+        },
+        test: {
+          name: "dom",
+          include: ["src/**/*.dom.test.ts"],
+          environment: "jsdom",
+        },
+      },
+    ],
+    coverage: {
+      provider: "v8",
+      include: ["src/**/*.{ts,tsx}", "shared/**/*.ts", "worker/src/**/*.ts"],
+      exclude: [
+        "**/*.test.ts",
+        "**/*.test.tsx",
+        "**/*.d.ts",
+        "src/test/**",
+        "shared/build-info.ts",
+        "worker/src/core/application/fake-game-repository.ts",
+        "worker/src/mcp/fixtures.ts",
+      ],
+      reporter: ["text", "json-summary"],
+      thresholds: {
+        statements: 100,
+        branches: 100,
+        functions: 100,
+        lines: 100,
+      },
+    },
   },
 });

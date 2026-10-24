@@ -3,6 +3,7 @@ import type { ExpenseInput } from "../../../../shared/schemas";
 import { InvalidInputError, NotFoundError } from "./errors";
 import {
   addExpense,
+  reallocateExpenses,
   recordTransfer,
   removeExpense,
   reorderExpenses,
@@ -55,7 +56,12 @@ describe("addExpense", () => {
   });
 
   it("chia deu va tra ve detail da tinh lai balance", async () => {
-    const detail = await addExpense(fake.repo, FAKE_OWNER, FAKE_GAME_ID, expenseInput());
+    const detail = await addExpense(
+      fake.repo,
+      FAKE_OWNER,
+      FAKE_GAME_ID,
+      expenseInput(),
+    );
 
     const [expense] = fake.state.expenses;
     expect(splitsOf(fake.state, expense.id)).toEqual([
@@ -65,11 +71,18 @@ describe("addExpense", () => {
     ]);
     expect(detail.summary.totalExpense).toBe(90_000);
     // Nguoi tra ung 90k, chiu 30k -> con duoc nhan lai 60k.
-    expect(detail.summary.balances.find((row) => row.participantId === AN)?.balance).toBe(60_000);
+    expect(
+      detail.summary.balances.find((row) => row.participantId === AN)?.balance,
+    ).toBe(60_000);
   });
 
   it("tong split luon bang tong tien du chia le", async () => {
-    await addExpense(fake.repo, FAKE_OWNER, FAKE_GAME_ID, expenseInput({ amount: 100_000 }));
+    await addExpense(
+      fake.repo,
+      FAKE_OWNER,
+      FAKE_GAME_ID,
+      expenseInput({ amount: 100_000 }),
+    );
 
     const total = fake.state.splits.reduce((sum, row) => sum + row.amount, 0);
     expect(total).toBe(100_000);
@@ -83,7 +96,12 @@ describe("addExpense", () => {
   });
 
   it("tu dat ten mac dinh khi title bo trong", async () => {
-    await addExpense(fake.repo, FAKE_OWNER, FAKE_GAME_ID, expenseInput({ title: "" }));
+    await addExpense(
+      fake.repo,
+      FAKE_OWNER,
+      FAKE_GAME_ID,
+      expenseInput({ title: "" }),
+    );
 
     expect(fake.state.expenses[0].title).not.toBe("");
   });
@@ -160,18 +178,87 @@ describe("addExpense", () => {
     });
 
     await expect(
-      addExpense(trashed.repo, FAKE_OWNER, FAKE_GAME_ID, expenseInput({ splitParticipantIds: [AN] })),
+      addExpense(
+        trashed.repo,
+        FAKE_OWNER,
+        FAKE_GAME_ID,
+        expenseInput({ splitParticipantIds: [AN] }),
+      ),
     ).rejects.toThrow(NotFoundError);
   });
 });
 
 describe("updateExpense", () => {
+  it("updates income and uses a default title for an empty rename", async () => {
+    const fake = threePeople();
+    await addExpense(
+      fake.repo,
+      FAKE_OWNER,
+      FAKE_GAME_ID,
+      expenseInput({ kind: "income" }),
+    );
+    const expenseId = fake.state.expenses[0].id;
+    await updateExpense(fake.repo, FAKE_OWNER, expenseId, { title: "" });
+    expect(fake.state.expenses[0].kind).toBe("income");
+    expect(fake.state.expenses[0].title).not.toBe("");
+    expect(JSON.parse(fake.state.events[0].payload).title).toBe(
+      fake.state.expenses[0].title,
+    );
+  });
+
+  it("keeps weighted splits when editing a shares expense", async () => {
+    const fake = threePeople();
+    await addExpense(
+      fake.repo,
+      FAKE_OWNER,
+      FAKE_GAME_ID,
+      expenseInput({
+        splitMode: "shares",
+        splitParticipantIds: [],
+        splits: [
+          { participantId: AN, value: 1 },
+          { participantId: BINH, value: 2 },
+        ],
+      }),
+    );
+    const expenseId = fake.state.expenses[0].id;
+    await updateExpense(fake.repo, FAKE_OWNER, expenseId, { note: "sửa" });
+    expect(fake.state.expenses[0].splitMode).toBe("shares");
+    fake.state.splits[0].weight = 0;
+    await updateExpense(fake.repo, FAKE_OWNER, expenseId, { note: "sửa tiếp" });
+    expect(fake.state.splits[0].weight).toBe(1);
+  });
+
+  it("rejects an amount update without matching custom splits", async () => {
+    const fake = threePeople();
+    await addExpense(
+      fake.repo,
+      FAKE_OWNER,
+      FAKE_GAME_ID,
+      expenseInput({
+        amount: 1000,
+        splitMode: "amount",
+        splitParticipantIds: [],
+        splits: [
+          { participantId: AN, value: 500 },
+          { participantId: BINH, value: 500 },
+        ],
+      }),
+    );
+    await expect(
+      updateExpense(fake.repo, FAKE_OWNER, fake.state.expenses[0].id, {
+        amount: 2000,
+      }),
+    ).rejects.toBeInstanceOf(InvalidInputError);
+  });
   it("doi so tien thi chia lai va tong khop", async () => {
     const fake = threePeople();
     await addExpense(fake.repo, FAKE_OWNER, FAKE_GAME_ID, expenseInput());
     const expenseId = fake.state.expenses[0].id;
 
-    const detail = await updateExpense(fake.repo, FAKE_OWNER, expenseId, { amount: 60_000 });
+    const detail = await updateExpense(fake.repo, FAKE_OWNER, expenseId, {
+      amount: 60_000,
+    });
 
     expect(splitsOf(fake.state, expenseId)).toEqual([
       [AN, 20_000],
@@ -186,7 +273,9 @@ describe("updateExpense", () => {
     await addExpense(fake.repo, FAKE_OWNER, FAKE_GAME_ID, expenseInput());
     const expenseId = fake.state.expenses[0].id;
 
-    await updateExpense(fake.repo, FAKE_OWNER, expenseId, { splitParticipantIds: [AN, BINH] });
+    await updateExpense(fake.repo, FAKE_OWNER, expenseId, {
+      splitParticipantIds: [AN, BINH],
+    });
 
     expect(splitsOf(fake.state, expenseId)).toEqual([
       [AN, 45_000],
@@ -223,6 +312,13 @@ describe("updateExpense", () => {
 });
 
 describe("removeExpense", () => {
+  it("uses an unknown payer label if the participant disappeared", async () => {
+    const fake = threePeople();
+    await addExpense(fake.repo, FAKE_OWNER, FAKE_GAME_ID, expenseInput());
+    fake.state.participants = [];
+    await removeExpense(fake.repo, FAKE_OWNER, fake.state.expenses[0].id);
+    expect(JSON.parse(fake.state.events[0].payload).payerName).toBe("Không rõ");
+  });
   it("xoa khoan chi va luu du lieu hoan tac trong lich su", async () => {
     const fake = threePeople();
     await addExpense(fake.repo, FAKE_OWNER, FAKE_GAME_ID, expenseInput());
@@ -234,7 +330,9 @@ describe("removeExpense", () => {
     expect(fake.state.splits).toEqual([]);
     expect(detail.summary.totalExpense).toBe(0);
 
-    const removedEvent = fake.state.events.find((row) => row.kind === "expense_removed");
+    const removedEvent = fake.state.events.find(
+      (row) => row.kind === "expense_removed",
+    );
     const payload = JSON.parse(removedEvent?.payload || "{}");
     // Khong co payload nay thi toast "hoan tac" khong khoi phuc lai duoc gi.
     expect(payload.restore.splits).toHaveLength(3);
@@ -265,8 +363,13 @@ describe("recordTransfer", () => {
     });
 
     expect(detail.summary.totalExpense).toBe(90_000);
-    expect(detail.summary.balances.find((row) => row.participantId === BINH)?.balance).toBe(0);
-    expect(detail.summary.balances.find((row) => row.participantId === AN)?.balance).toBe(30_000);
+    expect(
+      detail.summary.balances.find((row) => row.participantId === BINH)
+        ?.balance,
+    ).toBe(0);
+    expect(
+      detail.summary.balances.find((row) => row.participantId === AN)?.balance,
+    ).toBe(30_000);
   });
 
   it("khong tra no cho nguoi ngoai cuoc chia", async () => {
@@ -287,7 +390,12 @@ describe("recordTransfer", () => {
 describe("danh muc chi tieu", () => {
   it("luu danh muc hop le va bo danh muc la", async () => {
     const fake = threePeople();
-    await addExpense(fake.repo, FAKE_OWNER, FAKE_GAME_ID, expenseInput({ category: "food" }));
+    await addExpense(
+      fake.repo,
+      FAKE_OWNER,
+      FAKE_GAME_ID,
+      expenseInput({ category: "food" }),
+    );
     await addExpense(
       fake.repo,
       FAKE_OWNER,
@@ -295,12 +403,20 @@ describe("danh muc chi tieu", () => {
       expenseInput({ category: "khong-co-that" }),
     );
 
-    expect(fake.state.expenses.map((row) => row.category)).toEqual(["food", ""]);
+    expect(fake.state.expenses.map((row) => row.category)).toEqual([
+      "food",
+      "",
+    ]);
   });
 
   it("sua khoan chi khong gui danh muc thi giu nguyen danh muc cu", async () => {
     const fake = threePeople();
-    await addExpense(fake.repo, FAKE_OWNER, FAKE_GAME_ID, expenseInput({ category: "transport" }));
+    await addExpense(
+      fake.repo,
+      FAKE_OWNER,
+      FAKE_GAME_ID,
+      expenseInput({ category: "transport" }),
+    );
     const expenseId = fake.state.expenses[0].id;
 
     await updateExpense(fake.repo, FAKE_OWNER, expenseId, { amount: 60_000 });
@@ -326,11 +442,24 @@ describe("danh muc chi tieu", () => {
 describe("reorderExpenses", () => {
   it("sap lai thu tu hien thi", async () => {
     const fake = threePeople();
-    await addExpense(fake.repo, FAKE_OWNER, FAKE_GAME_ID, expenseInput({ title: "Nước" }));
-    await addExpense(fake.repo, FAKE_OWNER, FAKE_GAME_ID, expenseInput({ title: "Sân" }));
+    await addExpense(
+      fake.repo,
+      FAKE_OWNER,
+      FAKE_GAME_ID,
+      expenseInput({ title: "Nước" }),
+    );
+    await addExpense(
+      fake.repo,
+      FAKE_OWNER,
+      FAKE_GAME_ID,
+      expenseInput({ title: "Sân" }),
+    );
     const [first, second] = fake.state.expenses.map((row) => row.id);
 
-    const detail = await reorderExpenses(fake.repo, FAKE_OWNER, FAKE_GAME_ID, [first, second]);
+    const detail = await reorderExpenses(fake.repo, FAKE_OWNER, FAKE_GAME_ID, [
+      first,
+      second,
+    ]);
 
     expect(detail.expenses.map((row) => row.id)).toEqual([first, second]);
   });
@@ -341,7 +470,10 @@ describe("reorderExpenses", () => {
     const expenseId = fake.state.expenses[0].id;
 
     await expect(
-      reorderExpenses(fake.repo, FAKE_OWNER, FAKE_GAME_ID, [expenseId, expenseId]),
+      reorderExpenses(fake.repo, FAKE_OWNER, FAKE_GAME_ID, [
+        expenseId,
+        expenseId,
+      ]),
     ).rejects.toThrow(InvalidInputError);
     await expect(
       reorderExpenses(fake.repo, FAKE_OWNER, FAKE_GAME_ID, ["expense_la"]),
@@ -350,6 +482,110 @@ describe("reorderExpenses", () => {
 });
 
 describe("chia lai sau khi xoa nguoi", () => {
+  it("ignores deleted expenses and preserves transfers with a live recipient", async () => {
+    const fake = threePeople();
+    await recordTransfer(fake.repo, FAKE_OWNER, FAKE_GAME_ID, {
+      fromParticipantId: BINH,
+      toParticipantId: AN,
+      amount: 1000,
+      note: "",
+    });
+    const transferId = fake.state.expenses[0].id;
+    await reallocateExpenses(fake.repo, ["missing", transferId]);
+    expect(fake.state.expenses.map((row) => row.id)).toEqual([transferId]);
+  });
+
+  it("reallocates weighted shares after removing a participant", async () => {
+    const fake = threePeople();
+    await addExpense(
+      fake.repo,
+      FAKE_OWNER,
+      FAKE_GAME_ID,
+      expenseInput({
+        splitMode: "shares",
+        splitParticipantIds: [],
+        splits: [
+          { participantId: AN, value: 1 },
+          { participantId: BINH, value: 2 },
+          { participantId: CUONG, value: 3 },
+        ],
+      }),
+    );
+    const expenseId = fake.state.expenses[0].id;
+    await removeParticipant(fake.repo, FAKE_OWNER, CUONG);
+    expect(splitsOf(fake.state, expenseId)).toEqual([
+      [AN, 30_000],
+      [BINH, 60_000],
+    ]);
+  });
+
+  it("treats a stored zero share weight as one when reallocating", async () => {
+    const fake = threePeople();
+    await addExpense(
+      fake.repo,
+      FAKE_OWNER,
+      FAKE_GAME_ID,
+      expenseInput({
+        splitMode: "shares",
+        splitParticipantIds: [],
+        splits: [
+          { participantId: AN, value: 1 },
+          { participantId: BINH, value: 2 },
+        ],
+      }),
+    );
+    const expenseId = fake.state.expenses[0].id;
+    fake.state.splits[0].weight = 0;
+    await reallocateExpenses(fake.repo, [expenseId]);
+    expect(
+      fake.state.splits.find((row) => row.participantId === AN)?.weight,
+    ).toBe(1);
+  });
+
+  it("removes an expense when stored share weights are invalid", async () => {
+    const fake = threePeople();
+    await addExpense(
+      fake.repo,
+      FAKE_OWNER,
+      FAKE_GAME_ID,
+      expenseInput({
+        splitMode: "shares",
+        splitParticipantIds: [],
+        splits: [
+          { participantId: AN, value: 1 },
+          { participantId: BINH, value: 2 },
+        ],
+      }),
+    );
+    const expenseId = fake.state.expenses[0].id;
+    fake.state.splits[0].weight = 1001;
+    await reallocateExpenses(fake.repo, [expenseId]);
+    expect(fake.state.expenses).toEqual([]);
+  });
+
+  it("removes an amount expense when all remaining amounts are zero", async () => {
+    const fake = threePeople();
+    await addExpense(
+      fake.repo,
+      FAKE_OWNER,
+      FAKE_GAME_ID,
+      expenseInput({
+        amount: 1000,
+        splitMode: "amount",
+        splitParticipantIds: [],
+        splits: [
+          { participantId: AN, value: 500 },
+          { participantId: BINH, value: 500 },
+        ],
+      }),
+    );
+    const expenseId = fake.state.expenses[0].id;
+    fake.state.splits.forEach((row) => {
+      row.amount = 0;
+    });
+    await reallocateExpenses(fake.repo, [expenseId]);
+    expect(fake.state.expenses).toEqual([]);
+  });
   it("mode equal: nguoi con lai chia deu lai va tong van khop", async () => {
     const fake = threePeople();
     await addExpense(fake.repo, FAKE_OWNER, FAKE_GAME_ID, expenseInput());
@@ -391,7 +627,10 @@ describe("chia lai sau khi xoa nguoi", () => {
 
   it("khoan chi khong con ai chiu thi bi xoa han", async () => {
     const fake = createFakeRepo({
-      participants: [participantRow(AN, "An"), participantRow(BINH, "Bình", { sequence: 1 })],
+      participants: [
+        participantRow(AN, "An"),
+        participantRow(BINH, "Bình", { sequence: 1 }),
+      ],
     });
     await addExpense(
       fake.repo,
