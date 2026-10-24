@@ -165,12 +165,13 @@ export async function updateGame(
 
   if (Object.keys(changes).length === 0) throw new InvalidInputError();
 
+  const previousName = game.name;
   await repo.games.update(game.id, changes, nowIso());
 
-  if (changes.name !== undefined && changes.name !== game.name) {
+  if (changes.name !== undefined && changes.name !== previousName) {
     await recordEvent(repo, game.id, {
       kind: "game_renamed",
-      from: game.name,
+      from: previousName,
       to: changes.name,
     });
   }
