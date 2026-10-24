@@ -309,4 +309,184 @@ describe("D1 game repository", () => {
     );
     expect(await repo.gameEvents.getWithGame("missing")).toBeNull();
   });
+
+  it("đọc, cập nhật và sắp xếp người cùng khoản chi trong D1", async () => {
+    const repo = createD1GameRepository(database);
+    const game = await createGame(repo, "owner", {
+      name: "Kèo sắp xếp",
+      participantCount: 2,
+    });
+    const [first, second] = game.participants;
+    const now = "2026-07-01T00:00:00.000Z";
+    expect(await repo.participants.getWithGame("missing")).toBeNull();
+    expect(await repo.games.getById("missing")).toBeNull();
+    expect(await repo.games.countParticipants([])).toEqual(new Map());
+    expect(await repo.games.countExpenses([])).toEqual(new Map());
+    expect((await repo.participants.getWithGame(first.id))?.game.id).toBe(
+      game.id,
+    );
+    expect(await repo.participants.listIdsByGame(game.id)).toEqual([
+      first.id,
+      second.id,
+    ]);
+    await repo.participants.rename(first.id, "Người trả", now);
+    await repo.participants.upsertPaymentProfile(
+      first.id,
+      { bankId: "bank-a" },
+      now,
+    );
+    expect(
+      (await repo.paymentProfiles.listByParticipantIds([first.id]))[0]?.bankId,
+    ).toBe("bank-a");
+    await repo.participants.upsertPaymentProfile(first.id, { bankId: "" }, now);
+    expect(await repo.paymentProfiles.listByParticipantIds([])).toEqual([]);
+    await repo.participants.reorder(game.id, [second.id, first.id]);
+    expect(
+      (await repo.participants.listByGame(game.id)).map((row) => row.id),
+    ).toEqual([second.id, first.id]);
+    expect(
+      (await repo.participants.listByOwner("owner")).map((row) => row.name),
+    ).toContain("Người trả");
+    expect(
+      (await repo.participants.listIdNamesByOwner("owner")).map(
+        (row) => row.id,
+      ),
+    ).toContain(first.id);
+
+    const expenseInput = (title: string) => ({
+      kind: "expense" as const,
+      category: "",
+      title,
+      amount: 100_000,
+      note: "",
+      payerParticipantId: first.id,
+      splitMode: "equal" as const,
+      splitParticipantIds: [first.id, second.id],
+      splits: [],
+    });
+    const firstExpense = (
+      await addExpense(repo, "owner", game.id, expenseInput("Sân"))
+    ).expenses[0];
+    const secondExpense = (
+      await addExpense(repo, "owner", game.id, expenseInput("Cầu"))
+    ).expenses.find((row) => row.title === "Cầu");
+    expect(secondExpense).toBeDefined();
+    const secondExpenseId = secondExpense?.id || "";
+    expect(await repo.expenses.getById("missing")).toBeNull();
+    expect(await repo.expenses.getWithGame("missing")).toBeNull();
+    expect((await repo.expenses.getWithGame(firstExpense.id))?.game.id).toBe(
+      game.id,
+    );
+    expect(
+      (await repo.expenses.listByGameIds([game.id])).map((row) => row.id),
+    ).toContain(firstExpense.id);
+    expect(await repo.expenses.listByGameIds([])).toEqual([]);
+    expect(await repo.expenses.listIdsSplitWith(second.id)).toContain(
+      firstExpense.id,
+    );
+    expect(
+      (await repo.splits.listByExpense(firstExpense.id)).map(
+        (row) => row.participantId,
+      ),
+    ).toEqual(expect.arrayContaining([first.id, second.id]));
+    expect(
+      (await repo.splits.listLiveByExpense(firstExpense.id)).map(
+        (row) => row.participantId,
+      ),
+    ).toHaveLength(2);
+    expect(await repo.splits.listByExpenseIds([firstExpense.id])).toHaveLength(
+      2,
+    );
+    expect(await repo.splits.listByExpenseIds([])).toEqual([]);
+    await repo.splits.replace(firstExpense.id, [
+      {
+        id: "split-replacement",
+        expenseId: firstExpense.id,
+        participantId: second.id,
+        amount: 100_000,
+        weight: null,
+      },
+    ]);
+    expect((await repo.splits.listByExpense(firstExpense.id))[0]?.amount).toBe(
+      100_000,
+    );
+    await repo.splits.replace(firstExpense.id, []);
+    expect(await repo.splits.listByExpense(firstExpense.id)).toEqual([]);
+    await repo.expenses.update(firstExpense.id, {
+      title: "Sân mới",
+      updatedAt: now,
+    });
+    expect((await repo.expenses.getById(firstExpense.id))?.title).toBe(
+      "Sân mới",
+    );
+    await repo.expenses.reorder(game.id, [firstExpense.id, secondExpenseId]);
+    expect((await repo.expenses.listByGame(game.id))[0]?.id).toBe(
+      firstExpense.id,
+    );
+    await repo.expenses.delete(secondExpenseId);
+    expect(await repo.expenses.getById(secondExpenseId)).toBeNull();
+    await repo.games.update(game.id, { name: "Kèo mới" }, now);
+    expect((await repo.games.getById(game.id))?.name).toBe("Kèo mới");
+    await repo.participants.delete(second.id);
+    expect(await repo.participants.getWithGame(second.id)).toBeNull();
+    await repo.games.delete(game.id);
+    expect(await repo.games.getById(game.id)).toBeNull();
+  });
+
+  it("xử lý lời mời chờ và quyền cộng tác theo email", async () => {
+    const repo = createD1GameRepository(database);
+    const game = await createGame(repo, "owner", { name: "Kèo mời" });
+    const now = "2026-07-01T00:00:00.000Z";
+    expect(await repo.users.findIdByEmail("missing@example.test")).toBeNull();
+    expect((await repo.users.findIdByEmail("FRIEND@example.test"))?.id).toBe(
+      "friend",
+    );
+    expect(
+      (await repo.users.listAllExceptOwner("owner")).map((user) => user.id),
+    ).toContain("friend");
+    await repo.users.updateName("friend", "Bạn", new Date(now));
+    expect((await repo.users.findIdByEmail("friend@example.test"))?.name).toBe(
+      "Bạn",
+    );
+
+    const invite = {
+      id: "invite-d1",
+      gameId: game.id,
+      userId: null,
+      invitedEmail: "friend@example.test",
+      createdAt: now,
+    };
+    expect(await repo.gameCollaborators.add(invite)).toBe(true);
+    expect(
+      await repo.gameCollaborators.add({ ...invite, id: "invite-again" }),
+    ).toBe(false);
+    expect(await repo.gameCollaborators.isCollaborator(game.id, "friend")).toBe(
+      false,
+    );
+    expect((await repo.gameCollaborators.listByGame(game.id))[0]?.email).toBe(
+      "friend@example.test",
+    );
+    await repo.gameCollaborators.resolvePendingByEmail(
+      "FRIEND@example.test",
+      "friend",
+    );
+    expect(await repo.gameCollaborators.isCollaborator(game.id, "friend")).toBe(
+      true,
+    );
+    expect((await repo.gameCollaborators.listByGame(game.id))[0]?.name).toBe(
+      "Bạn",
+    );
+    await repo.gameCollaborators.remove(game.id, { userId: "friend" });
+    expect(await repo.gameCollaborators.isCollaborator(game.id, "friend")).toBe(
+      false,
+    );
+    expect(
+      await repo.gameCollaborators.add({ ...invite, id: "invite-new" }),
+    ).toBe(true);
+    await repo.gameCollaborators.remove(game.id, {
+      invitedEmail: "friend@example.test",
+    });
+    expect(await repo.gameCollaborators.listByGame(game.id)).toEqual([]);
+    await repo.gameCollaborators.remove(game.id, {});
+  });
 });
