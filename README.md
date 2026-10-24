@@ -8,7 +8,9 @@ Ung dung chia tien nhom cho cac buoi an, di choi, du lich hoac nhom chi tieu nho
 
 - Frontend: React, Vite, TypeScript, Tailwind CSS.
 - Luu tru: Cloudflare D1 cho users, session, game, share link, profile va mau chi tieu.
-- Dang nhap: username/password qua Better Auth tren Worker, session luu bang HttpOnly cookie.
+- Dang nhap: Better Auth username/password qua HttpOnly cookie; SSO `huyab_sso`
+  qua cookie tren web hoac `Authorization: Bearer` tren app native. Worker xac
+  minh chu ky JWT cua SSO truoc khi cap quyen.
 - Tinh nang dang co:
   - Tao nhieu cuoc choi.
   - Them nguoi tham gia va thong tin ngan hang.

@@ -111,6 +111,15 @@ try {
   await page.waitForURL("**/login", WAIT);
   ok("redirect to /login when logged out");
 
+  const invalidBearerStatus = await page.evaluate(async () => {
+    const response = await fetch("/api/games", {
+      headers: { Authorization: "Bearer invalid" },
+    });
+    return response.status;
+  });
+  assert.equal(invalidBearerStatus, 401);
+  ok("invalid SSO Bearer token is rejected");
+
   // 2. Dang ky tai khoan moi. Trang /login chi con nut SSO Google (di ra
   // auth.huyab.click, khong chay duoc trong test), nen tao session bang API
   // username/mat khau cua Better Auth - van bat trong worker/src/auth.ts.

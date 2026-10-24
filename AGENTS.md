@@ -207,7 +207,7 @@ things reading the code does not show right away.
 - **Hai đường đăng nhập chạy SONG SONG**: better-auth (username/mật khẩu) và
   SSO cookie RS256 từ `auth.huyab.click` (`worker/src/sso.ts`, JWKS cache ở
   module scope). Không cái nào thay cái nào — sửa auth phải kiểm cả 2 nhánh.
-  (README nói chỉ có better-auth, đó là chỗ README đã cũ.)
+  App native gửi cùng JWT SSO qua `Authorization: Bearer`.
 - **CORS chỉ áp cho `/api/*`**, có `credentials: true` và cho phép header
   `Authorization` — cần cho MCP client chạy trong browser gửi bearer token.
 - **MCP là Streamable HTTP KHÔNG state** (`POST /api/mcp`): không session,

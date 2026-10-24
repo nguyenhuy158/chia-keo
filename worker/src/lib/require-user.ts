@@ -3,7 +3,7 @@ import { createD1GameRepository } from "../adapters/d1/game-repository";
 import { createAuth } from "../auth";
 import type { GameRepository } from "../core/ports/game-repository";
 import type { Env } from "../env";
-import { readSsoCookie, verifySsoToken } from "../sso";
+import { readSsoToken, verifySsoToken } from "../sso";
 import { resolveSsoUserId } from "../sso-user";
 
 export type AuthedEnv = {
@@ -44,7 +44,7 @@ export async function resolveUserId(env: Env, request: Request): Promise<string 
   const session = await auth.api.getSession({ headers: request.headers });
   if (session) return session.user.id;
 
-  const token = readSsoCookie(request.headers);
+  const token = readSsoToken(request.headers);
   if (!token) return null;
 
   const claims = await verifySsoToken(token);

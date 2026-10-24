@@ -50,6 +50,17 @@ export function readSsoCookie(headers: Headers) {
   return headers.get("Cookie")?.match(new RegExp(`${COOKIE_NAME}=([^;]+)`))?.[1] || null;
 }
 
+export function readSsoToken(headers: Headers) {
+  const cookie = readSsoCookie(headers);
+  if (cookie) return cookie;
+
+  const authorization = headers.get("Authorization");
+  if (!authorization) return null;
+
+  const match = /^Bearer\s+(\S+)$/i.exec(authorization.trim());
+  return match ? match[1] : null;
+}
+
 /**
  * Tra ve claims neu cookie hop le, null cho MOI truong hop khac (thieu cookie,
  * chu ky sai, het han, JWKS khong lay duoc). Khong nem loi: day la duong dang
