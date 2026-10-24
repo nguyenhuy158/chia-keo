@@ -78,7 +78,7 @@ export default defineConfig({
   },
   test: {
     include: ["src/**/*.test.ts", "shared/**/*.test.ts", "worker/**/*.test.ts"],
-    environment: "node",
+    environment: "jsdom",
     coverage: {
       provider: "v8",
       include: ["src/**/*.{ts,tsx}", "shared/**/*.ts", "worker/src/**/*.ts"],
