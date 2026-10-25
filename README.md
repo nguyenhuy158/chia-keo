@@ -403,7 +403,7 @@ Worker:
 
 ## Milestones
 
-- [MVP web — Chia tiền, share, VietQR](https://github.com/nguyenhuy158/chia-keo/milestone/1): [checklist nghiệm thu](docs/mvp-web.md), còn kiểm chứng đăng nhập SSO từ phiên mới và chia theo số phần qua UI.
+- [MVP web — Chia tiền, share, VietQR](https://github.com/nguyenhuy158/chia-keo/milestone/1): [checklist nghiệm thu](docs/mvp-web.md); SSO và chia theo số phần đã kiểm chứng, chờ CI trên commit `main` chốt và đối chiếu phiên bản production để đóng.
 - [E2E local — Luồng chia tiền](https://github.com/nguyenhuy158/chia-keo/milestone/2): đã đạt trên Wrangler/D1 local và CI; không đại diện cho E2E ghi dữ liệu production.
 - [Web — Xác minh production](https://github.com/nguyenhuy158/chia-keo/milestone/3): luồng người dùng thật với dữ liệu thử, cần phê duyệt riêng trước thao tác ghi.
 - [Web — Bảo mật và tài liệu](https://github.com/nguyenhuy158/chia-keo/milestone/4): Turnstile cho login/public share và đồng bộ tài liệu kiến trúc.

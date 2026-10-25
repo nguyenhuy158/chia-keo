@@ -410,6 +410,109 @@ try {
   }
   ok("revoke MCP token from UI kills it");
 
+  await page.goto(`${BASE}/`);
+  await page.fill("#game-name", "E2E Weighted Split");
+  await page.click('button[aria-label="Tạo cuộc chơi"]');
+  await page.waitForURL("**/games/**", WAIT);
+  const weightedGameId = new URL(page.url()).pathname.split("/").pop();
+
+  for (const name of ["An", "Binh", "Cuong"]) {
+    await page.fill('input[placeholder="Huy"]', name);
+    await page.click('button[type="submit"]:has-text("Thêm người")');
+    await page.locator(`button[aria-label="Đưa ${name} xuống"]`).waitFor(WAIT);
+    await page.waitForFunction(() => document.querySelector('input[placeholder="Huy"]')?.value === "");
+  }
+
+  await page.click('button:has-text("Theo phần")');
+  await page.fill('input[placeholder="Ăn tối"]', "Bua toi theo phan");
+  await page.fill('input[placeholder="500.000"]', "120000");
+  await page.fill('input[aria-label="Số phần của An"]', "1");
+  await page.fill('input[aria-label="Số phần của Binh"]', "2");
+  await page.fill('input[aria-label="Số phần của Cuong"]', "3");
+  await page.waitForSelector("text=≈ 20.000", WAIT);
+  await page.waitForSelector("text=≈ 40.000", WAIT);
+  await page.waitForSelector("text=≈ 60.000", WAIT);
+  await page.click('button[type="submit"]:has-text("Thêm khoản chi")');
+  await page.waitForSelector("text=theo phần", WAIT);
+  await page.waitForSelector("text=100.000", WAIT);
+
+  const weighted = await getGameDetail(page, weightedGameId);
+  const weightedIds = Object.fromEntries(
+    weighted.participants.map((person) => [person.name, person.id]),
+  );
+  const weightedExpense = weighted.expenses.find((expense) => expense.title === "Bua toi theo phan");
+  assert.ok(weightedExpense);
+  assert.equal(weightedExpense.splitMode, "shares");
+  assert.equal(weightedExpense.amount, 120000);
+  assert.equal(weightedExpense.payerParticipantId, weightedIds.An);
+  assert.deepEqual(
+    weightedExpense.splits
+      .map(({ participantId, amount, weight }) => [participantId, amount, weight])
+      .sort(),
+    [
+      [weightedIds.An, 20000, 1],
+      [weightedIds.Binh, 40000, 2],
+      [weightedIds.Cuong, 60000, 3],
+    ].sort(),
+  );
+  assert.equal(weighted.summary.totalExpense, 120000);
+  assert.deepEqual(
+    weighted.summary.balances
+      .map(({ participantId, balance }) => [participantId, balance])
+      .sort(),
+    [
+      [weightedIds.An, 100000],
+      [weightedIds.Binh, -40000],
+      [weightedIds.Cuong, -60000],
+    ].sort(),
+  );
+  assert.deepEqual(
+    weighted.summary.settlements
+      .map(({ fromParticipantId, toParticipantId, amount }) => [fromParticipantId, toParticipantId, amount])
+      .sort(),
+    [
+      [weightedIds.Binh, weightedIds.An, 40000],
+      [weightedIds.Cuong, weightedIds.An, 60000],
+    ].sort(),
+  );
+  ok("weighted split shows 1:2:3 shares and correct settlements");
+
+  await page.reload();
+  await page.waitForSelector("text=theo phần", WAIT);
+  await page.waitForSelector("text=100.000", WAIT);
+  const weightedReloaded = await getGameDetail(page, weightedGameId);
+  assert.deepEqual(weightedReloaded.expenses, weighted.expenses);
+  assert.deepEqual(weightedReloaded.summary, weighted.summary);
+  ok("weighted split persists after reload");
+
+  const invalidWeightStatus = await page.evaluate(async ({ id, payerId, participants }) => {
+    const response = await fetch(`/api/games/${id}/expenses`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({
+        title: "Invalid weighted split",
+        amount: 120000,
+        payerParticipantId: payerId,
+        splitMode: "shares",
+        splits: participants.map((participantId, index) => ({
+          participantId,
+          value: index === 2 ? 1001 : 1,
+        })),
+      }),
+    });
+    return response.status;
+  }, {
+    id: weightedGameId,
+    payerId: weightedIds.An,
+    participants: [weightedIds.An, weightedIds.Binh, weightedIds.Cuong],
+  });
+  assert.equal(invalidWeightStatus, 400);
+  const afterInvalidWeight = await getGameDetail(page, weightedGameId);
+  assert.deepEqual(afterInvalidWeight.expenses, weightedReloaded.expenses);
+  assert.deepEqual(afterInvalidWeight.summary, weightedReloaded.summary);
+  ok("invalid weighted split leaves stored game unchanged");
+
   // 8. Logout
   await page.click("text=Thoát");
   await page.waitForURL("**/login", WAIT);
