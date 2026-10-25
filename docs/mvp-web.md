@@ -16,12 +16,12 @@ Người dùng trên web đăng nhập, tạo cuộc chia, thêm người và th
 - [x] **Link share chỉ xem:** E2E mở link bằng phiên vô danh, xem cuộc chia/ảnh và xác nhận không thể ghi game. [Kịch bản UI](../e2e/ui-smoke.mjs), [CI](https://github.com/nguyenhuy158/chia-keo/actions/runs/40112382140).
 - [x] **VietQR cho người nhận đủ thông tin ngân hàng:** E2E thấy QR ở dòng chuyển tiền; unit test kiểm ngân hàng, tài khoản, số tiền và nội dung khi tạo URL. [Kịch bản UI](../e2e/ui-smoke.mjs), [test VietQR](../shared/vietqr.test.ts).
 - [x] **Bảo vệ dữ liệu:** split sai tổng không làm đổi game; tài khoản khác và người xem share vô danh không sửa được. [Bằng chứng #27](https://github.com/nguyenhuy158/chia-keo/issues/27).
-- [x] **Gate code trước merge:** baseline `main` `08c6afb` có 837 test, coverage 100% bốn chỉ số, type check/build và E2E local 19/19 xanh ([CI](https://github.com/nguyenhuy158/chia-keo/actions/runs/40112382140), [#22](https://github.com/nguyenhuy158/chia-keo/issues/22)). [PR #37](https://github.com/nguyenhuy158/chia-keo/pull/37) ở `0d4f80b` có Check và E2E smoke xanh ([CI](https://github.com/nguyenhuy158/chia-keo/actions/runs/40150090906)); gate trên commit `main` chốt được ghi tiếp ở [#20](https://github.com/nguyenhuy158/chia-keo/issues/20).
-- [x] **Bản đang chạy được đối chiếu:** ngày 2026-10-25 production `/api/version` khớp `818c646`, `/api/health` báo API/DB khỏe; SSO từ phiên mới, trang chủ, reload và đăng xuất được kiểm chứng ở [#31](https://github.com/nguyenhuy158/chia-keo/issues/31). Bước SSO không tạo cuộc chia hoặc khoản chi production; đăng nhập đầu có thể tạo user D1.
+- [x] **Gate trên commit nghiệm thu:** `main` `07d8085` có 837 unit test, E2E local 22/22, Check và Workers Builds xanh ([CI](https://github.com/nguyenhuy158/chia-keo/actions/runs/40150651938)). Coverage 100% bốn chỉ số đã được chứng minh ở [baseline #22](https://github.com/nguyenhuy158/chia-keo/issues/22).
+- [x] **Production tại thời điểm nghiệm thu:** ngày 2026-10-25 `/api/version` khớp `07d8085`, `/api/health` báo API/DB khỏe, trang chủ HTTP 200. SSO từ phiên mới, reload và đăng xuất được kiểm chứng ở [#31](https://github.com/nguyenhuy158/chia-keo/issues/31); PR #37 chỉ đổi E2E và tài liệu, không đổi code sản phẩm. Bước SSO không tạo cuộc chia hoặc khoản chi production; đăng nhập đầu có thể tạo user D1.
 
-## Quy tắc đóng MVP
+## Kết luận nghiệm thu
 
-[Milestone MVP web](https://github.com/nguyenhuy158/chia-keo/milestone/1) và [issue điều phối #20](https://github.com/nguyenhuy158/chia-keo/issues/20) chỉ đóng sau khi CI trên commit `main` chốt xanh và phiên bản production được đối chiếu lại. Bằng chứng Wrangler/D1 local không được gọi là E2E ghi dữ liệu production.
+[Milestone MVP web](https://github.com/nguyenhuy158/chia-keo/milestone/1) và [issue điều phối #20](https://github.com/nguyenhuy158/chia-keo/issues/20) đã đóng sau khi CI trên commit nghiệm thu xanh và phiên bản production khớp. Bằng chứng Wrangler/D1 local không được gọi là E2E ghi dữ liệu production; [#33](https://github.com/nguyenhuy158/chia-keo/issues/33) theo dõi riêng bước đó.
 
 ## Sau MVP
 
