@@ -1,15 +1,18 @@
-import { HandCoins, Trash2 } from "lucide-react";
+import { Copy, HandCoins, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import type {
   ApiExpense,
   ApiParticipant,
   ApiSummary,
 } from "../../shared/api-types";
+import { buildPaymentReminder } from "../../shared/payment-reminder";
 import type { SettlementMode } from "../../shared/schemas";
 import {
   calculateHostTransfers,
   resolveHostParticipantId,
   type SettlementRow,
 } from "../../shared/split";
+import { copyText } from "../adapters/browser/clipboard";
 import { getQrProvider } from "../core/container";
 import { formatMoney } from "../core/domain/money";
 import { Avatar } from "./Avatar";
@@ -18,6 +21,43 @@ import { BalancePill, Metric } from "./ui";
 
 /** QR chung cua host khong gan san so tien vi moi nguoi chuyen mot muc khac. */
 const QR_AMOUNT_FREE = 0;
+
+function ReminderButton({
+  gameName,
+  fromName,
+  toName,
+  amount,
+  disabled = false,
+}: {
+  gameName: string;
+  fromName: string;
+  toName: string;
+  amount: number;
+  disabled?: boolean;
+}) {
+  async function handleCopy() {
+    const copied = await copyText(
+      buildPaymentReminder(gameName, fromName, toName, amount),
+    );
+    (copied ? toast.success : toast.error)(
+      copied ? "Đã sao chép lời nhắc" : "Không sao chép được lời nhắc",
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={handleCopy}
+      disabled={disabled}
+      aria-label={`Copy lời nhắc cho ${fromName}`}
+      title={`Copy lời nhắc cho ${fromName}`}
+      className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-md border border-stone-300 bg-surface px-2.5 text-xs font-semibold text-stone-700 transition hover:bg-surface-muted active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 dark:border-stone-700 dark:text-stone-200"
+    >
+      <Copy size={14} />
+      Nhắc
+    </button>
+  );
+}
 
 const MODE_OPTIONS: Array<{
   value: SettlementMode;
@@ -148,9 +188,7 @@ export function GameDashboard({
               );
             })
           ) : (
-            <p className="text-sm text-fg-muted">
-              Chưa có người tham gia.
-            </p>
+            <p className="text-sm text-fg-muted">Chưa có người tham gia.</p>
           )}
         </div>
       </section>
@@ -242,17 +280,30 @@ export function GameDashboard({
                     return (
                       <div
                         key={transfer.participantId}
-                        className="flex items-center justify-between gap-3 rounded-md border border-border p-3"
+                        className="rounded-md border border-border p-3"
                       >
-                        <p className="min-w-0 truncate text-sm font-medium text-stone-950 dark:text-stone-50">
+                        <p className="text-sm font-medium text-stone-950 dark:text-stone-50">
                           {transfer.toHost
                             ? `${participant.name} → ${host.name}`
                             : `${host.name} → ${participant.name}`}
                         </p>
-                        <div className="flex shrink-0 items-center gap-2">
-                          <span className="text-sm font-bold text-violet-700 tabular dark:text-violet-400">
+                        <div className="mt-2 flex flex-wrap items-center gap-2">
+                          <span className="mr-auto text-sm font-bold text-violet-700 tabular dark:text-violet-400">
                             {formatMoney(transfer.amount)}
                           </span>
+                          {onSettle && (
+                            <ReminderButton
+                              gameName={name}
+                              fromName={
+                                transfer.toHost ? participant.name : host.name
+                              }
+                              toName={
+                                transfer.toHost ? host.name : participant.name
+                              }
+                              amount={transfer.amount}
+                              disabled={settlePending}
+                            />
+                          )}
                           {onSettle && (
                             <button
                               type="button"
@@ -316,16 +367,25 @@ export function GameDashboard({
                         </p>
                       </div>
                       {onSettle && (
-                        <button
-                          type="button"
-                          onClick={() => onSettle(settlement)}
-                          disabled={settlePending}
-                          className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-md border border-emerald-300 bg-emerald-50 px-2.5 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 dark:border-emerald-500/40 dark:bg-emerald-500/10 dark:text-emerald-300 dark:hover:bg-emerald-500/20"
-                          title="Ghi nhận khoản này đã được chuyển"
-                        >
-                          <HandCoins size={14} />
-                          Đã trả
-                        </button>
+                        <div className="flex shrink-0 flex-wrap justify-end gap-2">
+                          <ReminderButton
+                            gameName={name}
+                            fromName={from.name}
+                            toName={to.name}
+                            amount={settlement.amount}
+                            disabled={settlePending}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => onSettle(settlement)}
+                            disabled={settlePending}
+                            className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-md border border-emerald-300 bg-emerald-50 px-2.5 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 dark:border-emerald-500/40 dark:bg-emerald-500/10 dark:text-emerald-300 dark:hover:bg-emerald-500/20"
+                            title="Ghi nhận khoản này đã được chuyển"
+                          >
+                            <HandCoins size={14} />
+                            Đã trả
+                          </button>
+                        </div>
                       )}
                     </div>
                     {qr.canBuild(to) && (
