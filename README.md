@@ -401,22 +401,14 @@ Worker:
 - Validate input bang Zod o ca FE va Worker.
 - Khong tin client-side amount/split khi tinh summary; backend tinh lai tu DB.
 
-## Roadmap
+## Milestones
 
-1. ~~Tach routing FE sang TanStack Router.~~ Xong.
-2. ~~Them form validation bang react-hook-form + zod.~~ Xong.
-3. ~~Gop backend ve mot Worker (Hono) duy nhat, bo Pages.~~ Xong.
-4. ~~Bo sung migration Drizzle khi schema D1 thay doi.~~ Dang dung `drizzle/`.
-5. ~~Them React Query cho cache/sync API.~~ Xong.
-6. ~~Them Better Auth username/password.~~ Xong.
-7. ~~Public share tren UI (bat/tat, doi token).~~ Xong.
-8. ~~Chot QR: VietQR ngan hang Viet Nam.~~ Xong (`img.vietqr.io`).
-9. ~~Them test cho logic split va settlement.~~ Xong (`pnpm test`).
-10. ~~Cau hinh deploy Cloudflare (khong dung GitHub Actions).~~ Xong.
-11. ~~UI quan ly token MCP (tao/xem/thu hoi) o `/settings`.~~ Xong.
+- [MVP web — Chia tiền, share, VietQR](https://github.com/nguyenhuy158/chia-keo/milestone/1): [checklist nghiệm thu](docs/mvp-web.md), còn kiểm chứng đăng nhập SSO từ phiên mới và chia theo số phần qua UI.
+- [E2E local — Luồng chia tiền](https://github.com/nguyenhuy158/chia-keo/milestone/2): đã đạt trên Wrangler/D1 local và CI; không đại diện cho E2E ghi dữ liệu production.
+- [Web — Xác minh production](https://github.com/nguyenhuy158/chia-keo/milestone/3): luồng người dùng thật với dữ liệu thử, cần phê duyệt riêng trước thao tác ghi.
+- [Web — Bảo mật và tài liệu](https://github.com/nguyenhuy158/chia-keo/milestone/4): Turnstile cho login/public share và đồng bộ tài liệu kiến trúc.
 
-Con lai: Turnstile cho login/public link (rate limit theo IP da co o Worker),
-dong bo lai tai lieu kien truc (`docs/`) cho khop backend Worker.
+[SSO iOS #30](https://github.com/nguyenhuy158/chia-keo/issues/30) là việc riêng, không chặn MVP web.
 
 ## Logo & favicon
 
