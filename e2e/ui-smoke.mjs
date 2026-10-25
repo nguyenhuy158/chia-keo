@@ -161,6 +161,15 @@ try {
   if (qrCount !== 1) throw new Error(`expected 1 QR image, got ${qrCount}`);
   ok("settlement + VietQR shown");
 
+  await page.context().grantPermissions(["clipboard-read", "clipboard-write"], { origin: BASE });
+  await page.getByRole("button", { name: "Copy lời nhắc cho Binh" }).click();
+  await page.waitForSelector("text=Đã sao chép lời nhắc", WAIT);
+  assert.equal(
+    await page.evaluate(() => navigator.clipboard.readText()),
+    'Binh ơi, bạn chuyển 50.000 ₫ cho An cho kèo "E2E Trip" nhé.',
+  );
+  ok("copy payment reminder for current settlement");
+
   // 6.5 Khoan chi chia theo so tien cu the (mode "amount")
   await page.click('button:has-text("Số tiền")');
   await page.fill('input[placeholder="Ăn tối"]', "Karaoke");
@@ -171,6 +180,29 @@ try {
   await page.waitForSelector("text=số tiền riêng", WAIT);
   // Balance moi: An +110.000, Binh -110.000
   await page.waitForSelector("text=110.000", WAIT);
+  await page.getByRole("button", { name: "Copy lời nhắc cho Binh" }).click();
+  assert.equal(
+    await page.evaluate(() => navigator.clipboard.readText()),
+    'Binh ơi, bạn chuyển 110.000 ₫ cho An cho kèo "E2E Trip" nhé.',
+  );
+  await page.click('button:has-text("Nhiều chiều")');
+  await page.waitForSelector('button[aria-pressed="true"]:has-text("Nhiều chiều")', WAIT);
+  await page.waitForFunction(async (id) => {
+    const response = await fetch(`/api/games/${id}`, { credentials: "include" });
+    return (await response.json()).settlementMode === "p2p";
+  }, gameId, WAIT);
+  await page.getByRole("button", { name: "Copy lời nhắc cho Binh" }).click();
+  assert.equal(
+    await page.evaluate(() => navigator.clipboard.readText()),
+    'Binh ơi, bạn chuyển 110.000 ₫ cho An cho kèo "E2E Trip" nhé.',
+  );
+  await page.click('button:has-text("Gom 1 người")');
+  await page.waitForSelector('button[aria-pressed="true"]:has-text("Gom 1 người")', WAIT);
+  await page.waitForFunction(async (id) => {
+    const response = await fetch(`/api/games/${id}`, { credentials: "include" });
+    return (await response.json()).settlementMode === "host";
+  }, gameId, WAIT);
+  ok("payment reminder follows updated balance in both settlement modes");
   const beforeInvalid = await getGameDetail(page, gameId);
   const an = beforeInvalid.participants.find((person) => person.name === "An");
   const binh = beforeInvalid.participants.find((person) => person.name === "Binh");
@@ -290,6 +322,7 @@ try {
   await anonPage.waitForSelector('button[aria-label="Đóng ảnh"]', WAIT);
   const deleteCount = await anonPage.locator('button[aria-label="Xóa ảnh"]').count();
   if (deleteCount !== 0) throw new Error("share view must not allow deleting photos");
+  assert.equal(await anonPage.locator('button[aria-label^="Copy lời nhắc cho"]').count(), 0);
   const shareWriteStatus = await anonPage.evaluate(async ({ id, payerId, anId, binhId }) => {
     const response = await fetch(`/api/games/${id}/expenses`, {
       method: "POST",
@@ -314,6 +347,7 @@ try {
   await page.waitForSelector("text=Đã trả nợ", WAIT);
   await page.waitForSelector("text=Binh đã trả An", WAIT);
   await page.waitForSelector("text=Mọi người đã cân bằng", WAIT);
+  assert.equal(await page.locator('button[aria-label^="Copy lời nhắc cho"]').count(), 0);
   const settled = await getGameDetail(page, gameId);
   const transfers = settled.expenses.filter((expense) => expense.kind === "transfer");
   assert.equal(transfers.length, 1);

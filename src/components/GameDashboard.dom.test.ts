@@ -8,13 +8,21 @@ import type {
 } from "../../shared/api-types";
 import type { SettlementMode } from "../../shared/schemas";
 
-const { qr, canBuild, buildUrl } = vi.hoisted(() => ({
-  qr: { canBuild: vi.fn(), buildUrl: vi.fn() },
-  canBuild: vi.fn(),
-  buildUrl: vi.fn(),
-}));
+const { qr, canBuild, buildUrl, copyText, toastSuccess, toastError } =
+  vi.hoisted(() => ({
+    qr: { canBuild: vi.fn(), buildUrl: vi.fn() },
+    canBuild: vi.fn(),
+    buildUrl: vi.fn(),
+    copyText: vi.fn(),
+    toastSuccess: vi.fn(),
+    toastError: vi.fn(),
+  }));
 
 vi.mock("../core/container", () => ({ getQrProvider: () => qr }));
+vi.mock("../adapters/browser/clipboard", () => ({ copyText }));
+vi.mock("sonner", () => ({
+  toast: { success: toastSuccess, error: toastError },
+}));
 vi.mock("./CategoryBreakdownCard", () => ({
   CategoryBreakdownCard: () => "category card",
 }));
@@ -105,6 +113,9 @@ beforeEach(() => {
   buildUrl.mockReset().mockReturnValue("https://qr.example/image");
   qr.canBuild = canBuild;
   qr.buildUrl = buildUrl;
+  copyText.mockReset().mockResolvedValue(true);
+  toastSuccess.mockReset();
+  toastError.mockReset();
   onModeChange = vi.fn();
   onHostChange = vi.fn();
   onSettle = vi.fn();
@@ -129,6 +140,7 @@ describe("GameDashboard", () => {
     expect(host.textContent).toContain("BìnhtrảAn");
     expect(host.querySelector('img[alt="QR nhận tiền của An"]')).not.toBeNull();
     expect(buildUrl).toHaveBeenCalledWith(participants[0], 50000, "CK01");
+    expect(button("Copy lời nhắc cho Bình")).toBeDefined();
     act(() => button("Đã trả")?.click());
     expect(onSettle).toHaveBeenCalledWith(summary.settlements[0]);
     act(() => button("Gom 1 người")?.click());
@@ -150,6 +162,7 @@ describe("GameDashboard", () => {
     });
     expect(button("Nhiều chiều")).toBeUndefined();
     expect(button("Đã trả")).toBeUndefined();
+    expect(button("Copy lời nhắc cho Bình")).toBeUndefined();
     expect(host.querySelector('img[alt^="QR"]')).toBeNull();
     render({
       participants: [],
@@ -177,6 +190,7 @@ describe("GameDashboard", () => {
     render({ settlementMode: "host" });
     expect(host.textContent).toContain("Gom về An");
     expect(host.textContent).toContain("Bình → An");
+    expect(button("Copy lời nhắc cho Bình")).toBeDefined();
     expect(buildUrl).toHaveBeenCalledWith(participants[0], 0, "CK01");
     act(() => button("Đã trả")?.click());
     expect(onSettle).toHaveBeenCalledWith({
@@ -196,6 +210,11 @@ describe("GameDashboard", () => {
       },
     });
     expect(host.textContent).toContain("An → Bình");
+    expect(button("Copy lời nhắc cho An")).toBeDefined();
+    act(() => button("Copy lời nhắc cho An")?.click());
+    expect(copyText).toHaveBeenCalledWith(
+      'An ơi, bạn chuyển 50.000 ₫ cho Bình cho kèo "Cầu tối" nhé.',
+    );
     act(() => button("Đã trả")?.click());
     expect(onSettle).toHaveBeenCalledWith({
       fromParticipantId: "an",
@@ -243,9 +262,11 @@ describe("GameDashboard", () => {
     render({ settlementMode: "host", settlePending: true });
     expect(host.querySelector('img[alt^="QR"]')).toBeNull();
     expect(button("Đã trả")?.disabled).toBe(true);
+    expect(button("Copy lời nhắc cho Bình")?.disabled).toBe(true);
     render({ settlementMode: "p2p", settlePending: true });
     expect(host.querySelector('img[alt^="QR"]')).toBeNull();
     expect(button("Đã trả")?.disabled).toBe(true);
+    expect(button("Copy lời nhắc cho Bình")?.disabled).toBe(true);
     render({ settlementMode: "host", onSettle: undefined });
     expect(button("Đã trả")).toBeUndefined();
     render({
@@ -259,6 +280,22 @@ describe("GameDashboard", () => {
       },
     });
     expect(host.textContent).not.toContain("missing → An");
+  });
+
+  it("copies the current reminder and reports clipboard failure", async () => {
+    render();
+    await act(async () => button("Copy lời nhắc cho Bình")?.click());
+    expect(copyText).toHaveBeenCalledWith(
+      'Bình ơi, bạn chuyển 50.000 ₫ cho An cho kèo "Cầu tối" nhé.',
+    );
+    expect(toastSuccess).toHaveBeenCalledWith("Đã sao chép lời nhắc");
+
+    copyText.mockResolvedValueOnce(false);
+    await act(async () => button("Copy lời nhắc cho Bình")?.click());
+    expect(toastError).toHaveBeenCalledWith("Không sao chép được lời nhắc");
+
+    render({ summary: { ...summary, settlements: [] } });
+    expect(button("Copy lời nhắc cho Bình")).toBeUndefined();
   });
 
   it("lists transfer history and removes a transfer", () => {
