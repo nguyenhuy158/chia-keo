@@ -51,7 +51,7 @@ app.get("/api/version", (c) => c.json(BUILD_INFO));
 app.get("/api/health", async (c) => {
   // Kiem tra D1 da chay migration chua de chan doan nhanh loi 500 khi login.
   try {
-    await c.env.DB.prepare("SELECT 1 FROM user LIMIT 1").first();
+    await c.env.DB.prepare("SELECT 1 FROM chiakeo_user LIMIT 1").first();
     return c.json({ ok: true, db: "ok" });
   } catch (error) {
     console.error("D1 health check failed:", error);

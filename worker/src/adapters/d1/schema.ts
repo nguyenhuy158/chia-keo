@@ -2,7 +2,7 @@ import { sqliteTable, text, integer, uniqueIndex, index } from "drizzle-orm/sqli
 
 // --- Better Auth tables ---
 
-export const user = sqliteTable("user", {
+export const user = sqliteTable("chiakeo_user", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
   email: text("email").notNull().unique(),
@@ -15,7 +15,7 @@ export const user = sqliteTable("user", {
 });
 
 export const session = sqliteTable(
-  "session",
+  "chiakeo_session",
   {
     id: text("id").primaryKey(),
     expiresAt: integer("expires_at", { mode: "timestamp" }).notNull(),
@@ -28,11 +28,11 @@ export const session = sqliteTable(
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
   },
-  (table) => [index("session_user_id_idx").on(table.userId)],
+  (table) => [index("chiakeo_session_user_id_idx").on(table.userId)],
 );
 
 export const account = sqliteTable(
-  "account",
+  "chiakeo_account",
   {
     id: text("id").primaryKey(),
     accountId: text("account_id").notNull(),
@@ -50,10 +50,10 @@ export const account = sqliteTable(
     createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
     updatedAt: integer("updated_at", { mode: "timestamp" }).notNull(),
   },
-  (table) => [index("account_user_id_idx").on(table.userId)],
+  (table) => [index("chiakeo_account_user_id_idx").on(table.userId)],
 );
 
-export const verification = sqliteTable("verification", {
+export const verification = sqliteTable("chiakeo_verification", {
   id: text("id").primaryKey(),
   identifier: text("identifier").notNull(),
   value: text("value").notNull(),
@@ -65,7 +65,7 @@ export const verification = sqliteTable("verification", {
 // --- App tables ---
 
 export const games = sqliteTable(
-  "games",
+  "chiakeo_games",
   {
     id: text("id").primaryKey(),
     ownerUserId: text("owner_user_id")
@@ -93,11 +93,11 @@ export const games = sqliteTable(
     // | "" (chua dong). Xem CLOSE_MODES o shared/game-closing.ts.
     closeMode: text("close_mode").notNull().default(""),
   },
-  (table) => [index("games_owner_user_id_idx").on(table.ownerUserId)],
+  (table) => [index("chiakeo_games_owner_user_id_idx").on(table.ownerUserId)],
 );
 
 export const participants = sqliteTable(
-  "participants",
+  "chiakeo_participants",
   {
     id: text("id").primaryKey(),
     gameId: text("game_id")
@@ -109,11 +109,11 @@ export const participants = sqliteTable(
     createdAt: text("created_at").notNull(),
     updatedAt: text("updated_at").notNull(),
   },
-  (table) => [index("participants_game_id_idx").on(table.gameId)],
+  (table) => [index("chiakeo_participants_game_id_idx").on(table.gameId)],
 );
 
 export const expenses = sqliteTable(
-  "expenses",
+  "chiakeo_expenses",
   {
     id: text("id").primaryKey(),
     gameId: text("game_id")
@@ -137,11 +137,11 @@ export const expenses = sqliteTable(
     createdAt: text("created_at").notNull(),
     updatedAt: text("updated_at").notNull(),
   },
-  (table) => [index("expenses_game_id_idx").on(table.gameId)],
+  (table) => [index("chiakeo_expenses_game_id_idx").on(table.gameId)],
 );
 
 export const expenseSplits = sqliteTable(
-  "expense_splits",
+  "chiakeo_expense_splits",
   {
     id: text("id").primaryKey(),
     expenseId: text("expense_id")
@@ -155,13 +155,13 @@ export const expenseSplits = sqliteTable(
     weight: integer("weight"),
   },
   (table) => [
-    index("expense_splits_expense_id_idx").on(table.expenseId),
-    uniqueIndex("expense_splits_expense_participant_idx").on(table.expenseId, table.participantId),
+    index("chiakeo_expense_splits_expense_id_idx").on(table.expenseId),
+    uniqueIndex("chiakeo_expense_splits_expense_participant_idx").on(table.expenseId, table.participantId),
   ],
 );
 
 export const gamePhotos = sqliteTable(
-  "game_photos",
+  "chiakeo_game_photos",
   {
     id: text("id").primaryKey(),
     gameId: text("game_id")
@@ -179,8 +179,8 @@ export const gamePhotos = sqliteTable(
     createdAt: text("created_at").notNull(),
   },
   (table) => [
-    index("game_photos_game_id_idx").on(table.gameId),
-    index("game_photos_expense_id_idx").on(table.expenseId),
+    index("chiakeo_game_photos_game_id_idx").on(table.gameId),
+    index("chiakeo_game_photos_expense_id_idx").on(table.expenseId),
   ],
 );
 
@@ -190,7 +190,7 @@ export const gamePhotos = sqliteTable(
  * sua/xoa duoc. Hai nguon duoc gop luc doc, ban tu nhap thang.
  */
 export const contacts = sqliteTable(
-  "contacts",
+  "chiakeo_contacts",
   {
     id: text("id").primaryKey(),
     ownerUserId: text("owner_user_id")
@@ -209,7 +209,7 @@ export const contacts = sqliteTable(
     createdAt: text("created_at").notNull(),
     updatedAt: text("updated_at").notNull(),
   },
-  (table) => [uniqueIndex("contacts_owner_name_key_idx").on(table.ownerUserId, table.nameKey)],
+  (table) => [uniqueIndex("chiakeo_contacts_owner_name_key_idx").on(table.ownerUserId, table.nameKey)],
 );
 
 /**
@@ -218,7 +218,7 @@ export const contacts = sqliteTable(
  * chu khong luu o day.
  */
 export const gameEvents = sqliteTable(
-  "game_events",
+  "chiakeo_game_events",
   {
     id: text("id").primaryKey(),
     gameId: text("game_id")
@@ -231,11 +231,11 @@ export const gameEvents = sqliteTable(
     /** Luc bam hoan tac; null la chua hoan tac. */
     undoneAt: text("undone_at"),
   },
-  (table) => [index("game_events_game_id_idx").on(table.gameId)],
+  (table) => [index("chiakeo_game_events_game_id_idx").on(table.gameId)],
 );
 
 export const shareLinks = sqliteTable(
-  "share_links",
+  "chiakeo_share_links",
   {
     id: text("id").primaryKey(),
     gameId: text("game_id")
@@ -246,7 +246,7 @@ export const shareLinks = sqliteTable(
     createdAt: text("created_at").notNull(),
     expiresAt: text("expires_at"),
   },
-  (table) => [index("share_links_game_id_idx").on(table.gameId)],
+  (table) => [index("chiakeo_share_links_game_id_idx").on(table.gameId)],
 );
 
 /**
@@ -258,7 +258,7 @@ export const shareLinks = sqliteTable(
  * tu dien userId vao ngay luc nguoi do dang nhap lan dau, khong can share lai.
  */
 export const gameCollaborators = sqliteTable(
-  "game_collaborators",
+  "chiakeo_game_collaborators",
   {
     id: text("id").primaryKey(),
     gameId: text("game_id")
@@ -270,11 +270,11 @@ export const gameCollaborators = sqliteTable(
     createdAt: text("created_at").notNull(),
   },
   (table) => [
-    index("game_collaborators_game_id_idx").on(table.gameId),
-    index("game_collaborators_user_id_idx").on(table.userId),
-    index("game_collaborators_invited_email_idx").on(table.invitedEmail),
-    uniqueIndex("game_collaborators_game_user_idx").on(table.gameId, table.userId),
-    uniqueIndex("game_collaborators_game_email_idx").on(table.gameId, table.invitedEmail),
+    index("chiakeo_game_collaborators_game_id_idx").on(table.gameId),
+    index("chiakeo_game_collaborators_user_id_idx").on(table.userId),
+    index("chiakeo_game_collaborators_invited_email_idx").on(table.invitedEmail),
+    uniqueIndex("chiakeo_game_collaborators_game_user_idx").on(table.gameId, table.userId),
+    uniqueIndex("chiakeo_game_collaborators_game_email_idx").on(table.gameId, table.invitedEmail),
   ],
 );
 
@@ -286,7 +286,7 @@ export const gameCollaborators = sqliteTable(
  * ke doc duoc database cung khong dung token cua nguoi khac de goi API.
  */
 export const mcpTokens = sqliteTable(
-  "mcp_tokens",
+  "chiakeo_mcp_tokens",
   {
     id: text("id").primaryKey(),
     userId: text("user_id")
@@ -305,7 +305,7 @@ export const mcpTokens = sqliteTable(
     expiresAt: text("expires_at"),
     revokedAt: text("revoked_at"),
   },
-  (table) => [index("mcp_tokens_user_id_idx").on(table.userId)],
+  (table) => [index("chiakeo_mcp_tokens_user_id_idx").on(table.userId)],
 );
 
 /**
@@ -314,7 +314,7 @@ export const mcpTokens = sqliteTable(
  * migration, va cot la se bi bo qua luc doc (xem USER_PREFERENCE_KEYS).
  */
 export const userPreferences = sqliteTable(
-  "user_preferences",
+  "chiakeo_user_preferences",
   {
     id: text("id").primaryKey(),
     userId: text("user_id")
@@ -325,7 +325,7 @@ export const userPreferences = sqliteTable(
     value: text("value").notNull(),
     updatedAt: text("updated_at").notNull(),
   },
-  (table) => [uniqueIndex("user_preferences_user_key_idx").on(table.userId, table.key)],
+  (table) => [uniqueIndex("chiakeo_user_preferences_user_key_idx").on(table.userId, table.key)],
 );
 
 /**
@@ -334,7 +334,7 @@ export const userPreferences = sqliteTable(
  * dung con doi chieu duoc hom nao dung bao nhieu trai.
  */
 export const shuttleEntries = sqliteTable(
-  "shuttle_entries",
+  "chiakeo_shuttle_entries",
   {
     id: text("id").primaryKey(),
     ownerUserId: text("owner_user_id")
@@ -347,11 +347,11 @@ export const shuttleEntries = sqliteTable(
     note: text("note").notNull().default(""),
     createdAt: text("created_at").notNull(),
   },
-  (table) => [index("shuttle_entries_owner_id_idx").on(table.ownerUserId)],
+  (table) => [index("chiakeo_shuttle_entries_owner_id_idx").on(table.ownerUserId)],
 );
 
 export const paymentProfiles = sqliteTable(
-  "payment_profiles",
+  "chiakeo_payment_profiles",
   {
     id: text("id").primaryKey(),
     participantId: text("participant_id")
@@ -364,5 +364,5 @@ export const paymentProfiles = sqliteTable(
     createdAt: text("created_at").notNull(),
     updatedAt: text("updated_at").notNull(),
   },
-  (table) => [uniqueIndex("payment_profiles_participant_id_idx").on(table.participantId)],
+  (table) => [uniqueIndex("chiakeo_payment_profiles_participant_id_idx").on(table.participantId)],
 );
