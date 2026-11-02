@@ -255,8 +255,8 @@ describe("buildSummaryText", () => {
 
     // Nam ung 305k nen la nguoi ung nhieu nhat, thanh dau moi nhan tien.
     expect(text).toContain("GOM VỀ NAM");
-    expect(text).toContain("- Hồng → Nam: 155,2k");
-    expect(text).toContain("- Thu → Nam: 48,2k");
+    expect(text).toContain("- Hồng → Nam: 156k");
+    expect(text).toContain("- Thu → Nam: 49k");
     expect(text).not.toContain("CẦN CHUYỂN");
   });
 
@@ -278,7 +278,7 @@ describe("buildSummaryText", () => {
     });
 
     expect(text).toContain("GOM VỀ THU");
-    expect(text).toContain("- Hồng → Thu: 321,8k");
+    expect(text).toContain("- Hồng → Thu: 322k");
     // Ca hai chieu dung cung mot dau "→" de doc cho nhat quan.
     expect(text).toContain("- Thu → Nam: 36,7k");
     expect(text).not.toContain("trả lại");
@@ -294,7 +294,7 @@ describe("buildSummaryText", () => {
 
     expect(text).toContain("GOM VỀ HỒNG");
     expect(text).toContain("- Hồng → Nam: 203,3k");
-    expect(text).toContain("- Thu → Hồng: 48,2k");
+    expect(text).toContain("- Thu → Hồng: 49k");
     expect(text).not.toContain("CẦN CHUYỂN");
   });
 
@@ -355,8 +355,8 @@ describe("buildSummaryText", () => {
     );
 
     expect(text).toContain("GOM VỀ THU (Thu ứng nhiều nhất, cả nhóm quét 1 QR)");
-    expect(text).toContain("Chuyển vào Thu — tổng 321,8k:");
-    expect(text).toContain("- Hồng → Thu: 321,8k");
+    expect(text).toContain("Chuyển vào Thu — tổng 322k:");
+    expect(text).toContain("- Hồng → Thu: 322k");
     expect(text).toContain("Thu chuyển ra:");
     expect(text).toContain("- Thu → Nam: 36,7k (Nam đã ứng 305k)");
   });

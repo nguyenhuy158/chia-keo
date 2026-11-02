@@ -64,6 +64,13 @@ export type SettlementRow = {
 
 export const MAX_SPLIT_WEIGHT = 1000;
 
+/** Nguoi phai tra duoc lam tron len boi so nay de de thu va de chuyen khoan. */
+export const SETTLEMENT_ROUNDING_UNIT = 1000;
+
+export function roundUpToUnit(amount: number, unit: number = SETTLEMENT_ROUNDING_UNIT) {
+  return Math.ceil(amount / unit) * unit;
+}
+
 /**
  * Chia `amount` cho danh sach nguoi tham gia. Phan du (neu tien le) duoc cong
  * lan luot cho cac nguoi dau danh sach de tong split luon bang tong tien goc.
@@ -242,6 +249,8 @@ export function resolveHostParticipantId(
 /**
  * Giu dung thu tu cua `balances` (= thu tu nguoi tham gia nguoi dung tu sap),
  * khong sort theo so tien — de danh sach "gom ve" khop voi tab Người.
+ * Chi so tien nguoi phai chuyen cho host duoc lam tron len (61,7k -> 62k);
+ * so host tra lai giu nguyen, khong lam tron thiet cho nguoi nhan.
  */
 export function calculateHostTransfers(
   balances: BalanceRow[],
@@ -249,11 +258,16 @@ export function calculateHostTransfers(
 ): HostTransferRow[] {
   return balances
     .filter((row) => row.participantId !== hostParticipantId && row.balance !== 0)
-    .map((row) => ({
-      participantId: row.participantId,
-      amount: Math.abs(row.balance),
-      toHost: row.balance < 0,
-    }));
+    .map((row) => {
+      const toHost = row.balance < 0;
+      const amount = Math.abs(row.balance);
+
+      return {
+        participantId: row.participantId,
+        amount: toHost ? roundUpToUnit(amount) : amount,
+        toHost,
+      };
+    });
 }
 
 /**
