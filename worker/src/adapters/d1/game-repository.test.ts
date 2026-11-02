@@ -40,7 +40,7 @@ beforeAll(async () => {
     d1Persist: false,
   });
   database = await miniflare.getD1Database("DB");
-  await migrate(drizzle(database), { migrationsFolder: "./drizzle" });
+  await migrate(drizzle(database), { migrationsFolder: "./drizzle-shared" });
   await drizzle(database)
     .insert(schema.user)
     .values({

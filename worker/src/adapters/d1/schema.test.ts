@@ -6,8 +6,8 @@ describe("D1 schema", () => {
   it("resolves every declared table, index and foreign key", () => {
     const tables = Object.values(schema);
     const configs = tables.map((table) => getTableConfig(table));
-    expect(configs.map((config) => config.name)).toContain("games");
-    expect(configs.map((config) => config.name)).toContain("payment_profiles");
+    expect(configs.map((config) => config.name)).toContain("chiakeo_games");
+    expect(configs.map((config) => config.name)).toContain("chiakeo_payment_profiles");
     expect(configs.flatMap((config) => config.indexes).length).toBeGreaterThan(
       10,
     );
@@ -18,6 +18,6 @@ describe("D1 schema", () => {
       configs.flatMap((config) =>
         config.foreignKeys.map((key) => key.getName()),
       ),
-    ).toContain("games_owner_user_id_user_id_fk");
+    ).toContain("chiakeo_games_owner_user_id_chiakeo_user_id_fk");
   });
 });

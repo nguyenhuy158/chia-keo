@@ -192,9 +192,7 @@ data model, API list, MCP docs, brand/logo and roadmap live in
 [README.md](README.md). This section only records **decision + why + trap**,
 things reading the code does not show right away.
 
-- **D1 riêng** (`chiakeo-db`, `d583fc77-...`), KHÁC app `notes` dùng D1 chung
-  `db` — chia-keo có better-auth tự tạo bảng `user`/`session`/`account` tên
-  trống trải, không tiền tố được, để chung là đụng tên app khác.
+- **D1 chung `db`**: mọi bảng/index của app dùng prefix `chiakeo_`. Better Auth giữ logical schema keys `user`/`session`/`account` nhưng tên vật lý có prefix. Migration chạy từ `drizzle-shared/`, ledger `chiakeo_migrations`; không chạy migration lịch sử `drizzle/` hoặc `migrations/` trên DB chung.
 - **`nodejs_compat` là bắt buộc**, không phải bật cho vui: better-auth và
   drizzle đều import Node builtin. Bỏ flag là worker chết lúc boot.
 - **`workers_dev = false`**, chỉ vào qua custom domain — cookie SSO

@@ -477,3 +477,11 @@ npm install
 npm run dev
 npm run build
 ```
+
+## Shared D1 storage
+
+Chia Kèo uses the shared D1 database `db` with `chiakeo_` table and index names. `drizzle-shared/` contains the active schema migrations; Wrangler tracks them in `chiakeo_migrations`. The historical `drizzle/` and `migrations/` directories must not be applied to the shared database.
+
+Legacy tables and their data are preserved under the same prefix. The old migration ledger is retained as `chiakeo_legacy_migrations`, separate from the active ledger. Better Auth logical schema keys remain unchanged.
+
+`scripts/d1-shared-migration.py prepare SOURCE.sql OUTPUT_DIR` restores a source export, renames SQLite schema objects, produces a data-only import and checks every row hash and foreign key against a local restore. `verify MANIFEST.json TARGET.sql` compares a target export with that manifest. Treat SQL exports as secrets and keep encrypted backups outside this repository.
