@@ -73,15 +73,28 @@ def prepare(source, output):
         "ORDER BY CASE type WHEN 'table' THEN 0 ELSE 1 END, name"
     )]
     (output / "schema.sql").write_text(";\n--> statement-breakpoint\n".join(schema) + ";\n")
+    pending = {name: {row[2] for row in database.execute(f"PRAGMA foreign_key_list({quote(name)})")
+                      if row[2] != name} for name in mapping.values()}
+    ordered = []
+    while pending:
+        ready = sorted(name for name, parents in pending.items() if not parents.intersection(pending))
+        if not ready:
+            raise ValueError("Cyclic foreign keys require an explicit import strategy")
+        ordered.extend(ready)
+        for name in ready:
+            del pending[name]
     statements = [line for line in database.iterdump() if line.startswith('INSERT INTO "chiakeo_')]
+    positions = {name: position for position, name in enumerate(ordered)}
+    statements.sort(key=lambda line: positions[line.split('"', 2)[1]])
     (output / "data.sql").write_text("PRAGMA defer_foreign_keys=ON;\n" + "\n".join(statements) + "\n")
     (output / "manifest.json").write_text(json.dumps(
         {"mapping": mapping, "tables": before}, indent=2,
     ) + "\n")
-    check = sqlite3.connect(":memory:")
+    check = sqlite3.connect(":memory:", isolation_level=None)
     check.execute("PRAGMA foreign_keys=ON")
     check.executescript((output / "schema.sql").read_text())
-    check.executescript("BEGIN;\n" + (output / "data.sql").read_text() + "COMMIT;")
+    for statement in statements:
+        check.execute(statement)
     for old, new in mapping.items():
         if fingerprint(check, new) != before[old]:
             raise ValueError("Transformed dump restore did not match source")
