@@ -3,12 +3,14 @@ import {
   allocateAmount,
   allocateByWeights,
   calculateBalances,
+  calculateHostTransfers,
   calculateSettlements,
   computeSplitRows,
   MAX_SPLIT_WEIGHT,
   type BalanceRow,
   type ExpenseInput,
   resolveHostParticipantId,
+  roundUpToUnit,
 } from "./split";
 
 describe("allocateAmount", () => {
@@ -366,5 +368,48 @@ describe("resolveHostParticipantId", () => {
   it("khong co dau moi o cac che do khac", () => {
     expect(resolveHostParticipantId(balances, "p2p", "thieu")).toBe("");
     expect(resolveHostParticipantId(balances, "off", "thieu")).toBe("");
+  });
+});
+
+describe("roundUpToUnit", () => {
+  it("lam tron len boi so 1.000d", () => {
+    expect(roundUpToUnit(61667)).toBe(62000);
+    expect(roundUpToUnit(61001)).toBe(62000);
+  });
+
+  it("giu nguyen so da la boi so", () => {
+    expect(roundUpToUnit(62000)).toBe(62000);
+    expect(roundUpToUnit(0)).toBe(0);
+  });
+});
+
+describe("calculateHostTransfers", () => {
+  const ids = ["huy", "kiet", "duc", "tan", "thu", "kiet2"];
+  const balances = calculateBalances(ids, [
+    {
+      payerParticipantId: "huy",
+      amount: 370000,
+      shares: allocateAmount(370000, ids),
+    },
+  ]);
+
+  it("lam tron len so nguoi phai chuyen cho host", () => {
+    const transfers = calculateHostTransfers(balances, "huy");
+
+    expect(transfers).toHaveLength(5);
+    expect(transfers.every((row) => row.toHost && row.amount === 62000)).toBe(true);
+  });
+
+  it("khong lam tron so host tra lai", () => {
+    const [back] = calculateHostTransfers(
+      [
+        { participantId: "huy", paid: 0, owed: 10500, balance: -10500 },
+        { participantId: "kiet", paid: 30500, owed: 10500, balance: 20000 },
+        { participantId: "duc", paid: 0, owed: 10500, balance: -9500 },
+      ],
+      "huy",
+    );
+
+    expect(back).toEqual({ participantId: "kiet", amount: 20000, toHost: false });
   });
 });
