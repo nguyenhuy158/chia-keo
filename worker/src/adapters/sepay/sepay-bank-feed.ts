@@ -7,7 +7,7 @@ const TRANSACTIONS_PAGE_SIZE = 100;
 const MAX_TRANSACTION_PAGES = 5;
 const VIETNAM_OFFSET_MS = 7 * 60 * 60_000;
 
-type SepayAccount = { account_number: string };
+type SepayAccount = { account_number: string; connection_type: string | null };
 type SepayTransaction = {
   id: string;
   account_number: string;
@@ -81,7 +81,9 @@ export function createSepayBankFeed(
         return accountCache.numbers;
       }
       const accounts = await get<SepayAccount>("/v2/bank-accounts", {});
-      const numbers = accounts.data.map((account) => account.account_number);
+      const numbers = accounts.data
+        .filter((account) => account.connection_type)
+        .map((account) => account.account_number);
       accountCache = {
         key: cacheKey,
         numbers,
