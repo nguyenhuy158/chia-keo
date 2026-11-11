@@ -54,9 +54,9 @@ export function rateLimitNotFound(
   return async (c, next) => {
     if (!methods.includes(c.req.method)) return next();
     const key = `${bucket}:${clientIp(c)}`;
-    if (limiter.isBlocked(key, Date.now()))
+    if (!limiter.isAllowed(key, Date.now()))
       return c.json({ error: "rate_limited" }, 429);
     await next();
-    if (c.res.status === NOT_FOUND_STATUS) limiter.record(key, Date.now());
+    if (c.res.status !== NOT_FOUND_STATUS) limiter.release(key);
   };
 }
