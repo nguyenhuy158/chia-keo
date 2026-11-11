@@ -28,6 +28,8 @@ export const gameKeys = {
   all: ["games"] as const,
   detail: (gameId: string) => ["games", gameId] as const,
   share: (token: string) => ["share", token] as const,
+  paymentOptions: (token: string) => ["share-payment-options", token] as const,
+  payment: (token: string, code: string) => ["share-payment", token, code] as const,
 };
 
 /**
@@ -82,6 +84,42 @@ export function useShareView(token: string) {
     queryKey: gameKeys.share(token),
     queryFn: () => getGameApi().share.view(token),
     retry: false,
+  });
+}
+
+export const PAYMENT_POLL_INTERVAL_MS = 10_000;
+
+export function usePaymentOptions(token: string) {
+  return useQuery({
+    queryKey: gameKeys.paymentOptions(token),
+    queryFn: () => getGameApi().share.paymentOptions(token),
+    retry: false,
+  });
+}
+
+export function useCreatePayment(token: string) {
+  return useMutation({
+    mutationFn: (participantIds: string[]) =>
+      getGameApi().share.createPayment(token, participantIds),
+  });
+}
+
+export function usePaymentRequest(token: string, code: string) {
+  const queryClient = useQueryClient();
+  return useQuery({
+    queryKey: gameKeys.payment(token, code),
+    queryFn: async () => {
+      const payment = await getGameApi().share.payment(token, code);
+      if (payment.status !== "pending") {
+        await queryClient.invalidateQueries({ queryKey: gameKeys.share(token) });
+        await queryClient.invalidateQueries({ queryKey: gameKeys.paymentOptions(token) });
+      }
+      return payment;
+    },
+    enabled: Boolean(code),
+    retry: false,
+    refetchInterval: (query) =>
+      query.state.data?.status === "pending" ? PAYMENT_POLL_INTERVAL_MS : false,
   });
 }
 

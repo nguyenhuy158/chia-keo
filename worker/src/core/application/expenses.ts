@@ -246,6 +246,11 @@ export async function recordTransfer(
     throw new InvalidInputError();
   }
 
+  await insertTransfer(repo, game.id, input);
+  return loadGameDetail(repo, game, userId);
+}
+
+export async function insertTransfer(repo: GameRepository, gameId: string, input: TransferInput) {
   const now = nowIso();
   const expenseId = createId("expense");
 
@@ -253,7 +258,7 @@ export async function recordTransfer(
   // nguoi nhan chiu toan bo -> balance hai ben tu can bang lai.
   await repo.expenses.insert({
     id: expenseId,
-    gameId: game.id,
+    gameId,
     payerParticipantId: input.fromParticipantId,
     kind: "transfer",
     category: "",
@@ -274,16 +279,14 @@ export async function recordTransfer(
     },
   ]);
 
-  const detail = await loadGameDetail(repo, game, userId);
-  const nameById = new Map(detail.participants.map((person) => [person.id, person.name]));
-  await recordEvent(repo, game.id, {
+  const participants = await repo.participants.listByGame(gameId);
+  const nameById = new Map(participants.map((person) => [person.id, person.name]));
+  await recordEvent(repo, gameId, {
     kind: "transfer_added",
     fromName: nameById.get(input.fromParticipantId) as string,
     toName: nameById.get(input.toParticipantId) as string,
     amount: input.amount,
   });
-
-  return detail;
 }
 
 /**

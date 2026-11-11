@@ -13,7 +13,7 @@ jobs:
   # pnpm check (tsc -b) -> pnpm test -> pnpm build, roi job rieng `pnpm e2e`
   # (tu build FE, ap migration D1 local, bat wrangler dev roi tat).
   check:
-    uses: nguyenhuy158/kit/.github/workflows/check.yml@v0.1.0
+    uses: nguyenhuy158/kit/.github/workflows/check.yml@v0.1.1
     with:
       run-test: true
       run-build: true

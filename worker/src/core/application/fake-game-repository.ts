@@ -13,6 +13,8 @@ import type {
   NewSplitRow,
   ParticipantRow,
   PaymentProfileRow,
+  PaymentRequestRow,
+  PaymentTransactionRow,
   ShareLinkRow,
   ShuttleEntryRow,
 } from "../ports/game-repository";
@@ -29,6 +31,8 @@ export type FakeState = {
   events: GameEventRow[];
   collaborators: CollaboratorRow[];
   shareLinks: ShareLinkRow[];
+  paymentRequests: PaymentRequestRow[];
+  paymentTransactions: PaymentTransactionRow[];
   shuttleEntries: ShuttleEntryRow[];
   users: { id: string; name: string; email: string }[];
 };
@@ -79,6 +83,8 @@ function emptyState(): FakeState {
     events: [],
     collaborators: [],
     shareLinks: [],
+    paymentRequests: [],
+    paymentTransactions: [],
     shuttleEntries: [],
     users: [],
   };
@@ -285,6 +291,39 @@ export function createFakeRepo(initial: Partial<FakeState> = {}) {
       upsert: async () => {},
       update: async () => {},
       delete: async () => {},
+    },
+    paymentRequests: {
+      async insert(row) {
+        state.paymentRequests.push({ ...row });
+      },
+      async findByCode(code) {
+        return state.paymentRequests.find((row) => row.code === code) || null;
+      },
+      async listPendingByGame(gameId, createdAfter) {
+        return state.paymentRequests.filter(
+          (row) => row.gameId === gameId && row.status === "pending" && row.createdAt > createdAfter,
+        );
+      },
+      async markChecked(ids, checkedAt) {
+        for (const row of state.paymentRequests) if (ids.includes(row.id)) row.checkedAt = checkedAt;
+      },
+      async claimTransaction(row) {
+        if (state.paymentTransactions.some((item) => item.bankTxnId === row.bankTxnId)) return false;
+        state.paymentTransactions.push({ ...row });
+        return true;
+      },
+      async addPaidAmount(id, amount) {
+        const row = state.paymentRequests.find((item) => item.id === id) as PaymentRequestRow;
+        row.paidAmount += amount;
+        return row.paidAmount;
+      },
+      async markPaid(id, paidAt) {
+        const row = state.paymentRequests.find((item) => item.id === id);
+        if (!row || row.status !== "pending") return false;
+        row.status = "paid";
+        row.paidAt = paidAt;
+        return true;
+      },
     },
     gameEvents: {
       listByGame: async (gameId, limit) =>

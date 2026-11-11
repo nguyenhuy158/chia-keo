@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { ApiExpense, ApiParticipant, ApiSummary } from "../../shared/api-types";
 import { CopyMenu } from "../components/CopyMenu";
 import { GameDashboard } from "../components/GameDashboard";
+import { SharePaymentPanel } from "../components/SharePaymentPanel";
 import { SharePhotoGallery } from "../components/SharePhotoGallery";
 import { ThemeToggle } from "../components/theme";
 import { EmptyState, GamePageSkeleton } from "../components/ui";
@@ -353,6 +354,7 @@ export function SharePage() {
           </div>
         ) : activeTab === "summary" ? (
           <div className="mx-auto max-w-2xl space-y-5 pb-4">
+            <SharePaymentPanel token={token} participants={view.participants} />
             <GameDashboard
               code={view.code}
               name={view.name}

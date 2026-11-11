@@ -2,8 +2,9 @@ import { Hono } from "hono";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Env } from "../env";
 
-const { repo, createRepo, shareView, listPhotos, getPhoto, mcpRequest } =
+const { repo, createRepo, shareView, listPhotos, getPhoto, mcpRequest, reconcileShared } =
   vi.hoisted(() => ({
+    reconcileShared: vi.fn(),
     repo: { name: "repo" },
     createRepo: vi.fn(),
     shareView: vi.fn(),
@@ -17,6 +18,9 @@ vi.mock("../adapters/d1/game-repository", () => ({
 }));
 vi.mock("../core/application/share-links", () => ({
   getShareViewByToken: shareView,
+}));
+vi.mock("../core/application/payments", () => ({
+  reconcileSharedPayments: reconcileShared,
 }));
 vi.mock("../core/application/photos", () => ({
   listSharedPhotos: listPhotos,
@@ -48,6 +52,7 @@ describe("public HTTP adapters", () => {
     expect(view.status).toBe(200);
     expect(await view.json()).toEqual({ name: "Cầu tối" });
     expect(shareView).toHaveBeenCalledWith(repo, "token-1");
+    expect(reconcileShared).toHaveBeenCalledWith({ repo, bankFeed: null }, "token-1");
 
     const photos = await app.request("/api/share/token-1/photos", {}, env);
     expect(photos.status).toBe(200);

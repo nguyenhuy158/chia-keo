@@ -310,3 +310,14 @@ export type ShuttleEntryInput = z.input<typeof shuttleEntryInputSchema>;
 export type UserPreferences = z.infer<typeof userPreferencesSchema>;
 export type UserPreferenceKey = keyof UserPreferences;
 export type UserPreferencesPatch = z.infer<typeof userPreferencesPatchSchema>;
+
+export const MAX_PAYMENT_PARTICIPANTS = 50;
+
+export const paymentRequestInputSchema = z.object({
+  participantIds: z
+    .array(z.string().trim().min(1).max(ID_MAX_LENGTH))
+    .min(1)
+    .max(MAX_PAYMENT_PARTICIPANTS),
+});
+
+export type PaymentRequestInput = z.infer<typeof paymentRequestInputSchema>;

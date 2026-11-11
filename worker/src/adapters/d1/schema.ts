@@ -366,3 +366,37 @@ export const paymentProfiles = sqliteTable(
   },
   (table) => [uniqueIndex("chiakeo_payment_profiles_participant_id_idx").on(table.participantId)],
 );
+
+export const paymentRequests = sqliteTable(
+  "chiakeo_payment_requests",
+  {
+    id: text("id").primaryKey(),
+    gameId: text("game_id")
+      .notNull()
+      .references(() => games.id, { onDelete: "cascade" }),
+    code: text("code").notNull().unique(),
+    receiverParticipantId: text("receiver_participant_id").notNull(),
+    receiverAccountNo: text("receiver_account_no").notNull(),
+    itemsJson: text("items_json").notNull(),
+    total: integer("total").notNull(),
+    status: text("status").notNull().default("pending"),
+    paidAmount: integer("paid_amount").notNull().default(0),
+    createdAt: text("created_at").notNull(),
+    checkedAt: text("checked_at").notNull(),
+    paidAt: text("paid_at"),
+  },
+  (table) => [index("chiakeo_payment_requests_game_id_idx").on(table.gameId)],
+);
+
+export const paymentTransactions = sqliteTable(
+  "chiakeo_payment_transactions",
+  {
+    bankTxnId: text("bank_txn_id").primaryKey(),
+    requestId: text("request_id")
+      .notNull()
+      .references(() => paymentRequests.id, { onDelete: "cascade" }),
+    amount: integer("amount").notNull(),
+    createdAt: text("created_at").notNull(),
+  },
+  (table) => [index("chiakeo_payment_transactions_request_id_idx").on(table.requestId)],
+);

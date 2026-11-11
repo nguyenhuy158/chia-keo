@@ -97,6 +97,28 @@ export type ShareLinkRow = {
   expiresAt: string | null;
 };
 
+export type PaymentRequestRow = {
+  id: string;
+  gameId: string;
+  code: string;
+  receiverParticipantId: string;
+  receiverAccountNo: string;
+  itemsJson: string;
+  total: number;
+  status: string;
+  paidAmount: number;
+  createdAt: string;
+  checkedAt: string;
+  paidAt: string | null;
+};
+
+export type PaymentTransactionRow = {
+  bankTxnId: string;
+  requestId: string;
+  amount: number;
+  createdAt: string;
+};
+
 /** Anh o dang danh sach: khong kem du lieu anh goc. */
 export type PhotoRow = {
   id: string;
@@ -306,6 +328,18 @@ export type GameRepository = {
       updatedAt: string,
     ): Promise<void>;
     delete(contactId: string): Promise<void>;
+  };
+  paymentRequests: {
+    insert(row: PaymentRequestRow): Promise<void>;
+    findByCode(code: string): Promise<PaymentRequestRow | null>;
+    listPendingByGame(gameId: string, createdAfter: string): Promise<PaymentRequestRow[]>;
+    markChecked(ids: string[], checkedAt: string): Promise<void>;
+    /** Ghi giao dich ngan hang cho request; false = giao dich da duoc ghi truoc do. */
+    claimTransaction(row: PaymentTransactionRow): Promise<boolean>;
+    /** Cong don so tien da nhan, tra ve tong moi. */
+    addPaidAmount(id: string, amount: number): Promise<number>;
+    /** Chi doi request con pending; false = lan doi soat khac da chot truoc. */
+    markPaid(id: string, paidAt: string): Promise<boolean>;
   };
   gameEvents: {
     /** Lich su cua mot cuoc chia, moi nhat truoc. */

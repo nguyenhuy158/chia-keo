@@ -8,6 +8,13 @@
       "when": 1793634965822,
       "tag": "0000_shared_baseline",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1794412490954,
+      "tag": "0001_payment_requests",
+      "breakpoints": true
     }
   ]
 }

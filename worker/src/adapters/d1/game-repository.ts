@@ -14,6 +14,7 @@ import type {
   PhotoDetailRow,
   PhotoRow,
   PaymentProfileRow,
+  PaymentRequestRow,
   ShareLinkRow,
 } from "../../core/ports/game-repository";
 import { createId } from "../../lib/ids";
@@ -584,6 +585,66 @@ export function createD1GameRepository(d1: D1Database): GameRepository {
       },
       async delete(contactId) {
         await db.delete(schema.contacts).where(eq(schema.contacts.id, contactId));
+      },
+    },
+
+    paymentRequests: {
+      async insert(row) {
+        await db.insert(schema.paymentRequests).values(row);
+      },
+      async findByCode(code): Promise<PaymentRequestRow | null> {
+        const rows = await db
+          .select()
+          .from(schema.paymentRequests)
+          .where(eq(schema.paymentRequests.code, code))
+          .limit(1);
+        return rows[0] || null;
+      },
+      async listPendingByGame(gameId, createdAfter) {
+        return db
+          .select()
+          .from(schema.paymentRequests)
+          .where(
+            and(
+              eq(schema.paymentRequests.gameId, gameId),
+              eq(schema.paymentRequests.status, "pending"),
+              sql`${schema.paymentRequests.createdAt} > ${createdAfter}`,
+            ),
+          )
+          .orderBy(asc(schema.paymentRequests.createdAt));
+      },
+      async markChecked(ids, checkedAt) {
+        if (ids.length === 0) return;
+        await db
+          .update(schema.paymentRequests)
+          .set({ checkedAt })
+          .where(inArray(schema.paymentRequests.id, ids));
+      },
+      async claimTransaction(row) {
+        const rows = await db
+          .insert(schema.paymentTransactions)
+          .values(row)
+          .onConflictDoNothing()
+          .returning({ id: schema.paymentTransactions.bankTxnId });
+        return rows.length > 0;
+      },
+      async addPaidAmount(id, amount) {
+        const rows = await db
+          .update(schema.paymentRequests)
+          .set({ paidAmount: sql`${schema.paymentRequests.paidAmount} + ${amount}` })
+          .where(eq(schema.paymentRequests.id, id))
+          .returning({ paidAmount: schema.paymentRequests.paidAmount });
+        return rows[0].paidAmount;
+      },
+      async markPaid(id, paidAt) {
+        const rows = await db
+          .update(schema.paymentRequests)
+          .set({ status: "paid", paidAt })
+          .where(
+            and(eq(schema.paymentRequests.id, id), eq(schema.paymentRequests.status, "pending")),
+          )
+          .returning({ id: schema.paymentRequests.id });
+        return rows.length > 0;
       },
     },
 
