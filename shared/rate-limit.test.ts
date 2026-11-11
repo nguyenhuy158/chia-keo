@@ -41,12 +41,15 @@ describe("createFixedWindowLimiter", () => {
     expect(limiter.isAllowed("ip1", 1000)).toBe(true);
   });
 
-  it("isBlocked chi doc, record moi dem", () => {
-    const limiter = createFixedWindowLimiter({ limit: 2, windowMs: 1000 });
-    expect(limiter.isBlocked("k", 0)).toBe(false);
-    limiter.record("k", 0);
-    limiter.record("k", 10);
-    expect(limiter.isBlocked("k", 20)).toBe(true);
-    expect(limiter.isBlocked("k", 1000)).toBe(false);
+  it("release chi tra lai luot cua dung cua so da giu", () => {
+    const limiter = createFixedWindowLimiter({ limit: 1, windowMs: 1000 });
+    const first = limiter.reserve("k", 0) as number;
+    expect(limiter.reserve("k", 1)).toBeNull();
+    limiter.release("k", first);
+    expect(limiter.reserve("k", 2)).toBe(first);
+    const next = limiter.reserve("k", 1000) as number;
+    limiter.release("k", first);
+    expect(limiter.reserve("k", 1001)).toBeNull();
+    limiter.release("missing", next);
   });
 });

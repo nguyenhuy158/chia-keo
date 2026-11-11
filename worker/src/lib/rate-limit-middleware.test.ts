@@ -30,4 +30,26 @@ describe("rateLimitNotFound", () => {
       (await app.request("/x/ok", { method: "POST", headers })).status,
     ).toBe(200);
   });
+
+  it("dem request song song ngay luc toi", async () => {
+    const app = new Hono();
+    let release: () => void = () => {};
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    app.use(
+      "/y",
+      rateLimitNotFound(["GET"], "race", { limit: 2, windowMs: 60_000 }),
+    );
+    app.get("/y", async (c) => {
+      await gate;
+      return c.json({}, 404);
+    });
+    const pending = [1, 2, 3].map(() => app.request("/y", { headers }));
+    release();
+    const statuses = (await Promise.all(pending)).map(
+      (response) => response.status,
+    );
+    expect(statuses.filter((status) => status === 429)).toHaveLength(1);
+  });
 });
