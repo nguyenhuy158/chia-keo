@@ -40,4 +40,13 @@ describe("createFixedWindowLimiter", () => {
     expect(limiter.isAllowed("ip0", 1000)).toBe(false);
     expect(limiter.isAllowed("ip1", 1000)).toBe(true);
   });
+
+  it("isBlocked chi doc, record moi dem", () => {
+    const limiter = createFixedWindowLimiter({ limit: 2, windowMs: 1000 });
+    expect(limiter.isBlocked("k", 0)).toBe(false);
+    limiter.record("k", 0);
+    limiter.record("k", 10);
+    expect(limiter.isBlocked("k", 20)).toBe(true);
+    expect(limiter.isBlocked("k", 1000)).toBe(false);
+  });
 });

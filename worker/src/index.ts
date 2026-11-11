@@ -3,11 +3,15 @@ import { cors } from "hono/cors";
 import { BUILD_INFO } from "../../shared/build-info";
 import { AUTH_BASE_PATH, createAuth, getTrustedOrigins } from "./auth";
 import type { Env } from "./env";
-import { rateLimitMethods, rateLimitPost } from "./lib/rate-limit-middleware";
+import {
+  rateLimitMethods,
+  rateLimitNotFound,
+  rateLimitPost,
+} from "./lib/rate-limit-middleware";
 import { aiRouter } from "./routes/ai";
 import { crossBalancesRouter } from "./routes/cross-balances";
-import { funStatsRouter } from "./routes/fun-stats";
 import { emailSummaryRouter } from "./routes/email-summary";
+import { funStatsRouter } from "./routes/fun-stats";
 import { gamesRouter } from "./routes/games";
 import { mcpRouter } from "./routes/mcp";
 import { mcpTokensRouter } from "./routes/mcp-tokens";
@@ -73,12 +77,25 @@ app.get("/api/health", async (c) => {
 app.use(`${AUTH_BASE_PATH}/sign-in/*`, rateLimitPost("auth", AUTH_RATE_LIMIT));
 app.use(`${AUTH_BASE_PATH}/sign-up/*`, rateLimitPost("auth", AUTH_RATE_LIMIT));
 app.use("/api/games", rateLimitPost("create-game", CREATE_RATE_LIMIT));
-app.use("/api/games/:gameId/share-links", rateLimitPost("share-link", CREATE_RATE_LIMIT));
-app.use("/api/games/:gameId/photos", rateLimitPost("photo-upload", PHOTO_UPLOAD_RATE_LIMIT));
+app.use(
+  "/api/games/:gameId/share-links",
+  rateLimitPost("share-link", CREATE_RATE_LIMIT),
+);
+app.use(
+  "/api/games/:gameId/photos",
+  rateLimitPost("photo-upload", PHOTO_UPLOAD_RATE_LIMIT),
+);
 app.use("/api/mcp", rateLimitPost("mcp", MCP_RATE_LIMIT));
 app.use("/api/mcp-tokens", rateLimitPost("mcp-token", CREATE_RATE_LIMIT));
-app.use("/api/share/:token", rateLimitMethods(["GET"], "share-view", SHARE_VIEW_RATE_LIMIT));
-const shareViewLimit = rateLimitMethods(["GET"], "share-view", SHARE_VIEW_RATE_LIMIT);
+app.use(
+  "/api/share/:token",
+  rateLimitMethods(["GET"], "share-view", SHARE_VIEW_RATE_LIMIT),
+);
+const shareViewLimit = rateLimitMethods(
+  ["GET"],
+  "share-view",
+  SHARE_VIEW_RATE_LIMIT,
+);
 app.use("/api/share/:token/*", (c, next) =>
   PAYMENT_STATUS_PATH.test(c.req.path) ? next() : shareViewLimit(c, next),
 );
@@ -86,7 +103,14 @@ app.use(
   "/api/share/:token/payments/:code",
   rateLimitMethods(["GET"], "payment-status", PAYMENT_STATUS_RATE_LIMIT),
 );
-app.use("/api/share/:token/payments", rateLimitPost("share-payment", PAYMENT_CREATE_RATE_LIMIT));
+app.use(
+  "/api/share/:token/payments/:code",
+  rateLimitNotFound(["GET"], "payment-status-miss", SHARE_VIEW_RATE_LIMIT),
+);
+app.use(
+  "/api/share/:token/payments",
+  rateLimitPost("share-payment", PAYMENT_CREATE_RATE_LIMIT),
+);
 
 app.on(["GET", "POST"], `${AUTH_BASE_PATH}/*`, (c) =>
   createAuth(c.env, c.req.url).handler(c.req.raw),
