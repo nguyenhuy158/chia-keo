@@ -308,6 +308,13 @@ describe("D1 game repository", () => {
     });
     expect(await repo.shareLinks.findByToken(link.token)).toBeNull();
 
+    expect(await repo.sharePreviews.getUpdatedAt(game.id)).toBeNull();
+    expect(await repo.sharePreviews.getData(game.id)).toBeNull();
+    await repo.sharePreviews.put(game.id, "preview-v1", "2026-08-01T00:00:00.000Z");
+    await repo.sharePreviews.put(game.id, "preview-v2", "2026-08-02T00:00:00.000Z");
+    expect(await repo.sharePreviews.getData(game.id)).toBe("preview-v2");
+    expect(await repo.sharePreviews.getUpdatedAt(game.id)).toBe("2026-08-02T00:00:00.000Z");
+
     const event = (await repo.gameEvents.listByGame(game.id, 1))[0];
     expect(event?.kind).toBe("game_created");
     expect((await repo.gameEvents.getWithGame(event.id))?.game.id).toBe(

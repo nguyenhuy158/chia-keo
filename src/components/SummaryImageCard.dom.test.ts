@@ -239,6 +239,22 @@ describe("SummaryImageCard", () => {
     expect(error).toHaveBeenCalledWith("Không tải được ảnh");
   });
 
+  it("publishes the share preview when copying text with a share link", async () => {
+    const onShare = vi.fn();
+    act(() =>
+      root.render(
+        createElement(SummaryImageCard, {
+          input: { ...input, shareUrl: "https://chiakeo.example/share/AbCd" },
+          onShare,
+        }),
+      ),
+    );
+    await vi.waitFor(() => expect(button("Copy ảnh").disabled).toBe(false));
+    act(() => button("Chữ").click());
+    await act(async () => button("Copy chữ").click());
+    expect(onShare).toHaveBeenCalledWith("plain");
+  });
+
   it("switches to text and reports copy success or failure", async () => {
     render();
     await vi.waitFor(() => expect(button("Copy ảnh").disabled).toBe(false));
