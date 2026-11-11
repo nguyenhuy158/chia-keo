@@ -31,6 +31,8 @@ const MCP_RATE_LIMIT = { limit: 120, windowMs: 60_000 };
 const PAYMENT_CREATE_RATE_LIMIT = { limit: 10, windowMs: 60_000 };
 // Share token ngan (4 ky tu) nen phai chan brute-force doan token qua GET.
 const SHARE_VIEW_RATE_LIMIT = { limit: 20, windowMs: 60_000 };
+const PAYMENT_STATUS_RATE_LIMIT = { limit: 60, windowMs: 60_000 };
+const PAYMENT_STATUS_PATH = /\/payments\/[^/]+$/;
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -76,7 +78,14 @@ app.use("/api/games/:gameId/photos", rateLimitPost("photo-upload", PHOTO_UPLOAD_
 app.use("/api/mcp", rateLimitPost("mcp", MCP_RATE_LIMIT));
 app.use("/api/mcp-tokens", rateLimitPost("mcp-token", CREATE_RATE_LIMIT));
 app.use("/api/share/:token", rateLimitMethods(["GET"], "share-view", SHARE_VIEW_RATE_LIMIT));
-app.use("/api/share/:token/*", rateLimitMethods(["GET"], "share-view", SHARE_VIEW_RATE_LIMIT));
+const shareViewLimit = rateLimitMethods(["GET"], "share-view", SHARE_VIEW_RATE_LIMIT);
+app.use("/api/share/:token/*", (c, next) =>
+  PAYMENT_STATUS_PATH.test(c.req.path) ? next() : shareViewLimit(c, next),
+);
+app.use(
+  "/api/share/:token/payments/:code",
+  rateLimitMethods(["GET"], "payment-status", PAYMENT_STATUS_RATE_LIMIT),
+);
 app.use("/api/share/:token/payments", rateLimitPost("share-payment", PAYMENT_CREATE_RATE_LIMIT));
 
 app.on(["GET", "POST"], `${AUTH_BASE_PATH}/*`, (c) =>

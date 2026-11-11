@@ -256,9 +256,10 @@ things reading the code does not show right away.
   client — nếu không endpoint này thành open proxy.
 - **Thanh toán SePay là POLL, không webhook** (`core/application/payments.ts`):
   dùng API Token `SEPAY_API`, không cần cấu hình webhook trên my.sepay.vn.
-  User API giới hạn 3 req/s nên đối soát gom theo cuộc chia, tối đa 1 lần/5 s
-  (`checked_at`), không theo từng tab; trang chờ poll 10 s vì GET chung
-  bucket `share-view` 20/phút. Đối soát cả khi host mở game/link share, để
+  User API giới hạn 3 req/s nên đối soát gom theo cuộc chia, tối đa 1 lần/3 s
+  (`checked_at`), không theo từng tab; trang chờ poll 3 s qua bucket riêng
+  `payment-status` 60/phút (không tính vào `share-view` 20/phút, vì mã CK 8
+  ký tự không dò được như token share 4 ký tự). Đối soát cả khi host mở game/link share, để
   người trả đóng tab sớm vẫn được ghi. Khớp bằng mã `CK` + 8 ký tự trong nội
   dung + đúng số TK nhận. Mỗi giao dịch lưu 1 dòng `payment_transactions`
   (khóa = id SePay) và cộng dồn: chuyển thiếu vẫn `pending`, đủ mới `markPaid`

@@ -26,7 +26,7 @@ import { loadShareView } from "./game-detail";
 import { getSharedGame } from "./share-links";
 
 export const PAYMENT_REQUEST_TTL_MS = 24 * 60 * 60_000;
-export const BANK_CHECK_INTERVAL_MS = 5_000;
+export const BANK_CHECK_INTERVAL_MS = 3_000;
 const BANK_LOOKBACK_MS = 60_000;
 const PAYMENT_CODE_RETRY_LIMIT = 5;
 const PAYMENT_TRANSFER_NOTE_PREFIX = "SePay";

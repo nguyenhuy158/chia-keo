@@ -8,6 +8,7 @@ import {
 } from "../adapters/react-query/queries";
 import { getQrProvider } from "../core/container";
 import { formatMoney } from "../core/domain/money";
+import { Confetti } from "./Confetti";
 import { BottomSheet } from "./overlays";
 
 type SharePaymentPanelProps = {
@@ -18,10 +19,11 @@ type SharePaymentPanelProps = {
 function PaymentStatus({ payment }: { payment: ApiPaymentRequest }) {
   if (payment.status === "paid") {
     return (
-      <div className="flex flex-col items-center gap-2 py-6 text-center">
+      <div className="relative flex flex-col items-center gap-2 py-6 text-center">
+        <Confetti />
         <CircleCheckBig
-          size={40}
-          className="text-emerald-600 dark:text-emerald-400"
+          size={48}
+          className="paid-pop text-emerald-600 dark:text-emerald-400"
         />
         <p className="text-base font-semibold">
           Đã nhận {formatMoney(payment.paidAmount)}
