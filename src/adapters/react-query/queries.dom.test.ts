@@ -17,7 +17,11 @@ import {
   photoKeys,
   preferenceKeys,
   trashKeys,
+  PAYMENT_POLL_INTERVAL_MS,
   useAddCollaborator,
+  useCreatePayment,
+  usePaymentOptions,
+  usePaymentRequest,
   useAddExpense,
   useAddParticipant,
   useAddParticipants,
@@ -767,3 +771,41 @@ describe("React Query photo cache", () => {
     ]);
   });
 });
+
+describe("share payments", () => {
+  it("doc lua chon, tao request va poll den khi tien ve", async () => {
+    const pending = { code: "CKAAAA2222", status: "pending" };
+    const methods = {
+      share: {
+        paymentOptions: vi.fn().mockResolvedValue({ receiver: null, options: [] }),
+        createPayment: vi.fn().mockResolvedValue(pending),
+        payment: vi
+          .fn()
+          .mockResolvedValueOnce(pending)
+          .mockResolvedValueOnce({ ...pending, status: "paid" }),
+      },
+    };
+    provideGameApi(methods as unknown as GameApiPort);
+    const invalidate = vi.spyOn(client, "invalidateQueries");
+
+    const options = mount(() => usePaymentOptions("tok"));
+    await vi.waitFor(() => expect(options().data).toEqual({ receiver: null, options: [] }));
+
+    await execute(() => useCreatePayment("tok"), ["an"]);
+    expect(methods.share.createPayment).toHaveBeenCalledWith("tok", ["an"]);
+
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const payment = mount(() => usePaymentRequest("tok", "CKAAAA2222"));
+    await vi.waitFor(() => expect(payment().data?.status).toBe("pending"));
+    expect(invalidate).not.toHaveBeenCalled();
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(PAYMENT_POLL_INTERVAL_MS);
+    });
+    await vi.waitFor(() => expect(payment().data?.status).toBe("paid"));
+    vi.useRealTimers();
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: gameKeys.share("tok") });
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: gameKeys.paymentOptions("tok") });
+    expect(methods.share.payment).toHaveBeenCalledWith("tok", "CKAAAA2222");
+  });
+});
+

@@ -226,6 +226,14 @@ export function fakeRepo(
       update: unused("contacts.update"),
       delete: unused("contacts.delete"),
     },
+    paymentRequests: {
+      insert: unused("paymentRequests.insert"),
+      findByCode: unused("paymentRequests.findByCode"),
+      listPendingByGame: unused("paymentRequests.listPendingByGame"),
+      isBankTxnUsed: unused("paymentRequests.isBankTxnUsed"),
+      markChecked: unused("paymentRequests.markChecked"),
+      settle: unused("paymentRequests.settle"),
+    },
     gameEvents: {
       listByGame: async () => [],
       getWithGame: unused("gameEvents.getWithGame"),

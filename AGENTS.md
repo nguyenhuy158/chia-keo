@@ -254,6 +254,13 @@ things reading the code does not show right away.
 - **QR VietQR proxy qua origin mình** (`worker/src/routes/qr.ts`): chỉ nhận
   tham số đã validate rồi TỰ dựng URL upstream, KHÔNG BAO GIỜ nhận URL từ
   client — nếu không endpoint này thành open proxy.
+- **Thanh toán SePay là POLL, không webhook** (`core/application/payments.ts`):
+  dùng API Token `SEPAY_API`, không cần cấu hình webhook trên my.sepay.vn.
+  User API giới hạn 3 req/s nên đối soát gom theo cuộc chia, tối đa 1 lần/5 s
+  (`checked_at`), không theo từng tab. Khớp bằng mã `CK` + 8 ký tự trong nội
+  dung chuyển khoản + đúng số TK người nhận; `settle` chỉ đổi request còn
+  `pending` nên hai lần đối soát song song không ghi trả nợ hai lần. Chuyển
+  thiếu thì `partial`, KHÔNG tự chia số tiền thiếu cho từng người.
 - **Brand: SVG là bản gốc**, PNG sinh ra bằng `node scripts/render-brand.mjs`
   (playwright-core Chromium). Đừng sửa tay PNG, lần render sau ghi đè hết.
 - **Test dùng `fake-game-repository.ts`** (in-memory double) đặt cạnh use

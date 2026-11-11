@@ -26,6 +26,8 @@ Ung dung chia tien nhom cho cac buoi an, di choi, du lich hoac nhom chi tieu nho
     "Chi theo danh mục" với thanh phần trăm trong phần tổng kết, cả ở link
     share. Danh mục là danh sách cố định trong `shared/expense-categories.ts`.
   - Lưu mẫu chi tiêu, xuất báo cáo text và xem thống kê nhanh.
+  - Thanh toán qua link share: chọn trả cho ai, quét QR có mã `CK...`, app
+    đối soát giao dịch qua SePay API và tự ghi khoản trả nợ khi tiền về.
   - Trang Cài đặt (`/settings`) để tạo, xem và thu hồi token MCP cho Claude.
 - Tinh `da tra`, `phan chiu`, `con lai`.
 - Toi gian cong no peer-to-peer: ghep nguoi am voi nguoi duong de so lan
@@ -269,6 +271,8 @@ Sau khi co balance, tinh danh sach chuyen khoan toi uu (peer-to-peer):
 - `GET /share/:token`
 - `GET /share/:token/photos`
 - `GET /share/:token/photos/:photoId`
+- `GET /share/:token/payments`, `POST /share/:token/payments`,
+  `GET /share/:token/payments/:code` (thanh toan SePay qua link share)
 - `POST /api/ai/expense`
 - `POST /api/ai/receipt`
 - `PUT /api/share/:token` khi link share có quyền edit
@@ -366,7 +370,8 @@ Config nam trong `wrangler.toml`:
 - D1 binding: `DB` -> `chiakeo-db`; service binding: `MAILER` -> Worker `mailer`
 - Secret: `BETTER_AUTH_SECRET` (bat buoc); `MAILER_KEY` (khop
   `INTERNAL_API_KEY` cua `mailer`); `GEMINI_API_KEY` (tuy chon, bat AI);
-  `GEMINI_MODEL` (tuy chon, mac dinh `gemini-2.0-flash`)
+  `GEMINI_MODEL` (tuy chon, mac dinh `gemini-2.0-flash`); `SEPAY_API`
+  (tuy chon, API Token SePay, bat nut "Thanh toan" tren link share)
 
 [docs/cloudflare-v1.md]: docs/cloudflare-v1.md
 
@@ -390,6 +395,7 @@ Worker:
 - `TURNSTILE_SECRET_KEY`
 - `GEMINI_API_KEY`
 - `GEMINI_MODEL`
+- `SEPAY_API`, `SEPAY_API_BASE` (local: `https://userapi-sandbox.sepay.vn`)
 - D1 binding: `DB`
 
 ## Bao mat

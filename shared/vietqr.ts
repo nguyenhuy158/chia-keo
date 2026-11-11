@@ -1,4 +1,5 @@
 import type { ApiParticipant } from "./api-types";
+import { PAYMENT_CODE_PATTERN } from "./payments";
 import { stripDiacritics } from "./text";
 
 export type PaymentInfo = Pick<ApiParticipant, "bankId" | "accountNo" | "accountName">;
@@ -117,8 +118,12 @@ export function getVietQrPaymentIssue(payment: PaymentInfo | undefined) {
  * cho QR chung cua host khi moi nguoi chuyen ve mot dau moi voi so tien khac
  * nhau.
  */
+function buildTransferContent(reference: string) {
+  return PAYMENT_CODE_PATTERN.test(reference) ? `${reference} CHIA KEO` : `CHIA KEO ${reference}`;
+}
+
 export function buildVietQrUrl(payment: PaymentInfo, amount: number, gameCode: string) {
-  const content = normalizeText(`CHIA KEO ${gameCode}`);
+  const content = normalizeText(buildTransferContent(gameCode));
   const bankId = encodeURIComponent(resolveVietQrBankId(payment.bankId));
   const accountNo = encodeURIComponent(payment.accountNo.trim());
   const accountName = encodeURIComponent(payment.accountName.trim());

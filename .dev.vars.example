@@ -4,3 +4,6 @@ BETTER_AUTH_SECRET=dev-secret-thay-bang-chuoi-ngau-nhien-du-dai
 # Bat tinh nang AI (goi y khoan chi + quet hoa don). Khong co thi /api/ai/* tra 400.
 # GEMINI_API_KEY=your-key
 # GEMINI_MODEL=gemini-2.0-flash
+# Thanh toan qua link share (SePay). Local dung token Test mode (bws SEPAY_TEST_API).
+# SEPAY_API=your-sepay-api-token
+# SEPAY_API_BASE=https://userapi-sandbox.sepay.vn

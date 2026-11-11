@@ -67,6 +67,11 @@ describe("buildVietQrUrl", () => {
     expect(url).toContain(`accountName=${encodeURIComponent("NGUYEN VAN A")}`);
   });
 
+  it("đặt mã thanh toán SePay lên đầu nội dung để ngân hàng không cắt mất", () => {
+    const url = buildVietQrUrl(fullPayment, 150000, "CKAB23CD45");
+    expect(url).toContain(`addInfo=${encodeURIComponent("CKAB23CD45 CHIA KEO")}`);
+  });
+
   it("tạo URL bằng mã ngân hàng đã chuẩn hóa", () => {
     const payment = { ...fullPayment, bankId: "MBB", accountNo: "0000000000" };
 

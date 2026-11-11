@@ -14,6 +14,7 @@ import type {
   PhotoDetailRow,
   PhotoRow,
   PaymentProfileRow,
+  PaymentRequestRow,
   ShareLinkRow,
 } from "../../core/ports/game-repository";
 import { createId } from "../../lib/ids";
@@ -584,6 +585,58 @@ export function createD1GameRepository(d1: D1Database): GameRepository {
       },
       async delete(contactId) {
         await db.delete(schema.contacts).where(eq(schema.contacts.id, contactId));
+      },
+    },
+
+    paymentRequests: {
+      async insert(row) {
+        await db.insert(schema.paymentRequests).values(row);
+      },
+      async findByCode(code): Promise<PaymentRequestRow | null> {
+        const rows = await db
+          .select()
+          .from(schema.paymentRequests)
+          .where(eq(schema.paymentRequests.code, code))
+          .limit(1);
+        return rows[0] || null;
+      },
+      async listPendingByGame(gameId, createdAfter) {
+        return db
+          .select()
+          .from(schema.paymentRequests)
+          .where(
+            and(
+              eq(schema.paymentRequests.gameId, gameId),
+              eq(schema.paymentRequests.status, "pending"),
+              sql`${schema.paymentRequests.createdAt} > ${createdAfter}`,
+            ),
+          )
+          .orderBy(asc(schema.paymentRequests.createdAt));
+      },
+      async isBankTxnUsed(bankTxnId) {
+        const rows = await db
+          .select({ id: schema.paymentRequests.id })
+          .from(schema.paymentRequests)
+          .where(eq(schema.paymentRequests.bankTxnId, bankTxnId))
+          .limit(1);
+        return rows.length > 0;
+      },
+      async markChecked(ids, checkedAt) {
+        if (ids.length === 0) return;
+        await db
+          .update(schema.paymentRequests)
+          .set({ checkedAt })
+          .where(inArray(schema.paymentRequests.id, ids));
+      },
+      async settle(id, settlement) {
+        const rows = await db
+          .update(schema.paymentRequests)
+          .set(settlement)
+          .where(
+            and(eq(schema.paymentRequests.id, id), eq(schema.paymentRequests.status, "pending")),
+          )
+          .returning({ id: schema.paymentRequests.id });
+        return rows.length > 0;
       },
     },
 

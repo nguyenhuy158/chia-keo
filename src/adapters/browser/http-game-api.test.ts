@@ -160,6 +160,14 @@ describe("HTTP Game API", () => {
     ["GET", "/api/share/token", () => api.share.view("token")],
     ["GET", "/api/share/token/photos", () => api.share.photos("token")],
     ["GET", "/api/share/token/photos/p", () => api.share.photo("token", "p")],
+    ["GET", "/api/share/token/payments", () => api.share.paymentOptions("token")],
+    [
+      "POST",
+      "/api/share/token/payments",
+      () => api.share.createPayment("token", ["an"]),
+      '{"participantIds":["an"]}',
+    ],
+    ["GET", "/api/share/token/payments/CKAAAA2222", () => api.share.payment("token", "CKAAAA2222")],
     ["GET", "/api/mcp-tokens", () => api.mcpTokens.list()],
     [
       "POST",

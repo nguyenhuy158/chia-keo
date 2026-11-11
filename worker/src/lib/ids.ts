@@ -27,6 +27,10 @@ export function createShareToken() {
   return randomFromAlphabet(SHARE_TOKEN_ALPHABET, SHARE_TOKEN_LENGTH);
 }
 
+export function createPaymentCode(prefix: string, suffixLength: number) {
+  return `${prefix}${randomFromAlphabet(GAME_CODE_ALPHABET, suffixLength)}`;
+}
+
 export function nowIso() {
   return new Date().toISOString();
 }

@@ -25,6 +25,9 @@ vi.mock("../components/GameDashboard", () => ({
   GameDashboard: () => "game dashboard",
 }));
 vi.mock("../components/CopyMenu", () => ({ CopyMenu: () => "copy menu" }));
+vi.mock("../components/SharePaymentPanel", () => ({
+  SharePaymentPanel: () => "payment panel",
+}));
 vi.mock("../components/SharePhotoGallery", () => ({
   SharePhotoGallery: () => "photo gallery",
 }));

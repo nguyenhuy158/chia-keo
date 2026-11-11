@@ -11,6 +11,7 @@ import { emailSummaryRouter } from "./routes/email-summary";
 import { gamesRouter } from "./routes/games";
 import { mcpRouter } from "./routes/mcp";
 import { mcpTokensRouter } from "./routes/mcp-tokens";
+import { paymentsRouter } from "./routes/payments";
 import { photosRouter } from "./routes/photos";
 import { profileRouter } from "./routes/profile";
 import { qrRouter } from "./routes/qr";
@@ -27,6 +28,7 @@ const PHOTO_UPLOAD_RATE_LIMIT = { limit: 60, windowMs: 60_000 };
 // MCP goi nhieu lan moi phien (initialize, tools/list, roi tung tools/call) nen
 // nguong cao; muc dich chi la chan do token, khong phai tiet kiem tai nguyen.
 const MCP_RATE_LIMIT = { limit: 120, windowMs: 60_000 };
+const PAYMENT_CREATE_RATE_LIMIT = { limit: 10, windowMs: 60_000 };
 // Share token ngan (4 ky tu) nen phai chan brute-force doan token qua GET.
 const SHARE_VIEW_RATE_LIMIT = { limit: 20, windowMs: 60_000 };
 
@@ -75,6 +77,7 @@ app.use("/api/mcp", rateLimitPost("mcp", MCP_RATE_LIMIT));
 app.use("/api/mcp-tokens", rateLimitPost("mcp-token", CREATE_RATE_LIMIT));
 app.use("/api/share/:token", rateLimitMethods(["GET"], "share-view", SHARE_VIEW_RATE_LIMIT));
 app.use("/api/share/:token/*", rateLimitMethods(["GET"], "share-view", SHARE_VIEW_RATE_LIMIT));
+app.use("/api/share/:token/payments", rateLimitPost("share-payment", PAYMENT_CREATE_RATE_LIMIT));
 
 app.on(["GET", "POST"], `${AUTH_BASE_PATH}/*`, (c) =>
   createAuth(c.env, c.req.url).handler(c.req.raw),
@@ -83,6 +86,7 @@ app.on(["GET", "POST"], `${AUTH_BASE_PATH}/*`, (c) =>
 app.route("/api", qrRouter);
 app.route("/api", mcpRouter);
 app.route("/api", mcpTokensRouter);
+app.route("/api", paymentsRouter);
 app.route("/api", shareRouter);
 app.route("/api", aiRouter);
 app.route("/api", photosRouter);

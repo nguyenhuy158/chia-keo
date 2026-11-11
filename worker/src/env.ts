@@ -12,4 +12,8 @@ export type Env = {
   MAILER: Fetcher;
   /** Phai khop INTERNAL_API_KEY dat o Worker mailer. */
   MAILER_KEY: string;
+  /** API Token SePay; khong co thi tat thanh toan qua link share. */
+  SEPAY_API?: string;
+  /** Mac dinh https://userapi.sepay.vn; local tro sang sandbox. */
+  SEPAY_API_BASE?: string;
 };

@@ -15,6 +15,8 @@ import type {
   ApiShareView,
   ApiShuttleStock,
   ApiTrashGame,
+  ApiPaymentOptions,
+  ApiPaymentRequest,
 } from "../../../shared/api-types";
 import type { Contact } from "../../../shared/contacts";
 import type { ApiGameEvent } from "../../../shared/game-events";
@@ -134,6 +136,9 @@ export type GameApiPort = {
     view(token: string): Promise<ApiShareView>;
     photos(token: string): Promise<ApiPhoto[]>;
     photo(token: string, photoId: string): Promise<ApiPhotoDetail>;
+    paymentOptions(token: string): Promise<ApiPaymentOptions>;
+    createPayment(token: string, participantIds: string[]): Promise<ApiPaymentRequest>;
+    payment(token: string, code: string): Promise<ApiPaymentRequest>;
   };
   mcpTokens: {
     list(): Promise<ApiMcpToken[]>;

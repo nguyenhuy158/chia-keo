@@ -244,3 +244,22 @@ export type ApiShuttleStock = {
 export type ApiError = {
   error: string;
 };
+
+export type ApiPaymentOption = {
+  participantId: string;
+  amount: number;
+};
+
+export type ApiPaymentOptions = {
+  receiver: ApiParticipant | null;
+  options: ApiPaymentOption[];
+};
+
+export type ApiPaymentRequest = {
+  code: string;
+  receiver: ApiParticipant;
+  items: ApiPaymentOption[];
+  total: number;
+  status: "pending" | "paid" | "partial";
+  paidAmount: number;
+};

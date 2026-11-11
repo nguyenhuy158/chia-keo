@@ -631,3 +631,54 @@ describe("D1 game repository", () => {
     await expect(listSharedPhotos(repo, "missing-token")).rejects.toThrow();
   });
 });
+
+describe("D1 payment requests", () => {
+  it("luu, tim, doi soat va chi settle request con pending", async () => {
+    const repo = createD1GameRepository(database);
+    const game = await createGame(repo, "owner", { name: "Kèo SePay", participantCount: 2 });
+    const row = {
+      id: "payreq-d1",
+      gameId: game.id,
+      code: "CKD1TEST22",
+      receiverParticipantId: game.participants[0].id,
+      receiverAccountNo: "0123",
+      itemsJson: "[]",
+      total: 100_000,
+      status: "pending",
+      paidAmount: 0,
+      bankTxnId: null,
+      createdAt: "2026-11-11T10:00:00.000Z",
+      checkedAt: "1970-01-01T00:00:00.000Z",
+      paidAt: null,
+    };
+    await repo.paymentRequests.insert(row);
+
+    expect((await repo.paymentRequests.findByCode(row.code))?.id).toBe(row.id);
+    expect(await repo.paymentRequests.findByCode("missing")).toBeNull();
+    expect(
+      (await repo.paymentRequests.listPendingByGame(game.id, "2026-11-11T00:00:00.000Z")).map(
+        (item) => item.id,
+      ),
+    ).toEqual([row.id]);
+    expect(await repo.paymentRequests.listPendingByGame(game.id, "2026-11-12T00:00:00.000Z")).toEqual(
+      [],
+    );
+
+    await repo.paymentRequests.markChecked([], "ignored");
+    await repo.paymentRequests.markChecked([row.id], "2026-11-11T10:01:00.000Z");
+    expect((await repo.paymentRequests.findByCode(row.code))?.checkedAt).toBe(
+      "2026-11-11T10:01:00.000Z",
+    );
+
+    const settlement = {
+      status: "paid",
+      paidAmount: 100_000,
+      bankTxnId: "txn-d1",
+      paidAt: "2026-11-11T10:02:00.000Z",
+    };
+    expect(await repo.paymentRequests.isBankTxnUsed("txn-d1")).toBe(false);
+    expect(await repo.paymentRequests.settle(row.id, settlement)).toBe(true);
+    expect(await repo.paymentRequests.settle(row.id, settlement)).toBe(false);
+    expect(await repo.paymentRequests.isBankTxnUsed("txn-d1")).toBe(true);
+  });
+});
