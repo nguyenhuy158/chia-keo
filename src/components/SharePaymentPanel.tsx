@@ -19,32 +19,42 @@ function PaymentStatus({ payment }: { payment: ApiPaymentRequest }) {
   if (payment.status === "paid") {
     return (
       <div className="flex flex-col items-center gap-2 py-6 text-center">
-        <CircleCheckBig size={40} className="text-emerald-600 dark:text-emerald-400" />
-        <p className="text-base font-semibold">Đã nhận {formatMoney(payment.paidAmount)}</p>
-        <p className="text-sm text-fg-muted">Các khoản nợ đã được đánh dấu là đã trả.</p>
+        <CircleCheckBig
+          size={40}
+          className="text-emerald-600 dark:text-emerald-400"
+        />
+        <p className="text-base font-semibold">
+          Đã nhận {formatMoney(payment.paidAmount)}
+        </p>
+        <p className="text-sm text-fg-muted">
+          Các khoản nợ đã được đánh dấu là đã trả.
+        </p>
       </div>
     );
   }
 
-  if (payment.status === "partial") {
-    return (
-      <p role="alert" className="rounded-md bg-warning-soft p-3 text-sm">
-        Đã nhận {formatMoney(payment.paidAmount)}, còn thiếu{" "}
-        {formatMoney(payment.total - payment.paidAmount)}. Báo chủ cuộc để xử lý nhé.
-      </p>
-    );
-  }
-
+  const remaining = payment.total - payment.paidAmount;
   return (
     <div className="flex flex-col items-center gap-2 text-center">
       <img
-        src={getQrProvider().buildUrl(payment.receiver, payment.total, payment.code)}
-        alt={`QR chuyển ${formatMoney(payment.total)} cho ${payment.receiver.name}`}
+        src={getQrProvider().buildUrl(
+          payment.receiver,
+          remaining,
+          payment.code,
+        )}
+        alt={`QR chuyển ${formatMoney(remaining)} cho ${payment.receiver.name}`}
         className="h-56 w-56 rounded-md bg-white object-contain"
       />
-      <p className="text-lg font-semibold tabular">{formatMoney(payment.total)}</p>
+      {payment.paidAmount > 0 && (
+        <p role="alert" className="rounded-md bg-warning-soft p-2 text-sm">
+          Đã nhận {formatMoney(payment.paidAmount)}, chuyển thêm phần còn thiếu
+          với cùng nội dung.
+        </p>
+      )}
+      <p className="text-lg font-semibold tabular">{formatMoney(remaining)}</p>
       <p className="text-sm">
-        Nội dung: <span className="font-mono font-semibold">{payment.code}</span>
+        Nội dung:{" "}
+        <span className="font-mono font-semibold">{payment.code}</span>
       </p>
       <p className="text-xs text-fg-muted">
         Giữ nguyên nội dung khi chuyển. Đang chờ tiền về…
@@ -55,11 +65,15 @@ function PaymentStatus({ payment }: { payment: ApiPaymentRequest }) {
 
 function PaymentTracker({ token, code }: { token: string; code: string }) {
   const paymentQuery = usePaymentRequest(token, code);
-  if (!paymentQuery.data) return <p className="py-6 text-center text-sm text-fg-muted">Đang tải…</p>;
+  if (!paymentQuery.data)
+    return <p className="py-6 text-center text-sm text-fg-muted">Đang tải…</p>;
   return <PaymentStatus payment={paymentQuery.data} />;
 }
 
-export function SharePaymentPanel({ token, participants }: SharePaymentPanelProps) {
+export function SharePaymentPanel({
+  token,
+  participants,
+}: SharePaymentPanelProps) {
   const optionsQuery = usePaymentOptions(token);
   const createPayment = useCreatePayment(token);
   const [open, setOpen] = useState(false);
@@ -70,7 +84,9 @@ export function SharePaymentPanel({ token, participants }: SharePaymentPanelProp
   const options = optionsQuery.data?.options || [];
   if (!receiver || options.length === 0) return null;
 
-  const nameById = new Map(participants.map((person) => [person.id, person.name]));
+  const nameById = new Map(
+    participants.map((person) => [person.id, person.name]),
+  );
   const total = options
     .filter((option) => selected.includes(option.participantId))
     .reduce((sum, option) => sum + option.amount, 0);
@@ -97,8 +113,12 @@ export function SharePaymentPanel({ token, participants }: SharePaymentPanelProp
   return (
     <section className="flex items-center justify-between gap-3 rounded-lg border border-border bg-surface p-4 shadow-sm">
       <div className="min-w-0">
-        <h3 className="text-base font-semibold">Chuyển khoản cho {receiver.name}</h3>
-        <p className="text-sm text-fg-muted">Quét QR, app tự ghi nhận khi tiền về.</p>
+        <h3 className="text-base font-semibold">
+          Chuyển khoản cho {receiver.name}
+        </h3>
+        <p className="text-sm text-fg-muted">
+          Quét QR, app tự ghi nhận khi tiền về.
+        </p>
       </div>
       <button
         type="button"
@@ -131,7 +151,9 @@ export function SharePaymentPanel({ token, participants }: SharePaymentPanelProp
                     />
                     {nameById.get(option.participantId) || "Không rõ"}
                   </span>
-                  <span className="text-sm font-semibold tabular">{formatMoney(option.amount)}</span>
+                  <span className="text-sm font-semibold tabular">
+                    {formatMoney(option.amount)}
+                  </span>
                 </label>
               ))}
             </div>
@@ -146,7 +168,9 @@ export function SharePaymentPanel({ token, participants }: SharePaymentPanelProp
               onClick={submit}
               className="h-11 w-full rounded-md bg-primary text-sm font-semibold text-white disabled:opacity-50"
             >
-              {selected.length === 0 ? "Chọn ít nhất một người" : `Tạo QR ${formatMoney(total)}`}
+              {selected.length === 0
+                ? "Chọn ít nhất một người"
+                : `Tạo QR ${formatMoney(total)}`}
             </button>
           </div>
         )}

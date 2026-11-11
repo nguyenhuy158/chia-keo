@@ -8,7 +8,6 @@ CREATE TABLE `chiakeo_payment_requests` (
 	`total` integer NOT NULL,
 	`status` text DEFAULT 'pending' NOT NULL,
 	`paid_amount` integer DEFAULT 0 NOT NULL,
-	`bank_txn_id` text,
 	`created_at` text NOT NULL,
 	`checked_at` text NOT NULL,
 	`paid_at` text,
@@ -16,5 +15,13 @@ CREATE TABLE `chiakeo_payment_requests` (
 );
 --> statement-breakpoint
 CREATE UNIQUE INDEX `chiakeo_payment_requests_code_unique` ON `chiakeo_payment_requests` (`code`);--> statement-breakpoint
-CREATE UNIQUE INDEX `chiakeo_payment_requests_bank_txn_id_unique` ON `chiakeo_payment_requests` (`bank_txn_id`);--> statement-breakpoint
-CREATE INDEX `chiakeo_payment_requests_game_id_idx` ON `chiakeo_payment_requests` (`game_id`);
+CREATE INDEX `chiakeo_payment_requests_game_id_idx` ON `chiakeo_payment_requests` (`game_id`);--> statement-breakpoint
+CREATE TABLE `chiakeo_payment_transactions` (
+	`bank_txn_id` text PRIMARY KEY NOT NULL,
+	`request_id` text NOT NULL,
+	`amount` integer NOT NULL,
+	`created_at` text NOT NULL,
+	FOREIGN KEY (`request_id`) REFERENCES `chiakeo_payment_requests`(`id`) ON UPDATE no action ON DELETE cascade
+);
+--> statement-breakpoint
+CREATE INDEX `chiakeo_payment_transactions_request_id_idx` ON `chiakeo_payment_transactions` (`request_id`);

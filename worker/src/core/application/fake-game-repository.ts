@@ -14,6 +14,7 @@ import type {
   ParticipantRow,
   PaymentProfileRow,
   PaymentRequestRow,
+  PaymentTransactionRow,
   ShareLinkRow,
   ShuttleEntryRow,
 } from "../ports/game-repository";
@@ -31,6 +32,7 @@ export type FakeState = {
   collaborators: CollaboratorRow[];
   shareLinks: ShareLinkRow[];
   paymentRequests: PaymentRequestRow[];
+  paymentTransactions: PaymentTransactionRow[];
   shuttleEntries: ShuttleEntryRow[];
   users: { id: string; name: string; email: string }[];
 };
@@ -82,6 +84,7 @@ function emptyState(): FakeState {
     collaborators: [],
     shareLinks: [],
     paymentRequests: [],
+    paymentTransactions: [],
     shuttleEntries: [],
     users: [],
   };
@@ -301,16 +304,24 @@ export function createFakeRepo(initial: Partial<FakeState> = {}) {
           (row) => row.gameId === gameId && row.status === "pending" && row.createdAt > createdAfter,
         );
       },
-      async isBankTxnUsed(bankTxnId) {
-        return state.paymentRequests.some((row) => row.bankTxnId === bankTxnId);
-      },
       async markChecked(ids, checkedAt) {
         for (const row of state.paymentRequests) if (ids.includes(row.id)) row.checkedAt = checkedAt;
       },
-      async settle(id, settlement) {
+      async claimTransaction(row) {
+        if (state.paymentTransactions.some((item) => item.bankTxnId === row.bankTxnId)) return false;
+        state.paymentTransactions.push({ ...row });
+        return true;
+      },
+      async addPaidAmount(id, amount) {
+        const row = state.paymentRequests.find((item) => item.id === id) as PaymentRequestRow;
+        row.paidAmount += amount;
+        return row.paidAmount;
+      },
+      async markPaid(id, paidAt) {
         const row = state.paymentRequests.find((item) => item.id === id);
         if (!row || row.status !== "pending") return false;
-        Object.assign(row, settlement);
+        row.status = "paid";
+        row.paidAt = paidAt;
         return true;
       },
     },

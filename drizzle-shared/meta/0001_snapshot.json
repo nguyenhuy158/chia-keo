@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "fee32f51-cfc8-4566-a0ec-1164398490bb",
+  "id": "3be48de3-79ea-49cc-a39e-80164fd04d56",
   "prevId": "913c726f-6aff-46d7-a207-d5a01e418fd4",
   "tables": {
     "chiakeo_account": {
@@ -1212,13 +1212,6 @@
           "autoincrement": false,
           "default": 0
         },
-        "bank_txn_id": {
-          "name": "bank_txn_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
         "created_at": {
           "name": "created_at",
           "type": "text",
@@ -1249,13 +1242,6 @@
           ],
           "isUnique": true
         },
-        "chiakeo_payment_requests_bank_txn_id_unique": {
-          "name": "chiakeo_payment_requests_bank_txn_id_unique",
-          "columns": [
-            "bank_txn_id"
-          ],
-          "isUnique": true
-        },
         "chiakeo_payment_requests_game_id_idx": {
           "name": "chiakeo_payment_requests_game_id_idx",
           "columns": [
@@ -1271,6 +1257,66 @@
           "tableTo": "chiakeo_games",
           "columnsFrom": [
             "game_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "chiakeo_payment_transactions": {
+      "name": "chiakeo_payment_transactions",
+      "columns": {
+        "bank_txn_id": {
+          "name": "bank_txn_id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "request_id": {
+          "name": "request_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "amount": {
+          "name": "amount",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "chiakeo_payment_transactions_request_id_idx": {
+          "name": "chiakeo_payment_transactions_request_id_idx",
+          "columns": [
+            "request_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "chiakeo_payment_transactions_request_id_chiakeo_payment_requests_id_fk": {
+          "name": "chiakeo_payment_transactions_request_id_chiakeo_payment_requests_id_fk",
+          "tableFrom": "chiakeo_payment_transactions",
+          "tableTo": "chiakeo_payment_requests",
+          "columnsFrom": [
+            "request_id"
           ],
           "columnsTo": [
             "id"

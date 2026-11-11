@@ -1,7 +1,10 @@
 import { act, createElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { ApiPaymentOptions, ApiPaymentRequest } from "../../shared/api-types";
+import type {
+  ApiPaymentOptions,
+  ApiPaymentRequest,
+} from "../../shared/api-types";
 
 const { state, mutateAsync } = vi.hoisted(() => ({
   state: {
@@ -14,16 +17,29 @@ const { state, mutateAsync } = vi.hoisted(() => ({
 
 vi.mock("../adapters/react-query/queries", () => ({
   usePaymentOptions: () => ({ data: state.options }),
-  useCreatePayment: () => ({ mutateAsync, isPending: false, isError: state.createError }),
+  useCreatePayment: () => ({
+    mutateAsync,
+    isPending: false,
+    isError: state.createError,
+  }),
   usePaymentRequest: () => ({ data: state.payment }),
 }));
 vi.mock("../core/container", () => ({
-  getQrProvider: () => ({ buildUrl: (_p: unknown, amount: number, ref: string) => `qr:${amount}:${ref}` }),
+  getQrProvider: () => ({
+    buildUrl: (_p: unknown, amount: number, ref: string) =>
+      `qr:${amount}:${ref}`,
+  }),
 }));
 
 import { SharePaymentPanel } from "./SharePaymentPanel";
 
-const huy = { id: "huy", name: "Huy", bankId: "MB", accountNo: "0123", accountName: "HUY" };
+const huy = {
+  id: "huy",
+  name: "Huy",
+  bankId: "MB",
+  accountNo: "0123",
+  accountName: "HUY",
+};
 const people = [huy, { ...huy, id: "an", name: "An" }];
 const pending: ApiPaymentRequest = {
   code: "CKAAAA2222",
@@ -38,7 +54,11 @@ let host: HTMLDivElement;
 let root: Root;
 
 function render() {
-  act(() => root.render(createElement(SharePaymentPanel, { token: "tok", participants: people })));
+  act(() =>
+    root.render(
+      createElement(SharePaymentPanel, { token: "tok", participants: people }),
+    ),
+  );
 }
 
 function click(label: string) {
@@ -88,7 +108,9 @@ describe("SharePaymentPanel", () => {
     expect(document.body.textContent).toContain("Không rõ");
     expect(document.body.textContent).toContain("Chọn ít nhất một người");
 
-    const checkbox = document.querySelector<HTMLInputElement>('input[type="checkbox"]');
+    const checkbox = document.querySelector<HTMLInputElement>(
+      'input[type="checkbox"]',
+    );
     act(() => checkbox?.click());
     act(() => checkbox?.click());
     act(() => checkbox?.click());
@@ -100,18 +122,27 @@ describe("SharePaymentPanel", () => {
 
     state.payment = pending;
     render();
-    expect(document.querySelector("img")?.getAttribute("src")).toBe("qr:100000:CKAAAA2222");
+    expect(document.querySelector("img")?.getAttribute("src")).toBe(
+      "qr:100000:CKAAAA2222",
+    );
     expect(document.body.textContent).toContain("CKAAAA2222");
 
-    state.payment = { ...pending, status: "partial", paidAmount: 40_000 };
+    state.payment = { ...pending, paidAmount: 40_000 };
     render();
-    expect(document.body.textContent).toContain("còn thiếu");
+    expect(document.body.textContent).toContain("chuyển thêm phần còn thiếu");
+    expect(document.querySelector("img")?.getAttribute("src")).toBe(
+      "qr:60000:CKAAAA2222",
+    );
 
     state.payment = { ...pending, status: "paid", paidAmount: 100_000 };
     render();
     expect(document.body.textContent).toContain("Đã nhận");
 
-    act(() => document.querySelector<HTMLButtonElement>('button[aria-label="Đóng"]')?.click());
+    act(() =>
+      document
+        .querySelector<HTMLButtonElement>('button[aria-label="Đóng"]')
+        ?.click(),
+    );
     expect(document.querySelector('[role="dialog"]')).toBeNull();
   });
 

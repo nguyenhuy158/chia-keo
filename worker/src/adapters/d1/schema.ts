@@ -381,10 +381,22 @@ export const paymentRequests = sqliteTable(
     total: integer("total").notNull(),
     status: text("status").notNull().default("pending"),
     paidAmount: integer("paid_amount").notNull().default(0),
-    bankTxnId: text("bank_txn_id").unique(),
     createdAt: text("created_at").notNull(),
     checkedAt: text("checked_at").notNull(),
     paidAt: text("paid_at"),
   },
   (table) => [index("chiakeo_payment_requests_game_id_idx").on(table.gameId)],
+);
+
+export const paymentTransactions = sqliteTable(
+  "chiakeo_payment_transactions",
+  {
+    bankTxnId: text("bank_txn_id").primaryKey(),
+    requestId: text("request_id")
+      .notNull()
+      .references(() => paymentRequests.id, { onDelete: "cascade" }),
+    amount: integer("amount").notNull(),
+    createdAt: text("created_at").notNull(),
+  },
+  (table) => [index("chiakeo_payment_transactions_request_id_idx").on(table.requestId)],
 );

@@ -260,6 +260,6 @@ export type ApiPaymentRequest = {
   receiver: ApiParticipant;
   items: ApiPaymentOption[];
   total: number;
-  status: "pending" | "paid" | "partial";
+  status: "pending" | "paid";
   paidAmount: number;
 };

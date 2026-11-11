@@ -646,7 +646,6 @@ describe("D1 payment requests", () => {
       total: 100_000,
       status: "pending",
       paidAmount: 0,
-      bankTxnId: null,
       createdAt: "2026-11-11T10:00:00.000Z",
       checkedAt: "1970-01-01T00:00:00.000Z",
       paidAt: null,
@@ -670,15 +669,18 @@ describe("D1 payment requests", () => {
       "2026-11-11T10:01:00.000Z",
     );
 
-    const settlement = {
-      status: "paid",
-      paidAmount: 100_000,
+    const transaction = {
       bankTxnId: "txn-d1",
-      paidAt: "2026-11-11T10:02:00.000Z",
+      requestId: row.id,
+      amount: 60_000,
+      createdAt: "2026-11-11T10:02:00.000Z",
     };
-    expect(await repo.paymentRequests.isBankTxnUsed("txn-d1")).toBe(false);
-    expect(await repo.paymentRequests.settle(row.id, settlement)).toBe(true);
-    expect(await repo.paymentRequests.settle(row.id, settlement)).toBe(false);
-    expect(await repo.paymentRequests.isBankTxnUsed("txn-d1")).toBe(true);
+    expect(await repo.paymentRequests.claimTransaction(transaction)).toBe(true);
+    expect(await repo.paymentRequests.claimTransaction(transaction)).toBe(false);
+    expect(await repo.paymentRequests.addPaidAmount(row.id, 60_000)).toBe(60_000);
+    expect(await repo.paymentRequests.addPaidAmount(row.id, 40_000)).toBe(100_000);
+    expect(await repo.paymentRequests.markPaid(row.id, "2026-11-11T10:03:00.000Z")).toBe(true);
+    expect(await repo.paymentRequests.markPaid(row.id, "2026-11-11T10:03:00.000Z")).toBe(false);
+    expect((await repo.paymentRequests.findByCode(row.code))?.status).toBe("paid");
   });
 });

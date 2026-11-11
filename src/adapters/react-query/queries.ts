@@ -87,7 +87,7 @@ export function useShareView(token: string) {
   });
 }
 
-export const PAYMENT_POLL_INTERVAL_MS = 6_000;
+export const PAYMENT_POLL_INTERVAL_MS = 10_000;
 
 export function usePaymentOptions(token: string) {
   return useQuery({

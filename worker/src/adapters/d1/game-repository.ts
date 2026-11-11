@@ -613,14 +613,6 @@ export function createD1GameRepository(d1: D1Database): GameRepository {
           )
           .orderBy(asc(schema.paymentRequests.createdAt));
       },
-      async isBankTxnUsed(bankTxnId) {
-        const rows = await db
-          .select({ id: schema.paymentRequests.id })
-          .from(schema.paymentRequests)
-          .where(eq(schema.paymentRequests.bankTxnId, bankTxnId))
-          .limit(1);
-        return rows.length > 0;
-      },
       async markChecked(ids, checkedAt) {
         if (ids.length === 0) return;
         await db
@@ -628,10 +620,26 @@ export function createD1GameRepository(d1: D1Database): GameRepository {
           .set({ checkedAt })
           .where(inArray(schema.paymentRequests.id, ids));
       },
-      async settle(id, settlement) {
+      async claimTransaction(row) {
+        const rows = await db
+          .insert(schema.paymentTransactions)
+          .values(row)
+          .onConflictDoNothing()
+          .returning({ id: schema.paymentTransactions.bankTxnId });
+        return rows.length > 0;
+      },
+      async addPaidAmount(id, amount) {
         const rows = await db
           .update(schema.paymentRequests)
-          .set(settlement)
+          .set({ paidAmount: sql`${schema.paymentRequests.paidAmount} + ${amount}` })
+          .where(eq(schema.paymentRequests.id, id))
+          .returning({ paidAmount: schema.paymentRequests.paidAmount });
+        return rows[0].paidAmount;
+      },
+      async markPaid(id, paidAt) {
+        const rows = await db
+          .update(schema.paymentRequests)
+          .set({ status: "paid", paidAt })
           .where(
             and(eq(schema.paymentRequests.id, id), eq(schema.paymentRequests.status, "pending")),
           )

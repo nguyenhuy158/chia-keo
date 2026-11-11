@@ -1,6 +1,10 @@
 import type { ApiSummary } from "./api-types";
 import type { SettlementMode } from "./schemas";
-import { calculateHostTransfers, resolveHostParticipantId, type SettlementRow } from "./split";
+import {
+  calculateHostTransfers,
+  resolveHostParticipantId,
+  type SettlementRow,
+} from "./split";
 
 export const PAYMENT_CODE_PREFIX = "CK";
 export const PAYMENT_CODE_SUFFIX_LENGTH = 8;
@@ -8,7 +12,7 @@ export const PAYMENT_CODE_PATTERN = new RegExp(
   `^${PAYMENT_CODE_PREFIX}[A-Z0-9]{${PAYMENT_CODE_SUFFIX_LENGTH}}$`,
 );
 
-export type PaymentStatus = "pending" | "paid" | "partial";
+export type PaymentStatus = "pending" | "paid";
 
 export type PaymentItem = {
   participantId: string;
@@ -23,7 +27,11 @@ export function listDueTransfers(
   if (settlementMode === "off") return [];
   if (settlementMode === "p2p") return summary.settlements;
 
-  const hostId = resolveHostParticipantId(summary.balances, settlementMode, settlementHostId);
+  const hostId = resolveHostParticipantId(
+    summary.balances,
+    settlementMode,
+    settlementHostId,
+  );
   return calculateHostTransfers(summary.balances, hostId)
     .filter((row) => row.toHost)
     .map((row) => ({
@@ -35,10 +43,6 @@ export function listDueTransfers(
 
 export function sumPaymentItems(items: PaymentItem[]) {
   return items.reduce((total, item) => total + item.amount, 0);
-}
-
-export function resolvePaymentStatus(total: number, receivedAmount: number): PaymentStatus {
-  return receivedAmount >= total ? "paid" : "partial";
 }
 
 export function samePaymentItems(left: PaymentItem[], right: PaymentItem[]) {

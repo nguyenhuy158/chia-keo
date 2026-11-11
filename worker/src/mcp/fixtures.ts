@@ -230,9 +230,10 @@ export function fakeRepo(
       insert: unused("paymentRequests.insert"),
       findByCode: unused("paymentRequests.findByCode"),
       listPendingByGame: unused("paymentRequests.listPendingByGame"),
-      isBankTxnUsed: unused("paymentRequests.isBankTxnUsed"),
       markChecked: unused("paymentRequests.markChecked"),
-      settle: unused("paymentRequests.settle"),
+      claimTransaction: unused("paymentRequests.claimTransaction"),
+      addPaidAmount: unused("paymentRequests.addPaidAmount"),
+      markPaid: unused("paymentRequests.markPaid"),
     },
     gameEvents: {
       listByGame: async () => [],

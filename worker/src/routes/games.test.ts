@@ -17,6 +17,9 @@ import { gamesRouter } from "./games";
 vi.mock("../lib/require-user", () => ({
   protectPaths: vi.fn(),
 }));
+vi.mock("../lib/payment-context", () => ({
+  createPaymentContext: (_env: unknown, repo: unknown) => ({ repo, bankFeed: null }),
+}));
 
 let app: Hono<AuthedEnv>;
 let fake: ReturnType<typeof createFakeRepo>;

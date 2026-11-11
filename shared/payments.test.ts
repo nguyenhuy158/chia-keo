@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { ApiSummary } from "./api-types";
-import { listDueTransfers, resolvePaymentStatus, samePaymentItems } from "./payments";
+import { listDueTransfers, samePaymentItems } from "./payments";
 
 const summary: ApiSummary = {
   totalExpense: 300_000,
@@ -30,14 +30,11 @@ describe("listDueTransfers", () => {
 });
 
 describe("payment helpers", () => {
-  it("du hoac du thua la paid, thieu la partial", () => {
-    expect(resolvePaymentStatus(100, 100)).toBe("paid");
-    expect(resolvePaymentStatus(100, 120)).toBe("paid");
-    expect(resolvePaymentStatus(100, 90)).toBe("partial");
-  });
-
   it("so sanh lua chon khong phu thuoc thu tu", () => {
-    const a = [{ participantId: "an", amount: 1 }, { participantId: "binh", amount: 2 }];
+    const a = [
+      { participantId: "an", amount: 1 },
+      { participantId: "binh", amount: 2 },
+    ];
     expect(samePaymentItems(a, [...a].reverse())).toBe(true);
     expect(samePaymentItems(a, [a[0]])).toBe(false);
   });

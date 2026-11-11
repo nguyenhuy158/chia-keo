@@ -4,19 +4,22 @@ import type {
   ApiPaymentRequest,
 } from "../../../../shared/api-types";
 import {
+  listDueTransfers,
   PAYMENT_CODE_PREFIX,
   PAYMENT_CODE_SUFFIX_LENGTH,
   type PaymentItem,
   type PaymentStatus,
-  listDueTransfers,
-  resolvePaymentStatus,
   samePaymentItems,
   sumPaymentItems,
 } from "../../../../shared/payments";
 import type { PaymentRequestInput } from "../../../../shared/schemas";
 import { createId, createPaymentCode, nowIso } from "../../lib/ids";
 import type { BankFeed, IncomingTransfer } from "../ports/bank-feed";
-import type { GameRepository, GameRow, PaymentRequestRow } from "../ports/game-repository";
+import type {
+  GameRepository,
+  GameRow,
+  PaymentRequestRow,
+} from "../ports/game-repository";
 import { InvalidInputError, NotFoundError } from "./errors";
 import { insertTransfer } from "./expenses";
 import { loadShareView } from "./game-detail";
@@ -28,7 +31,7 @@ const BANK_LOOKBACK_MS = 60_000;
 const PAYMENT_CODE_RETRY_LIMIT = 5;
 const PAYMENT_TRANSFER_NOTE_PREFIX = "SePay";
 
-type PaymentContext = {
+export type PaymentContext = {
   repo: GameRepository;
   bankFeed: BankFeed | null;
 };
@@ -55,7 +58,11 @@ async function loadPaymentOptions(
 
   const accountNumbers = new Set(await bankFeed.listAccountNumbers());
   const byId = new Map(view.participants.map((person) => [person.id, person]));
-  const due = listDueTransfers(view.summary, view.settlementMode, view.settlementHostId);
+  const due = listDueTransfers(
+    view.summary,
+    view.settlementMode,
+    view.settlementHostId,
+  );
   const receiver = due
     .map((row) => byId.get(row.toParticipantId))
     .find((person) => person && accountNumbers.has(person.accountNo.trim()));
@@ -65,11 +72,17 @@ async function loadPaymentOptions(
     receiver,
     options: due
       .filter((row) => row.toParticipantId === receiver.id)
-      .map((row) => ({ participantId: row.fromParticipantId, amount: row.amount })),
+      .map((row) => ({
+        participantId: row.fromParticipantId,
+        amount: row.amount,
+      })),
   };
 }
 
-function toApiRequest(row: PaymentRequestRow, receiver: ApiParticipant): ApiPaymentRequest {
+function toApiRequest(
+  row: PaymentRequestRow,
+  receiver: ApiParticipant,
+): ApiPaymentRequest {
   return {
     code: row.code,
     receiver,
@@ -80,33 +93,17 @@ function toApiRequest(row: PaymentRequestRow, receiver: ApiParticipant): ApiPaym
   };
 }
 
-function findMatchingTransfer(
-  request: PaymentRequestRow,
-  transfers: IncomingTransfer[],
-  usedIds: Set<string>,
-) {
-  return transfers.find(
-    (transfer) =>
-      !usedIds.has(transfer.id) &&
-      transfer.accountNo.trim() === request.receiverAccountNo &&
-      normalizeContent(transfer.content).includes(request.code),
+function isTransferFor(request: PaymentRequestRow, transfer: IncomingTransfer) {
+  return (
+    transfer.accountNo.trim() === request.receiverAccountNo &&
+    normalizeContent(transfer.content).includes(request.code)
   );
 }
 
-async function applyTransfer(
+async function recordDebtPayments(
   repo: GameRepository,
   request: PaymentRequestRow,
-  transfer: IncomingTransfer,
 ) {
-  const status = resolvePaymentStatus(request.total, transfer.amount);
-  const claimed = await repo.paymentRequests.settle(request.id, {
-    status,
-    paidAmount: transfer.amount,
-    bankTxnId: transfer.id,
-    paidAt: nowIso(),
-  });
-  if (!claimed || status !== "paid") return;
-
   for (const item of parseItems(request)) {
     await insertTransfer(repo, request.gameId, {
       fromParticipantId: item.participantId,
@@ -117,9 +114,42 @@ async function applyTransfer(
   }
 }
 
-export async function reconcileGamePayments({ repo, bankFeed }: PaymentContext, gameId: string) {
+async function applyTransfers(
+  repo: GameRepository,
+  request: PaymentRequestRow,
+  transfers: IncomingTransfer[],
+) {
+  let paidAmount = request.paidAmount;
+  for (const transfer of transfers.filter((item) =>
+    isTransferFor(request, item),
+  )) {
+    const claimed = await repo.paymentRequests.claimTransaction({
+      bankTxnId: transfer.id,
+      requestId: request.id,
+      amount: transfer.amount,
+      createdAt: nowIso(),
+    });
+    if (claimed)
+      paidAmount = await repo.paymentRequests.addPaidAmount(
+        request.id,
+        transfer.amount,
+      );
+  }
+  if (paidAmount < request.total) return;
+  if (await repo.paymentRequests.markPaid(request.id, nowIso())) {
+    await recordDebtPayments(repo, request);
+  }
+}
+
+async function reconcileGamePayments(
+  { repo, bankFeed }: PaymentContext,
+  gameId: string,
+) {
   if (!bankFeed) return;
-  const pending = await repo.paymentRequests.listPendingByGame(gameId, msAgo(PAYMENT_REQUEST_TTL_MS));
+  const pending = await repo.paymentRequests.listPendingByGame(
+    gameId,
+    msAgo(PAYMENT_REQUEST_TTL_MS),
+  );
   if (pending.length === 0) return;
 
   const recentlyChecked = msAgo(BANK_CHECK_INTERVAL_MS);
@@ -133,20 +163,13 @@ export async function reconcileGamePayments({ repo, bankFeed }: PaymentContext, 
   const transfers = await bankFeed.listIncomingSince(
     new Date(Date.parse(oldest) - BANK_LOOKBACK_MS).toISOString(),
   );
-  const usedIds = new Set<string>();
-  for (const transfer of transfers) {
-    if (await repo.paymentRequests.isBankTxnUsed(transfer.id)) usedIds.add(transfer.id);
-  }
-
-  for (const request of pending) {
-    const transfer = findMatchingTransfer(request, transfers, usedIds);
-    if (!transfer) continue;
-    usedIds.add(transfer.id);
-    await applyTransfer(repo, request, transfer);
-  }
+  for (const request of pending) await applyTransfers(repo, request, transfers);
 }
 
-async function reconcileSafely(context: PaymentContext, gameId: string) {
+export async function reconcilePaymentsSafely(
+  context: PaymentContext,
+  gameId: string,
+) {
   try {
     await reconcileGamePayments(context, gameId);
   } catch (error) {
@@ -154,18 +177,29 @@ async function reconcileSafely(context: PaymentContext, gameId: string) {
   }
 }
 
+export async function reconcileSharedPayments(
+  context: PaymentContext,
+  token: string,
+) {
+  const game = await getSharedGame(context.repo, token);
+  await reconcilePaymentsSafely(context, game.id);
+}
+
 export async function getPaymentOptions(
   context: PaymentContext,
   token: string,
 ): Promise<ApiPaymentOptions> {
   const game = await getSharedGame(context.repo, token);
-  await reconcileSafely(context, game.id);
+  await reconcilePaymentsSafely(context, game.id);
   return loadPaymentOptions(context, game);
 }
 
 async function createUniquePaymentCode(repo: GameRepository) {
   for (let attempt = 0; attempt < PAYMENT_CODE_RETRY_LIMIT; attempt += 1) {
-    const code = createPaymentCode(PAYMENT_CODE_PREFIX, PAYMENT_CODE_SUFFIX_LENGTH);
+    const code = createPaymentCode(
+      PAYMENT_CODE_PREFIX,
+      PAYMENT_CODE_SUFFIX_LENGTH,
+    );
     if (!(await repo.paymentRequests.findByCode(code))) return code;
   }
   throw new Error("Khong tao duoc ma thanh toan khong trung");
@@ -181,13 +215,18 @@ export async function createPaymentRequest(
   const { receiver, options } = await loadPaymentOptions(context, game);
   if (!receiver) throw new InvalidInputError();
 
-  const optionById = new Map(options.map((option) => [option.participantId, option]));
+  const optionById = new Map(
+    options.map((option) => [option.participantId, option]),
+  );
   const selectedIds = [...new Set(input.participantIds)];
   const items = selectedIds.map((id) => optionById.get(id));
   if (items.some((item) => !item)) throw new InvalidInputError();
   const paymentItems = items as PaymentItem[];
 
-  const pending = await repo.paymentRequests.listPendingByGame(game.id, msAgo(PAYMENT_REQUEST_TTL_MS));
+  const pending = await repo.paymentRequests.listPendingByGame(
+    game.id,
+    msAgo(PAYMENT_REQUEST_TTL_MS),
+  );
   const reusable = pending.find(
     (request) =>
       request.receiverParticipantId === receiver.id &&
@@ -206,7 +245,6 @@ export async function createPaymentRequest(
     total: sumPaymentItems(paymentItems),
     status: "pending",
     paidAmount: 0,
-    bankTxnId: null,
     createdAt: now,
     checkedAt: new Date(0).toISOString(),
     paidAt: null,
@@ -225,10 +263,15 @@ export async function getPaymentRequest(
   const found = await repo.paymentRequests.findByCode(code);
   if (!found || found.gameId !== game.id) throw new NotFoundError();
 
-  if (found.status === "pending") await reconcileSafely(context, game.id);
-  const row = (await repo.paymentRequests.findByCode(code)) as PaymentRequestRow;
+  if (found.status === "pending")
+    await reconcilePaymentsSafely(context, game.id);
+  const row = (await repo.paymentRequests.findByCode(
+    code,
+  )) as PaymentRequestRow;
   const view = await loadShareView(repo, game);
-  const receiver = view.participants.find((person) => person.id === row.receiverParticipantId);
+  const receiver = view.participants.find(
+    (person) => person.id === row.receiverParticipantId,
+  );
   if (!receiver) throw new NotFoundError();
   return toApiRequest(row, receiver);
 }

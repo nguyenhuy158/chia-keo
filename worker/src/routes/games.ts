@@ -54,8 +54,10 @@ import {
   reorderParticipants,
   updateParticipant,
 } from "../core/application/participants";
+import { reconcilePaymentsSafely } from "../core/application/payments";
 import { rotateShareLink, setShareLinkEnabled } from "../core/application/share-links";
 import { invalidInput, readJson, respond } from "../lib/http";
+import { createPaymentContext } from "../lib/payment-context";
 import { protectPaths, type AuthedEnv } from "../lib/require-user";
 
 const participantUpdateSchema = participantInputSchema.partial();
@@ -133,7 +135,10 @@ gamesRouter.post("/games/:gameId/reopen", (c) =>
 );
 
 gamesRouter.get("/games/:gameId", (c) =>
-  respond(c, () => getGameDetailForOwner(c.get("repo"), c.get("userId"), c.req.param("gameId"))),
+  respond(c, async () => {
+    await reconcilePaymentsSafely(createPaymentContext(c.env, c.get("repo")), c.req.param("gameId"));
+    return getGameDetailForOwner(c.get("repo"), c.get("userId"), c.req.param("gameId"));
+  }),
 );
 
 gamesRouter.patch("/games/:gameId", async (c) => {

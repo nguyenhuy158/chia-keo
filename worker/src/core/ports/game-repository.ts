@@ -107,17 +107,16 @@ export type PaymentRequestRow = {
   total: number;
   status: string;
   paidAmount: number;
-  bankTxnId: string | null;
   createdAt: string;
   checkedAt: string;
   paidAt: string | null;
 };
 
-export type PaymentSettlement = {
-  status: string;
-  paidAmount: number;
+export type PaymentTransactionRow = {
   bankTxnId: string;
-  paidAt: string;
+  requestId: string;
+  amount: number;
+  createdAt: string;
 };
 
 /** Anh o dang danh sach: khong kem du lieu anh goc. */
@@ -334,10 +333,13 @@ export type GameRepository = {
     insert(row: PaymentRequestRow): Promise<void>;
     findByCode(code: string): Promise<PaymentRequestRow | null>;
     listPendingByGame(gameId: string, createdAfter: string): Promise<PaymentRequestRow[]>;
-    isBankTxnUsed(bankTxnId: string): Promise<boolean>;
     markChecked(ids: string[], checkedAt: string): Promise<void>;
-    /** Chi doi request con pending; false = request khac da nhan giao dich nay truoc. */
-    settle(id: string, settlement: PaymentSettlement): Promise<boolean>;
+    /** Ghi giao dich ngan hang cho request; false = giao dich da duoc ghi truoc do. */
+    claimTransaction(row: PaymentTransactionRow): Promise<boolean>;
+    /** Cong don so tien da nhan, tra ve tong moi. */
+    addPaidAmount(id: string, amount: number): Promise<number>;
+    /** Chi doi request con pending; false = lan doi soat khac da chot truoc. */
+    markPaid(id: string, paidAt: string): Promise<boolean>;
   };
   gameEvents: {
     /** Lich su cua mot cuoc chia, moi nhat truoc. */
