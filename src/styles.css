@@ -97,3 +97,48 @@ body {
     transform: translateX(0);
   }
 }
+
+@keyframes confetti-burst {
+  0% {
+    opacity: 1;
+    transform: translate(0, 0) rotate(0deg) scale(0.6);
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--confetti-x), var(--confetti-y)) rotate(var(--confetti-spin));
+  }
+}
+
+@keyframes paid-pop {
+  0% {
+    transform: scale(0.4);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.15);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.confetti-piece {
+  animation: confetti-burst 2.2s cubic-bezier(0.15, 0.8, 0.3, 1) forwards;
+}
+
+.paid-pop {
+  animation: paid-pop 480ms cubic-bezier(0.3, 1.4, 0.5, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .confetti-piece {
+    display: none;
+  }
+  .paid-pop {
+    animation: none;
+  }
+}

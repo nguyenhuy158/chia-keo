@@ -39,7 +39,10 @@ export function protectPaths(router: Hono<AuthedEnv>, ...paths: string[]) {
  * Ca hai deu tra ve userId trong cung bang `user`, nen tang duoi (games,
  * contacts, preferences) khong can biet nguoi dung vao bang duong nao.
  */
-export async function resolveUserId(env: Env, request: Request): Promise<string | null> {
+export async function resolveUserId(
+  env: Env,
+  request: Request,
+): Promise<string | null> {
   const auth = createAuth(env, request.url);
   const session = await auth.api.getSession({ headers: request.headers });
   if (session) return session.user.id;

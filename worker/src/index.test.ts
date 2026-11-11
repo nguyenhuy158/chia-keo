@@ -99,4 +99,23 @@ describe("Worker entrypoint", () => {
     expect(blocked.status).toBe(429);
     expect(await blocked.json()).toEqual({ error: "rate_limited" });
   });
+
+  it("keeps payment status polling out of the share-view limit", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const headers = { "cf-connecting-ip": "192.0.2.77" };
+    const statuses = [];
+    for (let index = 0; index < 21; index++) {
+      statuses.push(
+        (await app.request("/api/share/tok1/payments/CKAAAA2222", { headers }, env)).status,
+      );
+    }
+    expect(statuses).not.toContain(429);
+
+    let shareView = 0;
+    for (let index = 0; index < 21; index++) {
+      shareView = (await app.request("/api/share/tok1/photos", { headers }, env)).status;
+    }
+    expect(shareView).toBe(429);
+  });
 });
+

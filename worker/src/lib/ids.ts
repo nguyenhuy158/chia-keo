@@ -1,7 +1,8 @@
 const GAME_CODE_LENGTH = 6;
 const GAME_CODE_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
 /** Chu, so, khong dau, khong ky tu de nham (0/O, 1/l/I) — token ngan cho de doc/nho. */
-const SHARE_TOKEN_ALPHABET = "23456789abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ";
+const SHARE_TOKEN_ALPHABET =
+  "23456789abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ";
 const SHARE_TOKEN_LENGTH = 4;
 
 export function createId(prefix: string) {

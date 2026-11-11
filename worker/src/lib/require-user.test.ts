@@ -62,13 +62,18 @@ describe("resolveUserId", () => {
     readSsoToken.mockReturnValue("signed-token");
     verifySsoToken.mockResolvedValue(claims);
     expect(
-      await resolveUserId(env, new Request("https://example.test/api/private", {
-        headers: { Authorization: "Bearer signed-token" },
-      })),
+      await resolveUserId(
+        env,
+        new Request("https://example.test/api/private", {
+          headers: { Authorization: "Bearer signed-token" },
+        }),
+      ),
     ).toBe("sso-user");
-    expect(readSsoToken).toHaveBeenCalledWith(new Headers({
-      Authorization: "Bearer signed-token",
-    }));
+    expect(readSsoToken).toHaveBeenCalledWith(
+      new Headers({
+        Authorization: "Bearer signed-token",
+      }),
+    );
     expect(resolveSsoUserId).toHaveBeenCalledWith(env.DB, claims);
   });
 });
