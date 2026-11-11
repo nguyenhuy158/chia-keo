@@ -59,6 +59,41 @@ export async function getSharedGame(repo: GameRepository, token: string): Promis
   return row.game;
 }
 
+export async function saveSharePreview(
+  repo: GameRepository,
+  userId: string,
+  gameId: string,
+  data: string,
+): Promise<void> {
+  const game = await getAccessibleGame(repo, gameId, userId);
+  if (!game) throw new NotFoundError();
+
+  await repo.sharePreviews.put(game.id, data, nowIso());
+}
+
+export async function getSharePreviewData(repo: GameRepository, token: string): Promise<string> {
+  const game = await getSharedGame(repo, token);
+  const data = await repo.sharePreviews.getData(game.id);
+  if (!data) throw new NotFoundError();
+
+  return data;
+}
+
+export type SharePageMeta = { name: string; previewVersion: string | null };
+
+export async function findSharePageMeta(
+  repo: GameRepository,
+  token: string,
+): Promise<SharePageMeta | null> {
+  try {
+    const game = await getSharedGame(repo, token);
+    return { name: game.name, previewVersion: await repo.sharePreviews.getUpdatedAt(game.id) };
+  } catch (error) {
+    if (error instanceof NotFoundError) return null;
+    throw error;
+  }
+}
+
 export async function getShareViewByToken(
   repo: GameRepository,
   token: string,

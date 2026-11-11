@@ -707,6 +707,31 @@ export function createD1GameRepository(d1: D1Database): GameRepository {
       },
     },
 
+    sharePreviews: {
+      async put(gameId, data, updatedAt) {
+        await db
+          .insert(schema.sharePreviews)
+          .values({ gameId, data, updatedAt })
+          .onConflictDoUpdate({ target: schema.sharePreviews.gameId, set: { data, updatedAt } });
+      },
+      async getUpdatedAt(gameId) {
+        const rows = await db
+          .select({ updatedAt: schema.sharePreviews.updatedAt })
+          .from(schema.sharePreviews)
+          .where(eq(schema.sharePreviews.gameId, gameId))
+          .limit(1);
+        return rows[0]?.updatedAt ?? null;
+      },
+      async getData(gameId) {
+        const rows = await db
+          .select({ data: schema.sharePreviews.data })
+          .from(schema.sharePreviews)
+          .where(eq(schema.sharePreviews.gameId, gameId))
+          .limit(1);
+        return rows[0]?.data ?? null;
+      },
+    },
+
     users: {
       async findIdByEmail(email) {
         const rows = await db

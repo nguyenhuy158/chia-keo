@@ -31,6 +31,7 @@ export type FakeState = {
   events: GameEventRow[];
   collaborators: CollaboratorRow[];
   shareLinks: ShareLinkRow[];
+  sharePreviews: { gameId: string; data: string; updatedAt: string }[];
   paymentRequests: PaymentRequestRow[];
   paymentTransactions: PaymentTransactionRow[];
   shuttleEntries: ShuttleEntryRow[];
@@ -83,6 +84,7 @@ function emptyState(): FakeState {
     events: [],
     collaborators: [],
     shareLinks: [],
+    sharePreviews: [],
     paymentRequests: [],
     paymentTransactions: [],
     shuttleEntries: [],
@@ -363,6 +365,16 @@ export function createFakeRepo(initial: Partial<FakeState> = {}) {
         const game = link ? findGame(link.gameId) : null;
         return link && game ? { link, game } : null;
       },
+    },
+    sharePreviews: {
+      put: async (gameId, data, updatedAt) => {
+        state.sharePreviews = state.sharePreviews.filter((row) => row.gameId !== gameId);
+        state.sharePreviews.push({ gameId, data, updatedAt });
+      },
+      getUpdatedAt: async (gameId) =>
+        state.sharePreviews.find((row) => row.gameId === gameId)?.updatedAt ?? null,
+      getData: async (gameId) =>
+        state.sharePreviews.find((row) => row.gameId === gameId)?.data ?? null,
     },
     users: {
       findIdByEmail: async (email) =>

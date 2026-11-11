@@ -21,6 +21,7 @@ import { profileRouter } from "./routes/profile";
 import { qrRouter } from "./routes/qr";
 import { sessionRouter } from "./routes/session";
 import { shareRouter } from "./routes/share";
+import { sharePageRouter } from "./routes/share-page";
 import { shuttlesRouter } from "./routes/shuttles";
 import { userPreferencesRouter } from "./routes/user-preferences";
 
@@ -111,6 +112,8 @@ app.use(
   "/api/share/:token/payments",
   rateLimitPost("share-payment", PAYMENT_CREATE_RATE_LIMIT),
 );
+app.use("/share/:token", rateLimitMethods(["GET"], "share-page", SHARE_VIEW_RATE_LIMIT));
+app.use("/api/games/:gameId/share-preview", rateLimitPost("share-preview", CREATE_RATE_LIMIT));
 
 app.on(["GET", "POST"], `${AUTH_BASE_PATH}/*`, (c) =>
   createAuth(c.env, c.req.url).handler(c.req.raw),
@@ -131,6 +134,7 @@ app.route("/api", profileRouter);
 app.route("/api", userPreferencesRouter);
 app.route("/api", shuttlesRouter);
 app.route("/api", emailSummaryRouter);
+app.route("/", sharePageRouter);
 
 app.onError((error, c) => {
   // Log ra Cloudflare de 500 khong con "cam" nhu truoc.

@@ -61,7 +61,13 @@ function Segmented<T extends string>({
 const ACTION_CLASS =
   "inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-md border border-stone-300 bg-white px-3 text-sm font-medium text-stone-700 transition hover:bg-stone-50 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-200 dark:hover:bg-stone-800";
 
-export function SummaryImageCard({ input }: { input: SummaryTextInput }) {
+export function SummaryImageCard({
+  input,
+  onShare,
+}: {
+  input: SummaryTextInput;
+  onShare?: (backgroundId: string) => void;
+}) {
   const [backgroundId, chooseBackground] = useSummaryImageBackground();
   const [variant, setVariant] = useState<SummaryVariant>("compact");
   // Nho lua chon o server: bat/tat QR la thoi quen cua tung nhom, va giu
@@ -151,6 +157,7 @@ export function SummaryImageCard({ input }: { input: SummaryTextInput }) {
   }
 
   async function copySummaryText() {
+    if (input.shareUrl) onShare?.(backgroundId);
     const ok = await copyText(summaryText);
     (ok ? toast.success : toast.error)(
       ok ? "Đã sao chép tổng kết" : "Không sao chép được tổng kết",

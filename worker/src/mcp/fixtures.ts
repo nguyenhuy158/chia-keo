@@ -280,6 +280,11 @@ export function fakeRepo(
       findByToken: async (token) =>
         link && token === link.token ? { link, game } : null,
     },
+    sharePreviews: {
+      put: unused("sharePreviews.put"),
+      getUpdatedAt: unused("sharePreviews.getUpdatedAt"),
+      getData: unused("sharePreviews.getData"),
+    },
     users: {
       findIdByEmail: unused("users.findIdByEmail"),
       listAllExceptOwner: unused("users.listAllExceptOwner"),

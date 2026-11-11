@@ -277,6 +277,14 @@ export const photoInputSchema = z.object({
   expenseId: z.string().min(1).nullable().default(null),
 });
 
+export const SHARE_PREVIEW_WIDTH = 1200;
+export const SHARE_PREVIEW_HEIGHT = 630;
+export const SHARE_PREVIEW_MIME_TYPE = "image/jpeg";
+
+export const sharePreviewInputSchema = z.object({
+  data: z.string().min(1).max(PHOTO_DATA_MAX_LENGTH),
+});
+
 export const photoUpdateSchema = z.object({
   caption: z.string().trim().max(PHOTO_CAPTION_MAX_LENGTH).optional(),
   expenseId: z.string().min(1).nullable().optional(),

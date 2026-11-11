@@ -355,6 +355,11 @@ export type GameRepository = {
     setEnabled(gameId: string, enabled: boolean): Promise<void>;
     findByToken(token: string): Promise<{ link: ShareLinkRow; game: GameRow } | null>;
   };
+  sharePreviews: {
+    put(gameId: string, data: string, updatedAt: string): Promise<void>;
+    getUpdatedAt(gameId: string): Promise<string | null>;
+    getData(gameId: string): Promise<string | null>;
+  };
   users: {
     /** Doi chieu khong phan biet hoa thuong; null neu email chua co tai khoan. */
     findIdByEmail(email: string): Promise<{ id: string; name: string; email: string } | null>;

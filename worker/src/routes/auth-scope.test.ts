@@ -21,7 +21,13 @@ const PROTECTED_ROUTERS: [string, Hono<never>][] = [
 ];
 
 /** Cac path public phai qua duoc, ke ca khi mount sau router can dang nhap. */
-const PUBLIC_PATHS = ["/api/share/tok", "/api/share/tok/photos", "/api/qr", "/api/health"];
+const PUBLIC_PATHS = [
+  "/api/share/tok",
+  "/api/share/tok/photos",
+  "/api/share/tok/preview.jpg",
+  "/api/qr",
+  "/api/health",
+];
 
 /** Route can dang nhap: khong co session phai bi chan tu middleware. */
 const GUARDED_PATHS: [string, Hono<never>][] = [

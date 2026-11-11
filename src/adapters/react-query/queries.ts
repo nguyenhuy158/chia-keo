@@ -652,6 +652,12 @@ export function useSetShareLinkEnabled(gameId: string) {
   );
 }
 
+export function useSaveSharePreview(gameId: string) {
+  return useMutation({
+    mutationFn: (data: string) => getGameApi().shareLinks.savePreview(gameId, data),
+  });
+}
+
 export function useAddCollaborator(gameId: string) {
   return useGameDetailMutation((email: string) => getGameApi().collaborators.add(gameId, email));
 }

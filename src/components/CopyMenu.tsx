@@ -48,6 +48,7 @@ type MenuPosition = {
 type CopyMenuProps = {
   input: SummaryTextInput;
   className?: string;
+  onShare?: (backgroundId: string) => void;
 };
 
 function computePosition(trigger: HTMLElement): MenuPosition {
@@ -61,7 +62,7 @@ function computePosition(trigger: HTMLElement): MenuPosition {
     : { left, top: rect.bottom + MENU_GAP };
 }
 
-export function CopyMenu({ input, className }: CopyMenuProps) {
+export function CopyMenu({ input, className, onShare }: CopyMenuProps) {
   const triggerRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState<MenuPosition | null>(null);
@@ -194,6 +195,7 @@ export function CopyMenu({ input, className }: CopyMenuProps) {
 
   async function handleSelect(action: MenuAction) {
     setPosition(null);
+    if (input.shareUrl) onShare?.(backgroundId);
     await action.run();
   }
 
