@@ -38,10 +38,17 @@ export function createFixedWindowLimiter(config: FixedWindowConfig) {
     return true;
   }
 
-  function release(key: string) {
-    const window = windows.get(key);
-    if (window && window.count > 0) window.count -= 1;
+  function reserve(key: string, now: number): number | null {
+    return isAllowed(key, now)
+      ? (windows.get(key) as { resetAt: number }).resetAt
+      : null;
   }
 
-  return { isAllowed, release };
+  function release(key: string, resetAt: number) {
+    const window = windows.get(key);
+    if (window && window.resetAt === resetAt && window.count > 0)
+      window.count -= 1;
+  }
+
+  return { isAllowed, reserve, release };
 }
