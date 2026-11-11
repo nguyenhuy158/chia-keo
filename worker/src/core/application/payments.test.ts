@@ -208,6 +208,19 @@ describe("thanh toan qua link share", () => {
       participantIds: [BINH, AN],
     });
     expect(again.code).toBe(first.code);
+
+    const huy = env.fake.state.payments.find(
+      (row) => row.participantId === HUY,
+    );
+    if (huy) huy.accountNo = "9876543210";
+    env.context.bankFeed.listAccountNumbers = async () => ["9876543210"];
+    const moved = await createPaymentRequest(env.context, TOKEN, {
+      participantIds: [AN, BINH],
+    });
+    expect(moved.code).not.toBe(first.code);
+    expect(env.fake.state.paymentRequests.at(-1)?.receiverAccountNo).toBe(
+      "9876543210",
+    );
   });
 
   it("loi SePay khi doi soat khong lam hong trang", async () => {

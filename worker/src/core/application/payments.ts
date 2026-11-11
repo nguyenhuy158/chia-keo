@@ -230,6 +230,7 @@ export async function createPaymentRequest(
   const reusable = pending.find(
     (request) =>
       request.receiverParticipantId === receiver.id &&
+      request.receiverAccountNo === receiver.accountNo.trim() &&
       samePaymentItems(parseItems(request), paymentItems),
   );
   if (reusable) return toApiRequest(reusable, receiver);

@@ -10,12 +10,16 @@ afterEach(() => {
 });
 
 describe("SePay bank feed", () => {
-  it("doc so tai khoan va cache theo token", async () => {
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValue(
-        jsonResponse({ status: "success", data: [{ account_number: "0123" }] }),
-      );
+  it("chi lay tai khoan da ket noi ngan hang, cache theo token", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      jsonResponse({
+        status: "success",
+        data: [
+          { account_number: "0123", connection_type: "api" },
+          { account_number: "0999", connection_type: null },
+        ],
+      }),
+    );
     vi.stubGlobal("fetch", fetchMock);
     const feed = createSepayBankFeed("token-cache-1", "https://sandbox.test");
 
