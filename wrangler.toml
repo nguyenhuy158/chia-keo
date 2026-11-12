@@ -11,9 +11,10 @@ routes = [{ pattern = "chiakeo.huyab.click", custom_domain = true }]
 # tra file tinh. not_found_handling = SPA: URL khong khop file nao tra index.html
 # de router client tu xu ly.
 [assets]
+binding = "ASSETS"
 directory = "./dist"
 not_found_handling = "single-page-application"
-run_worker_first = ["/api/*"]
+run_worker_first = ["/api/*", "/share/*"]
 
 # Origin FE duoc phep goi API (chi can khi FE khong cung domain voi API).
 [vars]

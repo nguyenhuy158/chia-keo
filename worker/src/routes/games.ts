@@ -11,6 +11,7 @@ import {
   participantInputSchema,
   participantReorderInputSchema,
   shareLinkInputSchema,
+  sharePreviewInputSchema,
   transferInputSchema,
 } from "../../../shared/schemas";
 import {
@@ -55,7 +56,11 @@ import {
   updateParticipant,
 } from "../core/application/participants";
 import { reconcilePaymentsSafely } from "../core/application/payments";
-import { rotateShareLink, setShareLinkEnabled } from "../core/application/share-links";
+import {
+  rotateShareLink,
+  saveSharePreview,
+  setShareLinkEnabled,
+} from "../core/application/share-links";
 import { invalidInput, readJson, respond } from "../lib/http";
 import { createPaymentContext } from "../lib/payment-context";
 import { protectPaths, type AuthedEnv } from "../lib/require-user";
@@ -333,5 +338,16 @@ gamesRouter.patch("/games/:gameId/share-link", async (c) => {
 
   return respond(c, () =>
     setShareLinkEnabled(c.get("repo"), c.get("userId"), c.req.param("gameId"), input.enabled),
+  );
+});
+
+gamesRouter.post("/games/:gameId/share-preview", async (c) => {
+  const input = await readJson(c, sharePreviewInputSchema);
+  if (!input) return invalidInput(c);
+
+  return respond(c, () =>
+    saveSharePreview(c.get("repo"), c.get("userId"), c.req.param("gameId"), input.data).then(
+      () => ({ ok: true }),
+    ),
   );
 });

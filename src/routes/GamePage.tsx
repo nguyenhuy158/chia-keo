@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { API_BASE } from "../adapters/browser/http-game-api";
+import { renderSharePreviewImage } from "../adapters/browser/share-preview-image";
 import { CollaboratorsPanel } from "../components/CollaboratorsPanel";
 import { CopyMenu } from "../components/CopyMenu";
 import { ExpensePanel } from "../components/ExpensePanel";
@@ -52,6 +53,7 @@ import {
   useRotateShareLink,
   useSetSettlementHost,
   useSetSettlementMode,
+  useSaveSharePreview,
   useSetShareLinkEnabled,
   useUndoGameEvent,
   useUpdateExpense,
@@ -79,6 +81,7 @@ export function GamePage() {
   const renameGame = useRenameGame(gameId);
   const rotateShareLink = useRotateShareLink(gameId);
   const setShareLinkEnabled = useSetShareLinkEnabled(gameId);
+  const saveSharePreview = useSaveSharePreview(gameId);
   const setSettlementMode = useSetSettlementMode(gameId);
   const setSettlementHost = useSetSettlementHost(gameId);
   const deleteGame = useDeleteGame();
@@ -287,22 +290,28 @@ export function GamePage() {
     />
   );
 
+  const summaryInput = {
+    code: game.code,
+    name: game.name,
+    participants: game.participants,
+    expenses: game.expenses,
+    summary: game.summary,
+    settlementMode: game.settlementMode,
+    settlementHostId: game.settlementHostId,
+    shareUrl:
+      shareLink && shareLink.enabled
+        ? `${window.location.origin}/share/${shareLink.token}`
+        : undefined,
+  };
+
+  function publishSharePreview(backgroundId: string) {
+    renderSharePreviewImage(summaryInput, backgroundId)
+      .then((data) => saveSharePreview.mutateAsync(data))
+      .catch((error) => console.error("Share preview upload failed:", error));
+  }
+
   const summaryImageCard = (
-    <SummaryImageCard
-      input={{
-        code: game.code,
-        name: game.name,
-        participants: game.participants,
-        expenses: game.expenses,
-        summary: game.summary,
-        settlementMode: game.settlementMode,
-        settlementHostId: game.settlementHostId,
-        shareUrl:
-          shareLink && shareLink.enabled
-            ? `${window.location.origin}/share/${shareLink.token}`
-            : undefined,
-      }}
-    />
+    <SummaryImageCard input={summaryInput} onShare={publishSharePreview} />
   );
 
   const emailAction = (
@@ -331,23 +340,7 @@ export function GamePage() {
     </button>
   );
 
-  const copyAction = (
-    <CopyMenu
-      input={{
-        code: game.code,
-        name: game.name,
-        participants: game.participants,
-        expenses: game.expenses,
-        summary: game.summary,
-        settlementMode: game.settlementMode,
-        settlementHostId: game.settlementHostId,
-        shareUrl:
-          shareLink && shareLink.enabled
-            ? `${window.location.origin}/share/${shareLink.token}`
-            : undefined,
-      }}
-    />
-  );
+  const copyAction = <CopyMenu input={summaryInput} onShare={publishSharePreview} />;
 
   const shareActions = shareLink ? (
     <>

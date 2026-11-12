@@ -113,6 +113,7 @@ export type GameApiPort = {
   shareLinks: {
     rotate(gameId: string): Promise<ApiGameDetail>;
     setEnabled(gameId: string, enabled: boolean): Promise<ApiGameDetail>;
+    savePreview(gameId: string, data: string): Promise<void>;
   };
   collaborators: {
     /** Chi chu cuoc choi goi duoc; nguoi duoc chia se khac chi doc `collaborators` trong detail. */

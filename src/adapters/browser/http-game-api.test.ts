@@ -123,6 +123,12 @@ describe("HTTP Game API", () => {
     ],
     [
       "POST",
+      "/api/games/g/share-preview",
+      () => api.shareLinks.savePreview("g", "base64"),
+      '{"data":"base64"}',
+    ],
+    [
+      "POST",
       "/api/games/g/collaborators",
       () => api.collaborators.add("g", "a@b.co"),
       '{"email":"a@b.co"}',

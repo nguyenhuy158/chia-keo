@@ -154,6 +154,7 @@ describe("gamesRouter", () => {
     ["POST", `/games/${FAKE_GAME_ID}/transfers`],
     ["POST", `/games/${FAKE_GAME_ID}/collaborators`],
     ["PATCH", `/games/${FAKE_GAME_ID}/share-link`],
+    ["POST", `/games/${FAKE_GAME_ID}/share-preview`],
   ])("trả 400 cho JSON không hợp lệ tại %s %s", async (method, path) => {
     expect((await request(method, path, null)).status).toBe(400);
   });
@@ -297,6 +298,13 @@ describe("gamesRouter", () => {
     );
     expect(disabled.status).toBe(200);
     expect(fake.state.shareLinks[0].enabled).toBe(false);
+
+    const preview = await request("POST", `/games/${FAKE_GAME_ID}/share-preview`, {
+      data: "base64",
+    });
+    expect(preview.status).toBe(200);
+    expect(await preview.json()).toEqual({ ok: true });
+    expect(fake.state.sharePreviews[0].data).toBe("base64");
   });
 
   it("bỏ chia sẻ với user đã đăng ký", async () => {

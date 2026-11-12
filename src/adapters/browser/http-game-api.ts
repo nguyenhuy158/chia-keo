@@ -97,6 +97,7 @@ export function createHttpGameApi(): GameApiPort {
     shareLinks: {
       rotate: (gameId) => post(`/api/games/${gameId}/share-links`),
       setEnabled: (gameId, enabled) => patch(`/api/games/${gameId}/share-link`, { enabled }),
+      savePreview: (gameId, data) => post<void>(`/api/games/${gameId}/share-preview`, { data }),
     },
     collaborators: {
       add: (gameId, email) => post(`/api/games/${gameId}/collaborators`, { email }),

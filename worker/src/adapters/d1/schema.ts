@@ -249,6 +249,14 @@ export const shareLinks = sqliteTable(
   (table) => [index("chiakeo_share_links_game_id_idx").on(table.gameId)],
 );
 
+export const sharePreviews = sqliteTable("chiakeo_share_previews", {
+  gameId: text("game_id")
+    .primaryKey()
+    .references(() => games.id, { onDelete: "cascade" }),
+  data: text("data").notNull(),
+  updatedAt: text("updated_at").notNull(),
+});
+
 /**
  * Nguoi duoc chia se cuoc choi (nhap email). Duoc lam moi thu nhu chu, tru
  * xoa/phuc hoi/xoa han cuoc choi — nhung thao tac do van kiem tra rieng

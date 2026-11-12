@@ -60,6 +60,7 @@ import {
   useRotateShareLink,
   useSetSettlementHost,
   useSetSettlementMode,
+  useSaveSharePreview,
   useSetShareLinkEnabled,
   useShareCandidates,
   useSharePhoto,
@@ -386,6 +387,7 @@ describe("React Query game mutations", () => {
     const shareLinks = {
       rotate: vi.fn().mockResolvedValue(response),
       setEnabled: vi.fn().mockResolvedValue(response),
+      savePreview: vi.fn().mockResolvedValue(undefined),
     };
     const collaborators = {
       add: vi.fn().mockResolvedValue(response),
@@ -400,6 +402,8 @@ describe("React Query game mutations", () => {
     });
     await execute(() => useRotateShareLink("game"), undefined);
     await execute(() => useSetShareLinkEnabled("game"), false);
+    await execute(() => useSaveSharePreview("game"), "base64");
+    expect(shareLinks.savePreview).toHaveBeenCalledWith("game", "base64");
     await execute(() => useAddCollaborator("game"), "friend@example.test");
     await execute(() => useRemoveCollaborator("game"), "friend");
     await execute(
