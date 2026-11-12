@@ -32,7 +32,7 @@ const input: SummaryTextInput = {
       { fromParticipantId: "binh", toParticipantId: "an", amount: 50_000 },
     ],
   },
-  shareUrl: "https://chiakeo.huyab.click/share/token",
+  shareUrl: "https://chiakeo.huyab.cfd/share/token",
 };
 
 let context: CanvasRenderingContext2D;
@@ -109,7 +109,7 @@ describe("summary PNG rendering", () => {
     expect(fillText.mock.calls.map(([text]) => text)).toContain("Tiền sân");
     expect(
       fillText.mock.calls.some(([text]) =>
-        String(text).includes("chiakeo.huyab.click"),
+        String(text).includes("chiakeo.huyab.cfd"),
       ),
     ).toBe(true);
     expect(drawImage).not.toHaveBeenCalled();
@@ -206,7 +206,7 @@ describe("summary PNG rendering", () => {
         ...input,
         name: Array(30).fill("Cầu lông buổi tối").join(" "),
         shareUrl:
-          "https://chiakeo.huyab.click/share/" +
+          "https://chiakeo.huyab.cfd/share/" +
           Array(30).fill("token").join("-"),
       },
       "compact",

@@ -15,7 +15,7 @@ Toan bo config nam trong `wrangler.toml`:
   "single-page-application"` (SPA fallback cho `/share/:token`),
   `run_worker_first = ["/api/*"]` — chi `/api/*` vao Worker, con lai tra file
   tinh.
-- `workers_dev = false` + `routes` — chi phuc vu qua `chiakeo.huyab.click`.
+- `workers_dev = false` + `routes` — chi phuc vu qua `chiakeo.huyab.cfd`.
 - Binding `DB` (D1) va `MAILER` (service binding toi Worker `mailer`).
 
 ## Cach 1: Workers Builds (CI, dang dung)
@@ -52,7 +52,7 @@ npx wrangler secret put GEMINI_API_KEY       # tuy chon, bat AI nhap nhanh + OCR
 khong phai secret, dat trong `[vars]` cua `wrangler.toml`.
 
 > Dang nhap: email/password + username qua Better Auth, hoac SSO chung
-> `auth.huyab.click` (xem `worker/src/sso.ts`). Google di qua SSO nen app
+> `auth.huyab.cfd` (xem `worker/src/sso.ts`). Google di qua SSO nen app
 > **khong** can `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` rieng.
 
 ## Migration D1

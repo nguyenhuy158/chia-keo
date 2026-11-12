@@ -12,7 +12,7 @@ let DB: D1Database;
 
 function claims(email: string, overrides: Partial<SsoClaims> = {}): SsoClaims {
   return {
-    iss: "https://auth.huyab.click",
+    iss: "https://auth.huyab.cfd",
     sub: `sso-${email}`,
     email,
     exp: Math.floor(Date.now() / 1000) + 3600,

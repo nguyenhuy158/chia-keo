@@ -50,7 +50,7 @@ export function LoginPage() {
   }
 
   /**
-   * Dang nhap duy nhat qua SSO chung cua *.huyab.click: ca he sinh thai dung
+   * Dang nhap duy nhat qua SSO chung cua *.huyab.cfd: ca he sinh thai dung
    * MOT OAuth client, khong con form username/mat khau rieng cho app nay.
    */
   function handleGoogleSignIn() {

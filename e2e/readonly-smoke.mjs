@@ -1,6 +1,6 @@
 // Smoke CHI DOC: chi GET trang/API cong khai va kiem trang render, khong dang
 // ky, khong submit form, khong ghi gi. An toan de chay vao production:
-// `pnpm e2e:prod` (chiakeo.huyab.click). `pnpm e2e` cung chay no truoc
+// `pnpm e2e:prod` (chiakeo.huyab.cfd). `pnpm e2e` cung chay no truoc
 // ui-smoke de dev va prod dung chung mot bo kiem tra.
 //
 // Bien moi truong:
