@@ -139,6 +139,14 @@ is the `.dark` class on `<html>` and the tokens switch with it. Keep token
 names in sync with `ui-kit/src/styles/tokens.css`; change only values here.
 Palette classes remain only where no token exists yet.
 
+UI primitives come only from ui-kit (`github.com/nguyenhuy158/ui-kit`,
+`src/ui/`), copied into `src/ui/` here and kept in sync; do not hand-roll a
+button, input, select, sheet, modal, menu, tabs, badge, toast or similar in
+this repo. If ui-kit lacks a primitive, add it to ui-kit first (with a
+Gallery demo), then copy it here. Screens and feature panels in
+`src/components/` and `src/routes/` stay here but compose ui-kit primitives
+only. Do not fork a copied ui-kit file to restyle it; change it in ui-kit.
+
 Hexagonal boundaries:
 
 - Put pure rules, calculations, parsing, and schema validation shared by FE
