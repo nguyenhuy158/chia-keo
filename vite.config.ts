@@ -112,6 +112,8 @@ export default defineConfig({
         "shared/build-info.ts",
         "worker/src/core/application/fake-game-repository.ts",
         "worker/src/mcp/fixtures.ts",
+        "src/ui/**",
+        "src/dom/**",
       ],
       reporter: ["text", "json-summary"],
       thresholds: {

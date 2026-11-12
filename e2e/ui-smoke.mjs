@@ -290,7 +290,7 @@ try {
   await page.fill('input[placeholder="Chú thích ảnh"]', "Hoa don san");
   await page.click('button[aria-label="Lưu chú thích"]');
   await page.waitForSelector("text=Hoa don san", WAIT);
-  await page.click('button[aria-label="Đóng ảnh"]');
+  await page.click('[role="dialog"] button[aria-label="Đóng"]');
   ok("add photo to album + caption");
 
   await page.click('button:has-text("Chia đều")');
@@ -319,7 +319,7 @@ try {
   await anonPage.click('button:has-text("Ảnh")');
   await anonPage.waitForSelector("text=Ảnh (2)", WAIT);
   await anonPage.click('button[aria-label="Hoa don san"]');
-  await anonPage.waitForSelector('button[aria-label="Đóng ảnh"]', WAIT);
+  await anonPage.waitForSelector('[role="dialog"] button[aria-label="Đóng"]', WAIT);
   const deleteCount = await anonPage.locator('button[aria-label="Xóa ảnh"]').count();
   if (deleteCount !== 0) throw new Error("share view must not allow deleting photos");
   assert.equal(await anonPage.locator('button[aria-label^="Copy lời nhắc cho"]').count(), 0);
@@ -374,7 +374,7 @@ try {
   await acceptConfirm();
   await page.waitForSelector('span:text-is("1/60")', WAIT);
   // Xoa xong van con anh khac nen khung xem mo tiep, dong lai truoc khi thoat.
-  await page.click('button[aria-label="Đóng ảnh"]');
+  await page.click('[role="dialog"] button[aria-label="Đóng"]');
   ok("delete photo");
 
   // 7.9 Token MCP: tao tu trang cai dat, dung that, roi thu hoi

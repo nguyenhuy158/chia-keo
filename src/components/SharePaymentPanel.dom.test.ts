@@ -139,9 +139,7 @@ describe("SharePaymentPanel", () => {
     expect(document.body.textContent).toContain("Đã nhận");
 
     act(() =>
-      document
-        .querySelector<HTMLButtonElement>('button[aria-label="Đóng"]')
-        ?.click(),
+      document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" })),
     );
     expect(document.querySelector('[role="dialog"]')).toBeNull();
   });

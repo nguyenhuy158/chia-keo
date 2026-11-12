@@ -4,7 +4,7 @@ import { useState } from "react";
 import { BrandMark } from "../components/brand";
 import { GamesSidebar } from "../components/GamesSidebar";
 import { MobileShellContext } from "../components/mobile-shell";
-import { Drawer } from "../components/overlays";
+import { Sheet } from "../ui/Sheet";
 import { ThemeToggle } from "../components/theme";
 import { LoadingState } from "../components/ui";
 import { authClient } from "../adapters/browser/auth-client";
@@ -145,9 +145,9 @@ export function AppLayout() {
         </section>
       </main>
 
-      <Drawer open={gamesOpen} onClose={() => setGamesOpen(false)} title="Cuộc chơi">
+      <Sheet side="left" open={gamesOpen} onClose={() => setGamesOpen(false)} title="Cuộc chơi">
         <GamesSidebar onNavigate={() => setGamesOpen(false)} />
-      </Drawer>
+      </Sheet>
     </MobileShellContext.Provider>
   );
 }
