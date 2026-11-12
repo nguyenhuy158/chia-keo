@@ -51,10 +51,10 @@ vi.mock("../components/GamesSidebar", async () => {
   };
 });
 vi.mock("../components/ui", () => ({ LoadingState: () => "loading session" }));
-vi.mock("../components/overlays", async () => {
+vi.mock("../ui/Sheet", async () => {
   const { createElement: element } = await import("react");
   return {
-    Drawer: ({
+    Sheet: ({
       open,
       onClose,
       children,

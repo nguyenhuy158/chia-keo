@@ -8,8 +8,8 @@ import {
 } from "../adapters/react-query/queries";
 import { getQrProvider } from "../core/container";
 import { formatMoney } from "../core/domain/money";
-import { Confetti } from "./Confetti";
-import { BottomSheet } from "./overlays";
+import { Celebrate } from "../ui/Celebrate";
+import { Sheet } from "../ui/Sheet";
 
 type SharePaymentPanelProps = {
   token: string;
@@ -19,12 +19,10 @@ type SharePaymentPanelProps = {
 function PaymentStatus({ payment }: { payment: ApiPaymentRequest }) {
   if (payment.status === "paid") {
     return (
-      <div className="relative flex flex-col items-center gap-2 py-6 text-center">
-        <Confetti />
-        <CircleCheckBig
-          size={48}
-          className="paid-pop text-emerald-600 dark:text-emerald-400"
-        />
+      <div className="flex flex-col items-center gap-2 py-6 text-center">
+        <Celebrate>
+          <CircleCheckBig size={48} className="text-success" />
+        </Celebrate>
         <p className="text-base font-semibold">
           Đã nhận {formatMoney(payment.paidAmount)}
         </p>
@@ -131,7 +129,7 @@ export function SharePaymentPanel({
         Thanh toán
       </button>
 
-      <BottomSheet open={open} onClose={close} title="Thanh toán">
+      <Sheet open={open} onClose={close} title="Thanh toán">
         {code ? (
           <div className="pb-4">
             <PaymentTracker token={token} code={code} />
@@ -176,7 +174,7 @@ export function SharePaymentPanel({
             </button>
           </div>
         )}
-      </BottomSheet>
+      </Sheet>
     </section>
   );
 }

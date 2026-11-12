@@ -156,10 +156,10 @@ vi.mock("../components/MobileGameNav", async () => {
       element("button", { type: "button", onClick: props.onClick }, "fab"),
   };
 });
-vi.mock("../components/overlays", async () => {
+vi.mock("../ui/Sheet", async () => {
   const { createElement: element } = await import("react");
   return {
-    BottomSheet: (props: {
+    Sheet: (props: {
       open: boolean;
       onClose: () => void;
       children: unknown;

@@ -28,7 +28,7 @@ import { ExpenseFab, type GameSection, MobileGameNav } from "../components/Mobil
 import { useMobileShell } from "../components/mobile-shell";
 import { ParticipantPanel } from "../components/ParticipantPanel";
 import { SummaryImageCard } from "../components/SummaryImageCard";
-import { BottomSheet } from "../components/overlays";
+import { Sheet } from "../ui/Sheet";
 import { useConfirm } from "../components/ConfirmDialog";
 import { toast } from "sonner";
 import { EmptyState, GamePageSkeleton } from "../components/ui";
@@ -593,7 +593,7 @@ export function GamePage() {
       )}
       <MobileGameNav active={activeSection} onChange={setActiveSection} />
 
-      <BottomSheet
+      <Sheet
         open={actionsOpen}
         onClose={() => setActionsOpen(false)}
         title="Tùy chọn cuộc chơi"
@@ -605,7 +605,7 @@ export function GamePage() {
           {closeAction}
           {deleteAction}
         </div>
-      </BottomSheet>
+      </Sheet>
     </>
   );
 }

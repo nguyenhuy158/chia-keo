@@ -11,7 +11,7 @@ import { Avatar } from "./Avatar";
 import { BankSelect } from "./BankSelect";
 import { useConfirm } from "./ConfirmDialog";
 import { ContactPicker } from "./ContactPicker";
-import { SwipeToDelete } from "./SwipeToDelete";
+import { SwipeAction } from "../ui/SwipeAction";
 import { Field } from "./ui";
 
 const participantFormSchema = z.object({
@@ -59,7 +59,7 @@ export function ParticipantPanel({
   /**
    * Xoa nguoi cascade that (chia lai phan cac khoan chi khac) va khong nam
    * trong Lich su/hoan tac, khac voi xoa khoan chi — nen phai hoi truoc, dung
-   * chung cho ca nut icon lan SwipeToDelete de khong co duong nao lot luoi.
+   * chung cho ca nut icon lan SwipeAction de khong co duong nao lot luoi.
    */
   async function handleRemove(participant: ApiParticipant) {
     const ok = await confirm({
@@ -172,7 +172,7 @@ export function ParticipantPanel({
       <div className="mt-5 space-y-2">
         {participants.map((participant, index) => (
           <div key={participant.id}>
-            <SwipeToDelete onDelete={handleRemove.bind(null, participant)}>
+            <SwipeAction label="Xóa" icon={<Trash2 size={15} />} onAction={handleRemove.bind(null, participant)}>
               <div className="rounded-md border border-border p-3">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex min-w-0 items-center gap-1">
@@ -230,7 +230,7 @@ export function ParticipantPanel({
                   </div>
                 </div>
               </div>
-            </SwipeToDelete>
+            </SwipeAction>
           </div>
         ))}
       </div>

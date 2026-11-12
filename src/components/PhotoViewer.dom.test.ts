@@ -90,9 +90,9 @@ describe("PhotoViewer", () => {
     expect(document.body.style.overflow).toBe("hidden");
     expect(button("Xóa ảnh")).toBeNull();
     expect(button("Ảnh trước")).toBeNull();
-    act(() => button("Đóng ảnh")?.click());
+    act(() => button("Đóng")?.click());
     act(() =>
-      window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" })),
+      document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" })),
     );
     expect(onClose).toHaveBeenCalledTimes(2);
   });

@@ -9,7 +9,7 @@ import {
   useUpdateContact,
 } from "../adapters/react-query/queries";
 import { getVietQrBankLabel } from "../adapters/browser/vietqr";
-import { SwipeToDelete } from "./SwipeToDelete";
+import { SwipeAction } from "../ui/SwipeAction";
 import { Avatar } from "./Avatar";
 import { BankSelect } from "./BankSelect";
 import { useConfirm } from "./ConfirmDialog";
@@ -284,14 +284,14 @@ export function ContactBookCard() {
               // Chi nguoi thuoc danh ba (co id) moi xoa duoc, nen chi nguoi
               // do moi vuot xoa duoc — vuot nguoi chi suy ra tu lich su se
               // lo mot nut khong lam gi ca.
-              <SwipeToDelete key={contact.key} onDelete={handleDelete.bind(null, contact)}>
+              <SwipeAction key={contact.key} label="Xóa" icon={<Trash2 size={15} />} onAction={handleDelete.bind(null, contact)}>
                 <ContactRow
                   contact={contact}
                   pending={pending}
                   onEdit={() => startEdit(contact)}
                   onDelete={handleDelete.bind(null, contact)}
                 />
-              </SwipeToDelete>
+              </SwipeAction>
             ) : (
               <ContactRow
                 key={contact.key}

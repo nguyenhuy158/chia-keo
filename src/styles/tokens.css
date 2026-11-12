@@ -1,7 +1,7 @@
 /* ===========================================================================
-   ui-kit design tokens (ban sao tu personal-projects/ui-kit/src/styles/
-   tokens.css). Nguon chuan nam o ui-kit; ban nay chi khac GIA TRI o muc 1.
-   File CSS goc cua app import file nay thay cho `@import "tailwindcss"`.
+   ui-kit design tokens: nguon chuan cho moi project ca nhan dung React +
+   Tailwind v4. Project khac COPY file nay va import no thay cho
+   `@import "tailwindcss"` trong file CSS goc.
 
    Hop dong:
    - Ten bien `--ui-*` va ten utility trong `@theme inline` la co dinh. Them /
@@ -23,36 +23,33 @@
 @custom-variant pointer-fine (@media (hover: hover) and (pointer: fine));
 
 /* ---------------------------------------------------------------------------
-   1. Bien mau. Ten bien giu dung ui-kit; GIA TRI la bang mau rieng cua
-   chia-keo (tim violet + xam am stone cua Tailwind), co y khac ui-kit:
-   moi gia tri bang DUNG mot mau palette Tailwind v4 dang dung trong app
-   (ghi o cuoi dong), nen thay class palette bang class token khong doi mau.
-   --ui-bg / --ui-fg / --ui-ring lay tu style goc cu cua app (hex).
+   1. Bien mau. Doi 3 dong --ui-primary* la doi toan bo tone cua app.
+   Dung oklch de chinh do sang/bao hoa khong bi lech mau.
 --------------------------------------------------------------------------- */
 :root {
   color-scheme: light;
 
   /* Nen va chu */
-  --ui-bg: #faf5ff; /* trung meta theme-color */
-  --ui-surface: #fff; /* white */
-  --ui-surface-muted: oklch(98.5% 0.001 106.423); /* stone-50 */
-  --ui-border: oklch(92.3% 0.003 48.717); /* stone-200 */
+  --ui-bg: #faf5ff;
+  --ui-surface: #fff;
+  --ui-surface-muted: oklch(98.5% 0.001 106.423);
+  --ui-border: oklch(92.3% 0.003 48.717);
   --ui-fg: #1d1d1f;
-  --ui-fg-muted: oklch(55.3% 0.013 58.071); /* stone-500 */
+  --ui-fg-muted: oklch(55.3% 0.013 58.071);
 
-  /* Mau thuong hieu: nut chinh giu violet-600 o ca hai che do */
-  --ui-primary: oklch(54.1% 0.281 293.009); /* violet-600 */
-  --ui-primary-hover: oklch(49.1% 0.27 292.581); /* violet-700 */
-  --ui-primary-fg: #fff; /* white */
-  --ui-primary-soft: oklch(96.9% 0.016 293.756); /* violet-50 */
+  /* Mau thuong hieu */
+  --ui-primary: oklch(54.1% 0.281 293.009);
+  --ui-primary-hover: oklch(49.1% 0.27 292.581);
+  --ui-primary-fg: #fff;
+  --ui-primary-soft: oklch(96.9% 0.016 293.756);
 
   /* Mau trang thai */
-  --ui-success: oklch(59.6% 0.145 163.225); /* emerald-600 */
-  --ui-success-soft: oklch(97.9% 0.021 166.113); /* emerald-50 */
-  --ui-warning: oklch(66.6% 0.179 58.318); /* amber-600 */
-  --ui-warning-soft: oklch(98.7% 0.022 95.277); /* amber-50 */
-  --ui-danger: oklch(58.6% 0.253 17.585); /* rose-600 */
-  --ui-danger-soft: oklch(96.9% 0.015 12.422); /* rose-50 */
+  --ui-success: oklch(59.6% 0.145 163.225);
+  --ui-success-soft: oklch(97.9% 0.021 166.113);
+  --ui-warning: oklch(66.6% 0.179 58.318);
+  --ui-warning-soft: oklch(98.7% 0.022 95.277);
+  --ui-danger: oklch(58.6% 0.253 17.585);
+  --ui-danger-soft: oklch(96.9% 0.015 12.422);
 
   --ui-ring: #ede9fe;
   --ui-radius: 0.5rem;
@@ -62,23 +59,23 @@
   color-scheme: dark;
 
   --ui-bg: #0c0a09;
-  --ui-surface: oklch(21.6% 0.006 56.043); /* stone-900 */
-  --ui-surface-muted: oklch(26.8% 0.007 34.298); /* stone-800 */
-  --ui-border: oklch(26.8% 0.007 34.298); /* stone-800 */
+  --ui-surface: oklch(21.6% 0.006 56.043);
+  --ui-surface-muted: oklch(26.8% 0.007 34.298);
+  --ui-border: oklch(26.8% 0.007 34.298);
   --ui-fg: #e7e5e4;
-  --ui-fg-muted: oklch(70.9% 0.01 56.259); /* stone-400 */
+  --ui-fg-muted: oklch(70.9% 0.01 56.259);
 
-  --ui-primary: oklch(54.1% 0.281 293.009); /* violet-600 */
-  --ui-primary-hover: oklch(49.1% 0.27 292.581); /* violet-700 */
-  --ui-primary-fg: #fff; /* white */
-  --ui-primary-soft: oklch(60.6% 0.25 292.717 / 10%); /* violet-500/10 */
+  --ui-primary: oklch(54.1% 0.281 293.009);
+  --ui-primary-hover: oklch(49.1% 0.27 292.581);
+  --ui-primary-fg: #fff;
+  --ui-primary-soft: oklch(60.6% 0.25 292.717 / 10%);
 
-  --ui-success: oklch(76.5% 0.177 163.223); /* emerald-400 */
-  --ui-success-soft: oklch(69.6% 0.17 162.48 / 15%); /* emerald-500/15 */
-  --ui-warning: oklch(82.8% 0.189 84.429); /* amber-400 */
-  --ui-warning-soft: oklch(76.9% 0.188 70.08 / 10%); /* amber-500/10 */
-  --ui-danger: oklch(71.2% 0.194 13.428); /* rose-400 */
-  --ui-danger-soft: oklch(64.5% 0.246 16.439 / 10%); /* rose-500/10 */
+  --ui-success: oklch(76.5% 0.177 163.223);
+  --ui-success-soft: oklch(69.6% 0.17 162.48 / 15%);
+  --ui-warning: oklch(82.8% 0.189 84.429);
+  --ui-warning-soft: oklch(76.9% 0.188 70.08 / 10%);
+  --ui-danger: oklch(71.2% 0.194 13.428);
+  --ui-danger-soft: oklch(64.5% 0.246 16.439 / 10%);
 
   --ui-ring: rgba(124, 58, 237, 0.35);
 }
@@ -200,6 +197,31 @@ a,
 @keyframes ui-spin {
   to {
     transform: rotate(360deg);
+  }
+}
+
+@keyframes ui-celebrate {
+  0% {
+    opacity: 1;
+    transform: translate(0, 0) rotate(0deg) scale(0.6);
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--celebrate-x), var(--celebrate-y)) rotate(var(--celebrate-spin));
+  }
+}
+
+@keyframes ui-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.15);
   }
 }
 
