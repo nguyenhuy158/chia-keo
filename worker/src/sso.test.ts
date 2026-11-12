@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const issuer = "https://auth.huyab.click";
+const issuer = "https://auth.huyab.cfd";
 let keyPair: CryptoKeyPair;
 let jwk: JsonWebKey;
 

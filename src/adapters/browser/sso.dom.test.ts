@@ -16,15 +16,15 @@ describe("SSO browser redirects", () => {
     );
   });
 
-  it("returns to the current app domain when already on huyab.click", () => {
+  it("returns to the current app domain when already on huyab.cfd", () => {
     vi.stubGlobal("window", {
-      location: { origin: "https://preview.huyab.click" },
+      location: { origin: "https://preview.huyab.cfd" },
     });
     expect(ssoLoginUrl()).toContain(
-      encodeURIComponent("https://preview.huyab.click/"),
+      encodeURIComponent("https://preview.huyab.cfd/"),
     );
     expect(ssoLogoutUrl()).toContain(
-      encodeURIComponent("https://preview.huyab.click/login"),
+      encodeURIComponent("https://preview.huyab.cfd/login"),
     );
   });
 });

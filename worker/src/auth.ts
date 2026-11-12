@@ -40,7 +40,7 @@ export function getTrustedOrigins(env: Env, requestUrl?: string) {
 
 /**
  * Khong khai bao socialProviders: dang nhap Google di qua SSO chung
- * auth.huyab.click (xem sso.ts), nen app nay khong giu OAuth client rieng.
+ * auth.huyab.cfd (xem sso.ts), nen app nay khong giu OAuth client rieng.
  */
 export function createAuth(env: Env, requestUrl?: string) {
   const db = drizzle(env.DB, { schema });

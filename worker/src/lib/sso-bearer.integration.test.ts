@@ -42,7 +42,7 @@ it("accepts a signed SSO Bearer JWT on a protected route", async () => {
   const encode = (value: unknown) =>
     base64url(new TextEncoder().encode(JSON.stringify(value)));
   const content = `${encode({ alg: "RS256", typ: "JWT" })}.${encode({
-    iss: "https://auth.huyab.click",
+    iss: "https://auth.huyab.cfd",
     sub: "native-subject",
     email: "native@example.test",
     exp: Math.floor(Date.now() / 1000) + 3600,
@@ -74,6 +74,6 @@ it("accepts a signed SSO Bearer JWT on a protected route", async () => {
     }),
   );
   expect(fetch).toHaveBeenCalledWith(
-    "https://auth.huyab.click/.well-known/jwks.json",
+    "https://auth.huyab.cfd/.well-known/jwks.json",
   );
 });

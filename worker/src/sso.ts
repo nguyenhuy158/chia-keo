@@ -1,10 +1,10 @@
-// Xac thuc cookie SSO cua auth.huyab.click, chay SONG SONG voi better-auth chu
+// Xac thuc cookie SSO cua auth.huyab.cfd, chay SONG SONG voi better-auth chu
 // khong thay the: tai khoan username/mat khau cu van dang nhap binh thuong.
 //
 // Token la JWT RS256 do SSO ky; app chi giu khoa cong khai lay tu JWKS nen
 // khong the tu phat token cho minh hay cho app khac.
 
-const ISSUER = "https://auth.huyab.click";
+const ISSUER = "https://auth.huyab.cfd";
 const COOKIE_NAME = "huyab_sso";
 
 export type SsoClaims = {

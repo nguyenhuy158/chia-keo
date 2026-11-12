@@ -326,14 +326,14 @@ khong dung bearer token MCP).
 ### Gan vao Claude Code
 
 ```sh
-claude mcp add --transport http chia-keo https://chiakeo.huyab.click/api/mcp \
+claude mcp add --transport http chia-keo https://chiakeo.huyab.cfd/api/mcp \
   --header "Authorization: Bearer ck_..."
 ```
 
 Kiem tra nhanh khong can client MCP:
 
 ```sh
-curl -s https://chiakeo.huyab.click/api/mcp \
+curl -s https://chiakeo.huyab.cfd/api/mcp \
   -H "Authorization: Bearer ck_..." \
   -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | jq
@@ -366,7 +366,7 @@ Config nam trong `wrangler.toml`:
 - `main = worker/src/index.ts`, `[assets]` `directory = ./dist` voi
   `run_worker_first = ["/api/*"]` va SPA fallback
 - Compatibility flag: `nodejs_compat` (Better Auth can node builtins)
-- `workers_dev = false`, chi phuc vu qua `chiakeo.huyab.click`
+- `workers_dev = false`, chi phuc vu qua `chiakeo.huyab.cfd`
 - D1 binding: `DB` -> `chiakeo-db`; service binding: `MAILER` -> Worker `mailer`
 - Secret: `BETTER_AUTH_SECRET` (bat buoc); `MAILER_KEY` (khop
   `INTERNAL_API_KEY` cua `mailer`); `GEMINI_API_KEY` (tuy chon, bat AI);

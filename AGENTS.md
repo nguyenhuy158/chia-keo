@@ -3,7 +3,7 @@
 ## Project Structure & Module Organization
 
 Chia Kèo splits group expenses after each play session and serves payment
-QR codes; production is `chiakeo.huyab.click`. It is a React 19 + Vite +
+QR codes; production is `chiakeo.huyab.cfd`. It is a React 19 + Vite +
 Tailwind v4 frontend plus a Hono Cloudflare Worker backend on D1 (Drizzle),
 both structured as hexagons (ports & adapters) around a shared pure
 domain kernel in `shared/` (split math, zod schemas, AI normalization, DTOs).
@@ -23,7 +23,7 @@ AiProvider), use cases and policies in `worker/src/core/application/`,
 implementations in `worker/src/adapters/d1/` (drizzle schema + repository)
 and `worker/src/adapters/gemini/`. Hono routes in `worker/src/routes/` are
 thin driving adapters. `worker/src/mcp/` serves the stateless MCP endpoint
-and `worker/src/sso.ts` verifies the `auth.huyab.click` SSO cookie. See
+and `worker/src/sso.ts` verifies the `auth.huyab.cfd` SSO cookie. See
 `docs/architecture.md` for dependency rules.
 
 Folder structure:
@@ -115,7 +115,7 @@ e2e/                           # E2E (Playwright + wrangler dev), plumbing from 
 - `pnpm e2e:smoke`: run only the UI smoke suite against a server you already
   started (`pnpm dev:api`), via `E2E_BASE_URL`.
 - `pnpm e2e:prod`: run the read-only smoke against production
-  (`https://chiakeo.huyab.click`): GET `/api/version`, `/api/health`,
+  (`https://chiakeo.huyab.cfd`): GET `/api/version`, `/api/health`,
   `/api/session`, the 401 guard on `/api/games`, and the `/login` render.
 
 Use `pnpm` for all package commands.
@@ -204,14 +204,14 @@ things reading the code does not show right away.
 - **`nodejs_compat` là bắt buộc**, không phải bật cho vui: better-auth và
   drizzle đều import Node builtin. Bỏ flag là worker chết lúc boot.
 - **`workers_dev = false`**, chỉ vào qua custom domain — cookie SSO
-  (`huyab_sso`, domain `.huyab.click`) không gửi tới `*.workers.dev`, để bật
+  (`huyab_sso`, domain `.huyab.cfd`) không gửi tới `*.workers.dev`, để bật
   là có URL đăng nhập được nửa vời.
 - **Một Worker phục vụ cả API lẫn SPA**: `run_worker_first = ["/api/*"]` +
   `not_found_handling = "single-page-application"`. Không tách Pages riêng.
   Thêm route server mới PHẢI nằm dưới `/api/*`, nếu không asset handler nuốt
   trước và trả về `index.html`.
 - **Hai đường đăng nhập chạy SONG SONG**: better-auth (username/mật khẩu) và
-  SSO cookie RS256 từ `auth.huyab.click` (`worker/src/sso.ts`, JWKS cache ở
+  SSO cookie RS256 từ `auth.huyab.cfd` (`worker/src/sso.ts`, JWKS cache ở
   module scope). Không cái nào thay cái nào — sửa auth phải kiểm cả 2 nhánh.
   App native gửi cùng JWT SSO qua `Authorization: Bearer`.
 - **CORS chỉ áp cho `/api/*`**, có `credentials: true` và cho phép header
@@ -287,15 +287,15 @@ Pushing to `main` triggers Cloudflare Workers Builds (build + deploy), which is
 not instant. Check whether prod really runs the new code:
 
 ```bash
-curl https://chiakeo.huyab.click/api/version   # compare `commit` with `git rev-parse HEAD`
-curl https://chiakeo.huyab.click/api/health    # ok:false + hint = migration not applied
+curl https://chiakeo.huyab.cfd/api/version   # compare `commit` with `git rev-parse HEAD`
+curl https://chiakeo.huyab.cfd/api/health    # ok:false + hint = migration not applied
 ```
 
 A mismatched commit means the build has not finished yet; wait and re-check.
 
 ## Ecosystem
 
-How this repo fits with the other `*.huyab.click` apps:
+How this repo fits with the other `*.huyab.cfd` apps:
 [kit/docs/ECOSYSTEM.md](https://github.com/nguyenhuy158/kit/blob/main/docs/ECOSYSTEM.md).
 
 - Kit packages (`github:nguyenhuy158/kit#v0.1.0`): `@huyab/config`
@@ -303,7 +303,7 @@ How this repo fits with the other `*.huyab.click` apps:
   server lifecycle, `findChromium`), and the reusable
   `.github/workflows/check.yml` (CI). `@huyab/sso` is not adopted yet:
   `worker/src/sso.ts` is still the local verifier.
-- Talks to: `sso` (auth.huyab.click: `huyab_sso` JWT verified against its
+- Talks to: `sso` (auth.huyab.cfd: `huyab_sso` JWT verified against its
   JWKS) and `mailer` (`MAILER` service binding, `POST /send`).
 - Called by: `chia-keo-ios` (same API with the SSO JWT), Claude MCP clients
   (`/api/mcp`), and `mytools` (uptime ping).

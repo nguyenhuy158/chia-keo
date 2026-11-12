@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { buildShareMetaTags } from "./share-meta";
 
-const PAGE_URL = "https://chiakeo.huyab.click/share/AbCd?utm=zalo";
+const PAGE_URL = "https://chiakeo.huyab.cfd/share/AbCd?utm=zalo";
 
 describe("buildShareMetaTags", () => {
   it("points og:image at the versioned preview of the same token", () => {
@@ -11,10 +11,10 @@ describe("buildShareMetaTags", () => {
     );
 
     expect(tags).toContain(
-      'content="https://chiakeo.huyab.click/api/share/AbCd/preview.jpg?v=2026-11-11T10%3A00%3A00.000Z"',
+      'content="https://chiakeo.huyab.cfd/api/share/AbCd/preview.jpg?v=2026-11-11T10%3A00%3A00.000Z"',
     );
     expect(tags).toContain(
-      '<meta property="og:url" content="https://chiakeo.huyab.click/share/AbCd" />',
+      '<meta property="og:url" content="https://chiakeo.huyab.cfd/share/AbCd" />',
     );
     expect(tags).toContain("summary_large_image");
   });
