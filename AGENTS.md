@@ -90,6 +90,21 @@ e2e/                           # E2E (Playwright + wrangler dev), plumbing from 
   ui-smoke.mjs                 #   Smoke suite qua UI that, ghi D1 local (`pnpm e2e:smoke`)
 ```
 
+## Ecosystem
+
+How this repo fits with the other `*.huyab.cfd` apps:
+[kit/docs/ECOSYSTEM.md](https://github.com/nguyenhuy158/kit/blob/main/docs/ECOSYSTEM.md).
+
+- Kit packages (`github:nguyenhuy158/kit#v0.1.0`): `@huyab/config`
+  (`biome.json`, `tsconfig.*.json` extend it), `@huyab/e2e` (`e2e/run.mjs`
+  server lifecycle, `findChromium`), and the reusable
+  `.github/workflows/check.yml` (CI). `@huyab/sso` is not adopted yet:
+  `worker/src/sso.ts` is still the local verifier.
+- Talks to: `sso` (auth.huyab.cfd: `huyab_sso` JWT verified against its
+  JWKS) and `mailer` (`MAILER` service binding, `POST /send`).
+- Called by: `chia-keo-ios` (same API with the SSO JWT), Claude MCP clients
+  (`/api/mcp`), and `mytools` (uptime ping).
+
 ## Build, Test, and Development Commands
 
 - `pnpm install`: install project dependencies.
@@ -192,6 +207,22 @@ Use Conventional Commits with an emoji and a scope, for example
 include a short summary, test/build results, linked issue if available, and
 screenshots for visible UI changes.
 
+## Deploy & CI
+
+Setup commands are in [README.md](README.md). Every `pnpm` build/dev/test
+script is prefixed with `node scripts/build-info.mjs`; building by hand
+without it makes `/api/version` report a stale commit.
+
+Pushing to `main` triggers Cloudflare Workers Builds (build + deploy), which is
+not instant. Check whether prod really runs the new code:
+
+```bash
+curl https://chiakeo.huyab.cfd/api/version   # compare `commit` with `git rev-parse HEAD`
+curl https://chiakeo.huyab.cfd/api/health    # ok:false + hint = migration not applied
+```
+
+A mismatched commit means the build has not finished yet; wait and re-check.
+
 ## Architecture Decisions & Pitfalls
 
 Docs split, do not duplicate: dependency direction, the "Không làm" list and
@@ -276,37 +307,6 @@ things reading the code does not show right away.
   (playwright-core Chromium). Đừng sửa tay PNG, lần render sau ghi đè hết.
 - **Test dùng `fake-game-repository.ts`** (in-memory double) đặt cạnh use
   case, không mock từng hàm — port đã tách nên có sẵn chỗ cắm.
-
-## Deploy & Production Checks
-
-Setup commands are in [README.md](README.md). Every `pnpm` build/dev/test
-script is prefixed with `node scripts/build-info.mjs`; building by hand
-without it makes `/api/version` report a stale commit.
-
-Pushing to `main` triggers Cloudflare Workers Builds (build + deploy), which is
-not instant. Check whether prod really runs the new code:
-
-```bash
-curl https://chiakeo.huyab.cfd/api/version   # compare `commit` with `git rev-parse HEAD`
-curl https://chiakeo.huyab.cfd/api/health    # ok:false + hint = migration not applied
-```
-
-A mismatched commit means the build has not finished yet; wait and re-check.
-
-## Ecosystem
-
-How this repo fits with the other `*.huyab.cfd` apps:
-[kit/docs/ECOSYSTEM.md](https://github.com/nguyenhuy158/kit/blob/main/docs/ECOSYSTEM.md).
-
-- Kit packages (`github:nguyenhuy158/kit#v0.1.0`): `@huyab/config`
-  (`biome.json`, `tsconfig.*.json` extend it), `@huyab/e2e` (`e2e/run.mjs`
-  server lifecycle, `findChromium`), and the reusable
-  `.github/workflows/check.yml` (CI). `@huyab/sso` is not adopted yet:
-  `worker/src/sso.ts` is still the local verifier.
-- Talks to: `sso` (auth.huyab.cfd: `huyab_sso` JWT verified against its
-  JWKS) and `mailer` (`MAILER` service binding, `POST /send`).
-- Called by: `chia-keo-ios` (same API with the SSO JWT), Claude MCP clients
-  (`/api/mcp`), and `mytools` (uptime ping).
 
 ## Agent-Specific Instructions
 
