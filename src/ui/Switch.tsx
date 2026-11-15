@@ -55,7 +55,9 @@ export function Switch({
         <span className="min-w-0">
           {label && <span className="block text-sm text-fg">{label}</span>}
           {description && (
-            <span className="mt-0.5 block text-xs text-fg-muted">{description}</span>
+            <span className="mt-0.5 block text-xs text-fg-muted">
+              {description}
+            </span>
           )}
         </span>
       )}

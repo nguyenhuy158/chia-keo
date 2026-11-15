@@ -1,16 +1,19 @@
 import type { InputHTMLAttributes, ReactNode } from "react";
 import { cn } from "./cn";
 
-export type RadioProps = Omit<
-  InputHTMLAttributes<HTMLInputElement>,
-  "type"
-> & {
+export type RadioProps = Omit<InputHTMLAttributes<HTMLInputElement>, "type"> & {
   label?: ReactNode;
   description?: ReactNode;
 };
 
 /** Mot lua chon don. Nhieu Radio cung `name` thi trinh duyet tu gom thanh nhom. */
-export function Radio({ label, description, className, disabled, ...rest }: RadioProps) {
+export function Radio({
+  label,
+  description,
+  className,
+  disabled,
+  ...rest
+}: RadioProps) {
   return (
     <label
       className={cn(
@@ -19,7 +22,12 @@ export function Radio({ label, description, className, disabled, ...rest }: Radi
         className,
       )}
     >
-      <input type="radio" disabled={disabled} className="peer sr-only" {...rest} />
+      <input
+        type="radio"
+        disabled={disabled}
+        className="peer sr-only"
+        {...rest}
+      />
 
       <span
         aria-hidden="true"
@@ -38,7 +46,9 @@ export function Radio({ label, description, className, disabled, ...rest }: Radi
         <span className="min-w-0">
           {label && <span className="block text-sm text-fg">{label}</span>}
           {description && (
-            <span className="mt-0.5 block text-xs text-fg-muted">{description}</span>
+            <span className="mt-0.5 block text-xs text-fg-muted">
+              {description}
+            </span>
           )}
         </span>
       )}
@@ -52,7 +62,12 @@ export type RadioGroupProps = {
   name: string;
   value: string;
   onChange: (value: string) => void;
-  options: { value: string; label: ReactNode; description?: ReactNode; disabled?: boolean }[];
+  options: {
+    value: string;
+    label: ReactNode;
+    description?: ReactNode;
+    disabled?: boolean;
+  }[];
   error?: string;
   className?: string;
 };

@@ -1,4 +1,4 @@
-import { useId, useState, type ReactNode } from "react";
+import { type ReactNode, useId, useState } from "react";
 import { cn } from "./cn";
 
 export type TooltipProps = {
@@ -20,11 +20,17 @@ const SIDE = {
  * bat buoc phai doc — chi dung cho phan giai thich them. Viec gi quan trong
  * thi viet thang ra man hinh.
  */
-export function Tooltip({ label, side = "top", children, className }: TooltipProps) {
+export function Tooltip({
+  label,
+  side = "top",
+  children,
+  className,
+}: TooltipProps) {
   const [open, setOpen] = useState(false);
   const id = useId();
 
   return (
+    // biome-ignore lint/a11y/noStaticElementInteractions: hover and focus listeners only toggle the hint
     <span
       className={cn("relative inline-flex", className)}
       onPointerEnter={() => setOpen(true)}

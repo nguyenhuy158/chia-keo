@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { type ReactNode, useState } from "react";
 import { cn } from "./cn";
 
 export type Column<TRow> = {
@@ -21,8 +21,14 @@ const collator = new Intl.Collator("vi", { numeric: true });
 function SortIcon({ dir }: { dir?: "asc" | "desc" }) {
   return (
     <svg viewBox="0 0 10 14" aria-hidden="true" className="h-3 w-2.5 shrink-0">
-      <path d="M5 1 9 5H1z" className={dir === "asc" ? "fill-fg" : "fill-fg-muted/40"} />
-      <path d="M5 13 1 9h8z" className={dir === "desc" ? "fill-fg" : "fill-fg-muted/40"} />
+      <path
+        d="M5 1 9 5H1z"
+        className={dir === "asc" ? "fill-fg" : "fill-fg-muted/40"}
+      />
+      <path
+        d="M5 13 1 9h8z"
+        className={dir === "desc" ? "fill-fg" : "fill-fg-muted/40"}
+      />
     </svg>
   );
 }
@@ -58,23 +64,35 @@ export function Table<TRow>({
 
   const sortColumn = sort && columns.find((column) => column.key === sort.key);
   const sortValue = sortColumn?.sortValue;
-  const sorted = sort && sortValue
-    ? [...rows].sort((rowA, rowB) => {
-        const a = sortValue(rowA);
-        const b = sortValue(rowB);
-        const result =
-          typeof a === "number" && typeof b === "number" ? a - b : collator.compare(String(a), String(b));
-        return sort.dir === "asc" ? result : -result;
-      })
-    : rows;
+  const sorted =
+    sort && sortValue
+      ? [...rows].sort((rowA, rowB) => {
+          const a = sortValue(rowA);
+          const b = sortValue(rowB);
+          const result =
+            typeof a === "number" && typeof b === "number"
+              ? a - b
+              : collator.compare(String(a), String(b));
+          return sort.dir === "asc" ? result : -result;
+        })
+      : rows;
 
   const toggleSort = (key: string) =>
     setSort((current) =>
-      current?.key !== key ? { key, dir: "asc" } : current.dir === "asc" ? { key, dir: "desc" } : null,
+      current?.key !== key
+        ? { key, dir: "asc" }
+        : current.dir === "asc"
+          ? { key, dir: "desc" }
+          : null,
     );
 
   return (
-    <div className={cn("overflow-x-auto rounded-ui border border-border", className)}>
+    <div
+      className={cn(
+        "overflow-x-auto rounded-ui border border-border",
+        className,
+      )}
+    >
       <table className="w-full border-collapse text-sm">
         <thead>
           <tr className="border-b border-border bg-surface-muted">
@@ -85,7 +103,13 @@ export function Table<TRow>({
                 <th
                   key={column.key}
                   scope="col"
-                  aria-sort={dir ? (dir === "asc" ? "ascending" : "descending") : undefined}
+                  aria-sort={
+                    dir
+                      ? dir === "asc"
+                        ? "ascending"
+                        : "descending"
+                      : undefined
+                  }
                   className={cn(
                     "sticky top-0 z-10 bg-surface-muted px-3 py-2.5 text-xs font-semibold uppercase tracking-wide text-fg-muted",
                     right ? "text-right" : "text-left",
@@ -121,7 +145,8 @@ export function Table<TRow>({
               onClick={onRowClick ? () => onRowClick(row) : undefined}
               className={cn(
                 "bg-surface",
-                onRowClick && "cursor-pointer transition hover:bg-surface-muted",
+                onRowClick &&
+                  "cursor-pointer transition hover:bg-surface-muted",
               )}
             >
               {columns.map((column) => (
@@ -130,7 +155,9 @@ export function Table<TRow>({
                   className={cn(
                     "px-3 py-3 text-fg",
                     column.numeric && "tabular",
-                    column.numeric || column.align === "right" ? "text-right" : "text-left",
+                    column.numeric || column.align === "right"
+                      ? "text-right"
+                      : "text-left",
                     column.hideOnMobile && "hidden sm:table-cell",
                   )}
                 >

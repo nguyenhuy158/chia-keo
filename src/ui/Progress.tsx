@@ -35,7 +35,9 @@ export function Progress({
       {(label || showValue) && (
         <div className="flex items-center justify-between text-xs">
           <span className="text-fg-muted">{label}</span>
-          {showValue && <span className="font-medium text-fg tabular">{percent}%</span>}
+          {showValue && (
+            <span className="font-medium text-fg tabular">{percent}%</span>
+          )}
         </div>
       )}
 
@@ -48,7 +50,10 @@ export function Progress({
       >
         <div
           style={{ width: `${percent}%` }}
-          className={cn("h-full rounded-full transition-[width] duration-300", TONE[tone])}
+          className={cn(
+            "h-full rounded-full transition-[width] duration-300",
+            TONE[tone],
+          )}
         />
       </div>
     </div>

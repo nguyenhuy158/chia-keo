@@ -29,7 +29,8 @@ export function TransferList({
     left: items.filter((item) => !selected.includes(item.value)),
     right: items.filter((item) => selected.includes(item.value)),
   };
-  const checkedOn = (side: Side) => columns[side].filter((item) => checked.has(item.value));
+  const checkedOn = (side: Side) =>
+    columns[side].filter((item) => checked.has(item.value));
 
   const toggle = (value: string) =>
     setChecked((current) => {
@@ -40,8 +41,15 @@ export function TransferList({
 
   const move = (from: Side) => {
     const moving = checkedOn(from).map((item) => item.value);
-    onChange(from === "left" ? [...selected, ...moving] : selected.filter((value) => !moving.includes(value)));
-    setChecked((current) => new Set([...current].filter((value) => !moving.includes(value))));
+    onChange(
+      from === "left"
+        ? [...selected, ...moving]
+        : selected.filter((value) => !moving.includes(value)),
+    );
+    setChecked(
+      (current) =>
+        new Set([...current].filter((value) => !moving.includes(value))),
+    );
   };
 
   const column = (side: Side, title: string) => {
@@ -68,7 +76,9 @@ export function TransferList({
           />
         </div>
         <div className="h-48 overflow-y-auto px-3">
-          {list.length === 0 && <p className="py-6 text-center text-sm text-fg-muted">Trống</p>}
+          {list.length === 0 && (
+            <p className="py-6 text-center text-sm text-fg-muted">Trống</p>
+          )}
           {list.map((item) => (
             <Checkbox
               key={item.value}
@@ -90,14 +100,26 @@ export function TransferList({
       onClick={() => move(from)}
       className="grid size-9 place-items-center rounded-ui border border-border bg-surface text-fg transition hover:bg-surface-muted disabled:cursor-not-allowed disabled:opacity-40"
     >
-      <svg viewBox="0 0 20 20" aria-hidden="true" className="size-4 max-sm:rotate-90" fill="none" stroke="currentColor" strokeWidth="2">
+      <svg
+        viewBox="0 0 20 20"
+        aria-hidden="true"
+        className="size-4 max-sm:rotate-90"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+      >
         <path d={path} strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     </button>
   );
 
   return (
-    <div className={cn("flex flex-col items-stretch gap-3 sm:flex-row sm:items-center", className)}>
+    <div
+      className={cn(
+        "flex flex-col items-stretch gap-3 sm:flex-row sm:items-center",
+        className,
+      )}
+    >
       {column("left", titles[0])}
       <div className="flex justify-center gap-2 sm:flex-col">
         {arrow("left", "Chuyển sang phải", "M7 4l6 6-6 6")}

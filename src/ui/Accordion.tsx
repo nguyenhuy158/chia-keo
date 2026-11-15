@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { type ReactNode, useState } from "react";
 import { cn } from "./cn";
 
 export type AccordionItem = {
@@ -16,7 +16,12 @@ export type AccordionProps = {
   className?: string;
 };
 
-export function Accordion({ items, defaultOpen = [], single = false, className }: AccordionProps) {
+export function Accordion({
+  items,
+  defaultOpen = [],
+  single = false,
+  className,
+}: AccordionProps) {
   const [open, setOpen] = useState<string[]>(defaultOpen);
 
   const toggle = (id: string) => {
@@ -27,7 +32,12 @@ export function Accordion({ items, defaultOpen = [], single = false, className }
   };
 
   return (
-    <div className={cn("divide-y divide-border rounded-ui border border-border bg-surface", className)}>
+    <div
+      className={cn(
+        "divide-y divide-border rounded-ui border border-border bg-surface",
+        className,
+      )}
+    >
       {items.map((item) => {
         const isOpen = open.includes(item.id);
 
@@ -54,13 +64,21 @@ export function Accordion({ items, defaultOpen = [], single = false, className }
                   isOpen && "rotate-180",
                 )}
               >
-                <path d="M6 8l4 4 4-4" strokeLinecap="round" strokeLinejoin="round" />
+                <path
+                  d="M6 8l4 4 4-4"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
               </svg>
             </button>
 
             {/* Thao han khoi DOM khi dong, khong chi an di: tranh Tab lac vao
                 phan dang an va tranh render thua noi dung nang. */}
-            {isOpen && <div className="px-4 pb-4 text-sm text-fg-muted">{item.content}</div>}
+            {isOpen && (
+              <div className="px-4 pb-4 text-sm text-fg-muted">
+                {item.content}
+              </div>
+            )}
           </div>
         );
       })}

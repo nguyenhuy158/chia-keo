@@ -1,11 +1,11 @@
 import {
   createContext,
+  type ReactNode,
   useCallback,
   useContext,
   useMemo,
   useRef,
   useState,
-  type ReactNode,
 } from "react";
 import { createPortal } from "react-dom";
 import { cn } from "./cn";
@@ -64,9 +64,13 @@ export function ToastProvider({
     (tone: ToastTone, message: string, options?: ToastOptions) => {
       const id = nextId.current;
       nextId.current += 1;
-      setToasts((list) => [...list, { id, tone, message, description: options?.description }]);
+      setToasts((list) => [
+        ...list,
+        { id, tone, message, description: options?.description },
+      ]);
       // Loi thuong can doc ky hon nen de lau gap doi.
-      const ms = options?.duration ?? (tone === "error" ? duration * 2 : duration);
+      const ms =
+        options?.duration ?? (tone === "error" ? duration * 2 : duration);
       window.setTimeout(() => dismiss(id), ms);
     },
     [dismiss, duration],

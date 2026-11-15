@@ -90,14 +90,32 @@ export function FileUpload({
           "flex w-full flex-col items-center gap-1 rounded-ui border border-dashed px-4 py-8 text-center transition",
           "outline-none focus-visible:ring-2 focus-visible:ring-ring",
           "disabled:cursor-not-allowed disabled:opacity-60",
-          dragging ? "border-primary bg-primary-soft" : "border-border bg-surface hover:bg-surface-muted",
+          dragging
+            ? "border-primary bg-primary-soft"
+            : "border-border bg-surface hover:bg-surface-muted",
         )}
       >
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-6 w-6 text-fg-muted">
-          <path d="M12 16V4m0 0L8 8m4-4l4 4" strokeLinecap="round" strokeLinejoin="round" />
-          <path d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2" strokeLinecap="round" />
+        <svg
+          aria-hidden="true"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          className="h-6 w-6 text-fg-muted"
+        >
+          <path
+            d="M12 16V4m0 0L8 8m4-4l4 4"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <path
+            d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2"
+            strokeLinecap="round"
+          />
         </svg>
-        <span className="text-sm font-medium text-fg">Kéo tệp vào đây hoặc bấm để chọn</span>
+        <span className="text-sm font-medium text-fg">
+          Kéo tệp vào đây hoặc bấm để chọn
+        </span>
         <span className="text-xs text-fg-muted">
           {accept ? `Chấp nhận: ${accept}` : "Mọi định dạng"}
           {maxSize ? ` · tối đa ${formatBytes(maxSize)} mỗi tệp` : ""}
@@ -127,10 +145,18 @@ export function FileUpload({
       {files.length > 0 && (
         <ul className="divide-y divide-border rounded-ui border border-border bg-surface">
           {files.map((file, index) => (
-            <li key={`${file.name}-${index}`} className="flex items-center gap-3 px-3 py-2.5">
+            <li
+              // biome-ignore lint/suspicious/noArrayIndexKey: file names can repeat, so the index disambiguates
+              key={`${file.name}-${index}`}
+              className="flex items-center gap-3 px-3 py-2.5"
+            >
               <span className="min-w-0 flex-1">
-                <span className="block truncate text-sm text-fg">{file.name}</span>
-                <span className="block text-xs text-fg-muted tabular">{formatBytes(file.size)}</span>
+                <span className="block truncate text-sm text-fg">
+                  {file.name}
+                </span>
+                <span className="block text-xs text-fg-muted tabular">
+                  {formatBytes(file.size)}
+                </span>
               </span>
               <button
                 type="button"
@@ -138,7 +164,14 @@ export function FileUpload({
                 aria-label={`Xoá ${file.name}`}
                 className="grid h-9 w-9 shrink-0 place-items-center rounded-ui text-fg-muted transition hover:bg-surface-muted hover:text-danger"
               >
-                <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.75" className="h-4 w-4">
+                <svg
+                  aria-hidden="true"
+                  viewBox="0 0 20 20"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.75"
+                  className="h-4 w-4"
+                >
                   <path d="M6 6l8 8M14 6l-8 8" strokeLinecap="round" />
                 </svg>
               </button>

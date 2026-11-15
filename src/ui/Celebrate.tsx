@@ -34,6 +34,7 @@ export function Celebrate({ children, className }: CelebrateProps) {
       >
         {Array.from({ length: PIECE_COUNT }, (_, index) => (
           <span
+            // biome-ignore lint/suspicious/noArrayIndexKey: fixed-size decorative pieces, never reordered
             key={index}
             data-celebrate-piece=""
             className={cn(

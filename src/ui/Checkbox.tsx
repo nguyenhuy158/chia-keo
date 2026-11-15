@@ -39,7 +39,13 @@ export function Checkbox({
         className,
       )}
     >
-      <input ref={ref} type="checkbox" disabled={disabled} className="peer sr-only" {...rest} />
+      <input
+        ref={ref}
+        type="checkbox"
+        disabled={disabled}
+        className="peer sr-only"
+        {...rest}
+      />
 
       <span
         aria-hidden="true"
@@ -53,11 +59,22 @@ export function Checkbox({
           "peer-focus-visible:ring-2 peer-focus-visible:ring-ring",
         )}
       >
-        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2.5" className="h-3.5 w-3.5">
+        <svg
+          aria-hidden="true"
+          viewBox="0 0 16 16"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.5"
+          className="h-3.5 w-3.5"
+        >
           {indeterminate ? (
             <path d="M4 8h8" strokeLinecap="round" />
           ) : (
-            <path d="M3.5 8.5l3 3 6-6.5" strokeLinecap="round" strokeLinejoin="round" />
+            <path
+              d="M3.5 8.5l3 3 6-6.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
           )}
         </svg>
       </span>
@@ -66,7 +83,9 @@ export function Checkbox({
         <span className="min-w-0">
           {label && <span className="block text-sm text-fg">{label}</span>}
           {description && (
-            <span className="mt-0.5 block text-xs text-fg-muted">{description}</span>
+            <span className="mt-0.5 block text-xs text-fg-muted">
+              {description}
+            </span>
           )}
         </span>
       )}
