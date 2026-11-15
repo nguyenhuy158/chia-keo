@@ -1,5 +1,9 @@
 import { forwardRef } from "react";
-import { formatMoney, parseMoney, sanitizeMoneyInput } from "../core/domain/money";
+import {
+  formatMoney,
+  parseMoney,
+  sanitizeMoneyInput,
+} from "../core/domain/money";
 
 type MoneyInputProps = {
   value: string;
@@ -18,35 +22,48 @@ type MoneyInputProps = {
  * ket qua cuoi hien o dong preview nho duoi o, gia tri thuc luc luu doc bang
  * `parseMoney` (xem core/domain/money.ts).
  */
-export const MoneyInput = forwardRef<HTMLInputElement, MoneyInputProps>(function MoneyInput(
-  { value, onChange, onBlur, placeholder, id, name, className = "", "aria-label": ariaLabel },
-  ref,
-) {
-  const showPreview = value.trim().length > 0;
-  const preview = showPreview ? parseMoney(value) : 0;
+export const MoneyInput = forwardRef<HTMLInputElement, MoneyInputProps>(
+  function MoneyInput(
+    {
+      value,
+      onChange,
+      onBlur,
+      placeholder,
+      id,
+      name,
+      className = "",
+      "aria-label": ariaLabel,
+    },
+    ref,
+  ) {
+    const showPreview = value.trim().length > 0;
+    const preview = showPreview ? parseMoney(value) : 0;
 
-  return (
-    <div className="flex flex-col gap-0.5">
-      <input
-        ref={ref}
-        id={id}
-        name={name}
-        aria-label={ariaLabel}
-        className={`field tabular ${className}`}
-        inputMode="text"
-        autoComplete="off"
-        placeholder={placeholder}
-        value={value}
-        // Chi loc ky tu la; khong tu them dau phan nhom hay tu tinh vao chinh
-        // o nhap — nguoi dung go gi thay gi, ket qua cuoi xem o dong preview.
-        onChange={(event) => onChange(sanitizeMoneyInput(event.target.value))}
-        onBlur={onBlur}
-      />
-      {showPreview && (
-        <span className="text-xs text-fg-muted">
-          {preview > 0 ? `= ${formatMoney(preview)}` : "Biểu thức chưa hợp lệ"}
-        </span>
-      )}
-    </div>
-  );
-});
+    return (
+      <div className="flex flex-col gap-0.5">
+        <input
+          ref={ref}
+          id={id}
+          name={name}
+          aria-label={ariaLabel}
+          className={`field tabular ${className}`}
+          inputMode="text"
+          autoComplete="off"
+          placeholder={placeholder}
+          value={value}
+          // Chi loc ky tu la; khong tu them dau phan nhom hay tu tinh vao chinh
+          // o nhap — nguoi dung go gi thay gi, ket qua cuoi xem o dong preview.
+          onChange={(event) => onChange(sanitizeMoneyInput(event.target.value))}
+          onBlur={onBlur}
+        />
+        {showPreview && (
+          <span className="text-xs text-fg-muted">
+            {preview > 0
+              ? `= ${formatMoney(preview)}`
+              : "Biểu thức chưa hợp lệ"}
+          </span>
+        )}
+      </div>
+    );
+  },
+);

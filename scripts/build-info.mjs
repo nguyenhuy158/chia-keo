@@ -32,7 +32,10 @@ function git(...args) {
  */
 const env = process.env;
 const commit =
-  env.WORKERS_CI_COMMIT_SHA || env.CF_PAGES_COMMIT_SHA || git("rev-parse", "HEAD") || UNKNOWN;
+  env.WORKERS_CI_COMMIT_SHA ||
+  env.CF_PAGES_COMMIT_SHA ||
+  git("rev-parse", "HEAD") ||
+  UNKNOWN;
 const branchFromGit = git("rev-parse", "--abbrev-ref", "HEAD");
 const info = {
   commit,

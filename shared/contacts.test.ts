@@ -6,7 +6,9 @@ import {
   normalizeContactName,
 } from "./contacts";
 
-function row(overrides: Partial<ContactSourceRow> & { name: string }): ContactSourceRow {
+function row(
+  overrides: Partial<ContactSourceRow> & { name: string },
+): ContactSourceRow {
   return {
     bankId: "",
     accountNo: "",
@@ -30,7 +32,11 @@ describe("buildContacts", () => {
   it("gop cung mot nguoi o nhieu cuoc chia thanh mot dong", () => {
     const contacts = buildContacts([
       row({ name: "Hồng", gameId: "g1" }),
-      row({ name: "hồng ", gameId: "g2", createdAt: "2026-02-01T00:00:00.000Z" }),
+      row({
+        name: "hồng ",
+        gameId: "g2",
+        createdAt: "2026-02-01T00:00:00.000Z",
+      }),
       row({ name: "Kiệt", gameId: "g1" }),
     ]);
 
@@ -58,7 +64,11 @@ describe("buildContacts", () => {
         accountName: "NGUYEN THI HONG",
         createdAt: "2026-01-01T00:00:00.000Z",
       }),
-      row({ name: "Hồng", gameId: "g2", createdAt: "2026-03-01T00:00:00.000Z" }),
+      row({
+        name: "Hồng",
+        gameId: "g2",
+        createdAt: "2026-03-01T00:00:00.000Z",
+      }),
     ]);
 
     expect(contacts[0]).toMatchObject({ bankId: "VCB", accountNo: "0123" });
@@ -99,7 +109,11 @@ describe("buildContacts", () => {
       row({ name: "Moi", gameId: "g2", createdAt: "2026-05-01T00:00:00.000Z" }),
     ]);
 
-    expect(contacts.map((contact) => contact.name)).toEqual(["Hay", "Moi", "Cu"]);
+    expect(contacts.map((contact) => contact.name)).toEqual([
+      "Hay",
+      "Moi",
+      "Cu",
+    ]);
   });
 
   it("cung so lan va cung thoi diem thi xep theo ten tieng Viet", () => {
@@ -157,7 +171,11 @@ describe("mergeContacts", () => {
   it("nguoi moi nhap chua di cuoc nao van co trong danh sach", () => {
     const merged = mergeContacts(book, []);
 
-    expect(merged[0]).toMatchObject({ name: "Hồng", gameCount: 0, source: "book" });
+    expect(merged[0]).toMatchObject({
+      name: "Hồng",
+      gameCount: 0,
+      source: "book",
+    });
     expect(merged[0].lastUsedAt).toBe("2026-06-01T00:00:00.000Z");
   });
 

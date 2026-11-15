@@ -24,7 +24,10 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 function post<T>(path: string, body?: unknown) {
-  return request<T>(path, { method: "POST", body: body ? JSON.stringify(body) : undefined });
+  return request<T>(path, {
+    method: "POST",
+    body: body ? JSON.stringify(body) : undefined,
+  });
 }
 
 function patch<T>(path: string, body: unknown) {
@@ -77,9 +80,12 @@ export function createHttpGameApi(): GameApiPort {
       remove: (contactId) => destroy(`/api/contacts/${contactId}`),
     },
     participants: {
-      create: (gameId, input) => post(`/api/games/${gameId}/participants`, input),
-      createMany: (gameId, input) => post(`/api/games/${gameId}/participants/batch`, input),
-      update: (participantId, input) => patch(`/api/participants/${participantId}`, input),
+      create: (gameId, input) =>
+        post(`/api/games/${gameId}/participants`, input),
+      createMany: (gameId, input) =>
+        post(`/api/games/${gameId}/participants/batch`, input),
+      update: (participantId, input) =>
+        patch(`/api/participants/${participantId}`, input),
       remove: (participantId) => destroy(`/api/participants/${participantId}`),
       reorder: (gameId, participantIds) =>
         patch(`/api/games/${gameId}/participants/reorder`, { participantIds }),
@@ -98,16 +104,22 @@ export function createHttpGameApi(): GameApiPort {
     },
     shareLinks: {
       rotate: (gameId) => post(`/api/games/${gameId}/share-links`),
-      setEnabled: (gameId, enabled) => patch(`/api/games/${gameId}/share-link`, { enabled }),
-      savePreview: (gameId, data) => post<void>(`/api/games/${gameId}/share-preview`, { data }),
+      setEnabled: (gameId, enabled) =>
+        patch(`/api/games/${gameId}/share-link`, { enabled }),
+      savePreview: (gameId, data) =>
+        post<void>(`/api/games/${gameId}/share-preview`, { data }),
     },
     collaborators: {
-      add: (gameId, email) => post(`/api/games/${gameId}/collaborators`, { email }),
+      add: (gameId, email) =>
+        post(`/api/games/${gameId}/collaborators`, { email }),
       remove: (gameId, collaboratorUserId) =>
         destroy(`/api/games/${gameId}/collaborators/${collaboratorUserId}`),
       removePending: (gameId, email) =>
-        destroy(`/api/games/${gameId}/collaborators/pending/${encodeURIComponent(email)}`),
-      listCandidates: (gameId) => request(`/api/games/${gameId}/collaborators/candidates`),
+        destroy(
+          `/api/games/${gameId}/collaborators/pending/${encodeURIComponent(email)}`,
+        ),
+      listCandidates: (gameId) =>
+        request(`/api/games/${gameId}/collaborators/candidates`),
     },
     photos: {
       list: (gameId) => request(`/api/games/${gameId}/photos`),
@@ -119,7 +131,8 @@ export function createHttpGameApi(): GameApiPort {
     share: {
       view: (token) => request(`/api/share/${token}`),
       photos: (token) => request(`/api/share/${token}/photos`),
-      photo: (token, photoId) => request(`/api/share/${token}/photos/${photoId}`),
+      photo: (token, photoId) =>
+        request(`/api/share/${token}/photos/${photoId}`),
       paymentOptions: (token) => request(`/api/share/${token}/payments`),
       createPayment: (token, participantIds) =>
         post(`/api/share/${token}/payments`, { participantIds }),
@@ -131,8 +144,10 @@ export function createHttpGameApi(): GameApiPort {
       revoke: (tokenId) => destroy(`/api/mcp-tokens/${tokenId}`),
     },
     ai: {
-      suggestExpense: (gameId, text) => post(`/api/ai/expense`, { gameId, text }),
-      scanReceipt: (gameId, image) => post(`/api/ai/receipt`, { gameId, image }),
+      suggestExpense: (gameId, text) =>
+        post(`/api/ai/expense`, { gameId, text }),
+      scanReceipt: (gameId, image) =>
+        post(`/api/ai/receipt`, { gameId, image }),
     },
   };
 }

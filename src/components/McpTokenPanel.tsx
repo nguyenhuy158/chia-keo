@@ -1,5 +1,13 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Check, ChevronDown, Copy, KeyRound, Plug, Trash2, TriangleAlert } from "lucide-react";
+import {
+  Check,
+  ChevronDown,
+  Copy,
+  KeyRound,
+  Plug,
+  Trash2,
+  TriangleAlert,
+} from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -52,7 +60,11 @@ const EXPIRY_OPTIONS: { label: string; value: number | null }[] = [
 ];
 
 const tokenFormSchema = z.object({
-  name: z.string().trim().min(1, "Nhập tên token").max(MCP_TOKEN_NAME_MAX_LENGTH),
+  name: z
+    .string()
+    .trim()
+    .min(1, "Nhập tên token")
+    .max(MCP_TOKEN_NAME_MAX_LENGTH),
   scopes: z.array(z.enum(MCP_SCOPES)).min(1, "Chọn ít nhất một quyền"),
   expiresInDays: z.number().int().nullable(),
 });
@@ -78,7 +90,8 @@ function tokenStatus(token: ApiMcpToken) {
 }
 
 const STATUS_CLASS = {
-  emerald: "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300",
+  emerald:
+    "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300",
   rose: "bg-rose-50 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300",
   stone: "bg-stone-100 text-stone-600 dark:bg-stone-800 dark:text-stone-300",
 };
@@ -104,7 +117,11 @@ function CopyButton({ value, label }: { value: string; label: string }) {
       aria-label={`Copy ${label}`}
       className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-md border border-stone-300 bg-white px-2.5 text-xs font-medium text-stone-700 transition hover:bg-stone-50 active:bg-stone-100 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-200 dark:hover:bg-stone-800"
     >
-      {copied ? <Check size={14} className="text-emerald-600" /> : <Copy size={14} />}
+      {copied ? (
+        <Check size={14} className="text-emerald-600" />
+      ) : (
+        <Copy size={14} />
+      )}
       Copy
     </button>
   );
@@ -114,19 +131,29 @@ function CopyButton({ value, label }: { value: string; label: string }) {
  * Ban token goc chi ton tai trong phan hoi cua request tao, khong lay lai duoc.
  * Hien no trong mot khoi rieng kem san lenh `claude mcp add` da dien san.
  */
-function SecretCard({ secret, onDismiss }: { secret: string; onDismiss: () => void }) {
+function SecretCard({
+  secret,
+  onDismiss,
+}: {
+  secret: string;
+  onDismiss: () => void;
+}) {
   const command = `claude mcp add --transport http chia-keo ${window.location.origin}/api/mcp --header "Authorization: Bearer ${secret}"`;
 
   return (
     <div className="rounded-lg border border-amber-300 bg-warning-soft p-4 dark:border-amber-500/40">
       <div className="flex items-start gap-2">
-        <TriangleAlert size={18} className="mt-0.5 shrink-0 text-amber-600 dark:text-amber-400" />
+        <TriangleAlert
+          size={18}
+          className="mt-0.5 shrink-0 text-amber-600 dark:text-amber-400"
+        />
         <div className="min-w-0 flex-1">
           <p className="text-sm font-semibold text-amber-900 dark:text-amber-200">
             Token chỉ hiện lần này
           </p>
           <p className="mt-1 text-xs text-amber-800 dark:text-amber-300/90">
-            Copy ngay và lưu lại. Đóng khối này là không xem lại được, chỉ còn cách tạo token mới.
+            Copy ngay và lưu lại. Đóng khối này là không xem lại được, chỉ còn
+            cách tạo token mới.
           </p>
 
           <div className="mt-3 flex items-center gap-2">
@@ -225,19 +252,24 @@ function TokenRow({ token }: { token: ApiMcpToken }) {
       <p className="mt-2 text-xs text-fg-muted">
         Tạo {formatDateTime(token.createdAt)}
         {" · "}
-        {token.lastUsedAt ? `dùng lần cuối ${formatDateTime(token.lastUsedAt)}` : "chưa dùng lần nào"}
+        {token.lastUsedAt
+          ? `dùng lần cuối ${formatDateTime(token.lastUsedAt)}`
+          : "chưa dùng lần nào"}
         {token.expiresAt && ` · hết hạn ${formatDateTime(token.expiresAt)}`}
       </p>
     </li>
   );
 }
 
-
 /**
  * Form tao token. Tren man hinh hep form dong san de trang chi con danh sach,
  * man hinh rong thi mo luon vi da xep hai cot.
  */
-function CreateTokenForm({ onCreated }: { onCreated: (secret: string) => void }) {
+function CreateTokenForm({
+  onCreated,
+}: {
+  onCreated: (secret: string) => void;
+}) {
   const createToken = useCreateMcpToken();
   const [open, setOpen] = useState(isDesktop);
 
@@ -251,7 +283,9 @@ function CreateTokenForm({ onCreated }: { onCreated: (secret: string) => void })
   function toggleScope(scope: McpScope) {
     form.setValue(
       "scopes",
-      scopes.includes(scope) ? scopes.filter((item) => item !== scope) : [...scopes, scope],
+      scopes.includes(scope)
+        ? scopes.filter((item) => item !== scope)
+        : [...scopes, scope],
       { shouldValidate: form.formState.isSubmitted },
     );
   }
@@ -265,7 +299,8 @@ function CreateTokenForm({ onCreated }: { onCreated: (secret: string) => void })
   });
 
   const error = createToken.error
-    ? ERROR_MESSAGE[createToken.error.message] || "Không tạo được token, thử lại sau."
+    ? ERROR_MESSAGE[createToken.error.message] ||
+      "Không tạo được token, thử lại sau."
     : null;
 
   return (
@@ -307,7 +342,9 @@ function CreateTokenForm({ onCreated }: { onCreated: (secret: string) => void })
           </p>
         )}
 
-        <p className="mt-3 text-xs font-medium text-stone-700 dark:text-stone-300">Quyền</p>
+        <p className="mt-3 text-xs font-medium text-stone-700 dark:text-stone-300">
+          Quyền
+        </p>
         <div className="mt-1.5 space-y-1.5">
           {MCP_SCOPES.map((scope) => (
             <label
@@ -337,7 +374,9 @@ function CreateTokenForm({ onCreated }: { onCreated: (secret: string) => void })
           </p>
         )}
 
-        <p className="mt-3 text-xs font-medium text-stone-700 dark:text-stone-300">Thời hạn</p>
+        <p className="mt-3 text-xs font-medium text-stone-700 dark:text-stone-300">
+          Thời hạn
+        </p>
         <div className="mt-1.5 flex flex-wrap gap-2">
           {EXPIRY_OPTIONS.map((option) => (
             <button
@@ -387,18 +426,23 @@ export function McpTokenPanel() {
     <div className="space-y-3">
       <section className="rounded-lg border border-border bg-surface px-4 py-3 shadow-sm">
         <div className="flex items-center gap-2">
-          <Plug size={17} className="shrink-0 text-violet-600 dark:text-violet-400" />
+          <Plug
+            size={17}
+            className="shrink-0 text-violet-600 dark:text-violet-400"
+          />
           <h2 className="text-sm font-semibold text-stone-950 dark:text-stone-50">
             Kết nối Claude (MCP)
           </h2>
         </div>
         <p className="mt-1 text-xs text-stone-600 dark:text-stone-400">
-          Token cho Claude Code / Claude Desktop đọc dữ liệu chia tiền của bạn. Mọi tool đều chỉ
-          đọc, và chỉ trong đúng các quyền bạn chọn lúc tạo.
+          Token cho Claude Code / Claude Desktop đọc dữ liệu chia tiền của bạn.
+          Mọi tool đều chỉ đọc, và chỉ trong đúng các quyền bạn chọn lúc tạo.
         </p>
       </section>
 
-      {secret && <SecretCard secret={secret} onDismiss={() => setSecret(null)} />}
+      {secret && (
+        <SecretCard secret={secret} onDismiss={() => setSecret(null)} />
+      )}
 
       <div className="grid gap-3 lg:grid-cols-2">
         <CreateTokenForm onCreated={setSecret} />

@@ -169,12 +169,10 @@ describe("standalone React Query hooks", () => {
     expect(client.getQueryData(sessionKeys.all)).toEqual({ user: null });
     vi.stubGlobal(
       "fetch",
-      vi
-        .fn()
-        .mockResolvedValue({
-          ok: true,
-          json: () => Promise.resolve({ name: "New" }),
-        }),
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ name: "New" }),
+      }),
     );
     await act(async () => {
       await current().mutateAsync("New");

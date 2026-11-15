@@ -39,5 +39,7 @@ export function useCreateShuttleEntry() {
 }
 
 export function useDeleteShuttleEntry() {
-  return useShuttleMutation((entryId: string) => getGameApi().shuttles.removeEntry(entryId));
+  return useShuttleMutation((entryId: string) =>
+    getGameApi().shuttles.removeEntry(entryId),
+  );
 }

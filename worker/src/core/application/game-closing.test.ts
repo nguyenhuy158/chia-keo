@@ -9,8 +9,14 @@ import {
   gameRow,
   participantRow,
 } from "./fake-game-repository";
-import { closeGame, listAllGames, listClosedGames, listGames, reopenGame } from "./games";
 import { countRealExpenses } from "./game-closing";
+import {
+  closeGame,
+  listAllGames,
+  listClosedGames,
+  listGames,
+  reopenGame,
+} from "./games";
 
 const AN = "participant_an";
 const BINH = "participant_binh";
@@ -60,7 +66,12 @@ describe("tu dong dong", () => {
   });
 
   it("cuoc vua tao chua co khoan chi thi khong tu dong dong", async () => {
-    const detail = await addExpense(fake.repo, FAKE_OWNER, FAKE_GAME_ID, expenseInput());
+    const detail = await addExpense(
+      fake.repo,
+      FAKE_OWNER,
+      FAKE_GAME_ID,
+      expenseInput(),
+    );
 
     // Co khoan chi nhung con lech -> dang choi.
     expect(detail.closedAt).toBeNull();
@@ -137,13 +148,17 @@ describe("closeGame", () => {
   });
 
   it("chi chu cuoc choi dong duoc", async () => {
-    await expect(closeGame(fake.repo, OTHER_USER, FAKE_GAME_ID)).rejects.toThrow(NotFoundError);
+    await expect(
+      closeGame(fake.repo, OTHER_USER, FAKE_GAME_ID),
+    ).rejects.toThrow(NotFoundError);
   });
 
   it("dong hai lan la loi trang thai", async () => {
     await closeGame(fake.repo, FAKE_OWNER, FAKE_GAME_ID);
 
-    await expect(closeGame(fake.repo, FAKE_OWNER, FAKE_GAME_ID)).rejects.toThrow(BadRequestError);
+    await expect(
+      closeGame(fake.repo, FAKE_OWNER, FAKE_GAME_ID),
+    ).rejects.toThrow(BadRequestError);
   });
 });
 
@@ -165,13 +180,17 @@ describe("reopenGame", () => {
   });
 
   it("mo cuoc dang choi la loi trang thai", async () => {
-    await expect(reopenGame(fake.repo, FAKE_OWNER, FAKE_GAME_ID)).rejects.toThrow(BadRequestError);
+    await expect(
+      reopenGame(fake.repo, FAKE_OWNER, FAKE_GAME_ID),
+    ).rejects.toThrow(BadRequestError);
   });
 
   it("chi chu cuoc choi mo lai duoc", async () => {
     await closeGame(fake.repo, FAKE_OWNER, FAKE_GAME_ID);
 
-    await expect(reopenGame(fake.repo, OTHER_USER, FAKE_GAME_ID)).rejects.toThrow(NotFoundError);
+    await expect(
+      reopenGame(fake.repo, OTHER_USER, FAKE_GAME_ID),
+    ).rejects.toThrow(NotFoundError);
   });
 });
 
@@ -180,9 +199,9 @@ describe("danh sach cuoc choi", () => {
     const fake = twoPeople();
     await addDebt(fake);
 
-    expect((await listGames(fake.repo, FAKE_OWNER)).map((game) => game.id)).toEqual([
-      FAKE_GAME_ID,
-    ]);
+    expect(
+      (await listGames(fake.repo, FAKE_OWNER)).map((game) => game.id),
+    ).toEqual([FAKE_GAME_ID]);
     expect(await listClosedGames(fake.repo, FAKE_OWNER)).toEqual([]);
 
     await closeGame(fake.repo, FAKE_OWNER, FAKE_GAME_ID);
@@ -198,8 +217,8 @@ describe("danh sach cuoc choi", () => {
     await addDebt(fake);
     await closeGame(fake.repo, FAKE_OWNER, FAKE_GAME_ID);
 
-    expect((await listAllGames(fake.repo, FAKE_OWNER)).map((game) => game.id)).toEqual([
-      FAKE_GAME_ID,
-    ]);
+    expect(
+      (await listAllGames(fake.repo, FAKE_OWNER)).map((game) => game.id),
+    ).toEqual([FAKE_GAME_ID]);
   });
 });

@@ -17,8 +17,15 @@ import {
   type SummaryTextInput,
   type SummaryVariant,
 } from "../../shared/summary-text";
-import { copyImage, copyText, downloadBlob } from "../adapters/browser/clipboard";
-import { buildSummaryImageFileName, renderSummaryImage } from "../adapters/browser/summary-image";
+import {
+  copyImage,
+  copyText,
+  downloadBlob,
+} from "../adapters/browser/clipboard";
+import {
+  buildSummaryImageFileName,
+  renderSummaryImage,
+} from "../adapters/browser/summary-image";
 import { SummaryBackgroundPicker } from "./SummaryBackgroundPicker";
 import { useSummaryImageBackground } from "./use-summary-image-background";
 
@@ -54,7 +61,10 @@ type CopyMenuProps = {
 function computePosition(trigger: HTMLElement): MenuPosition {
   const rect = trigger.getBoundingClientRect();
   const maxLeft = window.innerWidth - MENU_WIDTH - VIEWPORT_MARGIN;
-  const left = Math.max(VIEWPORT_MARGIN, Math.min(rect.right - MENU_WIDTH, maxLeft));
+  const left = Math.max(
+    VIEWPORT_MARGIN,
+    Math.min(rect.right - MENU_WIDTH, maxLeft),
+  );
   const openUp = rect.bottom + MENU_HEIGHT_ESTIMATE > window.innerHeight;
 
   return openUp
@@ -75,7 +85,11 @@ export function CopyMenu({ input, className, onShare }: CopyMenuProps) {
 
     function handlePointerDown(event: PointerEvent) {
       const target = event.target as Node;
-      if (menuRef.current?.contains(target) || triggerRef.current?.contains(target)) return;
+      if (
+        menuRef.current?.contains(target) ||
+        triggerRef.current?.contains(target)
+      )
+        return;
       setPosition(null);
     }
     function handleKeyDown(event: KeyboardEvent) {
@@ -114,7 +128,9 @@ export function CopyMenu({ input, className, onShare }: CopyMenuProps) {
 
   async function copyShareLink() {
     const ok = await copyText(input.shareUrl!);
-    (ok ? toast.success : toast.error)(ok ? "Đã sao chép link" : "Không sao chép được link");
+    (ok ? toast.success : toast.error)(
+      ok ? "Đã sao chép link" : "Không sao chép được link",
+    );
   }
 
   async function copySummaryImage(variant: SummaryVariant = "compact") {
@@ -204,14 +220,23 @@ export function CopyMenu({ input, className, onShare }: CopyMenuProps) {
       <button
         ref={triggerRef}
         type="button"
-        onClick={() => setPosition(open || !triggerRef.current ? null : computePosition(triggerRef.current))}
+        onClick={() =>
+          setPosition(
+            open || !triggerRef.current
+              ? null
+              : computePosition(triggerRef.current),
+          )
+        }
         aria-haspopup="menu"
         aria-expanded={open}
         className={className || TRIGGER_CLASS}
       >
         <Copy size={16} />
         Copy
-        <ChevronDown size={15} className={open ? "rotate-180 transition" : "transition"} />
+        <ChevronDown
+          size={15}
+          className={open ? "rotate-180 transition" : "transition"}
+        />
       </button>
 
       {position &&
@@ -223,7 +248,10 @@ export function CopyMenu({ input, className, onShare }: CopyMenuProps) {
             className="z-[70] overflow-hidden rounded-xl border border-stone-200 bg-surface p-1 shadow-xl animate-[overlay-in_120ms_ease] dark:border-stone-700"
           >
             <div className="border-b border-stone-200 px-3 pb-2.5 pt-2 dark:border-stone-700">
-              <SummaryBackgroundPicker value={backgroundId} onChange={chooseBackground} />
+              <SummaryBackgroundPicker
+                value={backgroundId}
+                onChange={chooseBackground}
+              />
             </div>
 
             {actions.map((action) => {
@@ -236,7 +264,10 @@ export function CopyMenu({ input, className, onShare }: CopyMenuProps) {
                   onClick={() => handleSelect(action)}
                   className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition hover:bg-stone-100 active:bg-stone-200 dark:hover:bg-stone-800 dark:active:bg-stone-700"
                 >
-                  <Icon size={18} className="shrink-0 text-violet-600 dark:text-violet-400" />
+                  <Icon
+                    size={18}
+                    className="shrink-0 text-violet-600 dark:text-violet-400"
+                  />
                   <span className="min-w-0">
                     <span className="block text-sm font-medium text-stone-950 dark:text-stone-50">
                       {action.label}

@@ -1,11 +1,21 @@
-import type { ApiCrossGameBalances, ApiCrossGamePerson } from "../../../../shared/api-types";
+import type {
+  ApiCrossGameBalances,
+  ApiCrossGamePerson,
+} from "../../../../shared/api-types";
 import { normalizeContactName } from "../../../../shared/contacts";
 import { capitalizeName } from "../../../../shared/schemas";
 import type { BalanceRow } from "../../../../shared/split";
-import { calculateBalances, calculateSettlements } from "../../../../shared/split";
+import {
+  calculateBalances,
+  calculateSettlements,
+} from "../../../../shared/split";
 import type { GameRepository, GameRow } from "../ports/game-repository";
 import { BadRequestError, NotFoundError } from "./errors";
-import { groupSplitsByExpenseId, sumTotalExpense, toExpenseInputs } from "./game-detail";
+import {
+  groupSplitsByExpenseId,
+  sumTotalExpense,
+  toExpenseInputs,
+} from "./game-detail";
 
 /**
  * Tran so cuoc chia gop mot luot. Moi cuoc ton 3 truy van D1, va Workers gioi
@@ -25,7 +35,9 @@ type PersonAccumulator = {
 async function loadGameBalances(repo: GameRepository, game: GameRow) {
   const participantRows = await repo.participants.listByGame(game.id);
   const expenseRows = await repo.expenses.listByGame(game.id);
-  const splitRows = await repo.splits.listByExpenseIds(expenseRows.map((row) => row.id));
+  const splitRows = await repo.splits.listByExpenseIds(
+    expenseRows.map((row) => row.id),
+  );
 
   const balances = calculateBalances(
     participantRows.map((row) => row.id),
@@ -83,7 +95,9 @@ export async function getBalancesAcrossGames(
     omittedCount = allGames.length - selected.length;
   }
 
-  const loaded = await Promise.all(selected.map((game) => loadGameBalances(repo, game)));
+  const loaded = await Promise.all(
+    selected.map((game) => loadGameBalances(repo, game)),
+  );
 
   const byPerson = new Map<string, PersonAccumulator>();
   let totalExpense = 0;
@@ -98,10 +112,19 @@ export async function getBalancesAcrossGames(
       const key = normalizeContactName(row.name);
       if (key === "") continue;
 
-      const person = byPerson.get(key) || { name: row.name, paid: 0, owed: 0, games: [] };
+      const person = byPerson.get(key) || {
+        name: row.name,
+        paid: 0,
+        owed: 0,
+        games: [],
+      };
       person.paid += row.paid;
       person.owed += row.owed;
-      person.games.push({ code: game.code, name: game.name, balance: row.balance });
+      person.games.push({
+        code: game.code,
+        name: game.name,
+        balance: row.balance,
+      });
       byPerson.set(key, person);
     }
   });
@@ -140,7 +163,9 @@ export async function getBalancesAcrossGames(
     // su chi tham gia mot cuoc, hoac ten bi go khac nhau nen khong gop duoc.
     namesInOneGameOnly:
       selected.length > 1
-        ? people.filter((person) => person.games.length === 1).map((person) => person.name)
+        ? people
+            .filter((person) => person.games.length === 1)
+            .map((person) => person.name)
         : [],
   };
 }

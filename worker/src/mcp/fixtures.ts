@@ -33,14 +33,16 @@ export const game: GameRow = {
   closeMode: "",
 };
 
-export const participants: ParticipantRow[] = ["Huy", "Hường", "Hồng"].map((name, index) => ({
-  id: `p${index}`,
-  gameId: game.id,
-  name,
-  sequence: index,
-  createdAt: game.createdAt,
-  updatedAt: game.createdAt,
-}));
+export const participants: ParticipantRow[] = ["Huy", "Hường", "Hồng"].map(
+  (name, index) => ({
+    id: `p${index}`,
+    gameId: game.id,
+    name,
+    sequence: index,
+    createdAt: game.createdAt,
+    updatedAt: game.createdAt,
+  }),
+);
 
 const expenseRow: ExpenseRow = {
   id: "e0",
@@ -145,7 +147,8 @@ export function fakeRepo(
     twoGames?: boolean;
   } = {},
 ): GameRepository {
-  const link = overrides.shareLink === undefined ? shareLink : overrides.shareLink;
+  const link =
+    overrides.shareLink === undefined ? shareLink : overrides.shareLink;
   const tokens = overrides.tokens || [];
   const games = overrides.twoGames ? [game, secondGame] : [game];
   const unused = (name: string) => () => {
@@ -154,9 +157,11 @@ export function fakeRepo(
 
   return {
     mcpTokens: {
-      listByUser: async (userId) => tokens.filter((token) => token.userId === userId),
+      listByUser: async (userId) =>
+        tokens.filter((token) => token.userId === userId),
       countActiveByUser: async (userId) =>
-        tokens.filter((token) => token.userId === userId && !token.revokedAt).length,
+        tokens.filter((token) => token.userId === userId && !token.revokedAt)
+          .length,
       findByHash: async (hash) =>
         tokens.find((token) => token.tokenHash === hash) || null,
       insert: async (row) => {
@@ -164,7 +169,8 @@ export function fakeRepo(
       },
       revoke: async (tokenId, userId, revokedAt) => {
         const found = tokens.find(
-          (token) => token.id === tokenId && token.userId === userId && !token.revokedAt,
+          (token) =>
+            token.id === tokenId && token.userId === userId && !token.revokedAt,
         );
         if (!found) return false;
         found.revokedAt = revokedAt;

@@ -15,8 +15,14 @@ function balance(participantId: string, value: number): BalanceRow {
 }
 
 const OPEN = { closedAt: null, closeMode: CLOSE_MODE_NONE } as const;
-const CLOSED_AUTO = { closedAt: "2026-01-01T00:00:00.000Z", closeMode: "auto" } as const;
-const CLOSED_MANUAL = { closedAt: "2026-01-01T00:00:00.000Z", closeMode: "manual" } as const;
+const CLOSED_AUTO = {
+  closedAt: "2026-01-01T00:00:00.000Z",
+  closeMode: "auto",
+} as const;
+const CLOSED_MANUAL = {
+  closedAt: "2026-01-01T00:00:00.000Z",
+  closeMode: "manual",
+} as const;
 
 describe("toCloseMode", () => {
   it("ep gia tri la ve rong", () => {
@@ -37,7 +43,9 @@ describe("isFullySettled", () => {
   });
 
   it("con ai lech thi chua xong", () => {
-    expect(isFullySettled([balance("p1", 50_000), balance("p2", -50_000)], 2)).toBe(false);
+    expect(
+      isFullySettled([balance("p1", 50_000), balance("p2", -50_000)], 2),
+    ).toBe(false);
   });
 });
 

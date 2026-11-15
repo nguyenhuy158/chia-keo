@@ -1,4 +1,10 @@
-import { sqliteTable, text, integer, uniqueIndex, index } from "drizzle-orm/sqlite-core";
+import {
+  index,
+  integer,
+  sqliteTable,
+  text,
+  uniqueIndex,
+} from "drizzle-orm/sqlite-core";
 
 // --- Better Auth tables ---
 
@@ -6,7 +12,9 @@ export const user = sqliteTable("chiakeo_user", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
   email: text("email").notNull().unique(),
-  emailVerified: integer("email_verified", { mode: "boolean" }).notNull().default(false),
+  emailVerified: integer("email_verified", { mode: "boolean" })
+    .notNull()
+    .default(false),
   image: text("image"),
   createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
   updatedAt: integer("updated_at", { mode: "timestamp" }).notNull(),
@@ -43,8 +51,12 @@ export const account = sqliteTable(
     accessToken: text("access_token"),
     refreshToken: text("refresh_token"),
     idToken: text("id_token"),
-    accessTokenExpiresAt: integer("access_token_expires_at", { mode: "timestamp" }),
-    refreshTokenExpiresAt: integer("refresh_token_expires_at", { mode: "timestamp" }),
+    accessTokenExpiresAt: integer("access_token_expires_at", {
+      mode: "timestamp",
+    }),
+    refreshTokenExpiresAt: integer("refresh_token_expires_at", {
+      mode: "timestamp",
+    }),
     scope: text("scope"),
     password: text("password"),
     createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
@@ -158,7 +170,10 @@ export const expenseSplits = sqliteTable(
   },
   (table) => [
     index("chiakeo_expense_splits_expense_id_idx").on(table.expenseId),
-    uniqueIndex("chiakeo_expense_splits_expense_participant_idx").on(table.expenseId, table.participantId),
+    uniqueIndex("chiakeo_expense_splits_expense_participant_idx").on(
+      table.expenseId,
+      table.participantId,
+    ),
   ],
 );
 
@@ -170,7 +185,9 @@ export const gamePhotos = sqliteTable(
       .notNull()
       .references(() => games.id, { onDelete: "cascade" }),
     // Anh gan vao mot khoan chi (hoa don); null la anh chung cua cuoc chia.
-    expenseId: text("expense_id").references(() => expenses.id, { onDelete: "set null" }),
+    expenseId: text("expense_id").references(() => expenses.id, {
+      onDelete: "set null",
+    }),
     caption: text("caption").notNull().default(""),
     mimeType: text("mime_type").notNull(),
     width: integer("width").notNull(),
@@ -211,7 +228,12 @@ export const contacts = sqliteTable(
     createdAt: text("created_at").notNull(),
     updatedAt: text("updated_at").notNull(),
   },
-  (table) => [uniqueIndex("chiakeo_contacts_owner_name_key_idx").on(table.ownerUserId, table.nameKey)],
+  (table) => [
+    uniqueIndex("chiakeo_contacts_owner_name_key_idx").on(
+      table.ownerUserId,
+      table.nameKey,
+    ),
+  ],
 );
 
 /**
@@ -282,9 +304,17 @@ export const gameCollaborators = sqliteTable(
   (table) => [
     index("chiakeo_game_collaborators_game_id_idx").on(table.gameId),
     index("chiakeo_game_collaborators_user_id_idx").on(table.userId),
-    index("chiakeo_game_collaborators_invited_email_idx").on(table.invitedEmail),
-    uniqueIndex("chiakeo_game_collaborators_game_user_idx").on(table.gameId, table.userId),
-    uniqueIndex("chiakeo_game_collaborators_game_email_idx").on(table.gameId, table.invitedEmail),
+    index("chiakeo_game_collaborators_invited_email_idx").on(
+      table.invitedEmail,
+    ),
+    uniqueIndex("chiakeo_game_collaborators_game_user_idx").on(
+      table.gameId,
+      table.userId,
+    ),
+    uniqueIndex("chiakeo_game_collaborators_game_email_idx").on(
+      table.gameId,
+      table.invitedEmail,
+    ),
   ],
 );
 
@@ -335,7 +365,12 @@ export const userPreferences = sqliteTable(
     value: text("value").notNull(),
     updatedAt: text("updated_at").notNull(),
   },
-  (table) => [uniqueIndex("chiakeo_user_preferences_user_key_idx").on(table.userId, table.key)],
+  (table) => [
+    uniqueIndex("chiakeo_user_preferences_user_key_idx").on(
+      table.userId,
+      table.key,
+    ),
+  ],
 );
 
 /**
@@ -357,7 +392,9 @@ export const shuttleEntries = sqliteTable(
     note: text("note").notNull().default(""),
     createdAt: text("created_at").notNull(),
   },
-  (table) => [index("chiakeo_shuttle_entries_owner_id_idx").on(table.ownerUserId)],
+  (table) => [
+    index("chiakeo_shuttle_entries_owner_id_idx").on(table.ownerUserId),
+  ],
 );
 
 export const paymentProfiles = sqliteTable(
@@ -374,7 +411,11 @@ export const paymentProfiles = sqliteTable(
     createdAt: text("created_at").notNull(),
     updatedAt: text("updated_at").notNull(),
   },
-  (table) => [uniqueIndex("chiakeo_payment_profiles_participant_id_idx").on(table.participantId)],
+  (table) => [
+    uniqueIndex("chiakeo_payment_profiles_participant_id_idx").on(
+      table.participantId,
+    ),
+  ],
 );
 
 export const paymentRequests = sqliteTable(
@@ -408,5 +449,7 @@ export const paymentTransactions = sqliteTable(
     amount: integer("amount").notNull(),
     createdAt: text("created_at").notNull(),
   },
-  (table) => [index("chiakeo_payment_transactions_request_id_idx").on(table.requestId)],
+  (table) => [
+    index("chiakeo_payment_transactions_request_id_idx").on(table.requestId),
+  ],
 );

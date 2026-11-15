@@ -112,8 +112,14 @@ app.use(
   "/api/share/:token/payments",
   rateLimitPost("share-payment", PAYMENT_CREATE_RATE_LIMIT),
 );
-app.use("/share/:token", rateLimitMethods(["GET"], "share-page", SHARE_VIEW_RATE_LIMIT));
-app.use("/api/games/:gameId/share-preview", rateLimitPost("share-preview", CREATE_RATE_LIMIT));
+app.use(
+  "/share/:token",
+  rateLimitMethods(["GET"], "share-page", SHARE_VIEW_RATE_LIMIT),
+);
+app.use(
+  "/api/games/:gameId/share-preview",
+  rateLimitPost("share-preview", CREATE_RATE_LIMIT),
+);
 
 app.on(["GET", "POST"], `${AUTH_BASE_PATH}/*`, (c) =>
   createAuth(c.env, c.req.url).handler(c.req.raw),

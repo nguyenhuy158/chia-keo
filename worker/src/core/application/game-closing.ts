@@ -34,7 +34,10 @@ export async function syncAutoClose(
   balances: BalanceRow[],
   expenseCount: number,
 ): Promise<Pick<GameRow, "closedAt" | "closeMode"> | null> {
-  const state = { closedAt: game.closedAt, closeMode: toCloseMode(game.closeMode) };
+  const state = {
+    closedAt: game.closedAt,
+    closeMode: toCloseMode(game.closeMode),
+  };
   const settled = isFullySettled(balances, expenseCount);
 
   if (shouldAutoClose(state, settled)) {

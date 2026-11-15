@@ -6,10 +6,11 @@
 // - E2E_BASE_URL: mac dinh http://127.0.0.1:8787
 // - PLAYWRIGHT_CHROMIUM_PATH: duong dan chromium co san; bo trong de
 //   playwright-core tu tim (xem findChromium trong @huyab/e2e).
+
+import assert from "node:assert/strict";
 import { writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import assert from "node:assert/strict";
 import { findChromium } from "@huyab/e2e";
 import { chromium } from "playwright-core";
 
@@ -52,20 +53,23 @@ async function createJpegFixture() {
  * Chay trong trang de cookie thuoc dung origin cua app.
  */
 async function signUp(target, username) {
-  const result = await target.evaluate(async ({ name, password }) => {
-    const response = await fetch("/api/auth/sign-up/email", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify({
-        username: name,
-        name,
-        email: `${name}@e2e.local`,
-        password,
-      }),
-    });
-    return { status: response.status, body: await response.text() };
-  }, { name: username, password: E2E_PASSWORD });
+  const result = await target.evaluate(
+    async ({ name, password }) => {
+      const response = await fetch("/api/auth/sign-up/email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          username: name,
+          name,
+          email: `${name}@e2e.local`,
+          password,
+        }),
+      });
+      return { status: response.status, body: await response.text() };
+    },
+    { name: username, password: E2E_PASSWORD },
+  );
   if (result.status !== 200) {
     throw new Error(`sign-up that bai (${result.status}): ${result.body}`);
   }
@@ -73,7 +77,9 @@ async function signUp(target, username) {
 
 async function getGameDetail(target, gameId) {
   const result = await target.evaluate(async (id) => {
-    const response = await fetch(`/api/games/${id}`, { credentials: "include" });
+    const response = await fetch(`/api/games/${id}`, {
+      credentials: "include",
+    });
     return { status: response.status, body: await response.json() };
   }, gameId);
   assert.equal(result.status, 200);
@@ -94,7 +100,11 @@ async function acceptConfirm(target = page) {
 /** O anh thu `index` trong album (khung co huy hieu so luong dang "n/60"). */
 function albumTile(index) {
   // Layout boc ngoai cung cung la <section>, lay khung trong cung bang .last().
-  return page.locator('section:has(span:text("/60"))').last().locator("button").nth(index);
+  return page
+    .locator('section:has(span:text("/60"))')
+    .last()
+    .locator("button")
+    .nth(index);
 }
 
 const browser = await chromium.launch({
@@ -162,7 +172,9 @@ try {
   if (qrCount !== 1) throw new Error(`expected 1 QR image, got ${qrCount}`);
   ok("settlement + VietQR shown");
 
-  await page.context().grantPermissions(["clipboard-read", "clipboard-write"], { origin: BASE });
+  await page
+    .context()
+    .grantPermissions(["clipboard-read", "clipboard-write"], { origin: BASE });
   await page.getByRole("button", { name: "Copy lời nhắc cho Binh" }).click();
   await page.waitForSelector("text=Đã sao chép lời nhắc", WAIT);
   assert.equal(
@@ -187,48 +199,92 @@ try {
     'Binh ơi, bạn chuyển 110.000 ₫ cho An cho kèo "E2E Trip" nhé.',
   );
   await page.click('button:has-text("Nhiều chiều")');
-  await page.waitForSelector('button[aria-pressed="true"]:has-text("Nhiều chiều")', WAIT);
-  await page.waitForFunction(async (id) => {
-    const response = await fetch(`/api/games/${id}`, { credentials: "include" });
-    return (await response.json()).settlementMode === "p2p";
-  }, gameId, WAIT);
+  await page.waitForSelector(
+    'button[aria-pressed="true"]:has-text("Nhiều chiều")',
+    WAIT,
+  );
+  await page.waitForFunction(
+    async (id) => {
+      const response = await fetch(`/api/games/${id}`, {
+        credentials: "include",
+      });
+      return (await response.json()).settlementMode === "p2p";
+    },
+    gameId,
+    WAIT,
+  );
   await page.getByRole("button", { name: "Copy lời nhắc cho Binh" }).click();
   assert.equal(
     await page.evaluate(() => navigator.clipboard.readText()),
     'Binh ơi, bạn chuyển 110.000 ₫ cho An cho kèo "E2E Trip" nhé.',
   );
   await page.click('button:has-text("Gom 1 người")');
-  await page.waitForSelector('button[aria-pressed="true"]:has-text("Gom 1 người")', WAIT);
-  await page.waitForFunction(async (id) => {
-    const response = await fetch(`/api/games/${id}`, { credentials: "include" });
-    return (await response.json()).settlementMode === "host";
-  }, gameId, WAIT);
+  await page.waitForSelector(
+    'button[aria-pressed="true"]:has-text("Gom 1 người")',
+    WAIT,
+  );
+  await page.waitForFunction(
+    async (id) => {
+      const response = await fetch(`/api/games/${id}`, {
+        credentials: "include",
+      });
+      return (await response.json()).settlementMode === "host";
+    },
+    gameId,
+    WAIT,
+  );
   ok("payment reminder follows updated balance in both settlement modes");
   const beforeInvalid = await getGameDetail(page, gameId);
   const an = beforeInvalid.participants.find((person) => person.name === "An");
-  const binh = beforeInvalid.participants.find((person) => person.name === "Binh");
+  const binh = beforeInvalid.participants.find(
+    (person) => person.name === "Binh",
+  );
   assert.ok(an);
   assert.ok(binh);
-  const lunch = beforeInvalid.expenses.find((expense) => expense.title === "An trua");
-  const karaoke = beforeInvalid.expenses.find((expense) => expense.title === "Karaoke");
+  const lunch = beforeInvalid.expenses.find(
+    (expense) => expense.title === "An trua",
+  );
+  const karaoke = beforeInvalid.expenses.find(
+    (expense) => expense.title === "Karaoke",
+  );
   assert.ok(lunch);
   assert.ok(karaoke);
   assert.deepEqual(
-    lunch.splits.map(({ participantId, amount }) => [participantId, amount]).sort(),
-    [[an.id, 50000], [binh.id, 50000]].sort(),
+    lunch.splits
+      .map(({ participantId, amount }) => [participantId, amount])
+      .sort(),
+    [
+      [an.id, 50000],
+      [binh.id, 50000],
+    ].sort(),
   );
   assert.deepEqual(
-    karaoke.splits.map(({ participantId, amount }) => [participantId, amount]).sort(),
-    [[an.id, 30000], [binh.id, 60000]].sort(),
+    karaoke.splits
+      .map(({ participantId, amount }) => [participantId, amount])
+      .sort(),
+    [
+      [an.id, 30000],
+      [binh.id, 60000],
+    ].sort(),
   );
   assert.equal(beforeInvalid.summary.totalExpense, 190000);
-  assert.equal(beforeInvalid.summary.balances.find((row) => row.participantId === an.id).balance, 110000);
-  assert.equal(beforeInvalid.summary.balances.find((row) => row.participantId === binh.id).balance, -110000);
-  assert.deepEqual(beforeInvalid.summary.settlements, [{
-    fromParticipantId: binh.id,
-    toParticipantId: an.id,
-    amount: 110000,
-  }]);
+  assert.equal(
+    beforeInvalid.summary.balances.find((row) => row.participantId === an.id)
+      .balance,
+    110000,
+  );
+  assert.equal(
+    beforeInvalid.summary.balances.find((row) => row.participantId === binh.id)
+      .balance,
+    -110000,
+  );
+  assert.deepEqual(beforeInvalid.summary.settlements, [
+    {
+      fromParticipantId: binh.id,
+      toParticipantId: an.id,
+      amount: 110000,
+    },
+  ]);
   await page.reload();
   await page.waitForSelector("text=110.000", WAIT);
   const reloaded = await getGameDetail(page, gameId);
@@ -237,13 +293,18 @@ try {
   ok("add expense with custom amounts");
 
   // 5.5 Keo tha doi thu tu khoan chi bang chuot that (dnd-kit)
-  const expenseIds = async () => (await getGameDetail(page, gameId)).expenses.map((item) => item.id);
+  const expenseIds = async () =>
+    (await getGameDetail(page, gameId)).expenses.map((item) => item.id);
   const dragFirstExpenseBelowSecond = async () => {
     const handles = page.locator('button[aria-label^="Kéo để đổi thứ tự"]');
     assert.ok((await handles.count()) >= 2);
-    const touchAction = await handles.nth(0).evaluate((element) => getComputedStyle(element).touchAction);
+    const touchAction = await handles
+      .nth(0)
+      .evaluate((element) => getComputedStyle(element).touchAction);
     assert.equal(touchAction, "none");
-    await handles.nth(0).evaluate((element) => element.scrollIntoView({ block: "center" }));
+    await handles
+      .nth(0)
+      .evaluate((element) => element.scrollIntoView({ block: "center" }));
     const first = await handles.nth(0).boundingBox();
     const second = await handles.nth(1).boundingBox();
     const x = first.x + first.width / 2;
@@ -255,7 +316,8 @@ try {
   };
   const waitForOrder = async (expected) => {
     for (let attempt = 0; attempt < 25; attempt += 1) {
-      if (JSON.stringify(await expenseIds()) === JSON.stringify(expected)) return;
+      if (JSON.stringify(await expenseIds()) === JSON.stringify(expected))
+        return;
       await page.waitForTimeout(200);
     }
     assert.deepEqual(await expenseIds(), expected);
@@ -268,24 +330,27 @@ try {
   await waitForOrder(orderBefore);
   ok("drag expenses to reorder and drag back");
 
-  const invalidSplit = await page.evaluate(async ({ id, payerId, anId, binhId }) => {
-    const response = await fetch(`/api/games/${id}/expenses`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify({
-        title: "Invalid split",
-        amount: 100000,
-        payerParticipantId: payerId,
-        splitMode: "amount",
-        splits: [
-          { participantId: anId, value: 10000 },
-          { participantId: binhId, value: 10000 },
-        ],
-      }),
-    });
-    return response.status;
-  }, { id: gameId, payerId: an.id, anId: an.id, binhId: binh.id });
+  const invalidSplit = await page.evaluate(
+    async ({ id, payerId, anId, binhId }) => {
+      const response = await fetch(`/api/games/${id}/expenses`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          title: "Invalid split",
+          amount: 100000,
+          payerParticipantId: payerId,
+          splitMode: "amount",
+          splits: [
+            { participantId: anId, value: 10000 },
+            { participantId: binhId, value: 10000 },
+          ],
+        }),
+      });
+      return response.status;
+    },
+    { id: gameId, payerId: an.id, anId: an.id, binhId: binh.id },
+  );
   assert.equal(invalidSplit, 400);
   const afterInvalid = await getGameDetail(page, gameId);
   assert.equal(afterInvalid.expenses.length, beforeInvalid.expenses.length);
@@ -295,28 +360,34 @@ try {
   const outsiderPage = await browser.newPage();
   await outsiderPage.goto(BASE + "/");
   await signUp(outsiderPage, `outsider${username}`);
-  const outsiderAccess = await outsiderPage.evaluate(async ({ id, payerId, anId, binhId }) => {
-    const read = await fetch(`/api/games/${id}`, { credentials: "include" });
-    const write = await fetch(`/api/games/${id}/expenses`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify({
-        title: "Unauthorized expense",
-        amount: 1000,
-        payerParticipantId: payerId,
-        splitParticipantIds: [anId, binhId],
-      }),
-    });
-    return { read: read.status, write: write.status };
-  }, { id: gameId, payerId: an.id, anId: an.id, binhId: binh.id });
+  const outsiderAccess = await outsiderPage.evaluate(
+    async ({ id, payerId, anId, binhId }) => {
+      const read = await fetch(`/api/games/${id}`, { credentials: "include" });
+      const write = await fetch(`/api/games/${id}/expenses`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          title: "Unauthorized expense",
+          amount: 1000,
+          payerParticipantId: payerId,
+          splitParticipantIds: [anId, binhId],
+        }),
+      });
+      return { read: read.status, write: write.status };
+    },
+    { id: gameId, payerId: an.id, anId: an.id, binhId: binh.id },
+  );
   assert.deepEqual(outsiderAccess, { read: 404, write: 404 });
   await outsiderPage.close();
   ok("another account cannot read or write the game");
 
   // 6.8 Anh: them vao album, sua chu thich, dinh kem vao khoan chi
   const jpegPath = await createJpegFixture();
-  await page.setInputFiles('label[aria-label="Thêm ảnh vào album"] input[type="file"]', jpegPath);
+  await page.setInputFiles(
+    'label[aria-label="Thêm ảnh vào album"] input[type="file"]',
+    jpegPath,
+  );
   await page.waitForSelector('span:text-is("1/60")', WAIT);
   await albumTile(0).click();
   await page.click('button[aria-label="Sửa chú thích"]');
@@ -331,9 +402,15 @@ try {
   await page.fill('input[placeholder="500.000"]', "20000");
   // Khoi "Ảnh hóa đơn" dong san, phai mo ra moi thay o chon file.
   await page.click('button:has-text("Ảnh hóa đơn")');
-  await page.setInputFiles('label[aria-label="Đính kèm ảnh hóa đơn"] input[type="file"]', jpegPath);
+  await page.setInputFiles(
+    'label[aria-label="Đính kèm ảnh hóa đơn"] input[type="file"]',
+    jpegPath,
+  );
   await page.click('button[type="submit"]:has-text("Thêm khoản chi")');
-  await page.waitForSelector('button[aria-label="Xem ảnh của Nuoc suoi"]', WAIT);
+  await page.waitForSelector(
+    'button[aria-label="Xem ảnh của Nuoc suoi"]',
+    WAIT,
+  );
   await page.waitForSelector('span:text-is("2/60")', WAIT);
   ok("attach photo to expense");
 
@@ -346,7 +423,9 @@ try {
   await page.keyboard.press("Escape");
   const detail = await page.evaluate(async () => {
     const gameId = location.pathname.split("/").pop();
-    const response = await fetch(`/api/games/${gameId}`, { credentials: "include" });
+    const response = await fetch(`/api/games/${gameId}`, {
+      credentials: "include",
+    });
     return response.json();
   });
   const anonPage = await browser.newPage();
@@ -356,23 +435,35 @@ try {
   await anonPage.click('button:has-text("Ảnh")');
   await anonPage.waitForSelector("text=Ảnh (2)", WAIT);
   await anonPage.click('button[aria-label="Hoa don san"]');
-  await anonPage.waitForSelector('[role="dialog"] button[aria-label="Đóng"]', WAIT);
-  const deleteCount = await anonPage.locator('button[aria-label="Xóa ảnh"]').count();
-  if (deleteCount !== 0) throw new Error("share view must not allow deleting photos");
-  assert.equal(await anonPage.locator('button[aria-label^="Copy lời nhắc cho"]').count(), 0);
-  const shareWriteStatus = await anonPage.evaluate(async ({ id, payerId, anId, binhId }) => {
-    const response = await fetch(`/api/games/${id}/expenses`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        title: "Share write",
-        amount: 1000,
-        payerParticipantId: payerId,
-        splitParticipantIds: [anId, binhId],
-      }),
-    });
-    return response.status;
-  }, { id: gameId, payerId: an.id, anId: an.id, binhId: binh.id });
+  await anonPage.waitForSelector(
+    '[role="dialog"] button[aria-label="Đóng"]',
+    WAIT,
+  );
+  const deleteCount = await anonPage
+    .locator('button[aria-label="Xóa ảnh"]')
+    .count();
+  if (deleteCount !== 0)
+    throw new Error("share view must not allow deleting photos");
+  assert.equal(
+    await anonPage.locator('button[aria-label^="Copy lời nhắc cho"]').count(),
+    0,
+  );
+  const shareWriteStatus = await anonPage.evaluate(
+    async ({ id, payerId, anId, binhId }) => {
+      const response = await fetch(`/api/games/${id}/expenses`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: "Share write",
+          amount: 1000,
+          payerParticipantId: payerId,
+          splitParticipantIds: [anId, binhId],
+        }),
+      });
+      return response.status;
+    },
+    { id: gameId, payerId: an.id, anId: an.id, binhId: binh.id },
+  );
   assert.equal(shareWriteStatus, 401);
   await anonPage.close();
   assert.equal((await getGameDetail(page, gameId)).expenses.length, 3);
@@ -384,16 +475,29 @@ try {
   await page.waitForSelector("text=Đã trả nợ", WAIT);
   await page.waitForSelector("text=Binh đã trả An", WAIT);
   await page.waitForSelector("text=Mọi người đã cân bằng", WAIT);
-  assert.equal(await page.locator('button[aria-label^="Copy lời nhắc cho"]').count(), 0);
+  assert.equal(
+    await page.locator('button[aria-label^="Copy lời nhắc cho"]').count(),
+    0,
+  );
   const settled = await getGameDetail(page, gameId);
-  const transfers = settled.expenses.filter((expense) => expense.kind === "transfer");
+  const transfers = settled.expenses.filter(
+    (expense) => expense.kind === "transfer",
+  );
   assert.equal(transfers.length, 1);
   assert.equal(transfers[0].amount, 120000);
   assert.equal(transfers[0].payerParticipantId, binh.id);
-  assert.deepEqual(transfers[0].splits.map(({ participantId, amount }) => ({ participantId, amount })), [{
-    participantId: an.id,
-    amount: 120000,
-  }]);
+  assert.deepEqual(
+    transfers[0].splits.map(({ participantId, amount }) => ({
+      participantId,
+      amount,
+    })),
+    [
+      {
+        participantId: an.id,
+        amount: 120000,
+      },
+    ],
+  );
   assert.equal(settled.summary.totalExpense, 210000);
   assert.equal(settled.summary.balances.length, 2);
   assert.ok(settled.summary.balances.every((row) => row.balance === 0));
@@ -402,7 +506,10 @@ try {
   await page.waitForSelector("text=Mọi người đã cân bằng", WAIT);
   const persisted = await getGameDetail(page, gameId);
   assert.deepEqual(persisted.summary, settled.summary);
-  assert.equal(persisted.expenses.filter((expense) => expense.kind === "transfer").length, 1);
+  assert.equal(
+    persisted.expenses.filter((expense) => expense.kind === "transfer").length,
+    1,
+  );
   ok("record settlement as transfer");
 
   // 7.8 Xoa anh khoi album
@@ -423,7 +530,10 @@ try {
   await page.fill("#mcp-token-name", "E2E Claude");
   await page.click('button[type="submit"]:has-text("Tạo token")');
   await page.waitForSelector("text=Token chỉ hiện lần này", WAIT);
-  const secret = await page.locator("code", { hasText: /^ck_[0-9a-f]{64}$/ }).first().innerText();
+  const secret = await page
+    .locator("code", { hasText: /^ck_[0-9a-f]{64}$/ })
+    .first()
+    .innerText();
   await page.waitForSelector('text="1/20 chưa thu hồi"', WAIT);
   ok("create MCP token from settings page");
 
@@ -431,7 +541,10 @@ try {
     const call = (body) =>
       fetch("/api/mcp", {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify(body),
       }).then((response) => response.json());
     const tools = await call({ jsonrpc: "2.0", id: 1, method: "tools/list" });
@@ -455,12 +568,17 @@ try {
   }, secret);
   // Chi kiem tra theo scope, khong khoa cung danh sach tool.
   if (!mcp.tools.includes("list_games")) {
-    throw new Error(`token co games:read phai thay list_games, got ${mcp.tools.join(",")}`);
+    throw new Error(
+      `token co games:read phai thay list_games, got ${mcp.tools.join(",")}`,
+    );
   }
   if (mcp.tools.includes("get_summary_text")) {
-    throw new Error("token khong co summary:read khong duoc thay get_summary_text");
+    throw new Error(
+      "token khong co summary:read khong duoc thay get_summary_text",
+    );
   }
-  if (!mcp.games.includes("E2E Trip")) throw new Error(`list_games thieu game: ${mcp.games}`);
+  if (!mcp.games.includes("E2E Trip"))
+    throw new Error(`list_games thieu game: ${mcp.games}`);
   if (!mcp.outOfScope) throw new Error("tool ngoai scope phai bi tu choi");
   ok("MCP token works and stays inside its scopes");
 
@@ -471,7 +589,10 @@ try {
     (token) =>
       fetch("/api/mcp", {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "tools/list" }),
       }).then((response) => response.status),
     secret,
@@ -491,7 +612,9 @@ try {
     await page.fill('input[placeholder="Huy"]', name);
     await page.click('button[type="submit"]:has-text("Thêm người")');
     await page.locator(`button[aria-label="Đưa ${name} xuống"]`).waitFor(WAIT);
-    await page.waitForFunction(() => document.querySelector('input[placeholder="Huy"]')?.value === "");
+    await page.waitForFunction(
+      () => document.querySelector('input[placeholder="Huy"]')?.value === "",
+    );
   }
 
   await page.click('button:has-text("Theo phần")');
@@ -511,14 +634,20 @@ try {
   const weightedIds = Object.fromEntries(
     weighted.participants.map((person) => [person.name, person.id]),
   );
-  const weightedExpense = weighted.expenses.find((expense) => expense.title === "Bua toi theo phan");
+  const weightedExpense = weighted.expenses.find(
+    (expense) => expense.title === "Bua toi theo phan",
+  );
   assert.ok(weightedExpense);
   assert.equal(weightedExpense.splitMode, "shares");
   assert.equal(weightedExpense.amount, 120000);
   assert.equal(weightedExpense.payerParticipantId, weightedIds.An);
   assert.deepEqual(
     weightedExpense.splits
-      .map(({ participantId, amount, weight }) => [participantId, amount, weight])
+      .map(({ participantId, amount, weight }) => [
+        participantId,
+        amount,
+        weight,
+      ])
       .sort(),
     [
       [weightedIds.An, 20000, 1],
@@ -539,7 +668,11 @@ try {
   );
   assert.deepEqual(
     weighted.summary.settlements
-      .map(({ fromParticipantId, toParticipantId, amount }) => [fromParticipantId, toParticipantId, amount])
+      .map(({ fromParticipantId, toParticipantId, amount }) => [
+        fromParticipantId,
+        toParticipantId,
+        amount,
+      ])
       .sort(),
     [
       [weightedIds.Binh, weightedIds.An, 40000],
@@ -556,28 +689,31 @@ try {
   assert.deepEqual(weightedReloaded.summary, weighted.summary);
   ok("weighted split persists after reload");
 
-  const invalidWeightStatus = await page.evaluate(async ({ id, payerId, participants }) => {
-    const response = await fetch(`/api/games/${id}/expenses`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify({
-        title: "Invalid weighted split",
-        amount: 120000,
-        payerParticipantId: payerId,
-        splitMode: "shares",
-        splits: participants.map((participantId, index) => ({
-          participantId,
-          value: index === 2 ? 1001 : 1,
-        })),
-      }),
-    });
-    return response.status;
-  }, {
-    id: weightedGameId,
-    payerId: weightedIds.An,
-    participants: [weightedIds.An, weightedIds.Binh, weightedIds.Cuong],
-  });
+  const invalidWeightStatus = await page.evaluate(
+    async ({ id, payerId, participants }) => {
+      const response = await fetch(`/api/games/${id}/expenses`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          title: "Invalid weighted split",
+          amount: 120000,
+          payerParticipantId: payerId,
+          splitMode: "shares",
+          splits: participants.map((participantId, index) => ({
+            participantId,
+            value: index === 2 ? 1001 : 1,
+          })),
+        }),
+      });
+      return response.status;
+    },
+    {
+      id: weightedGameId,
+      payerId: weightedIds.An,
+      participants: [weightedIds.An, weightedIds.Binh, weightedIds.Cuong],
+    },
+  );
   assert.equal(invalidWeightStatus, 400);
   const afterInvalidWeight = await getGameDetail(page, weightedGameId);
   assert.deepEqual(afterInvalidWeight.expenses, weightedReloaded.expenses);

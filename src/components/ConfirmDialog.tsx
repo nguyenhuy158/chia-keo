@@ -1,13 +1,13 @@
 import { TriangleAlert } from "lucide-react";
 import {
   createContext,
+  type ReactNode,
   useCallback,
   useContext,
   useEffect,
   useMemo,
   useRef,
   useState,
-  type ReactNode,
 } from "react";
 import { createPortal } from "react-dom";
 import { useRestoreFocus } from "./overlays";
@@ -121,7 +121,9 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
               role="alertdialog"
               aria-modal="true"
               aria-label={pending.title}
-              aria-describedby={pending.description ? "confirm-dialog-description" : undefined}
+              aria-describedby={
+                pending.description ? "confirm-dialog-description" : undefined
+              }
               className="relative w-full max-w-sm rounded-2xl bg-surface p-5 shadow-xl animate-[sheet-up_200ms_cubic-bezier(0.32,0.72,0,1)]"
             >
               <div className="flex items-start gap-3">

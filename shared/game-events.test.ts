@@ -17,19 +17,38 @@ const restore: RestorableExpense = {
   splits: [{ participantId: "p1", amount: 425_000, weight: null }],
 };
 
-function event(payload: GameEventPayload, undoneAt: string | null = null): ApiGameEvent {
+function event(
+  payload: GameEventPayload,
+  undoneAt: string | null = null,
+): ApiGameEvent {
   return { id: "e1", createdAt: "2026-08-05T10:00:00.000Z", undoneAt, payload };
 }
 
 describe("canUndoEvent", () => {
   it("chi khoan chi da xoa va con du lieu dung lai moi hoan tac duoc", () => {
-    expect(canUndoEvent(event({ kind: "expense_removed", title: "Lẩu bò", amount: 425_000, payerName: "Hồng", restore }))).toBe(true);
+    expect(
+      canUndoEvent(
+        event({
+          kind: "expense_removed",
+          title: "Lẩu bò",
+          amount: 425_000,
+          payerName: "Hồng",
+          restore,
+        }),
+      ),
+    ).toBe(true);
   });
 
   it("khong hoan tac duoc khi thieu du lieu dung lai", () => {
     expect(
       canUndoEvent(
-        event({ kind: "expense_removed", title: "Lẩu bò", amount: 425_000, payerName: "Hồng", restore: null }),
+        event({
+          kind: "expense_removed",
+          title: "Lẩu bò",
+          amount: 425_000,
+          payerName: "Hồng",
+          restore: null,
+        }),
       ),
     ).toBe(false);
   });
@@ -38,7 +57,13 @@ describe("canUndoEvent", () => {
     expect(
       canUndoEvent(
         event(
-          { kind: "expense_removed", title: "Lẩu bò", amount: 425_000, payerName: "Hồng", restore },
+          {
+            kind: "expense_removed",
+            title: "Lẩu bò",
+            amount: 425_000,
+            payerName: "Hồng",
+            restore,
+          },
           "2026-08-05T11:00:00.000Z",
         ),
       ),
@@ -46,9 +71,19 @@ describe("canUndoEvent", () => {
   });
 
   it("cac viec khac khong co hoan tac", () => {
-    expect(canUndoEvent(event({ kind: "participant_removed", name: "Kiệt" }))).toBe(false);
     expect(
-      canUndoEvent(event({ kind: "expense_updated", title: "Sân", amount: 1, beforeTitle: "Sân", beforeAmount: 2 })),
+      canUndoEvent(event({ kind: "participant_removed", name: "Kiệt" })),
+    ).toBe(false);
+    expect(
+      canUndoEvent(
+        event({
+          kind: "expense_updated",
+          title: "Sân",
+          amount: 1,
+          beforeTitle: "Sân",
+          beforeAmount: 2,
+        }),
+      ),
     ).toBe(false);
   });
 });
@@ -92,10 +127,15 @@ describe("describeGameEvent", () => {
   });
 
   it("them nhieu nguoi thi dem so luong", () => {
-    expect(describeGameEvent({ kind: "participant_added", names: ["Huy", "Hường", "Nam"] }).title).toBe(
-      "Thêm 3 người",
-    );
-    expect(describeGameEvent({ kind: "participant_added", names: ["Huy"] }).title).toBe("Thêm người");
+    expect(
+      describeGameEvent({
+        kind: "participant_added",
+        names: ["Huy", "Hường", "Nam"],
+      }).title,
+    ).toBe("Thêm 3 người");
+    expect(
+      describeGameEvent({ kind: "participant_added", names: ["Huy"] }).title,
+    ).toBe("Thêm người");
   });
 
   it("phan biet ly do dong va mo lai cuoc choi", () => {
@@ -103,21 +143,30 @@ describe("describeGameEvent", () => {
       title: "Đóng cuộc chơi",
       detail: "mọi người đã trả xong",
     });
-    expect(describeGameEvent({ kind: "game_closed", mode: "manual" }).detail).toBe("đóng thủ công");
+    expect(
+      describeGameEvent({ kind: "game_closed", mode: "manual" }).detail,
+    ).toBe("đóng thủ công");
     expect(describeGameEvent({ kind: "game_reopened", mode: "auto" })).toEqual({
       title: "Mở lại cuộc chơi",
       detail: "số dư lệch trở lại",
     });
-    expect(describeGameEvent({ kind: "game_reopened", mode: "manual" }).detail).toBe("mở thủ công");
+    expect(
+      describeGameEvent({ kind: "game_reopened", mode: "manual" }).detail,
+    ).toBe("mở thủ công");
   });
 
   it("giữ mã settlement chưa biết trong lịch sử cũ", () => {
-    const payload = { kind: "settlement_changed", mode: "legacy", hostName: "" } as GameEventPayload;
+    const payload = {
+      kind: "settlement_changed",
+      mode: "legacy",
+      hostName: "",
+    } as GameEventPayload;
 
     expect(describeGameEvent(payload).detail).toBe("legacy");
-    expect(describeGameEvent({ ...payload, hostName: "Huy" } as GameEventPayload).detail).toBe(
-      "legacy · Huy",
-    );
+    expect(
+      describeGameEvent({ ...payload, hostName: "Huy" } as GameEventPayload)
+        .detail,
+    ).toBe("legacy · Huy");
   });
 
   it("moi kind deu co cau chu, khong kind nao ra rong", () => {
@@ -129,11 +178,34 @@ describe("describeGameEvent", () => {
       { kind: "participant_added", names: ["Huy"] },
       { kind: "participant_renamed", from: "hồng", to: "Hồng" },
       { kind: "participant_removed", name: "Kiệt" },
-      { kind: "expense_added", title: "Sân", amount: 305_000, payerName: "Nam", splitNames: [] },
-      { kind: "expense_updated", title: "Sân", amount: 1, beforeTitle: "Sân", beforeAmount: 2 },
-      { kind: "expense_removed", title: "Sân", amount: 305_000, payerName: "Nam", restore: null },
+      {
+        kind: "expense_added",
+        title: "Sân",
+        amount: 305_000,
+        payerName: "Nam",
+        splitNames: [],
+      },
+      {
+        kind: "expense_updated",
+        title: "Sân",
+        amount: 1,
+        beforeTitle: "Sân",
+        beforeAmount: 2,
+      },
+      {
+        kind: "expense_removed",
+        title: "Sân",
+        amount: 305_000,
+        payerName: "Nam",
+        restore: null,
+      },
       { kind: "expense_restored", title: "Sân", amount: 305_000 },
-      { kind: "transfer_added", fromName: "Huy", toName: "Hồng", amount: 85_000 },
+      {
+        kind: "transfer_added",
+        fromName: "Huy",
+        toName: "Hồng",
+        amount: 85_000,
+      },
     ];
 
     for (const payload of payloads) {

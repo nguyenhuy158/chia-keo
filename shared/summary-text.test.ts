@@ -1,7 +1,15 @@
 import { describe, expect, it } from "vitest";
 import type { ApiExpense, ApiParticipant, ApiSummary } from "./api-types";
-import { allocateAmount, calculateBalances, calculateSettlements } from "./split";
-import { buildSummaryDocument, buildSummaryText, formatThousands } from "./summary-text";
+import {
+  allocateAmount,
+  calculateBalances,
+  calculateSettlements,
+} from "./split";
+import {
+  buildSummaryDocument,
+  buildSummaryText,
+  formatThousands,
+} from "./summary-text";
 
 const SHARE_URL = "https://chia-keo.test/share/tok3n";
 
@@ -35,7 +43,10 @@ function makeExpense(
   };
 }
 
-function makeSummary(participants: ApiParticipant[], expenses: ApiExpense[]): ApiSummary {
+function makeSummary(
+  participants: ApiParticipant[],
+  expenses: ApiExpense[],
+): ApiSummary {
   const balances = calculateBalances(
     participants.map((participant) => participant.id),
     expenses.map((expense) => ({
@@ -46,7 +57,10 @@ function makeSummary(participants: ApiParticipant[], expenses: ApiExpense[]): Ap
   );
 
   return {
-    totalExpense: expenses.reduce((total, expense) => total + expense.amount, 0),
+    totalExpense: expenses.reduce(
+      (total, expense) => total + expense.amount,
+      0,
+    ),
     balances,
     settlements: calculateSettlements(balances),
   };
@@ -68,7 +82,13 @@ const bunBo = makeExpense("e-333", "Bún bò", 90_000, thu.id, [thu.id, hong.id]
 const expenses = [traTac, sanCau, bunBo];
 const summary = makeSummary(participants, expenses);
 
-const input = { code: "ABC123", name: "Cầu lông thứ 7", participants, expenses, summary };
+const input = {
+  code: "ABC123",
+  name: "Cầu lông thứ 7",
+  participants,
+  expenses,
+  summary,
+};
 
 describe("formatThousands", () => {
   it("bo duoi .000 khi tron nghin", () => {
@@ -113,39 +133,56 @@ describe("buildSummaryText", () => {
       summary: {
         totalExpense: 0,
         balances: [{ participantId: thu.id, paid: 0, owed: 0, balance: 0 }],
-        settlements: [{ fromParticipantId: "missing", toParticipantId: thu.id, amount: 1000 }],
+        settlements: [
+          {
+            fromParticipantId: "missing",
+            toParticipantId: thu.id,
+            amount: 1000,
+          },
+        ],
       },
     };
     const text = buildSummaryText(base, "detailed");
     expect(text).toContain("Trống (Không rõ trả) — 0k");
     expect(text).toContain("- Hồng: 0k");
     expect(text).toContain("Không rõ → Thu: 1k");
-    const paid = buildSummaryText({
-      ...base,
-      summary: { ...base.summary, balances: [{ participantId: thu.id, paid: 1000, owed: 1000, balance: 0 }] },
-    }, "detailed");
+    const paid = buildSummaryText(
+      {
+        ...base,
+        summary: {
+          ...base.summary,
+          balances: [
+            { participantId: thu.id, paid: 1000, owed: 1000, balance: 0 },
+          ],
+        },
+      },
+      "detailed",
+    );
     expect(paid).toContain("đã ứng 1k → vừa đủ");
   });
 
   it("describes an outgoing host transfer with no recorded payment", () => {
-    const doc = buildSummaryDocument({
-      ...input,
-      participants: [thu],
-      expenses: [],
-      settlementMode: "pick",
-      settlementHostId: thu.id,
-      summary: {
-        totalExpense: 0,
-        balances: [
-          { participantId: thu.id, paid: 0, owed: 1000, balance: -1000 },
-          { participantId: "missing", paid: 0, owed: 0, balance: 1000 },
-        ],
-        settlements: [],
+    const doc = buildSummaryDocument(
+      {
+        ...input,
+        participants: [thu],
+        expenses: [],
+        settlementMode: "pick",
+        settlementHostId: thu.id,
+        summary: {
+          totalExpense: 0,
+          balances: [
+            { participantId: thu.id, paid: 0, owed: 1000, balance: -1000 },
+            { participantId: "missing", paid: 0, owed: 0, balance: 1000 },
+          ],
+          settlements: [],
+        },
       },
-    }, "detailed");
-    expect(doc.sections.find((section) => section.id === "settlements")?.lines).toContain(
-      "- Thu → Không rõ: 1k",
+      "detailed",
     );
+    expect(
+      doc.sections.find((section) => section.id === "settlements")?.lines,
+    ).toContain("- Thu → Không rõ: 1k");
   });
 
   it("omits empty people and settlement sections", () => {
@@ -177,10 +214,15 @@ describe("buildSummaryText", () => {
       },
     };
     expect(buildSummaryText(hostInput)).toContain("Không rõ → Thu: 1k");
-    expect(buildSummaryText(hostInput, "detailed")).toContain("Không rõ → Thu: 1k");
-    expect(buildSummaryText({ ...hostInput, settlementHostId: "missing" }, "detailed")).toContain(
-      "GOM VỀ KHÔNG RÕ",
+    expect(buildSummaryText(hostInput, "detailed")).toContain(
+      "Không rõ → Thu: 1k",
     );
+    expect(
+      buildSummaryText(
+        { ...hostInput, settlementHostId: "missing" },
+        "detailed",
+      ),
+    ).toContain("GOM VỀ KHÔNG RÕ");
   });
   it("liet ke khoan chi theo thu tu cu nhat truoc, phan chia viet nhu phep tinh", () => {
     const text = buildSummaryText(input);
@@ -188,7 +230,9 @@ describe("buildSummaryText", () => {
     expect(text).toContain("CÁC KHOẢN CHI (3 khoản · tổng 412k)");
     // Nguoi tra nam trong ngoac sau ten khoan; chi ket qua mang chu "k".
     expect(text).toContain("1. Bún bò (Thu trả) — 90/2 = 45k · (Thu, Hồng)");
-    expect(text).toContain("2. Sân + nước + cầu (Nam trả) — 305/3 = 101,7k · (cả nhóm)");
+    expect(text).toContain(
+      "2. Sân + nước + cầu (Nam trả) — 305/3 = 101,7k · (cả nhóm)",
+    );
     expect(text).toContain("3. Trà tắc (Thu trả) — 17/2 = 8,5k · (Thu, Hồng)");
   });
 
@@ -222,7 +266,9 @@ describe("buildSummaryText", () => {
       summary: makeSummary(participants, withCustom),
     });
 
-    expect(text).toContain("4. Sân (Nam trả) — 305k = 5 (Thu) + 200 (Hồng) + 100 (Nam) · (cả nhóm)");
+    expect(text).toContain(
+      "4. Sân (Nam trả) — 305k = 5 (Thu) + 200 (Hồng) + 100 (Nam) · (cả nhóm)",
+    );
     expect(text).not.toContain("chia tùy chỉnh");
     // Khong dung dau chia cho khoan nay: moi nguoi mot muc nen "305/3" la phep
     // tinh sai. (Fixture co san mot khoan 305k chia deu 3 nguoi, nen doi chieu
@@ -278,11 +324,13 @@ describe("buildSummaryText", () => {
   it("ghi ro chieu tra lai khi host van no nguoi khac", () => {
     // Thu ung them 500k chia ca nhom nen thanh nguoi ung nhieu nhat, nhung Nam
     // cung da ung du phan minh nen host phai tra lai Nam.
-    const bigPaidByThu = makeExpense("e-4444", "Thuê sân cả tháng", 500_000, thu.id, [
+    const bigPaidByThu = makeExpense(
+      "e-4444",
+      "Thuê sân cả tháng",
+      500_000,
       thu.id,
-      hong.id,
-      nam.id,
-    ]);
+      [thu.id, hong.id, nam.id],
+    );
     const withBigExpense = [bigPaidByThu, ...expenses];
 
     const text = buildSummaryText({
@@ -341,22 +389,31 @@ describe("buildSummaryText", () => {
   });
 
   it("ban chi tiet ghi ro ai da ung va ai duoc nhan lai", () => {
-    const text = buildSummaryText({ ...input, settlementMode: "host" }, "detailed");
+    const text = buildSummaryText(
+      { ...input, settlementMode: "host" },
+      "detailed",
+    );
 
     expect(text).toContain("TỪNG NGƯỜI (phần phải chịu)");
     // Nam ung 305k, phai chiu 101,7k nen la nguoi duoc nhan lai chu khong phai tra.
-    expect(text).toContain("- Nam: 101,7 = 101,7k · đã ứng 305k → nhận lại 203,3k");
-    expect(text).toContain("- Hồng: 45 + 101,7 + 8,5 = 155,2k · phải trả 155,2k");
+    expect(text).toContain(
+      "- Nam: 101,7 = 101,7k · đã ứng 305k → nhận lại 203,3k",
+    );
+    expect(text).toContain(
+      "- Hồng: 45 + 101,7 + 8,5 = 155,2k · phải trả 155,2k",
+    );
     // Thu ung 107k nhung van con thieu, phan con lai moi la so phai tra.
     expect(text).toContain("- Thu: 45 + 101,7 + 8,5 = 155,2k · phải trả 48,2k");
   });
 
   it("ban chi tiet tach hai chieu chuyen tien va noi ly do host tra lai", () => {
-    const bigPaidByThu = makeExpense("e-4444", "Thuê sân cả tháng", 500_000, thu.id, [
+    const bigPaidByThu = makeExpense(
+      "e-4444",
+      "Thuê sân cả tháng",
+      500_000,
       thu.id,
-      hong.id,
-      nam.id,
-    ]);
+      [thu.id, hong.id, nam.id],
+    );
     const withBigExpense = [bigPaidByThu, ...expenses];
 
     const text = buildSummaryText(
@@ -369,7 +426,9 @@ describe("buildSummaryText", () => {
       "detailed",
     );
 
-    expect(text).toContain("GOM VỀ THU (Thu ứng nhiều nhất, cả nhóm quét 1 QR)");
+    expect(text).toContain(
+      "GOM VỀ THU (Thu ứng nhiều nhất, cả nhóm quét 1 QR)",
+    );
     expect(text).toContain("Chuyển vào Thu — tổng 322k:");
     expect(text).toContain("- Hồng → Thu: 322k");
     expect(text).toContain("Thu chuyển ra:");
@@ -379,13 +438,19 @@ describe("buildSummaryText", () => {
   it("ban compact khong doi gi so voi truoc", () => {
     const hostInput = { ...input, settlementMode: "host" as const };
 
-    expect(buildSummaryText(hostInput)).toBe(buildSummaryText(hostInput, "compact"));
+    expect(buildSummaryText(hostInput)).toBe(
+      buildSummaryText(hostInput, "compact"),
+    );
     expect(buildSummaryText(hostInput)).not.toContain("đã ứng");
   });
 
   it("bao chua co khoan chi khi danh sach rong", () => {
     const emptySummary = makeSummary(participants, []);
-    const text = buildSummaryText({ ...input, expenses: [], summary: emptySummary });
+    const text = buildSummaryText({
+      ...input,
+      expenses: [],
+      summary: emptySummary,
+    });
 
     expect(text).toContain("Chưa có khoản chi nào.");
     expect(text).not.toContain("khoản · tổng");
@@ -394,7 +459,10 @@ describe("buildSummaryText", () => {
 
   it("hien ten du phong khi khoan chi tham chieu nguoi da bi xoa", () => {
     const staleExpense: ApiExpense = {
-      ...makeExpense("e-stale", "Nước", 20_000, "deleted-payer", [thu.id, "deleted-split"]),
+      ...makeExpense("e-stale", "Nước", 20_000, "deleted-payer", [
+        thu.id,
+        "deleted-split",
+      ]),
       splitMode: "amount",
     };
     const text = buildSummaryText({
@@ -410,9 +478,19 @@ describe("buildSummaryText", () => {
   it("hien ten du phong cho giao dich tham chieu nguoi da bi xoa", () => {
     const staleSummary: ApiSummary = {
       ...summary,
-      settlements: [{ fromParticipantId: "deleted-from", toParticipantId: "deleted-to", amount: 1000 }],
+      settlements: [
+        {
+          fromParticipantId: "deleted-from",
+          toParticipantId: "deleted-to",
+          amount: 1000,
+        },
+      ],
     };
-    const text = buildSummaryText({ ...input, summary: staleSummary, settlementMode: "p2p" });
+    const text = buildSummaryText({
+      ...input,
+      summary: staleSummary,
+      settlementMode: "p2p",
+    });
 
     expect(text).toContain("- Không rõ → Không rõ: 1k");
   });

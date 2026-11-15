@@ -141,7 +141,9 @@ describe("ParticipantPanel", () => {
     render([person("An", "MB", "12345678")]);
     expect(host.querySelector('input[placeholder="0123456789"]')).toBeNull();
     act(() => button("Sửa An")?.click());
-    expect(host.querySelector('input[placeholder="0123456789"]')).not.toBeNull();
+    expect(
+      host.querySelector('input[placeholder="0123456789"]'),
+    ).not.toBeNull();
     expect(bankToggle()).toBeUndefined();
   });
 

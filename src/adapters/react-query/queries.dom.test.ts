@@ -14,14 +14,11 @@ import {
   findUndoableExpenseRemoval,
   gameKeys,
   mcpTokenKeys,
+  PAYMENT_POLL_INTERVAL_MS,
   photoKeys,
   preferenceKeys,
   trashKeys,
-  PAYMENT_POLL_INTERVAL_MS,
   useAddCollaborator,
-  useCreatePayment,
-  usePaymentOptions,
-  usePaymentRequest,
   useAddExpense,
   useAddParticipant,
   useAddParticipants,
@@ -35,6 +32,7 @@ import {
   useCreateContact,
   useCreateGame,
   useCreateMcpToken,
+  useCreatePayment,
   useDeleteContact,
   useDeleteGame,
   useDuplicateGame,
@@ -42,13 +40,14 @@ import {
   useGameEvents,
   useGames,
   useMcpTokens,
+  usePaymentOptions,
+  usePaymentRequest,
   usePhoto,
   usePhotos,
   usePreferences,
   usePurgeGame,
   useRemoveCollaborator,
   useRemoveExpense,
-  useSetExpenseExcluded,
   useRemoveParticipant,
   useRemovePendingCollaborator,
   useRemovePhoto,
@@ -59,9 +58,10 @@ import {
   useRestoreGame,
   useRevokeMcpToken,
   useRotateShareLink,
+  useSaveSharePreview,
+  useSetExpenseExcluded,
   useSetSettlementHost,
   useSetSettlementMode,
-  useSaveSharePreview,
   useSetShareLinkEnabled,
   useShareCandidates,
   useSharePhoto,
@@ -788,7 +788,9 @@ describe("share payments", () => {
     const pending = { code: "CKAAAA2222", status: "pending" };
     const methods = {
       share: {
-        paymentOptions: vi.fn().mockResolvedValue({ receiver: null, options: [] }),
+        paymentOptions: vi
+          .fn()
+          .mockResolvedValue({ receiver: null, options: [] }),
         createPayment: vi.fn().mockResolvedValue(pending),
         payment: vi
           .fn()
@@ -800,7 +802,9 @@ describe("share payments", () => {
     const invalidate = vi.spyOn(client, "invalidateQueries");
 
     const options = mount(() => usePaymentOptions("tok"));
-    await vi.waitFor(() => expect(options().data).toEqual({ receiver: null, options: [] }));
+    await vi.waitFor(() =>
+      expect(options().data).toEqual({ receiver: null, options: [] }),
+    );
 
     await execute(() => useCreatePayment("tok"), ["an"]);
     expect(methods.share.createPayment).toHaveBeenCalledWith("tok", ["an"]);
@@ -814,9 +818,12 @@ describe("share payments", () => {
     });
     await vi.waitFor(() => expect(payment().data?.status).toBe("paid"));
     vi.useRealTimers();
-    expect(invalidate).toHaveBeenCalledWith({ queryKey: gameKeys.share("tok") });
-    expect(invalidate).toHaveBeenCalledWith({ queryKey: gameKeys.paymentOptions("tok") });
+    expect(invalidate).toHaveBeenCalledWith({
+      queryKey: gameKeys.share("tok"),
+    });
+    expect(invalidate).toHaveBeenCalledWith({
+      queryKey: gameKeys.paymentOptions("tok"),
+    });
     expect(methods.share.payment).toHaveBeenCalledWith("tok", "CKAAAA2222");
   });
 });
-

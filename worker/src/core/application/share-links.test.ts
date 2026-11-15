@@ -1,10 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
+import { NotFoundError } from "./errors";
 import {
   createFakeRepo,
   FAKE_GAME_ID,
   FAKE_OWNER,
 } from "./fake-game-repository";
-import { NotFoundError } from "./errors";
 import {
   findSharePageMeta,
   getSharePreviewData,
@@ -54,15 +54,17 @@ describe("share previews", () => {
   it("refuses to store a preview for someone else's game", async () => {
     const { repo } = createFakeRepo();
 
-    await expect(saveSharePreview(repo, "user_other", FAKE_GAME_ID, "base64")).rejects.toThrow(
-      NotFoundError,
-    );
+    await expect(
+      saveSharePreview(repo, "user_other", FAKE_GAME_ID, "base64"),
+    ).rejects.toThrow(NotFoundError);
   });
 
   it("reports a missing preview or share link as not found", async () => {
     const { repo } = createFakeRepo({ shareLinks: [LINK] });
 
-    await expect(getSharePreviewData(repo, "AbCd")).rejects.toThrow(NotFoundError);
+    await expect(getSharePreviewData(repo, "AbCd")).rejects.toThrow(
+      NotFoundError,
+    );
     expect(await findSharePageMeta(repo, "AbCd")).toEqual({
       name: "Cầu lông",
       previewVersion: null,
@@ -72,7 +74,9 @@ describe("share previews", () => {
 
   it("propagates unexpected errors from the page meta lookup", async () => {
     const { repo } = createFakeRepo();
-    vi.spyOn(repo.shareLinks, "findByToken").mockRejectedValue(new Error("d1 down"));
+    vi.spyOn(repo.shareLinks, "findByToken").mockRejectedValue(
+      new Error("d1 down"),
+    );
 
     await expect(findSharePageMeta(repo, "AbCd")).rejects.toThrow("d1 down");
   });

@@ -27,7 +27,8 @@ export function normalizeAiExpense(value: unknown): AiExpenseSuggestion {
   const raw = (value ?? {}) as Record<string, unknown>;
   const title = typeof raw.title === "string" ? raw.title.trim() : "";
   const amount = Number(raw.amount);
-  const payerName = typeof raw.payerName === "string" ? raw.payerName.trim() : "";
+  const payerName =
+    typeof raw.payerName === "string" ? raw.payerName.trim() : "";
   const splitNames = Array.isArray(raw.splitNames)
     ? raw.splitNames.flatMap((name) =>
         typeof name === "string" && name.trim() ? [name.trim()] : [],
@@ -41,7 +42,9 @@ export function normalizeAiExpense(value: unknown): AiExpenseSuggestion {
     payerName,
     splitNames,
     note: typeof raw.note === "string" ? raw.note.trim() : "",
-    confidence: Number.isFinite(confidence) ? Math.max(0, Math.min(1, confidence)) : 0,
+    confidence: Number.isFinite(confidence)
+      ? Math.max(0, Math.min(1, confidence))
+      : 0,
   };
 }
 
@@ -51,7 +54,9 @@ function findParticipantByName(participants: NamedParticipant[], name: string) {
 
   return (
     participants.find((participant) => foldText(participant.name) === target) ||
-    participants.find((participant) => foldText(participant.name).includes(target))
+    participants.find((participant) =>
+      foldText(participant.name).includes(target),
+    )
   );
 }
 
@@ -76,6 +81,8 @@ export function resolveAiExpense(
     ...suggestion,
     payerParticipantId: payer?.id || "",
     splitParticipantIds:
-      uniqueSplitIds.length > 0 ? uniqueSplitIds : participants.map((p) => p.id),
+      uniqueSplitIds.length > 0
+        ? uniqueSplitIds
+        : participants.map((p) => p.id),
   };
 }

@@ -40,32 +40,47 @@ export function buildFunStats(
   participantNames: ParticipantNameRow[],
   omittedGameCount: number,
 ): ApiFunStats {
-  const nameById = new Map(participantNames.map((row) => [row.id, capitalizeName(row.name)]));
+  const nameById = new Map(
+    participantNames.map((row) => [row.id, capitalizeName(row.name)]),
+  );
 
   const totalExpense = expenses
     .filter((row) => row.kind === "expense" || row.kind === "income")
-    .reduce((sum, row) => sum + (row.kind === "income" ? -row.amount : row.amount), 0);
+    .reduce(
+      (sum, row) => sum + (row.kind === "income" ? -row.amount : row.amount),
+      0,
+    );
 
   // Nguoi ung tien: tinh tren tat ca khoan "expense" (bo transfer/income vi
   // do khong phai tien nguoi do bo ra ung truoc cho nhom).
-  const paidByPerson = new Map<string, { name: string; total: number; games: Set<string> }>();
+  const paidByPerson = new Map<
+    string,
+    { name: string; total: number; games: Set<string> }
+  >();
   let biggestExpense: FunStatsExpenseInput | null = null;
 
   for (const row of expenses) {
     if (row.kind !== "expense") continue;
-    if (!biggestExpense || row.amount > biggestExpense.amount) biggestExpense = row;
+    if (!biggestExpense || row.amount > biggestExpense.amount)
+      biggestExpense = row;
 
     const name = nameById.get(row.payerParticipantId);
     if (!name) continue;
 
     const key = personKey(name);
-    const entry = paidByPerson.get(key) || { name, total: 0, games: new Set<string>() };
+    const entry = paidByPerson.get(key) || {
+      name,
+      total: 0,
+      games: new Set<string>(),
+    };
     entry.total += row.amount;
     entry.games.add(row.gameId);
     paidByPerson.set(key, entry);
   }
 
-  const topPayer = toBadge([...paidByPerson.values()].sort((a, b) => b.total - a.total)[0]);
+  const topPayer = toBadge(
+    [...paidByPerson.values()].sort((a, b) => b.total - a.total)[0],
+  );
 
   // Nguoi co mat nhieu cuoc nhat: dem tren so cuoc co it nhat 1 khoan chi cua
   // nguoi do lam payer — dung participant that su xuat hien trong danh sach
@@ -85,7 +100,9 @@ export function buildFunStats(
       .sort((a, b) => b.games.size - a.games.size)[0],
   );
 
-  const biggestGame = [...games].sort((a, b) => b.participantCount - a.participantCount)[0];
+  const biggestGame = [...games].sort(
+    (a, b) => b.participantCount - a.participantCount,
+  )[0];
 
   const weekdayCounts = new Map<number, number>();
   for (const game of games) {
@@ -96,7 +113,9 @@ export function buildFunStats(
   const favoriteWeekday =
     [...weekdayCounts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
 
-  const biggestExpenseGame = biggestExpense ? gameById.get(biggestExpense.gameId) : null;
+  const biggestExpenseGame = biggestExpense
+    ? gameById.get(biggestExpense.gameId)
+    : null;
 
   return {
     gameCount: games.length,
@@ -128,5 +147,9 @@ function toBadge(
   entry: { name: string; total: number; games: Set<string> } | undefined,
 ): ApiFunStatsBadge | null {
   if (!entry) return null;
-  return { name: entry.name, totalPaid: entry.total, gameCount: entry.games.size };
+  return {
+    name: entry.name,
+    totalPaid: entry.total,
+    gameCount: entry.games.size,
+  };
 }

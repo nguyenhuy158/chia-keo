@@ -2,9 +2,12 @@ import { Hono } from "hono";
 import { SHARE_PREVIEW_MIME_TYPE } from "../../../shared/schemas";
 import { createD1GameRepository } from "../adapters/d1/game-repository";
 import { NotFoundError } from "../core/application/errors";
-import { getSharedPhoto, listSharedPhotos } from "../core/application/photos";
 import { reconcileSharedPayments } from "../core/application/payments";
-import { getSharePreviewData, getShareViewByToken } from "../core/application/share-links";
+import { getSharedPhoto, listSharedPhotos } from "../core/application/photos";
+import {
+  getSharePreviewData,
+  getShareViewByToken,
+} from "../core/application/share-links";
 import type { Env } from "../env";
 import { notFound, respond } from "../lib/http";
 import { createPaymentContext } from "../lib/payment-context";
@@ -27,12 +30,15 @@ shareRouter.get("/share/:token/preview.jpg", async (c) => {
       createD1GameRepository(c.env.DB),
       c.req.param("token"),
     );
-    return new Response(Uint8Array.from(atob(data), (char) => char.charCodeAt(0)), {
-      headers: {
-        "Content-Type": SHARE_PREVIEW_MIME_TYPE,
-        "Cache-Control": `public, max-age=${SHARE_PREVIEW_CACHE_SECONDS}`,
+    return new Response(
+      Uint8Array.from(atob(data), (char) => char.charCodeAt(0)),
+      {
+        headers: {
+          "Content-Type": SHARE_PREVIEW_MIME_TYPE,
+          "Cache-Control": `public, max-age=${SHARE_PREVIEW_CACHE_SECONDS}`,
+        },
       },
-    });
+    );
   } catch (error) {
     if (error instanceof NotFoundError) return notFound(c);
     throw error;
@@ -40,7 +46,9 @@ shareRouter.get("/share/:token/preview.jpg", async (c) => {
 });
 
 shareRouter.get("/share/:token/photos", (c) =>
-  respond(c, () => listSharedPhotos(createD1GameRepository(c.env.DB), c.req.param("token"))),
+  respond(c, () =>
+    listSharedPhotos(createD1GameRepository(c.env.DB), c.req.param("token")),
+  ),
 );
 
 shareRouter.get("/share/:token/photos/:photoId", (c) =>

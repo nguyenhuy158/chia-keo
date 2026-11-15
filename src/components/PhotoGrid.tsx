@@ -10,11 +10,17 @@ type PhotoGridProps = {
 };
 
 /** Luoi anh vuong, bam vao mot o de mo che do xem toan man hinh. */
-export function PhotoGrid({ photos, expenseTitleById, onOpen }: PhotoGridProps) {
+export function PhotoGrid({
+  photos,
+  expenseTitleById,
+  onOpen,
+}: PhotoGridProps) {
   return (
     <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
       {photos.map((photo, index) => {
-        const expenseTitle = photo.expenseId ? expenseTitleById?.get(photo.expenseId) : undefined;
+        const expenseTitle = photo.expenseId
+          ? expenseTitleById?.get(photo.expenseId)
+          : undefined;
 
         return (
           <button

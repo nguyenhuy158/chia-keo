@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { getBalancesAcrossGames } from "../core/application/cross-game-balances";
 import { respond } from "../lib/http";
-import { protectPaths, type AuthedEnv } from "../lib/require-user";
+import { type AuthedEnv, protectPaths } from "../lib/require-user";
 
 /**
  * So du gop cua nhieu cuoc chia. Logic da co san va dang duoc MCP dung

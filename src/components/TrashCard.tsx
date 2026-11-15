@@ -1,11 +1,15 @@
 import { RotateCcw, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { usePersistentOpen } from "./use-persistent-open";
 import type { ApiTrashGame } from "../../shared/api-types";
 import { TRASH_RETENTION_DAYS } from "../../shared/schemas";
-import { usePurgeGame, useRestoreGame, useTrashedGames } from "../adapters/react-query/queries";
+import {
+  usePurgeGame,
+  useRestoreGame,
+  useTrashedGames,
+} from "../adapters/react-query/queries";
 import { useConfirm } from "./ConfirmDialog";
 import { SkeletonCard } from "./ui";
+import { usePersistentOpen } from "./use-persistent-open";
 
 /** Con bao nhieu ngay nua truoc khi cuoc chia bi xoa han. */
 function daysLeft(deletedAt: string) {
@@ -97,8 +101,8 @@ export function TrashCard() {
                     {game.name}
                   </p>
                   <p className="mt-0.5 text-xs text-fg-muted">
-                    {game.participantCount} người, {game.expenseCount} khoản · còn{" "}
-                    {daysLeft(game.deletedAt)} ngày
+                    {game.participantCount} người, {game.expenseCount} khoản ·
+                    còn {daysLeft(game.deletedAt)} ngày
                   </p>
                   <div className="mt-2 flex gap-2">
                     <button

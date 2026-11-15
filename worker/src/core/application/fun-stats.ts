@@ -1,5 +1,8 @@
 import type { ApiFunStats } from "../../../../shared/api-types";
-import { buildFunStats, type FunStatsGameInput } from "../../../../shared/fun-stats";
+import {
+  buildFunStats,
+  type FunStatsGameInput,
+} from "../../../../shared/fun-stats";
 import type { GameRepository } from "../ports/game-repository";
 
 /**
@@ -13,7 +16,10 @@ export const MAX_FUN_STATS_GAMES = 20;
  * Thong ke vui gop tat ca cuoc chia dang dung cua user. Chi doc, khong tinh
  * settlements — xem shared/fun-stats.ts.
  */
-export async function getFunStats(repo: GameRepository, userId: string): Promise<ApiFunStats> {
+export async function getFunStats(
+  repo: GameRepository,
+  userId: string,
+): Promise<ApiFunStats> {
   const allGames = await repo.games.listByOwner(userId);
   const selected = allGames.slice(0, MAX_FUN_STATS_GAMES);
   const omittedGameCount = allGames.length - selected.length;
@@ -47,7 +53,9 @@ export async function getFunStats(repo: GameRepository, userId: string): Promise
     createdAt: game.createdAt,
     participantCount: participantCounts.get(game.id) || 0,
   }));
-  const gameById = new Map(selected.map((game, index) => [game.id, gameInputs[index]]));
+  const gameById = new Map(
+    selected.map((game, index) => [game.id, gameInputs[index]]),
+  );
 
   return buildFunStats(
     gameInputs,

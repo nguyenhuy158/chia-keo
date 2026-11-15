@@ -66,8 +66,22 @@ export function BrandMark({
         </filter>
       </defs>
 
-      <rect x="14" y="14" width="484" height="484" rx="136" fill={`url(#${bg})`} />
-      <rect x="14" y="14" width="484" height="484" rx="136" fill={`url(#${glow})`} />
+      <rect
+        x="14"
+        y="14"
+        width="484"
+        height="484"
+        rx="136"
+        fill={`url(#${bg})`}
+      />
+      <rect
+        x="14"
+        y="14"
+        width="484"
+        height="484"
+        rx="136"
+        fill={`url(#${glow})`}
+      />
       <ellipse cx="176" cy="122" rx="104" ry="54" fill="#fff" opacity=".16" />
       <rect
         x="14"
@@ -93,7 +107,14 @@ export function BrandMark({
             strokeWidth="15"
             strokeLinejoin="round"
           />
-          <circle cx="186" cy="202" r="80" fill={`url(#${left})`} stroke="#fff" strokeWidth="18" />
+          <circle
+            cx="186"
+            cy="202"
+            r="80"
+            fill={`url(#${left})`}
+            stroke="#fff"
+            strokeWidth="18"
+          />
           <ellipse cx="162" cy="193" rx="9" ry="12.5" fill="#78350f" />
           <ellipse cx="214" cy="193" rx="9" ry="12.5" fill="#78350f" />
           <circle cx="165.5" cy="187.5" r="3.2" fill="#fff" opacity=".92" />
@@ -105,8 +126,22 @@ export function BrandMark({
             strokeWidth="9"
             strokeLinecap="round"
           />
-          <ellipse cx="139" cy="219" rx="14" ry="8.5" fill="#fb7185" opacity=".55" />
-          <ellipse cx="237" cy="219" rx="14" ry="8.5" fill="#fb7185" opacity=".55" />
+          <ellipse
+            cx="139"
+            cy="219"
+            rx="14"
+            ry="8.5"
+            fill="#fb7185"
+            opacity=".55"
+          />
+          <ellipse
+            cx="237"
+            cy="219"
+            rx="14"
+            ry="8.5"
+            fill="#fb7185"
+            opacity=".55"
+          />
         </g>
         <g transform="rotate(9 328 314)">
           <path
@@ -116,7 +151,14 @@ export function BrandMark({
             strokeWidth="15"
             strokeLinejoin="round"
           />
-          <circle cx="328" cy="314" r="74" fill={`url(#${right})`} stroke="#fff" strokeWidth="18" />
+          <circle
+            cx="328"
+            cy="314"
+            r="74"
+            fill={`url(#${right})`}
+            stroke="#fff"
+            strokeWidth="18"
+          />
           <ellipse cx="306" cy="305" rx="8.5" ry="11.5" fill="#7f1d1d" />
           <ellipse cx="352" cy="305" rx="8.5" ry="11.5" fill="#7f1d1d" />
           <circle cx="309.5" cy="299.5" r="3" fill="#fff" opacity=".92" />
@@ -128,14 +170,34 @@ export function BrandMark({
             strokeWidth="8.5"
             strokeLinecap="round"
           />
-          <ellipse cx="285" cy="330" rx="13" ry="8" fill="#e11d48" opacity=".4" />
-          <ellipse cx="373" cy="330" rx="13" ry="8" fill="#e11d48" opacity=".4" />
+          <ellipse
+            cx="285"
+            cy="330"
+            rx="13"
+            ry="8"
+            fill="#e11d48"
+            opacity=".4"
+          />
+          <ellipse
+            cx="373"
+            cy="330"
+            rx="13"
+            ry="8"
+            fill="#e11d48"
+            opacity=".4"
+          />
         </g>
       </g>
 
       <g fill="#fff">
-        <path d="M382 138 l10 26 26 10 -26 10 -10 26 -10-26 -26-10 26-10 z" opacity=".95" />
-        <path d="M132 356 l7 18 18 7 -18 7 -7 18 -7-18 -18-7 18-7 z" opacity=".72" />
+        <path
+          d="M382 138 l10 26 26 10 -26 10 -10 26 -10-26 -26-10 26-10 z"
+          opacity=".95"
+        />
+        <path
+          d="M132 356 l7 18 18 7 -18 7 -7 18 -7-18 -18-7 18-7 z"
+          opacity=".72"
+        />
       </g>
     </svg>
   );

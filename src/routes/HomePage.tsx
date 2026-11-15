@@ -57,7 +57,15 @@ function Section({
   );
 }
 
-function StatTile({ icon, label, value }: { icon: ReactNode; label: string; value: string }) {
+function StatTile({
+  icon,
+  label,
+  value,
+}: {
+  icon: ReactNode;
+  label: string;
+  value: string;
+}) {
   return (
     <div className="rounded-lg border border-border bg-stone-50 p-3 dark:bg-stone-950">
       <div className="flex items-center gap-1.5 text-violet-600 dark:text-violet-400">
@@ -66,7 +74,9 @@ function StatTile({ icon, label, value }: { icon: ReactNode; label: string; valu
           {label}
         </span>
       </div>
-      <p className="mt-1 truncate text-lg font-bold text-stone-950 dark:text-stone-50">{value}</p>
+      <p className="mt-1 truncate text-lg font-bold text-stone-950 dark:text-stone-50">
+        {value}
+      </p>
     </div>
   );
 }
@@ -92,8 +102,12 @@ export function HomePage() {
   const recent = games.slice(0, RECENT_LIMIT);
   const stats = funStatsQuery.data;
   const people = balancesQuery.data?.people || [];
-  const owedToMe = people.filter((person) => person.net > 0).slice(0, DEBT_LIMIT);
-  const owedByMe = people.filter((person) => person.net < 0).slice(0, DEBT_LIMIT);
+  const owedToMe = people
+    .filter((person) => person.net > 0)
+    .slice(0, DEBT_LIMIT);
+  const owedByMe = people
+    .filter((person) => person.net < 0)
+    .slice(0, DEBT_LIMIT);
   const hasDebts = owedToMe.length > 0 || owedByMe.length > 0;
 
   if (gamesQuery.isPending) {

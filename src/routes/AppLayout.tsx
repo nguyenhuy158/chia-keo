@@ -9,17 +9,17 @@ import {
   Volleyball,
 } from "lucide-react";
 import { useState } from "react";
-import { BrandMark } from "../components/brand";
-import { GamesSidebar } from "../components/GamesSidebar";
-import { MobileShellContext } from "../components/mobile-shell";
-import { Menu as DropdownMenu } from "../ui/Menu";
-import { Sheet } from "../ui/Sheet";
-import { ThemeToggle } from "../components/theme";
-import { LoadingState } from "../components/ui";
 import { authClient } from "../adapters/browser/auth-client";
 import { API_BASE } from "../adapters/browser/http-game-api";
 import { ssoLogoutUrl } from "../adapters/browser/sso";
 import { useAppSession } from "../adapters/react-query/session-query";
+import { BrandMark } from "../components/brand";
+import { GamesSidebar } from "../components/GamesSidebar";
+import { MobileShellContext } from "../components/mobile-shell";
+import { ThemeToggle } from "../components/theme";
+import { LoadingState } from "../components/ui";
+import { Menu as DropdownMenu } from "../ui/Menu";
+import { Sheet } from "../ui/Sheet";
 
 export function AppLayout() {
   const navigate = useNavigate();
@@ -45,7 +45,9 @@ export function AppLayout() {
     // xoa, va du sao cung sap roi khoi trang.
     await authClient.signOut().catch(() => undefined);
 
-    const response = await fetch(`${API_BASE}/api/session`, { credentials: "include" });
+    const response = await fetch(`${API_BASE}/api/session`, {
+      credentials: "include",
+    });
     const stillSignedIn = response.ok && Boolean((await response.json()).user);
 
     // Con session sau khi signOut nghia la dang vao bang SSO: phai qua trang
@@ -61,7 +63,9 @@ export function AppLayout() {
   const displayName = user.name;
 
   return (
-    <MobileShellContext.Provider value={{ openGames: () => setGamesOpen(true) }}>
+    <MobileShellContext.Provider
+      value={{ openGames: () => setGamesOpen(true) }}
+    >
       <header className="sticky top-0 z-30 border-b border-border bg-surface">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 px-4 py-3 sm:gap-3 sm:px-5 sm:py-4">
           <div className="flex min-w-0 items-center gap-2">
@@ -197,7 +201,12 @@ export function AppLayout() {
         </section>
       </main>
 
-      <Sheet side="left" open={gamesOpen} onClose={() => setGamesOpen(false)} title="Cuộc chơi">
+      <Sheet
+        side="left"
+        open={gamesOpen}
+        onClose={() => setGamesOpen(false)}
+        title="Cuộc chơi"
+      >
         <GamesSidebar onNavigate={() => setGamesOpen(false)} />
       </Sheet>
     </MobileShellContext.Provider>

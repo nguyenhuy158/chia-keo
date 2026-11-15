@@ -33,12 +33,12 @@
     <script>
       // Chan pinch-zoom + double-tap zoom. iOS Safari bo qua user-scalable=no
       // nen phai tu huy cac gesture o day.
-      ["gesturestart", "gesturechange", "gestureend"].forEach(function (name) {
-        document.addEventListener(name, function (event) { event.preventDefault(); }, { passive: false });
+      ["gesturestart", "gesturechange", "gestureend"].forEach((name) => {
+        document.addEventListener(name, (event) => { event.preventDefault(); }, { passive: false });
       });
       document.addEventListener(
         "touchmove",
-        function (event) {
+        (event) => {
           // Giu lai swipe 1 ngon (PhotoViewer dung de lat anh), chi chan pinch.
           if (event.touches.length > 1) event.preventDefault();
         },

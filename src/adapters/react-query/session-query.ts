@@ -15,7 +15,9 @@ export function useAppSession() {
   const query = useQuery({
     queryKey: sessionKeys.all,
     queryFn: async (): Promise<{ user: SessionUser | null }> => {
-      const response = await fetch(`${API_BASE}/api/session`, { credentials: "include" });
+      const response = await fetch(`${API_BASE}/api/session`, {
+        credentials: "include",
+      });
       if (!response.ok) return { user: null };
       return response.json();
     },
@@ -40,14 +42,18 @@ export function useUpdateProfileName() {
         body: JSON.stringify({ name }),
       });
       if (!response.ok) {
-        const body = (await response.json().catch(() => null)) as { error?: string } | null;
+        const body = (await response.json().catch(() => null)) as {
+          error?: string;
+        } | null;
         throw new Error(body?.error || "update_failed");
       }
       return response.json();
     },
     onSuccess: ({ name }) => {
-      queryClient.setQueryData<{ user: SessionUser | null }>(sessionKeys.all, (previous) =>
-        previous?.user ? { user: { ...previous.user, name } } : previous,
+      queryClient.setQueryData<{ user: SessionUser | null }>(
+        sessionKeys.all,
+        (previous) =>
+          previous?.user ? { user: { ...previous.user, name } } : previous,
       );
     },
   });

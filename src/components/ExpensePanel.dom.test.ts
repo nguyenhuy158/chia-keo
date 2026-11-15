@@ -1149,16 +1149,14 @@ describe("ExpensePanel", () => {
   });
 
   it("đọc được sự kiện ảnh nhưng nội dung ảnh rỗng", async () => {
-    const scanReceipt = vi
-      .fn()
-      .mockResolvedValue({
-        suggestion: {
-          title: "",
-          amount: 0,
-          payerParticipantId: "",
-          splitParticipantIds: [],
-        },
-      });
+    const scanReceipt = vi.fn().mockResolvedValue({
+      suggestion: {
+        title: "",
+        amount: 0,
+        payerParticipantId: "",
+        splitParticipantIds: [],
+      },
+    });
     provideGameApi({ ai: { scanReceipt } } as unknown as GameApiPort);
     class EmptyReader {
       result = null;

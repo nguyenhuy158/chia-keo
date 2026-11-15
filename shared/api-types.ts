@@ -3,7 +3,12 @@ import type { ExpenseCategory } from "./expense-categories";
 import type { CloseModeValue } from "./game-closing";
 import type { McpScope, SettlementMode } from "./schemas";
 import type { ShuttleEntryKind } from "./shuttles";
-import type { BalanceRow, ExpenseKind, SettlementRow, SplitMode } from "./split";
+import type {
+  BalanceRow,
+  ExpenseKind,
+  SettlementRow,
+  SplitMode,
+} from "./split";
 
 export type ApiAiSuggestionResponse = {
   suggestion: ResolvedAiExpense;

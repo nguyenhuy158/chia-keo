@@ -102,9 +102,7 @@
       "indexes": {
         "chiakeo_account_user_id_idx": {
           "name": "chiakeo_account_user_id_idx",
-          "columns": [
-            "user_id"
-          ],
+          "columns": ["user_id"],
           "isUnique": false
         }
       },
@@ -113,12 +111,8 @@
           "name": "chiakeo_account_user_id_chiakeo_user_id_fk",
           "tableFrom": "chiakeo_account",
           "tableTo": "chiakeo_user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -200,10 +194,7 @@
       "indexes": {
         "chiakeo_contacts_owner_name_key_idx": {
           "name": "chiakeo_contacts_owner_name_key_idx",
-          "columns": [
-            "owner_user_id",
-            "name_key"
-          ],
+          "columns": ["owner_user_id", "name_key"],
           "isUnique": true
         }
       },
@@ -212,12 +203,8 @@
           "name": "chiakeo_contacts_owner_user_id_chiakeo_user_id_fk",
           "tableFrom": "chiakeo_contacts",
           "tableTo": "chiakeo_user",
-          "columnsFrom": [
-            "owner_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["owner_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -268,17 +255,12 @@
       "indexes": {
         "chiakeo_expense_splits_expense_id_idx": {
           "name": "chiakeo_expense_splits_expense_id_idx",
-          "columns": [
-            "expense_id"
-          ],
+          "columns": ["expense_id"],
           "isUnique": false
         },
         "chiakeo_expense_splits_expense_participant_idx": {
           "name": "chiakeo_expense_splits_expense_participant_idx",
-          "columns": [
-            "expense_id",
-            "participant_id"
-          ],
+          "columns": ["expense_id", "participant_id"],
           "isUnique": true
         }
       },
@@ -287,12 +269,8 @@
           "name": "chiakeo_expense_splits_expense_id_chiakeo_expenses_id_fk",
           "tableFrom": "chiakeo_expense_splits",
           "tableTo": "chiakeo_expenses",
-          "columnsFrom": [
-            "expense_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["expense_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -300,12 +278,8 @@
           "name": "chiakeo_expense_splits_participant_id_chiakeo_participants_id_fk",
           "tableFrom": "chiakeo_expense_splits",
           "tableTo": "chiakeo_participants",
-          "columnsFrom": [
-            "participant_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["participant_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -410,9 +384,7 @@
       "indexes": {
         "chiakeo_expenses_game_id_idx": {
           "name": "chiakeo_expenses_game_id_idx",
-          "columns": [
-            "game_id"
-          ],
+          "columns": ["game_id"],
           "isUnique": false
         }
       },
@@ -421,12 +393,8 @@
           "name": "chiakeo_expenses_game_id_chiakeo_games_id_fk",
           "tableFrom": "chiakeo_expenses",
           "tableTo": "chiakeo_games",
-          "columnsFrom": [
-            "game_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["game_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -434,12 +402,8 @@
           "name": "chiakeo_expenses_payer_participant_id_chiakeo_participants_id_fk",
           "tableFrom": "chiakeo_expenses",
           "tableTo": "chiakeo_participants",
-          "columnsFrom": [
-            "payer_participant_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["payer_participant_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -491,39 +455,27 @@
       "indexes": {
         "chiakeo_game_collaborators_game_id_idx": {
           "name": "chiakeo_game_collaborators_game_id_idx",
-          "columns": [
-            "game_id"
-          ],
+          "columns": ["game_id"],
           "isUnique": false
         },
         "chiakeo_game_collaborators_user_id_idx": {
           "name": "chiakeo_game_collaborators_user_id_idx",
-          "columns": [
-            "user_id"
-          ],
+          "columns": ["user_id"],
           "isUnique": false
         },
         "chiakeo_game_collaborators_invited_email_idx": {
           "name": "chiakeo_game_collaborators_invited_email_idx",
-          "columns": [
-            "invited_email"
-          ],
+          "columns": ["invited_email"],
           "isUnique": false
         },
         "chiakeo_game_collaborators_game_user_idx": {
           "name": "chiakeo_game_collaborators_game_user_idx",
-          "columns": [
-            "game_id",
-            "user_id"
-          ],
+          "columns": ["game_id", "user_id"],
           "isUnique": true
         },
         "chiakeo_game_collaborators_game_email_idx": {
           "name": "chiakeo_game_collaborators_game_email_idx",
-          "columns": [
-            "game_id",
-            "invited_email"
-          ],
+          "columns": ["game_id", "invited_email"],
           "isUnique": true
         }
       },
@@ -532,12 +484,8 @@
           "name": "chiakeo_game_collaborators_game_id_chiakeo_games_id_fk",
           "tableFrom": "chiakeo_game_collaborators",
           "tableTo": "chiakeo_games",
-          "columnsFrom": [
-            "game_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["game_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -545,12 +493,8 @@
           "name": "chiakeo_game_collaborators_user_id_chiakeo_user_id_fk",
           "tableFrom": "chiakeo_game_collaborators",
           "tableTo": "chiakeo_user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -608,9 +552,7 @@
       "indexes": {
         "chiakeo_game_events_game_id_idx": {
           "name": "chiakeo_game_events_game_id_idx",
-          "columns": [
-            "game_id"
-          ],
+          "columns": ["game_id"],
           "isUnique": false
         }
       },
@@ -619,12 +561,8 @@
           "name": "chiakeo_game_events_game_id_chiakeo_games_id_fk",
           "tableFrom": "chiakeo_game_events",
           "tableTo": "chiakeo_games",
-          "columnsFrom": [
-            "game_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["game_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -711,16 +649,12 @@
       "indexes": {
         "chiakeo_game_photos_game_id_idx": {
           "name": "chiakeo_game_photos_game_id_idx",
-          "columns": [
-            "game_id"
-          ],
+          "columns": ["game_id"],
           "isUnique": false
         },
         "chiakeo_game_photos_expense_id_idx": {
           "name": "chiakeo_game_photos_expense_id_idx",
-          "columns": [
-            "expense_id"
-          ],
+          "columns": ["expense_id"],
           "isUnique": false
         }
       },
@@ -729,12 +663,8 @@
           "name": "chiakeo_game_photos_game_id_chiakeo_games_id_fk",
           "tableFrom": "chiakeo_game_photos",
           "tableTo": "chiakeo_games",
-          "columnsFrom": [
-            "game_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["game_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -742,12 +672,8 @@
           "name": "chiakeo_game_photos_expense_id_chiakeo_expenses_id_fk",
           "tableFrom": "chiakeo_game_photos",
           "tableTo": "chiakeo_expenses",
-          "columnsFrom": [
-            "expense_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["expense_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -843,9 +769,7 @@
       "indexes": {
         "chiakeo_games_owner_user_id_idx": {
           "name": "chiakeo_games_owner_user_id_idx",
-          "columns": [
-            "owner_user_id"
-          ],
+          "columns": ["owner_user_id"],
           "isUnique": false
         }
       },
@@ -854,12 +778,8 @@
           "name": "chiakeo_games_owner_user_id_chiakeo_user_id_fk",
           "tableFrom": "chiakeo_games",
           "tableTo": "chiakeo_user",
-          "columnsFrom": [
-            "owner_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["owner_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -945,16 +865,12 @@
       "indexes": {
         "chiakeo_mcp_tokens_token_hash_unique": {
           "name": "chiakeo_mcp_tokens_token_hash_unique",
-          "columns": [
-            "token_hash"
-          ],
+          "columns": ["token_hash"],
           "isUnique": true
         },
         "chiakeo_mcp_tokens_user_id_idx": {
           "name": "chiakeo_mcp_tokens_user_id_idx",
-          "columns": [
-            "user_id"
-          ],
+          "columns": ["user_id"],
           "isUnique": false
         }
       },
@@ -963,12 +879,8 @@
           "name": "chiakeo_mcp_tokens_user_id_chiakeo_user_id_fk",
           "tableFrom": "chiakeo_mcp_tokens",
           "tableTo": "chiakeo_user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1027,9 +939,7 @@
       "indexes": {
         "chiakeo_participants_game_id_idx": {
           "name": "chiakeo_participants_game_id_idx",
-          "columns": [
-            "game_id"
-          ],
+          "columns": ["game_id"],
           "isUnique": false
         }
       },
@@ -1038,12 +948,8 @@
           "name": "chiakeo_participants_game_id_chiakeo_games_id_fk",
           "tableFrom": "chiakeo_participants",
           "tableTo": "chiakeo_games",
-          "columnsFrom": [
-            "game_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["game_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1119,9 +1025,7 @@
       "indexes": {
         "chiakeo_payment_profiles_participant_id_idx": {
           "name": "chiakeo_payment_profiles_participant_id_idx",
-          "columns": [
-            "participant_id"
-          ],
+          "columns": ["participant_id"],
           "isUnique": true
         }
       },
@@ -1130,12 +1034,8 @@
           "name": "chiakeo_payment_profiles_participant_id_chiakeo_participants_id_fk",
           "tableFrom": "chiakeo_payment_profiles",
           "tableTo": "chiakeo_participants",
-          "columnsFrom": [
-            "participant_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["participant_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1237,16 +1137,12 @@
       "indexes": {
         "chiakeo_payment_requests_code_unique": {
           "name": "chiakeo_payment_requests_code_unique",
-          "columns": [
-            "code"
-          ],
+          "columns": ["code"],
           "isUnique": true
         },
         "chiakeo_payment_requests_game_id_idx": {
           "name": "chiakeo_payment_requests_game_id_idx",
-          "columns": [
-            "game_id"
-          ],
+          "columns": ["game_id"],
           "isUnique": false
         }
       },
@@ -1255,12 +1151,8 @@
           "name": "chiakeo_payment_requests_game_id_chiakeo_games_id_fk",
           "tableFrom": "chiakeo_payment_requests",
           "tableTo": "chiakeo_games",
-          "columnsFrom": [
-            "game_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["game_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1304,9 +1196,7 @@
       "indexes": {
         "chiakeo_payment_transactions_request_id_idx": {
           "name": "chiakeo_payment_transactions_request_id_idx",
-          "columns": [
-            "request_id"
-          ],
+          "columns": ["request_id"],
           "isUnique": false
         }
       },
@@ -1315,12 +1205,8 @@
           "name": "chiakeo_payment_transactions_request_id_chiakeo_payment_requests_id_fk",
           "tableFrom": "chiakeo_payment_transactions",
           "tableTo": "chiakeo_payment_requests",
-          "columnsFrom": [
-            "request_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["request_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1392,16 +1278,12 @@
       "indexes": {
         "chiakeo_session_token_unique": {
           "name": "chiakeo_session_token_unique",
-          "columns": [
-            "token"
-          ],
+          "columns": ["token"],
           "isUnique": true
         },
         "chiakeo_session_user_id_idx": {
           "name": "chiakeo_session_user_id_idx",
-          "columns": [
-            "user_id"
-          ],
+          "columns": ["user_id"],
           "isUnique": false
         }
       },
@@ -1410,12 +1292,8 @@
           "name": "chiakeo_session_user_id_chiakeo_user_id_fk",
           "tableFrom": "chiakeo_session",
           "tableTo": "chiakeo_user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1474,16 +1352,12 @@
       "indexes": {
         "chiakeo_share_links_token_unique": {
           "name": "chiakeo_share_links_token_unique",
-          "columns": [
-            "token"
-          ],
+          "columns": ["token"],
           "isUnique": true
         },
         "chiakeo_share_links_game_id_idx": {
           "name": "chiakeo_share_links_game_id_idx",
-          "columns": [
-            "game_id"
-          ],
+          "columns": ["game_id"],
           "isUnique": false
         }
       },
@@ -1492,12 +1366,8 @@
           "name": "chiakeo_share_links_game_id_chiakeo_games_id_fk",
           "tableFrom": "chiakeo_share_links",
           "tableTo": "chiakeo_games",
-          "columnsFrom": [
-            "game_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["game_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1556,9 +1426,7 @@
       "indexes": {
         "chiakeo_shuttle_entries_owner_id_idx": {
           "name": "chiakeo_shuttle_entries_owner_id_idx",
-          "columns": [
-            "owner_user_id"
-          ],
+          "columns": ["owner_user_id"],
           "isUnique": false
         }
       },
@@ -1567,12 +1435,8 @@
           "name": "chiakeo_shuttle_entries_owner_user_id_chiakeo_user_id_fk",
           "tableFrom": "chiakeo_shuttle_entries",
           "tableTo": "chiakeo_user",
-          "columnsFrom": [
-            "owner_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["owner_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1652,16 +1516,12 @@
       "indexes": {
         "chiakeo_user_email_unique": {
           "name": "chiakeo_user_email_unique",
-          "columns": [
-            "email"
-          ],
+          "columns": ["email"],
           "isUnique": true
         },
         "chiakeo_user_username_unique": {
           "name": "chiakeo_user_username_unique",
-          "columns": [
-            "username"
-          ],
+          "columns": ["username"],
           "isUnique": true
         }
       },
@@ -1712,10 +1572,7 @@
       "indexes": {
         "chiakeo_user_preferences_user_key_idx": {
           "name": "chiakeo_user_preferences_user_key_idx",
-          "columns": [
-            "user_id",
-            "key"
-          ],
+          "columns": ["user_id", "key"],
           "isUnique": true
         }
       },
@@ -1724,12 +1581,8 @@
           "name": "chiakeo_user_preferences_user_id_chiakeo_user_id_fk",
           "tableFrom": "chiakeo_user_preferences",
           "tableTo": "chiakeo_user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }

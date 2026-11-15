@@ -54,7 +54,9 @@ export function Dropdown({
   }, [options, query, searchable]);
 
   const activeOptionId =
-    activeIndex >= 0 && activeIndex < visible.length ? `${listId}-option-${activeIndex}` : undefined;
+    activeIndex >= 0 && activeIndex < visible.length
+      ? `${listId}-option-${activeIndex}`
+      : undefined;
 
   // Mo ra la nham thang vao muc dang chon; go tim doi danh sach thi ve dau.
   useEffect(() => {
@@ -75,7 +77,10 @@ export function Dropdown({
     // Tab ra khoi ca dropdown (trigger + o tim) thi dong lai, khong de danh
     // sach treo mo trong khi ban phim da roi sang phan khac cua trang.
     function onFocusOut(event: FocusEvent) {
-      if (rootRef.current && !rootRef.current.contains(event.relatedTarget as Node)) {
+      if (
+        rootRef.current &&
+        !rootRef.current.contains(event.relatedTarget as Node)
+      ) {
         setOpen(false);
       }
     }
@@ -144,7 +149,9 @@ export function Dropdown({
         aria-activedescendant={open ? activeOptionId : undefined}
         className="field flex items-center justify-between gap-2 text-left disabled:cursor-not-allowed disabled:opacity-60"
       >
-        <span className={`truncate ${selected ? "" : "text-stone-400 dark:text-stone-500"}`}>
+        <span
+          className={`truncate ${selected ? "" : "text-stone-400 dark:text-stone-500"}`}
+        >
           {selected?.label || placeholder}
         </span>
         <ChevronDown
@@ -172,7 +179,11 @@ export function Dropdown({
             </div>
           )}
 
-          <ul role="listbox" aria-label={ariaLabel} className="max-h-60 overflow-auto p-1">
+          <ul
+            role="listbox"
+            aria-label={ariaLabel}
+            className="max-h-60 overflow-auto p-1"
+          >
             {visible.length === 0 ? (
               <li className="px-3 py-2.5 text-sm text-fg-muted">
                 Không tìm thấy
@@ -189,7 +200,9 @@ export function Dropdown({
                       aria-selected={isSelected}
                       onClick={() => choose(option.value)}
                       className={`flex w-full items-center justify-between gap-2 rounded px-3 py-2.5 text-left text-sm ${
-                        index === activeIndex ? "bg-stone-100 dark:bg-stone-700" : ""
+                        index === activeIndex
+                          ? "bg-stone-100 dark:bg-stone-700"
+                          : ""
                       } ${
                         isSelected
                           ? "bg-violet-50 font-semibold text-violet-800 dark:bg-violet-500/15 dark:text-violet-300"

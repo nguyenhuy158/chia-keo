@@ -5,11 +5,12 @@ import type { ApiExpense, ApiPhoto } from "../../shared/api-types";
 import { MAX_PHOTOS_PER_GAME } from "../../shared/schemas";
 import { usePhotoUploader } from "../adapters/react-query/photo-upload";
 import { PhotoGrid } from "./PhotoGrid";
-import { usePhotoViewer } from "./use-photo-viewer";
 import { SkeletonPhotoGrid } from "./ui";
+import { usePhotoViewer } from "./use-photo-viewer";
 
 /** HEIC tu iPhone duoc trinh duyet giai ma roi nen lai thanh JPEG truoc khi gui. */
-export const PHOTO_FILE_ACCEPT = "image/jpeg,image/png,image/webp,image/heic,image/heif";
+export const PHOTO_FILE_ACCEPT =
+  "image/jpeg,image/png,image/webp,image/heic,image/heif";
 
 type PhotoPickerButtonProps = {
   label: string;
@@ -62,9 +63,16 @@ type PhotoPanelProps = {
 };
 
 /** Album anh cua mot cuoc chia: them, xem toan man hinh, sua chu thich, xoa. */
-export function PhotoPanel({ gameId, photos, expenses, loading = false }: PhotoPanelProps) {
+export function PhotoPanel({
+  gameId,
+  photos,
+  expenses,
+  loading = false,
+}: PhotoPanelProps) {
   const uploader = usePhotoUploader(gameId);
-  const expenseTitleById = new Map(expenses.map((expense) => [expense.id, expense.title]));
+  const expenseTitleById = new Map(
+    expenses.map((expense) => [expense.id, expense.title]),
+  );
   const photoViewer = usePhotoViewer(gameId, photos, expenseTitleById);
   const isFull = photos.length >= MAX_PHOTOS_PER_GAME;
 
@@ -75,7 +83,11 @@ export function PhotoPanel({ gameId, photos, expenses, loading = false }: PhotoP
 
   const addButton = (
     <PhotoPickerButton
-      label={uploader.pending ? `Đang tải ${uploader.done + 1}/${uploader.total}` : "Thêm ảnh"}
+      label={
+        uploader.pending
+          ? `Đang tải ${uploader.done + 1}/${uploader.total}`
+          : "Thêm ảnh"
+      }
       ariaLabel="Thêm ảnh vào album"
       disabled={uploader.pending || isFull}
       onPick={handlePick}
@@ -90,7 +102,9 @@ export function PhotoPanel({ gameId, photos, expenses, loading = false }: PhotoP
       <div className="mb-4 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <Images size={18} className="text-sky-500" />
-          <h3 className="text-lg font-semibold text-stone-950 dark:text-stone-50">Ảnh</h3>
+          <h3 className="text-lg font-semibold text-stone-950 dark:text-stone-50">
+            Ảnh
+          </h3>
           <span className="rounded-full bg-stone-100 px-2 py-0.5 text-xs font-semibold text-stone-600 tabular dark:bg-stone-800 dark:text-stone-300">
             {photos.length}/{MAX_PHOTOS_PER_GAME}
           </span>
@@ -111,7 +125,11 @@ export function PhotoPanel({ gameId, photos, expenses, loading = false }: PhotoP
         <SkeletonPhotoGrid />
       ) : photos.length > 0 ? (
         <div className="max-h-[60vh] overflow-y-auto pr-0.5">
-          <PhotoGrid photos={photos} expenseTitleById={expenseTitleById} onOpen={photoViewer.open} />
+          <PhotoGrid
+            photos={photos}
+            expenseTitleById={expenseTitleById}
+            onOpen={photoViewer.open}
+          />
         </div>
       ) : (
         <div className="flex flex-col items-center gap-3 rounded-md border border-dashed border-stone-300 p-6 text-center dark:border-stone-700">

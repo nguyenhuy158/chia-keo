@@ -1,5 +1,5 @@
-import type { ApiAiSuggestionResponse } from "../../../../shared/api-types";
 import { normalizeAiExpense, resolveAiExpense } from "../../../../shared/ai";
+import type { ApiAiSuggestionResponse } from "../../../../shared/api-types";
 import type { AiContentPart, AiProvider } from "../ports/ai-provider";
 import type { GameRepository } from "../ports/game-repository";
 import { AiProviderError, NotFoundError } from "./errors";
@@ -10,12 +10,19 @@ type AiDeps = {
   ai: AiProvider;
 };
 
-async function loadOwnedGameParticipants(deps: AiDeps, userId: string, gameId: string) {
+async function loadOwnedGameParticipants(
+  deps: AiDeps,
+  userId: string,
+  gameId: string,
+) {
   const game = await getAccessibleGame(deps.repo, gameId, userId);
   if (!game) throw new NotFoundError();
 
   const participants = await deps.repo.participants.listByGame(game.id);
-  return participants.map((participant) => ({ id: participant.id, name: participant.name }));
+  return participants.map((participant) => ({
+    id: participant.id,
+    name: participant.name,
+  }));
 }
 
 export async function suggestExpenseFromText(
@@ -39,7 +46,10 @@ export async function suggestExpenseFromText(
   const result = await deps.ai.generateJson([{ text: prompt }]);
   if (!result.ok) throw new AiProviderError(result.error);
 
-  const suggestion = resolveAiExpense(normalizeAiExpense(result.json), participants);
+  const suggestion = resolveAiExpense(
+    normalizeAiExpense(result.json),
+    participants,
+  );
   return { suggestion };
 }
 

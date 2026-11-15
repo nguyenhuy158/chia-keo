@@ -7,7 +7,9 @@ describe("D1 schema", () => {
     const tables = Object.values(schema);
     const configs = tables.map((table) => getTableConfig(table));
     expect(configs.map((config) => config.name)).toContain("chiakeo_games");
-    expect(configs.map((config) => config.name)).toContain("chiakeo_payment_profiles");
+    expect(configs.map((config) => config.name)).toContain(
+      "chiakeo_payment_profiles",
+    );
     expect(configs.flatMap((config) => config.indexes).length).toBeGreaterThan(
       10,
     );

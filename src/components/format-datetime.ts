@@ -1,4 +1,7 @@
-const TIME_FORMAT = new Intl.DateTimeFormat("vi-VN", { hour: "2-digit", minute: "2-digit" });
+const TIME_FORMAT = new Intl.DateTimeFormat("vi-VN", {
+  hour: "2-digit",
+  minute: "2-digit",
+});
 
 export function formatDateTime(iso: string, opts?: { includeYear?: boolean }) {
   const includeYear = opts?.includeYear !== false;

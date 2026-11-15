@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
-  VIETQR_ACCOUNT_PATTERN,
-  VIETQR_BANK_OPTIONS,
   buildVietQrProxyPath,
   buildVietQrUrl,
   canBuildVietQr,
   getVietQrBankLabel,
   getVietQrPaymentIssue,
   resolveVietQrBankId,
+  VIETQR_ACCOUNT_PATTERN,
+  VIETQR_BANK_OPTIONS,
 } from "./vietqr";
 
 const fullPayment = {
@@ -52,7 +52,9 @@ describe("canBuildVietQr", () => {
 
   it("báo thiếu thông tin nhận tiền và chấp nhận tài khoản đủ dữ liệu", () => {
     expect(getVietQrPaymentIssue(undefined)).toContain("chưa nhập");
-    expect(getVietQrPaymentIssue({ ...fullPayment, accountNo: "" })).toContain("chưa nhập");
+    expect(getVietQrPaymentIssue({ ...fullPayment, accountNo: "" })).toContain(
+      "chưa nhập",
+    );
     expect(getVietQrPaymentIssue(fullPayment)).toBe("");
   });
 });
@@ -61,7 +63,9 @@ describe("buildVietQrUrl", () => {
   it("tạo URL vietqr.io với amount và nội dung chuyển khoản", () => {
     const url = buildVietQrUrl(fullPayment, 150000, "ABC123");
 
-    expect(url).toContain("https://img.vietqr.io/image/VCB-0123456789-compact2.png");
+    expect(url).toContain(
+      "https://img.vietqr.io/image/VCB-0123456789-compact2.png",
+    );
     expect(url).toContain("amount=150000");
     expect(url).toContain(`addInfo=${encodeURIComponent("CHIA KEO ABC123")}`);
     expect(url).toContain(`accountName=${encodeURIComponent("NGUYEN VAN A")}`);
@@ -69,7 +73,9 @@ describe("buildVietQrUrl", () => {
 
   it("đặt mã thanh toán SePay lên đầu nội dung để ngân hàng không cắt mất", () => {
     const url = buildVietQrUrl(fullPayment, 150000, "CKAB23CD45");
-    expect(url).toContain(`addInfo=${encodeURIComponent("CKAB23CD45 CHIA KEO")}`);
+    expect(url).toContain(
+      `addInfo=${encodeURIComponent("CKAB23CD45 CHIA KEO")}`,
+    );
   });
 
   it("tạo URL bằng mã ngân hàng đã chuẩn hóa", () => {
@@ -109,7 +115,11 @@ describe("getVietQrBankLabel", () => {
 
 describe("buildVietQrProxyPath", () => {
   it("trỏ về API của mình với mã ngân hàng đã chuẩn hóa", () => {
-    const path = buildVietQrProxyPath({ ...fullPayment, bankId: "MBB" }, 148_800, "ABC123");
+    const path = buildVietQrProxyPath(
+      { ...fullPayment, bankId: "MBB" },
+      148_800,
+      "ABC123",
+    );
     const params = new URLSearchParams(path.split("?")[1]);
 
     expect(path.startsWith("/api/qr?")).toBe(true);
@@ -122,7 +132,9 @@ describe("buildVietQrProxyPath", () => {
   it("làm tròn số tiền lẻ vì VietQR chỉ nhận số nguyên", () => {
     const path = buildVietQrProxyPath(fullPayment, 148_800.6, "ABC123");
 
-    expect(new URLSearchParams(path.split("?")[1]).get("amount")).toBe("148801");
+    expect(new URLSearchParams(path.split("?")[1]).get("amount")).toBe(
+      "148801",
+    );
   });
 });
 

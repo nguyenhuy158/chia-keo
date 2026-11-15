@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { getFunStats } from "../core/application/fun-stats";
 import { respond } from "../lib/http";
-import { protectPaths, type AuthedEnv } from "../lib/require-user";
+import { type AuthedEnv, protectPaths } from "../lib/require-user";
 
 /**
  * Router rieng, tach khoi gamesRouter: thong ke vui khong dung chung logic

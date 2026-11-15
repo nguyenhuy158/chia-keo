@@ -7,7 +7,10 @@ import {
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
-import { restrictToParentElement, restrictToVerticalAxis } from "@dnd-kit/modifiers";
+import {
+  restrictToParentElement,
+  restrictToVerticalAxis,
+} from "@dnd-kit/modifiers";
 import {
   arrayMove,
   SortableContext,
@@ -32,17 +35,30 @@ type SortableListProps = {
  * Danh sach doc keo tha doi thu tu bang dnd-kit: chuot, cam ung va ban phim.
  * Chi goi `onReorder` khi tha, va chi khi thu tu thuc su doi.
  */
-export function SortableList({ ids, onReorder, className, children }: SortableListProps) {
+export function SortableList({
+  ids,
+  onReorder,
+  className,
+  children,
+}: SortableListProps) {
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: { distance: DRAG_ACTIVATION_DISTANCE_PX },
     }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
   );
 
   function handleDragEnd({ active, over }: DragEndEvent) {
     if (!over || active.id === over.id) return;
-    onReorder(arrayMove(ids, ids.indexOf(String(active.id)), ids.indexOf(String(over.id))));
+    onReorder(
+      arrayMove(
+        ids,
+        ids.indexOf(String(active.id)),
+        ids.indexOf(String(over.id)),
+      ),
+    );
   }
 
   return (
@@ -68,7 +84,8 @@ type SortableHandle = Pick<
  * Nhan giu tay cam tren dien thoai mo menu ngu canh cua he dieu hanh (popup
  * "nhan giu") va co the chon chu; chan o day de keo khong bi cat ngang.
  */
-export const DRAG_HANDLE_CLASS = "touch-none select-none [-webkit-touch-callout:none]";
+export const DRAG_HANDLE_CLASS =
+  "touch-none select-none [-webkit-touch-callout:none]";
 
 function blockContextMenu(event: MouseEvent) {
   event.preventDefault();
@@ -81,9 +98,20 @@ type SortableItemProps = {
 };
 
 /** Mot dong trong SortableList; `children` nhan props de gan vao tay cam keo. */
-export function SortableItem({ id, className = "", children }: SortableItemProps) {
-  const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } =
-    useSortable({ id });
+export function SortableItem({
+  id,
+  className = "",
+  children,
+}: SortableItemProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    setActivatorNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id });
 
   return (
     <div

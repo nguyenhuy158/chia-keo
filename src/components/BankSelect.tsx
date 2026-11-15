@@ -1,5 +1,8 @@
 import { useMemo } from "react";
-import { resolveVietQrBankId, VIETQR_BANK_OPTIONS } from "../adapters/browser/vietqr";
+import {
+  resolveVietQrBankId,
+  VIETQR_BANK_OPTIONS,
+} from "../adapters/browser/vietqr";
 import { Dropdown, type DropdownOption } from "./Dropdown";
 
 type BankSelectProps = {
@@ -21,7 +24,10 @@ export function BankSelect({ value, onChange, ariaLabel }: BankSelectProps) {
   const unknown = value.trim() !== "" && resolved === "";
 
   const options = useMemo<DropdownOption[]>(() => {
-    const list = VIETQR_BANK_OPTIONS.map((bank) => ({ value: bank.value, label: bank.label }));
+    const list = VIETQR_BANK_OPTIONS.map((bank) => ({
+      value: bank.value,
+      label: bank.label,
+    }));
     return unknown ? [{ value, label: `${value} (không rõ)` }, ...list] : list;
   }, [unknown, value]);
 

@@ -1,9 +1,16 @@
 import { Link } from "@tanstack/react-router";
-import { Crown, Flame, PartyPopper, Receipt, Sparkles, Users } from "lucide-react";
+import {
+  Crown,
+  Flame,
+  PartyPopper,
+  Receipt,
+  Sparkles,
+  Users,
+} from "lucide-react";
 import type { ReactNode } from "react";
 import { useFunStats } from "../adapters/react-query/fun-stats-query";
-import { formatMoney } from "../core/domain/money";
 import { EmptyState, LoadingState } from "../components/ui";
+import { formatMoney } from "../core/domain/money";
 
 const WEEKDAY_LABELS = [
   "Chủ nhật",
@@ -32,7 +39,9 @@ function StatCard({
         {icon}
         <span className="text-sm font-medium text-fg-muted">{label}</span>
       </div>
-      <p className="mt-2 truncate text-2xl font-bold text-stone-950 dark:text-stone-50">{value}</p>
+      <p className="mt-2 truncate text-2xl font-bold text-stone-950 dark:text-stone-50">
+        {value}
+      </p>
       {detail && <p className="mt-1 text-sm text-fg-muted">{detail}</p>}
     </div>
   );
@@ -72,11 +81,17 @@ export function FunStatsPage() {
   return (
     <div className="space-y-5">
       <div className="flex items-center gap-2">
-        <PartyPopper className="text-violet-600 dark:text-violet-400" size={22} />
-        <h1 className="text-xl font-bold text-stone-950 dark:text-stone-50">Thống kê vui</h1>
+        <PartyPopper
+          className="text-violet-600 dark:text-violet-400"
+          size={22}
+        />
+        <h1 className="text-xl font-bold text-stone-950 dark:text-stone-50">
+          Thống kê vui
+        </h1>
       </div>
       <p className="-mt-3 text-sm text-fg-muted">
-        Gộp {stats.gameCount} cuộc chơi gần nhất. Chỉ để xem cho vui, không dùng để tất toán.
+        Gộp {stats.gameCount} cuộc chơi gần nhất. Chỉ để xem cho vui, không dùng
+        để tất toán.
       </p>
 
       <div className="grid gap-3 sm:grid-cols-2">

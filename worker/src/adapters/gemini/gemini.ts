@@ -1,4 +1,8 @@
-import type { AiContentPart, AiJsonResult, AiProvider } from "../../core/ports/ai-provider";
+import type {
+  AiContentPart,
+  AiJsonResult,
+  AiProvider,
+} from "../../core/ports/ai-provider";
 import type { Env } from "../../env";
 
 const DEFAULT_GEMINI_MODEL = "gemini-2.0-flash";
@@ -40,7 +44,10 @@ function extractJson(text: string): unknown {
   }
 }
 
-export async function generateGeminiJson(env: Env, parts: GeminiPart[]): Promise<GeminiResult> {
+export async function generateGeminiJson(
+  env: Env,
+  parts: GeminiPart[],
+): Promise<GeminiResult> {
   const apiKey = env.GEMINI_API_KEY;
   if (!apiKey) {
     return { ok: false, error: "gemini_not_configured" };
@@ -68,7 +75,10 @@ export async function generateGeminiJson(env: Env, parts: GeminiPart[]): Promise
   } | null;
 
   if (!response.ok) {
-    return { ok: false, error: data?.error?.message || "gemini_request_failed" };
+    return {
+      ok: false,
+      error: data?.error?.message || "gemini_request_failed",
+    };
   }
 
   const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";

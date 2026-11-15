@@ -67,7 +67,10 @@ export const MAX_SPLIT_WEIGHT = 1000;
 /** Nguoi phai tra duoc lam tron len boi so nay de de thu va de chuyen khoan. */
 export const SETTLEMENT_ROUNDING_UNIT = 1000;
 
-export function roundUpToUnit(amount: number, unit: number = SETTLEMENT_ROUNDING_UNIT) {
+export function roundUpToUnit(
+  amount: number,
+  unit: number = SETTLEMENT_ROUNDING_UNIT,
+) {
   return Math.ceil(amount / unit) * unit;
 }
 
@@ -92,7 +95,9 @@ export function allocateAmount(
   const orderedIds = priorTotals
     ? [...participantIds].sort((a, b) => {
         const diff = (priorTotals.get(a) || 0) - (priorTotals.get(b) || 0);
-        return diff !== 0 ? diff : participantIds.indexOf(a) - participantIds.indexOf(b);
+        return diff !== 0
+          ? diff
+          : participantIds.indexOf(a) - participantIds.indexOf(b);
       })
     : participantIds;
   const remainderIds = new Set(orderedIds.slice(0, remainder));
@@ -108,16 +113,24 @@ export function allocateAmount(
  * phan nguyen duoc cong lan luot cho cac nguoi dau danh sach, cung quy uoc
  * voi `allocateAmount` de tong split luon bang tong tien goc.
  */
-export function allocateByWeights(amount: number, entries: WeightedShare[]): SplitShare[] {
+export function allocateByWeights(
+  amount: number,
+  entries: WeightedShare[],
+): SplitShare[] {
   const validEntries = entries.filter((entry) => entry.weight > 0);
   if (validEntries.length === 0) return [];
 
   // Dung BigInt cho phep nhan de khong tran so khi amount va weight deu lon
   // (vi du chia lai theo ty le so tien cu).
-  const totalWeight = validEntries.reduce((sum, entry) => sum + entry.weight, 0);
+  const totalWeight = validEntries.reduce(
+    (sum, entry) => sum + entry.weight,
+    0,
+  );
   const shares = validEntries.map((entry) => ({
     participantId: entry.participantId,
-    amount: Number((BigInt(amount) * BigInt(entry.weight)) / BigInt(totalWeight)),
+    amount: Number(
+      (BigInt(amount) * BigInt(entry.weight)) / BigInt(totalWeight),
+    ),
   }));
 
   let remainder = amount - shares.reduce((sum, share) => sum + share.amount, 0);
@@ -144,17 +157,26 @@ export function computeSplitRows(
   if (mode === "equal") {
     const ids = [...new Set(participantIds)];
     if (ids.length === 0) return null;
-    return allocateAmount(amount, ids, priorTotals).map((share) => ({ ...share, weight: null }));
+    return allocateAmount(amount, ids, priorTotals).map((share) => ({
+      ...share,
+      weight: null,
+    }));
   }
 
   if (splits.length === 0) return null;
-  if (new Set(splits.map((split) => split.participantId)).size !== splits.length) return null;
+  if (
+    new Set(splits.map((split) => split.participantId)).size !== splits.length
+  )
+    return null;
 
   if (mode === "shares") {
     if (splits.some((split) => split.value > MAX_SPLIT_WEIGHT)) return null;
     return allocateByWeights(
       amount,
-      splits.map((split) => ({ participantId: split.participantId, weight: split.value })),
+      splits.map((split) => ({
+        participantId: split.participantId,
+        weight: split.value,
+      })),
     ).map((share, index) => ({ ...share, weight: splits[index].value }));
   }
 
@@ -235,7 +257,9 @@ export function resolveHostParticipantId(
   if (settlementMode !== "host" && settlementMode !== "pick") return "";
 
   if (settlementMode === "pick" && settlementHostId) {
-    const chosen = balances.some((row) => row.participantId === settlementHostId);
+    const chosen = balances.some(
+      (row) => row.participantId === settlementHostId,
+    );
     if (chosen) return settlementHostId;
   }
 
@@ -257,7 +281,9 @@ export function calculateHostTransfers(
   hostParticipantId: string,
 ): HostTransferRow[] {
   return balances
-    .filter((row) => row.participantId !== hostParticipantId && row.balance !== 0)
+    .filter(
+      (row) => row.participantId !== hostParticipantId && row.balance !== 0,
+    )
     .map((row) => {
       const toHost = row.balance < 0;
       const amount = Math.abs(row.balance);

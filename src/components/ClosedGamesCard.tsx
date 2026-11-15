@@ -14,8 +14,8 @@ import { useClosedGames, useReopenGame } from "../adapters/react-query/queries";
 import { Link } from "../ui/Link";
 import { Dropdown } from "./Dropdown";
 import { formatDateTime } from "./format-datetime";
-import { usePersistentOpen } from "./use-persistent-open";
 import { SkeletonCard } from "./ui";
+import { usePersistentOpen } from "./use-persistent-open";
 
 /**
  * Cuoc choi da dong. Gap lai mac dinh giong thung rac: danh sach chinh chi nen
@@ -119,7 +119,9 @@ export function ClosedGamesCard({ onNavigate }: { onNavigate?: () => void }) {
                     <p className="mt-0.5 text-xs text-fg-muted">
                       {game.participantCount} người, {game.expenseCount} khoản ·{" "}
                       {describeCloseMode(game.closeMode)}
-                      {game.closedAt ? ` · ${formatDateTime(game.closedAt)}` : ""}
+                      {game.closedAt
+                        ? ` · ${formatDateTime(game.closedAt)}`
+                        : ""}
                     </p>
                   </button>
                   {game.isOwner && (

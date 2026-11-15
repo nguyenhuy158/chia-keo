@@ -9,7 +9,10 @@
 import { findChromium } from "@huyab/e2e";
 import { chromium } from "playwright-core";
 
-const BASE = (process.env.E2E_BASE_URL || "http://127.0.0.1:8787").replace(/\/$/, "");
+const BASE = (process.env.E2E_BASE_URL || "http://127.0.0.1:8787").replace(
+  /\/$/,
+  "",
+);
 const WAIT = { timeout: 15000 };
 const HTTP_OK = 200;
 const HTTP_UNAUTHORIZED = 401;
@@ -26,7 +29,9 @@ function ok(name) {
 async function getJson(path, expectedStatus) {
   const response = await fetch(BASE + path, { redirect: "manual" });
   if (response.status !== expectedStatus) {
-    throw new Error(`GET ${path}: mong ${expectedStatus}, nhan ${response.status}`);
+    throw new Error(
+      `GET ${path}: mong ${expectedStatus}, nhan ${response.status}`,
+    );
   }
   return response.json();
 }
@@ -46,11 +51,13 @@ try {
   ok(`GET /api/version (${version.shortCommit ?? version.commit})`);
 
   const health = await getJson("/api/health", HTTP_OK);
-  if (health.ok !== true) throw new Error(`/api/health khong ok: ${JSON.stringify(health)}`);
+  if (health.ok !== true)
+    throw new Error(`/api/health khong ok: ${JSON.stringify(health)}`);
   ok("GET /api/health reports D1 ok");
 
   const session = await getJson("/api/session", HTTP_OK);
-  if (session.user !== null) throw new Error(`/api/session phai user=null: ${JSON.stringify(session)}`);
+  if (session.user !== null)
+    throw new Error(`/api/session phai user=null: ${JSON.stringify(session)}`);
   ok("GET /api/session is anonymous without cookie");
 
   await getJson("/api/games", HTTP_UNAUTHORIZED);
@@ -65,10 +72,13 @@ try {
 
   await page.goto(BASE + "/help");
   await page.getByRole("heading", { name: "Hướng dẫn sử dụng" }).waitFor(WAIT);
-  await page.getByRole("button", { name: "Tạo cuộc chơi và thêm người" }).waitFor(WAIT);
+  await page
+    .getByRole("button", { name: "Tạo cuộc chơi và thêm người" })
+    .waitFor(WAIT);
   ok("GET /help renders the guide without login");
 
-  if (pageErrors.length > 0) throw new Error(`loi JS tren trang: ${pageErrors.join(" | ")}`);
+  if (pageErrors.length > 0)
+    throw new Error(`loi JS tren trang: ${pageErrors.join(" | ")}`);
   ok("no uncaught page errors");
 } catch (error) {
   failed += 1;

@@ -385,18 +385,33 @@ describe("GamePage", () => {
     mocks.game = game({ shareLink: { token: "token", enabled: true } });
     render();
     mocks.renderSharePreview.mockResolvedValueOnce("jpeg-base64");
-    await act(async () => (mocks.props.CopyMenu.onShare as (id: string) => void)("plain"));
+    await act(async () =>
+      (mocks.props.CopyMenu.onShare as (id: string) => void)("plain"),
+    );
     expect(mocks.renderSharePreview).toHaveBeenCalledWith(
-      expect.objectContaining({ shareUrl: expect.stringContaining("/share/token") }),
+      expect.objectContaining({
+        shareUrl: expect.stringContaining("/share/token"),
+      }),
       "plain",
     );
-    expect(mocks.mutation.SaveSharePreview.mutateAsync).toHaveBeenCalledWith("jpeg-base64");
-    expect(mocks.props.SummaryImageCard.onShare).toBe(mocks.props.CopyMenu.onShare);
+    expect(mocks.mutation.SaveSharePreview.mutateAsync).toHaveBeenCalledWith(
+      "jpeg-base64",
+    );
+    expect(mocks.props.SummaryImageCard.onShare).toBe(
+      mocks.props.CopyMenu.onShare,
+    );
 
-    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => {});
     mocks.renderSharePreview.mockRejectedValueOnce(new Error("canvas"));
-    await act(async () => (mocks.props.CopyMenu.onShare as (id: string) => void)("plain"));
-    expect(consoleError).toHaveBeenCalledWith("Share preview upload failed:", expect.any(Error));
+    await act(async () =>
+      (mocks.props.CopyMenu.onShare as (id: string) => void)("plain"),
+    );
+    expect(consoleError).toHaveBeenCalledWith(
+      "Share preview upload failed:",
+      expect.any(Error),
+    );
     consoleError.mockRestore();
   });
 
@@ -579,7 +594,9 @@ describe("GamePage", () => {
     mocks.game = game({ isOwner: false });
     render();
     await click("Thêm tùy chọn cuộc chơi");
-    expect(menuItems().map((item) => item.textContent)).not.toContain("Xóa cuộc chơi");
+    expect(menuItems().map((item) => item.textContent)).not.toContain(
+      "Xóa cuộc chơi",
+    );
     expect(host.textContent).not.toContain("Đóng");
   });
 

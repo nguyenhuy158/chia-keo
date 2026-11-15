@@ -18,7 +18,10 @@ vi.mock("../lib/require-user", () => ({
   protectPaths: vi.fn(),
 }));
 vi.mock("../lib/payment-context", () => ({
-  createPaymentContext: (_env: unknown, repo: unknown) => ({ repo, bankFeed: null }),
+  createPaymentContext: (_env: unknown, repo: unknown) => ({
+    repo,
+    bankFeed: null,
+  }),
 }));
 
 let app: Hono<AuthedEnv>;
@@ -144,7 +147,11 @@ describe("gamesRouter", () => {
       (await request("PATCH", `/expenses/${expenseId}/excluded`, {})).status,
     ).toBe(400);
     expect(
-      (await request("PATCH", "/expenses/khong-co/excluded", { excluded: true })).status,
+      (
+        await request("PATCH", "/expenses/khong-co/excluded", {
+          excluded: true,
+        })
+      ).status,
     ).toBe(404);
 
     const hidden = await request("PATCH", `/expenses/${expenseId}/excluded`, {
@@ -156,7 +163,9 @@ describe("gamesRouter", () => {
     expect(hiddenDetail.expenses[0].excluded).toBe(true);
 
     const shown = await json<ApiGameDetail>(
-      await request("PATCH", `/expenses/${expenseId}/excluded`, { excluded: false }),
+      await request("PATCH", `/expenses/${expenseId}/excluded`, {
+        excluded: false,
+      }),
     );
     expect(shown.summary.totalExpense).toBe(100_000);
   });
@@ -361,9 +370,13 @@ describe("gamesRouter", () => {
     expect(disabled.status).toBe(200);
     expect(fake.state.shareLinks[0].enabled).toBe(false);
 
-    const preview = await request("POST", `/games/${FAKE_GAME_ID}/share-preview`, {
-      data: "base64",
-    });
+    const preview = await request(
+      "POST",
+      `/games/${FAKE_GAME_ID}/share-preview`,
+      {
+        data: "base64",
+      },
+    );
     expect(preview.status).toBe(200);
     expect(await preview.json()).toEqual({ ok: true });
     expect(fake.state.sharePreviews[0].data).toBe("base64");

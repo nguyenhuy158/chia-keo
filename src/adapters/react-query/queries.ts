@@ -29,7 +29,8 @@ export const gameKeys = {
   detail: (gameId: string) => ["games", gameId] as const,
   share: (token: string) => ["share", token] as const,
   paymentOptions: (token: string) => ["share-payment-options", token] as const,
-  payment: (token: string, code: string) => ["share-payment", token, code] as const,
+  payment: (token: string, code: string) =>
+    ["share-payment", token, code] as const,
 };
 
 /**
@@ -40,7 +41,8 @@ export const photoKeys = {
   list: (gameId: string) => ["photos", gameId] as const,
   detail: (photoId: string) => ["photo", photoId] as const,
   shareList: (token: string) => ["share-photos", token] as const,
-  shareDetail: (token: string, photoId: string) => ["share-photo", token, photoId] as const,
+  shareDetail: (token: string, photoId: string) =>
+    ["share-photo", token, photoId] as const,
 };
 
 /** Danh ba suy ra tu participant nen phai lam moi khi participant doi. */
@@ -63,13 +65,18 @@ export const closedGameKeys = { all: ["games-closed"] as const };
  * Lich su co khoa rieng ngoai ["games"]: moi mutation deu sinh them dong lich
  * su nen phai lam moi, nhung nguoc lai mo tab Lich su khong can tai lai game.
  */
-export const eventKeys = { list: (gameId: string) => ["events", gameId] as const };
+export const eventKeys = {
+  list: (gameId: string) => ["events", gameId] as const,
+};
 
 /** Anh goc khong bao gio doi nen giu trong cache ca phien lam viec. */
 const PHOTO_DETAIL_STALE_TIME = Infinity;
 
 export function useGames() {
-  return useQuery({ queryKey: gameKeys.all, queryFn: () => getGameApi().games.list() });
+  return useQuery({
+    queryKey: gameKeys.all,
+    queryFn: () => getGameApi().games.list(),
+  });
 }
 
 export function useGame(gameId: string) {
@@ -111,8 +118,12 @@ export function usePaymentRequest(token: string, code: string) {
     queryFn: async () => {
       const payment = await getGameApi().share.payment(token, code);
       if (payment.status !== "pending") {
-        await queryClient.invalidateQueries({ queryKey: gameKeys.share(token) });
-        await queryClient.invalidateQueries({ queryKey: gameKeys.paymentOptions(token) });
+        await queryClient.invalidateQueries({
+          queryKey: gameKeys.share(token),
+        });
+        await queryClient.invalidateQueries({
+          queryKey: gameKeys.paymentOptions(token),
+        });
       }
       return payment;
     },
@@ -144,15 +155,19 @@ export function useUpdatePreferences() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (patch: UserPreferencesPatch) => getGameApi().preferences.update(patch),
+    mutationFn: (patch: UserPreferencesPatch) =>
+      getGameApi().preferences.update(patch),
     onMutate: async (patch) => {
       await queryClient.cancelQueries({ queryKey: preferenceKeys.all });
-      const previous = queryClient.getQueryData<{ preferences: UserPreferences }>(
-        preferenceKeys.all,
-      );
+      const previous = queryClient.getQueryData<{
+        preferences: UserPreferences;
+      }>(preferenceKeys.all);
 
       queryClient.setQueryData(preferenceKeys.all, {
-        preferences: { ...(previous?.preferences || DEFAULT_USER_PREFERENCES), ...patch },
+        preferences: {
+          ...(previous?.preferences || DEFAULT_USER_PREFERENCES),
+          ...patch,
+        },
       });
 
       return { previous };
@@ -195,17 +210,22 @@ function useContactMutation<TVariables>(
 }
 
 export function useCreateContact() {
-  return useContactMutation((input: ContactInput) => getGameApi().contacts.create(input));
+  return useContactMutation((input: ContactInput) =>
+    getGameApi().contacts.create(input),
+  );
 }
 
 export function useUpdateContact() {
-  return useContactMutation((variables: { contactId: string; input: ContactUpdateInput }) =>
-    getGameApi().contacts.update(variables.contactId, variables.input),
+  return useContactMutation(
+    (variables: { contactId: string; input: ContactUpdateInput }) =>
+      getGameApi().contacts.update(variables.contactId, variables.input),
   );
 }
 
 export function useDeleteContact() {
-  return useContactMutation((contactId: string) => getGameApi().contacts.remove(contactId));
+  return useContactMutation((contactId: string) =>
+    getGameApi().contacts.remove(contactId),
+  );
 }
 
 export function useGameEvents(gameId: string, enabled: boolean) {
@@ -292,11 +312,15 @@ export function useClosedGames(enabled: boolean) {
 
 /** Dong cuoc choi bang tay: cuoc bien khoi danh sach dang choi. */
 export function useCloseGame() {
-  return useGameDetailMutation((gameId: string) => getGameApi().games.close(gameId));
+  return useGameDetailMutation((gameId: string) =>
+    getGameApi().games.close(gameId),
+  );
 }
 
 export function useReopenGame() {
-  return useGameDetailMutation((gameId: string) => getGameApi().games.reopen(gameId));
+  return useGameDetailMutation((gameId: string) =>
+    getGameApi().games.reopen(gameId),
+  );
 }
 
 /** Xoa mem: cuoc chia roi vao thung rac chu chua mat. */
@@ -371,7 +395,9 @@ function useGameDetailMutation<TVariables>(
     mutationFn,
     onMutate: optimistic
       ? async (variables: TVariables) => {
-          await queryClient.cancelQueries({ queryKey: gameKeys.detail(optimistic.gameId) });
+          await queryClient.cancelQueries({
+            queryKey: gameKeys.detail(optimistic.gameId),
+          });
           const previous = queryClient.getQueryData<ApiGameDetail>(
             gameKeys.detail(optimistic.gameId),
           );
@@ -388,7 +414,10 @@ function useGameDetailMutation<TVariables>(
       ? (_error, _variables, context) => {
           const ctx = context as { previous?: ApiGameDetail } | undefined;
           if (ctx?.previous) {
-            queryClient.setQueryData(gameKeys.detail(optimistic.gameId), ctx.previous);
+            queryClient.setQueryData(
+              gameKeys.detail(optimistic.gameId),
+              ctx.previous,
+            );
           }
         }
       : undefined,
@@ -411,7 +440,8 @@ function useGameDetailMutation<TVariables>(
 
 export function useAddParticipant(gameId: string) {
   return useGameDetailMutation(
-    (input: ParticipantInput) => getGameApi().participants.create(gameId, input),
+    (input: ParticipantInput) =>
+      getGameApi().participants.create(gameId, input),
     { refreshContacts: true },
   );
 }
@@ -419,7 +449,8 @@ export function useAddParticipant(gameId: string) {
 /** Them nhieu nguoi mot luot (chon tu danh ba). */
 export function useAddParticipants(gameId: string) {
   return useGameDetailMutation(
-    (input: ParticipantBatchInput) => getGameApi().participants.createMany(gameId, input),
+    (input: ParticipantBatchInput) =>
+      getGameApi().participants.createMany(gameId, input),
     { refreshContacts: true },
   );
 }
@@ -434,7 +465,10 @@ export function useRemoveParticipant() {
 export function useUpdateParticipant() {
   return useGameDetailMutation(
     (variables: { participantId: string; input: Partial<ParticipantInput> }) =>
-      getGameApi().participants.update(variables.participantId, variables.input),
+      getGameApi().participants.update(
+        variables.participantId,
+        variables.input,
+      ),
     { refreshContacts: true },
   );
 }
@@ -453,38 +487,51 @@ export function useUpdateExpense() {
 }
 
 export function useSetExpenseExcluded() {
-  return useGameDetailMutation((variables: { expenseId: string; excluded: boolean }) =>
-    getGameApi().expenses.setExcluded(variables.expenseId, variables.excluded),
+  return useGameDetailMutation(
+    (variables: { expenseId: string; excluded: boolean }) =>
+      getGameApi().expenses.setExcluded(
+        variables.expenseId,
+        variables.excluded,
+      ),
   );
 }
 
 export function useRemoveExpense() {
-  return useGameDetailMutation((expenseId: string) => getGameApi().expenses.remove(expenseId), {
-    refreshPhotos: true,
-  });
+  return useGameDetailMutation(
+    (expenseId: string) => getGameApi().expenses.remove(expenseId),
+    {
+      refreshPhotos: true,
+    },
+  );
 }
 
 /** Sap lai mang theo thu tu id moi; id la nao khong co trong danh sach thi bo qua. */
 function reorderBy<T extends { id: string }>(items: T[], ids: string[]): T[] {
   const byId = new Map(items.map((item) => [item.id, item]));
-  return ids.map((id) => byId.get(id)).filter((item): item is T => Boolean(item));
+  return ids
+    .map((id) => byId.get(id))
+    .filter((item): item is T => Boolean(item));
 }
 
 export function useReorderExpenses(gameId: string) {
-  return useGameDetailMutation((expenseIds: string[]) => getGameApi().expenses.reorder(gameId, expenseIds), {
-    optimistic: {
-      gameId,
-      apply: (detail, expenseIds) => ({
-        ...detail,
-        expenses: reorderBy(detail.expenses, expenseIds),
-      }),
+  return useGameDetailMutation(
+    (expenseIds: string[]) => getGameApi().expenses.reorder(gameId, expenseIds),
+    {
+      optimistic: {
+        gameId,
+        apply: (detail, expenseIds) => ({
+          ...detail,
+          expenses: reorderBy(detail.expenses, expenseIds),
+        }),
+      },
     },
-  });
+  );
 }
 
 export function useReorderParticipants(gameId: string) {
   return useGameDetailMutation(
-    (participantIds: string[]) => getGameApi().participants.reorder(gameId, participantIds),
+    (participantIds: string[]) =>
+      getGameApi().participants.reorder(gameId, participantIds),
     {
       optimistic: {
         gameId,
@@ -504,9 +551,12 @@ export function useAddTransfer(gameId: string) {
 }
 
 export function useRenameGame(gameId: string) {
-  return useGameDetailMutation((name: string) => getGameApi().games.update(gameId, { name }), {
-    optimistic: { gameId, apply: (detail, name) => ({ ...detail, name }) },
-  });
+  return useGameDetailMutation(
+    (name: string) => getGameApi().games.update(gameId, { name }),
+    {
+      optimistic: { gameId, apply: (detail, name) => ({ ...detail, name }) },
+    },
+  );
 }
 
 export function useSetSettlementMode(gameId: string) {
@@ -574,7 +624,9 @@ function usePhotoListCache(gameId: string) {
   const queryClient = useQueryClient();
 
   return (update: (photos: ApiPhoto[]) => ApiPhoto[]) => {
-    queryClient.setQueryData<ApiPhoto[]>(photoKeys.list(gameId), (photos) => update(photos || []));
+    queryClient.setQueryData<ApiPhoto[]>(photoKeys.list(gameId), (photos) =>
+      update(photos || []),
+    );
   };
 }
 
@@ -582,7 +634,8 @@ export function useAddPhoto(gameId: string) {
   const updateCache = usePhotoListCache(gameId);
 
   return useMutation({
-    mutationFn: (input: PhotoInput) => getGameApi().photos.create(gameId, input),
+    mutationFn: (input: PhotoInput) =>
+      getGameApi().photos.create(gameId, input),
     onSuccess: (photo) => updateCache((photos) => [photo, ...photos]),
   });
 }
@@ -594,7 +647,9 @@ export function useUpdatePhoto(gameId: string) {
     mutationFn: (variables: { photoId: string; input: PhotoUpdateInput }) =>
       getGameApi().photos.update(variables.photoId, variables.input),
     onSuccess: (photo) =>
-      updateCache((photos) => photos.map((row) => (row.id === photo.id ? photo : row))),
+      updateCache((photos) =>
+        photos.map((row) => (row.id === photo.id ? photo : row)),
+      ),
   });
 }
 
@@ -602,8 +657,12 @@ export function useRemovePhoto(gameId: string) {
   const updateCache = usePhotoListCache(gameId);
 
   return useMutation({
-    mutationFn: (photoId: string) => getGameApi().photos.remove(photoId).then(() => photoId),
-    onSuccess: (photoId) => updateCache((photos) => photos.filter((row) => row.id !== photoId)),
+    mutationFn: (photoId: string) =>
+      getGameApi()
+        .photos.remove(photoId)
+        .then(() => photoId),
+    onSuccess: (photoId) =>
+      updateCache((photos) => photos.filter((row) => row.id !== photoId)),
   });
 }
 
@@ -642,7 +701,9 @@ export function useRevokeMcpToken() {
 }
 
 export function useRotateShareLink(gameId: string) {
-  return useGameDetailMutation<void>(() => getGameApi().shareLinks.rotate(gameId));
+  return useGameDetailMutation<void>(() =>
+    getGameApi().shareLinks.rotate(gameId),
+  );
 }
 
 export function useSetShareLinkEnabled(gameId: string) {
@@ -652,7 +713,9 @@ export function useSetShareLinkEnabled(gameId: string) {
       optimistic: {
         gameId,
         apply: (detail, enabled) =>
-          detail.shareLink ? { ...detail, shareLink: { ...detail.shareLink, enabled } } : detail,
+          detail.shareLink
+            ? { ...detail, shareLink: { ...detail.shareLink, enabled } }
+            : detail,
       },
     },
   );
@@ -660,12 +723,15 @@ export function useSetShareLinkEnabled(gameId: string) {
 
 export function useSaveSharePreview(gameId: string) {
   return useMutation({
-    mutationFn: (data: string) => getGameApi().shareLinks.savePreview(gameId, data),
+    mutationFn: (data: string) =>
+      getGameApi().shareLinks.savePreview(gameId, data),
   });
 }
 
 export function useAddCollaborator(gameId: string) {
-  return useGameDetailMutation((email: string) => getGameApi().collaborators.add(gameId, email));
+  return useGameDetailMutation((email: string) =>
+    getGameApi().collaborators.add(gameId, email),
+  );
 }
 
 export function useRemoveCollaborator(gameId: string) {

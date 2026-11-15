@@ -104,12 +104,18 @@ export const EXPENSE_CATEGORIES: ExpenseCategoryMeta[] = [
 const CATEGORY_BY_ID = new Map(EXPENSE_CATEGORIES.map((row) => [row.id, row]));
 
 /** Danh muc khong biet (du lieu cu, client la) duoc coi nhu chua phan loai. */
-export function normalizeCategory(value: string | null | undefined): ExpenseCategory {
+export function normalizeCategory(
+  value: string | null | undefined,
+): ExpenseCategory {
   const id = (value || "").trim();
-  return CATEGORY_BY_ID.has(id as ExpenseCategoryId) ? (id as ExpenseCategoryId) : "";
+  return CATEGORY_BY_ID.has(id as ExpenseCategoryId)
+    ? (id as ExpenseCategoryId)
+    : "";
 }
 
-export function categoryMeta(value: string | null | undefined): ExpenseCategoryMeta | null {
+export function categoryMeta(
+  value: string | null | undefined,
+): ExpenseCategoryMeta | null {
   const id = normalizeCategory(value);
   return id ? (CATEGORY_BY_ID.get(id) as ExpenseCategoryMeta) : null;
 }
@@ -156,7 +162,9 @@ const UNCATEGORIZED_META = {
  * Nhom rong bi bo, nhom lon truoc; chua phan loai luon xuong cuoi du to hay
  * nho vi do khong phai mot "loai chi tieu" de so sanh.
  */
-export function buildCategoryBreakdown(expenses: CategoryExpenseInput[]): CategoryBreakdown {
+export function buildCategoryBreakdown(
+  expenses: CategoryExpenseInput[],
+): CategoryBreakdown {
   const totals = new Map<ExpenseCategory, { total: number; count: number }>();
   let total = 0;
 
@@ -176,7 +184,8 @@ export function buildCategoryBreakdown(expenses: CategoryExpenseInput[]): Catego
     .sort((left, right) => {
       if (left[0] === "") return 1;
       if (right[0] === "") return -1;
-      if (right[1].total !== left[1].total) return right[1].total - left[1].total;
+      if (right[1].total !== left[1].total)
+        return right[1].total - left[1].total;
       // Tong bang nhau thi giu thu tu khai bao cho on dinh giua cac lan render.
       return (order.get(left[0]) as number) - (order.get(right[0]) as number);
     })

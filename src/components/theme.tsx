@@ -1,12 +1,12 @@
 import { Monitor, Moon, Sun } from "lucide-react";
 import {
   createContext,
+  type ReactNode,
   useCallback,
   useContext,
   useEffect,
   useMemo,
   useState,
-  type ReactNode,
 } from "react";
 import {
   applyTheme,
@@ -26,7 +26,8 @@ const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 export function useTheme() {
   const value = useContext(ThemeContext);
-  if (!value) throw new Error("useTheme phai duoc dung ben trong ThemeProvider");
+  if (!value)
+    throw new Error("useTheme phai duoc dung ben trong ThemeProvider");
   return value;
 }
 
@@ -56,7 +57,9 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     [mode, setMode],
   );
 
-  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
+  return (
+    <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
+  );
 }
 
 const NEXT_MODE: Record<ThemeMode, ThemeMode> = {

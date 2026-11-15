@@ -21,7 +21,10 @@ function repoWithTokens(tokens: McpTokenRow[] = []): GameRepository {
 async function makeToken(
   repo: GameRepository,
   userId = OWNER,
-  overrides: { name?: string; scopes?: ("games:read" | "summary:read" | "share:read")[] } = {},
+  overrides: {
+    name?: string;
+    scopes?: ("games:read" | "summary:read" | "share:read")[];
+  } = {},
 ) {
   return createMcpToken(repo, userId, {
     name: overrides.name || "Claude Code",
@@ -36,7 +39,9 @@ describe("createMcpToken", () => {
 
     expect(created.secret).toMatch(/^ck_[0-9a-f]{64}$/);
 
-    const stored = await repo.mcpTokens.findByHash(await hashMcpToken(created.secret));
+    const stored = await repo.mcpTokens.findByHash(
+      await hashMcpToken(created.secret),
+    );
     expect(stored).toBeTruthy();
     // Ban goc khong duoc nam o bat cu dau trong dong da luu.
     expect(JSON.stringify(stored)).not.toContain(created.secret);
@@ -49,7 +54,9 @@ describe("createMcpToken", () => {
     expect(created.token).not.toHaveProperty("tokenHash");
     expect(created.secret.startsWith(created.token.tokenPrefix)).toBe(true);
     // Tien to phai ngan hon han ban goc, khong thi coi nhu lam lo token.
-    expect(created.token.tokenPrefix.length).toBeLessThan(created.secret.length);
+    expect(created.token.tokenPrefix.length).toBeLessThan(
+      created.secret.length,
+    );
   });
 
   it("moi lan tao ra mot token khac nhau", async () => {
@@ -102,7 +109,9 @@ describe("createMcpToken", () => {
     }
 
     await revokeMcpToken(repo, OWNER, created.token.id);
-    await expect(makeToken(repo, OWNER, { name: "Sau khi thu hồi" })).resolves.toBeTruthy();
+    await expect(
+      makeToken(repo, OWNER, { name: "Sau khi thu hồi" }),
+    ).resolves.toBeTruthy();
   });
 });
 
@@ -142,7 +151,9 @@ describe("authenticateMcpToken", () => {
   it("tu choi token da het han", async () => {
     const repo = repoWithTokens();
     const created = await makeToken(repo);
-    const row = await repo.mcpTokens.findByHash(await hashMcpToken(created.secret));
+    const row = await repo.mcpTokens.findByHash(
+      await hashMcpToken(created.secret),
+    );
     row!.expiresAt = "2020-01-01T00:00:00.000Z";
 
     expect(await authenticateMcpToken(repo, created.secret)).toBeNull();
@@ -151,7 +162,9 @@ describe("authenticateMcpToken", () => {
   it("tu choi token co scope la, khong con quyen nao dung", async () => {
     const repo = repoWithTokens();
     const created = await makeToken(repo);
-    const row = await repo.mcpTokens.findByHash(await hashMcpToken(created.secret));
+    const row = await repo.mcpTokens.findByHash(
+      await hashMcpToken(created.secret),
+    );
     // Gia lap scope cu/khong hop le con sot trong DB.
     row!.scopes = "games:delete-everything";
 
@@ -161,7 +174,9 @@ describe("authenticateMcpToken", () => {
   it("loc scope la nhung giu scope hop le trong cung mot token", async () => {
     const repo = repoWithTokens();
     const created = await makeToken(repo);
-    const row = await repo.mcpTokens.findByHash(await hashMcpToken(created.secret));
+    const row = await repo.mcpTokens.findByHash(
+      await hashMcpToken(created.secret),
+    );
     row!.scopes = "games:read scope-bien-mat";
 
     const identity = await authenticateMcpToken(repo, created.secret);
@@ -200,7 +215,9 @@ describe("listMcpTokens / revokeMcpToken", () => {
     const repo = repoWithTokens();
     const created = await makeToken(repo, OTHER);
 
-    await expect(revokeMcpToken(repo, OWNER, created.token.id)).rejects.toThrow(NotFoundError);
+    await expect(revokeMcpToken(repo, OWNER, created.token.id)).rejects.toThrow(
+      NotFoundError,
+    );
     // Token cua nguoi kia van dung duoc.
     expect(await authenticateMcpToken(repo, created.secret)).toBeTruthy();
   });
@@ -210,6 +227,8 @@ describe("listMcpTokens / revokeMcpToken", () => {
     const created = await makeToken(repo);
 
     await revokeMcpToken(repo, OWNER, created.token.id);
-    await expect(revokeMcpToken(repo, OWNER, created.token.id)).rejects.toThrow(NotFoundError);
+    await expect(revokeMcpToken(repo, OWNER, created.token.id)).rejects.toThrow(
+      NotFoundError,
+    );
   });
 });

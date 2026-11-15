@@ -5,7 +5,9 @@ export type AiContentPart =
   | { text: string }
   | { inlineData: { mimeType: string; data: string } };
 
-export type AiJsonResult = { ok: true; json: unknown } | { ok: false; error: string };
+export type AiJsonResult =
+  | { ok: true; json: unknown }
+  | { ok: false; error: string };
 
 export type AiProvider = {
   generateJson(parts: AiContentPart[]): Promise<AiJsonResult>;

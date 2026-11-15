@@ -10,7 +10,11 @@ import {
   getBalancesAcrossGames,
   MAX_CROSS_GAME_GAMES,
 } from "../core/application/cross-game-balances";
-import { findGameByRef, getGameDetailForOwner, listAllGames } from "../core/application/games";
+import {
+  findGameByRef,
+  getGameDetailForOwner,
+  listAllGames,
+} from "../core/application/games";
 import { getShareViewByToken } from "../core/application/share-links";
 import type { GameRepository } from "../core/ports/game-repository";
 import type { McpTool } from "./protocol";
@@ -49,7 +53,10 @@ function readString(args: Record<string, unknown>, key: string) {
 function readVariant(args: Record<string, unknown>): SummaryVariant {
   const value = args.variant;
   if (value === undefined) return "compact";
-  if (typeof value === "string" && SUMMARY_VARIANTS.includes(value as SummaryVariant)) {
+  if (
+    typeof value === "string" &&
+    SUMMARY_VARIANTS.includes(value as SummaryVariant)
+  ) {
     return value as SummaryVariant;
   }
 
@@ -60,7 +67,10 @@ function readVariant(args: Record<string, unknown>): SummaryVariant {
  * Nhan ca ma cuoc chia va id: model thuong chi thay ma (in tren the tom tat)
  * chu khong biet id. Doi chieu ma khong phan biet hoa thuong.
  */
-async function loadGame(context: McpContext, ref: string): Promise<ApiGameDetail> {
+async function loadGame(
+  context: McpContext,
+  ref: string,
+): Promise<ApiGameDetail> {
   const games = await listAllGames(context.repo, context.userId);
   const match = findGameByRef(games, ref);
   if (!match) throw new Error(describeMissingGame(games, ref));
@@ -70,7 +80,8 @@ async function loadGame(context: McpContext, ref: string): Promise<ApiGameDetail
 
 /** Kem danh sach ma dang co: model doan lai duoc thay vi bao "khong tim thay". */
 function describeMissingGame(games: ApiGame[], ref: string) {
-  const known = games.map((game) => game.code).join(", ") || "(chưa có cuộc chia nào)";
+  const known =
+    games.map((game) => game.code).join(", ") || "(chưa có cuộc chia nào)";
   return `Không tìm thấy cuộc chia "${ref}". Các mã đang có: ${known}`;
 }
 
@@ -90,10 +101,14 @@ function readGameRefs(args: Record<string, unknown>): string[] {
   if (value === undefined) return [];
 
   if (!Array.isArray(value) || value.some((ref) => typeof ref !== "string")) {
-    throw new Error('"games" phải là mảng mã cuộc chia, ví dụ ["DSKVUF", "QZDHUD"]');
+    throw new Error(
+      '"games" phải là mảng mã cuộc chia, ví dụ ["DSKVUF", "QZDHUD"]',
+    );
   }
 
-  const refs = (value as string[]).map((ref) => ref.trim()).filter((ref) => ref !== "");
+  const refs = (value as string[])
+    .map((ref) => ref.trim())
+    .filter((ref) => ref !== "");
   if (refs.length > MAX_CROSS_GAME_GAMES) {
     throw new Error(
       `Gộp tối đa ${MAX_CROSS_GAME_GAMES} cuộc chia một lượt, đang truyền ${refs.length}.`,
@@ -133,7 +148,11 @@ export const mcpTools: McpTool<McpContext, McpScope>[] = [
       "build. Dùng để kiểm tra nhanh xem một thay đổi đã lên production chưa, hoặc khi kết quả " +
       "trên web khác với code đang đọc dưới máy. Không cần quyền gì, mọi token đều gọi được.",
     // Khong khai bao scope: day la thong tin ve server, khong phai du lieu cua ai.
-    inputSchema: { type: "object", properties: {}, additionalProperties: false },
+    inputSchema: {
+      type: "object",
+      properties: {},
+      additionalProperties: false,
+    },
     run: async (_args, context) => ({
       ...BUILD_INFO,
       appOrigin: context.appOrigin,
@@ -147,7 +166,11 @@ export const mcpTools: McpTool<McpContext, McpScope>[] = [
       "Gồm cả cuộc đã đóng (closedAt khác null là đã chia xong tiền). " +
       "Dùng tool này trước để lấy mã, rồi truyền mã đó cho các tool khác.",
     scope: "games:read",
-    inputSchema: { type: "object", properties: {}, additionalProperties: false },
+    inputSchema: {
+      type: "object",
+      properties: {},
+      additionalProperties: false,
+    },
     run: async (_args, context) => listAllGames(context.repo, context.userId),
   },
   {
@@ -182,7 +205,10 @@ export const mcpTools: McpTool<McpContext, McpScope>[] = [
     },
     run: async (args, context) => {
       const game = await loadGame(context, readString(args, "game"));
-      return buildSummaryText(toSummaryInput(game, context.appOrigin), readVariant(args));
+      return buildSummaryText(
+        toSummaryInput(game, context.appOrigin),
+        readVariant(args),
+      );
     },
   },
   {
@@ -214,7 +240,8 @@ export const mcpTools: McpTool<McpContext, McpScope>[] = [
     run: async (args, context) => {
       const refs = readGameRefs(args);
       return getBalancesAcrossGames(context.repo, context.userId, {
-        gameIds: refs.length > 0 ? await resolveGameIds(context, refs) : undefined,
+        gameIds:
+          refs.length > 0 ? await resolveGameIds(context, refs) : undefined,
       });
     },
   },
@@ -228,7 +255,10 @@ export const mcpTools: McpTool<McpContext, McpScope>[] = [
     inputSchema: {
       type: "object",
       properties: {
-        token: { type: "string", description: "Token trong link, phần sau /share/." },
+        token: {
+          type: "string",
+          description: "Token trong link, phần sau /share/.",
+        },
       },
       required: ["token"],
       additionalProperties: false,

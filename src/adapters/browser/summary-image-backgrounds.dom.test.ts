@@ -2,8 +2,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   DEFAULT_SUMMARY_IMAGE_BACKGROUND_ID,
   getStoredSummaryImageBackgroundId,
-  storeSummaryImageBackgroundId,
   SUMMARY_IMAGE_BACKGROUNDS,
+  storeSummaryImageBackgroundId,
 } from "./summary-image-backgrounds";
 
 afterEach(() => vi.unstubAllGlobals());

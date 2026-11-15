@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { USER_NAME_MAX_LENGTH } from "../../shared/schemas";
-import { useAppSession, useUpdateProfileName } from "../adapters/react-query/session-query";
+import {
+  useAppSession,
+  useUpdateProfileName,
+} from "../adapters/react-query/session-query";
 
 /** Doi ten hien thi cua chinh minh — cai duy nhat trong ho so cho sua hien tai. */
 export function ProfileNamePanel() {
@@ -31,7 +34,9 @@ export function ProfileNamePanel() {
 
   return (
     <section className="rounded-lg border border-border bg-surface p-4 shadow-sm">
-      <h3 className="text-sm font-semibold text-stone-950 dark:text-stone-50">Tên hiển thị</h3>
+      <h3 className="text-sm font-semibold text-stone-950 dark:text-stone-50">
+        Tên hiển thị
+      </h3>
       <div className="mt-3 flex items-center gap-2">
         <input
           value={name}

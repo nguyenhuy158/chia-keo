@@ -7,7 +7,8 @@ const LIGHT_THEME_COLOR = "#faf5ff";
 export function getStoredTheme(): ThemeMode {
   try {
     const value = localStorage.getItem(STORAGE_KEY);
-    if (value === "light" || value === "dark" || value === "system") return value;
+    if (value === "light" || value === "dark" || value === "system")
+      return value;
   } catch {
     // localStorage co the bi chan; ve mac dinh theo he thong.
   }
@@ -28,7 +29,10 @@ export function applyTheme(mode: ThemeMode) {
   document.documentElement.classList.toggle("dark", resolved === "dark");
   const meta = document.querySelector('meta[name="theme-color"]');
   if (meta) {
-    meta.setAttribute("content", resolved === "dark" ? DARK_THEME_COLOR : LIGHT_THEME_COLOR);
+    meta.setAttribute(
+      "content",
+      resolved === "dark" ? DARK_THEME_COLOR : LIGHT_THEME_COLOR,
+    );
   }
 }
 

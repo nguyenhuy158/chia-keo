@@ -41,14 +41,12 @@ function mount() {
 
 beforeEach(() => {
   Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
-  preparePhoto
-    .mockReset()
-    .mockResolvedValue({
-      mimeType: "image/png",
-      data: "base64",
-      width: 2,
-      height: 3,
-    });
+  preparePhoto.mockReset().mockResolvedValue({
+    mimeType: "image/png",
+    data: "base64",
+    width: 2,
+    height: 3,
+  });
   client = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });

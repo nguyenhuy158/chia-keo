@@ -5,7 +5,12 @@ import {
   MAX_CROSS_GAME_GAMES,
 } from "./cross-game-balances";
 import { BadRequestError, NotFoundError } from "./errors";
-import { createFakeRepo, FAKE_GAME_ID, FAKE_OWNER, participantRow } from "./fake-game-repository";
+import {
+  createFakeRepo,
+  FAKE_GAME_ID,
+  FAKE_OWNER,
+  participantRow,
+} from "./fake-game-repository";
 
 /**
  * Tool MCP da chan hai truong hop nay truoc khi goi xuong day (de bao loi model
@@ -14,8 +19,12 @@ import { createFakeRepo, FAKE_GAME_ID, FAKE_OWNER, participantRow } from "./fake
  */
 describe("getBalancesAcrossGames — chan dau vao", () => {
   it("skips participants with empty names in aggregate results", async () => {
-    const { repo } = createFakeRepo({ participants: [participantRow("p1", " ")] });
-    const result = await getBalancesAcrossGames(repo, FAKE_OWNER, { gameIds: [FAKE_GAME_ID] });
+    const { repo } = createFakeRepo({
+      participants: [participantRow("p1", " ")],
+    });
+    const result = await getBalancesAcrossGames(repo, FAKE_OWNER, {
+      gameIds: [FAKE_GAME_ID],
+    });
     expect(result.people).toEqual([]);
   });
   it("chan khi gop qua nhieu cuoc: moi cuoc ton 3 truy van D1", async () => {

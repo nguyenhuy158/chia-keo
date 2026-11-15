@@ -145,7 +145,9 @@ describe("AppLayout", () => {
     expect(host.querySelector('a[href="/settings"]')).not.toBeNull();
     expect(host.querySelector('a[href="/fun"]')).not.toBeNull();
     expect(host.querySelector('a[href="/shuttles"]')).not.toBeNull();
-    expect(host.querySelector('a[aria-label="Hướng dẫn sử dụng"]')).not.toBeNull();
+    expect(
+      host.querySelector('a[aria-label="Hướng dẫn sử dụng"]'),
+    ).not.toBeNull();
     act(() => button("Danh sách cuộc chơi").click());
     expect(host.textContent).toContain("close drawer");
     act(() => button("navigate from drawer").click());

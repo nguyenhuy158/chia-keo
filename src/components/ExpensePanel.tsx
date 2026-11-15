@@ -22,31 +22,43 @@ import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 import type { ResolvedAiExpense } from "../../shared/ai";
-import type { ApiExpense, ApiGameDetail, ApiParticipant, ApiPhoto } from "../../shared/api-types";
-import { countPhotosByExpenseId, filterPhotosByExpenseId, toDataUrl } from "../../shared/photos";
-import { allocateAmount, allocateByWeights } from "../../shared/split";
-import {
-  DEFAULT_EXPENSE_TITLE,
-  DEFAULT_INCOME_TITLE,
-  DEFAULT_TRANSFER_TITLE,
-  MAX_SPLIT_WEIGHT,
-  type ExpenseInput,
-  type SplitMode,
-  type TransferInput,
-} from "../../shared/schemas";
-import { formatMoney, parseMoney } from "../core/domain/money";
-import { usePhotoUploader } from "../adapters/react-query/photo-upload";
-import { useAiScanReceipt, useAiSuggestExpense } from "../adapters/react-query/queries";
-import { Dropdown } from "./Dropdown";
-import { MoneyInput } from "./MoneyInput";
-import { Menu } from "../ui/Menu";
-import { DRAG_HANDLE_CLASS, SortableItem, SortableList } from "./sortable";
-import { PhotoPickerButton } from "./PhotoPanel";
+import type {
+  ApiExpense,
+  ApiGameDetail,
+  ApiParticipant,
+  ApiPhoto,
+} from "../../shared/api-types";
 import {
   categoryMeta,
   EXPENSE_CATEGORIES,
   normalizeCategory,
 } from "../../shared/expense-categories";
+import {
+  countPhotosByExpenseId,
+  filterPhotosByExpenseId,
+  toDataUrl,
+} from "../../shared/photos";
+import {
+  DEFAULT_EXPENSE_TITLE,
+  DEFAULT_INCOME_TITLE,
+  DEFAULT_TRANSFER_TITLE,
+  type ExpenseInput,
+  MAX_SPLIT_WEIGHT,
+  type SplitMode,
+  type TransferInput,
+} from "../../shared/schemas";
+import { allocateAmount, allocateByWeights } from "../../shared/split";
+import { usePhotoUploader } from "../adapters/react-query/photo-upload";
+import {
+  useAiScanReceipt,
+  useAiSuggestExpense,
+} from "../adapters/react-query/queries";
+import { formatMoney, parseMoney } from "../core/domain/money";
+import { Menu } from "../ui/Menu";
+import { Dropdown } from "./Dropdown";
+import { MoneyInput } from "./MoneyInput";
+import { PhotoPickerButton } from "./PhotoPanel";
+import { DRAG_HANDLE_CLASS, SortableItem, SortableList } from "./sortable";
 import { Field } from "./ui";
 import { usePhotoViewer } from "./use-photo-viewer";
 
@@ -64,19 +76,27 @@ const expenseFormSchema = z
     // Rong la chua phan loai; khong bat buoc chon de them khoan chi van nhanh.
     category: z.string(),
     title: z.string().trim(),
-    amount: z.string().refine((value) => parseMoney(value) > 0, "Nhập số tiền hợp lệ"),
+    amount: z
+      .string()
+      .refine((value) => parseMoney(value) > 0, "Nhập số tiền hợp lệ"),
     payerId: z.string().min(1, "Chọn người trả"),
     // Chi dung khi kind = "transfer": nguoi nhan tien.
     toId: z.string(),
     splitMode: z.enum(["equal", "shares", "amount"]),
-    splitParticipantIds: z.array(z.string()).min(1, "Chọn ít nhất một người cùng chia"),
+    splitParticipantIds: z
+      .array(z.string())
+      .min(1, "Chọn ít nhất một người cùng chia"),
     // Gia tri nhap theo tung nguoi: so phan (shares) hoac so tien (amount).
     splitValues: z.record(z.string(), z.string()),
   })
   .superRefine((values, ctx) => {
     if (values.kind === "transfer") {
       if (!values.toId) {
-        ctx.addIssue({ code: "custom", path: ["toId"], message: "Chọn người nhận" });
+        ctx.addIssue({
+          code: "custom",
+          path: ["toId"],
+          message: "Chọn người nhận",
+        });
       } else if (values.toId === values.payerId) {
         ctx.addIssue({
           code: "custom",
@@ -152,7 +172,10 @@ type ExpensePanelProps = {
   photos: ApiPhoto[];
   pending: boolean;
   onAdd: (input: ExpenseInput) => Promise<ApiGameDetail>;
-  onUpdate: (expenseId: string, input: Partial<ExpenseInput>) => Promise<unknown>;
+  onUpdate: (
+    expenseId: string,
+    input: Partial<ExpenseInput>,
+  ) => Promise<unknown>;
   onRemove: (expenseId: string) => void;
   onToggleExcluded: (expenseId: string, excluded: boolean) => void;
   onAddTransfer: (input: TransferInput) => Promise<unknown>;
@@ -160,8 +183,10 @@ type ExpensePanelProps = {
 };
 
 const AI_ERROR_MESSAGES: Record<string, string> = {
-  gemini_not_configured: "Server chưa cấu hình GEMINI_API_KEY nên chưa dùng được AI.",
-  gemini_invalid_response: "AI trả dữ liệu không hợp lệ, thử lại với câu rõ hơn.",
+  gemini_not_configured:
+    "Server chưa cấu hình GEMINI_API_KEY nên chưa dùng được AI.",
+  gemini_invalid_response:
+    "AI trả dữ liệu không hợp lệ, thử lại với câu rõ hơn.",
   gemini_request_failed: "Gọi AI thất bại, thử lại sau.",
 };
 
@@ -187,7 +212,13 @@ function readFileAsBase64(file: File) {
  * Tong tien da chia o che do "So tien". Doi mau + noi con thieu/vuot bao nhieu vi
  * day la dieu kien duy nhat chan submit.
  */
-function AmountSplitTotal({ assigned, total }: { assigned: number; total: number }) {
+function AmountSplitTotal({
+  assigned,
+  total,
+}: {
+  assigned: number;
+  total: number;
+}) {
   const diff = total - assigned;
   const balanced = diff === 0 && total > 0;
   const tone = balanced
@@ -200,7 +231,10 @@ function AmountSplitTotal({ assigned, total }: { assigned: number; total: number
       {balanced && " — vừa đủ"}
       {/* total = 0 nghia la chua dien "So tien" o tren, khong phai chia sai. */}
       {!balanced && total === 0 && " — nhập số tiền ở trên trước"}
-      {!balanced && total > 0 && diff > 0 && ` — còn thiếu ${formatMoney(diff)}`}
+      {!balanced &&
+        total > 0 &&
+        diff > 0 &&
+        ` — còn thiếu ${formatMoney(diff)}`}
       {!balanced && diff < 0 && ` — vượt ${formatMoney(-diff)}`}
     </p>
   );
@@ -246,7 +280,9 @@ function SharesStepper({
           value={value}
           onChange={(event) => onChange(event.target.value.replace(/\D/g, ""))}
           // Chot lai gia tri hop le khi roi input: tranh de trong hoac 0.
-          onBlur={() => onChange(String(Math.min(MAX_SPLIT_WEIGHT, Math.max(1, current))))}
+          onBlur={() =>
+            onChange(String(Math.min(MAX_SPLIT_WEIGHT, Math.max(1, current))))
+          }
           className="tabular h-full w-10 min-w-0 border-x border-stone-200 bg-transparent text-center text-stone-900 outline-none dark:border-stone-700 dark:text-stone-100"
           aria-label={`Số phần của ${name}`}
         />
@@ -281,7 +317,11 @@ function ParticipantSelect({
   ariaLabel: string;
 }) {
   const options = useMemo(
-    () => participants.map((participant) => ({ value: participant.id, label: participant.name })),
+    () =>
+      participants.map((participant) => ({
+        value: participant.id,
+        label: participant.name,
+      })),
     [participants],
   );
 
@@ -311,9 +351,13 @@ export function ExpensePanel({
   onAddTransfer,
   onReorder,
 }: ExpensePanelProps) {
-  const participantById = new Map(participants.map((participant) => [participant.id, participant]));
+  const participantById = new Map(
+    participants.map((participant) => [participant.id, participant]),
+  );
 
-  const visibleExpenses = expenses.filter((expense) => expense.kind !== "transfer");
+  const visibleExpenses = expenses.filter(
+    (expense) => expense.kind !== "transfer",
+  );
 
   const form = useForm<ExpenseFormValues>({
     resolver: zodResolver(expenseFormSchema),
@@ -344,7 +388,9 @@ export function ExpensePanel({
   // them vao danh sach chia, nguoi bi xoa duoc go khoi form.
   const knownParticipantIdsRef = useRef(new Set(participants.map((p) => p.id)));
   useEffect(() => {
-    const currentIds = new Set(participants.map((participant) => participant.id));
+    const currentIds = new Set(
+      participants.map((participant) => participant.id),
+    );
     const knownIds = knownParticipantIdsRef.current;
     const addedIds = participants
       .map((participant) => participant.id)
@@ -388,7 +434,8 @@ export function ExpensePanel({
   }
 
   const allSelected =
-    participants.length > 0 && splitParticipantIds.length === participants.length;
+    participants.length > 0 &&
+    splitParticipantIds.length === participants.length;
 
   /** Xem truoc so tien tung nguoi phai tra o mode "Theo phần", theo ti le so phan. */
   const sharesPreviewById = useMemo(() => {
@@ -396,13 +443,18 @@ export function ExpensePanel({
     const total = parseMoney(amountValue);
     const shares = allocateByWeights(
       total,
-      splitParticipantIds.map((id) => ({ participantId: id, weight: parseWeight(splitValues[id]) })),
+      splitParticipantIds.map((id) => ({
+        participantId: id,
+        weight: parseWeight(splitValues[id]),
+      })),
     );
     return new Map(shares.map((share) => [share.participantId, share.amount]));
   }, [splitMode, amountValue, splitParticipantIds, splitValues]);
 
-function handleSplitModeChange(mode: SplitMode) {
-    form.setValue("splitMode", mode, { shouldValidate: form.formState.isSubmitted });
+  function handleSplitModeChange(mode: SplitMode) {
+    form.setValue("splitMode", mode, {
+      shouldValidate: form.formState.isSubmitted,
+    });
   }
 
   /**
@@ -440,8 +492,10 @@ function handleSplitModeChange(mode: SplitMode) {
 
   function applyAiSuggestion(suggestion: ResolvedAiExpense) {
     if (suggestion.title) form.setValue("title", suggestion.title);
-    if (suggestion.amount > 0) form.setValue("amount", String(suggestion.amount));
-    if (suggestion.payerParticipantId) form.setValue("payerId", suggestion.payerParticipantId);
+    if (suggestion.amount > 0)
+      form.setValue("amount", String(suggestion.amount));
+    if (suggestion.payerParticipantId)
+      form.setValue("payerId", suggestion.payerParticipantId);
     if (suggestion.splitParticipantIds.length > 0) {
       form.setValue("splitMode", "equal");
       form.setValue("splitParticipantIds", suggestion.splitParticipantIds);
@@ -482,9 +536,13 @@ function handleSplitModeChange(mode: SplitMode) {
   }, [stagedPreviews]);
 
   const photoCountByExpenseId = countPhotosByExpenseId(photos);
-  const expenseTitleById = new Map(expenses.map((expense) => [expense.id, expense.title]));
+  const expenseTitleById = new Map(
+    expenses.map((expense) => [expense.id, expense.title]),
+  );
   const [photoExpenseId, setPhotoExpenseId] = useState("");
-  const viewerPhotos = photoExpenseId ? filterPhotosByExpenseId(photos, photoExpenseId) : [];
+  const viewerPhotos = photoExpenseId
+    ? filterPhotosByExpenseId(photos, photoExpenseId)
+    : [];
   const photoViewer = usePhotoViewer(gameId, viewerPhotos, expenseTitleById);
   const editingPhotos = editingExpenseId
     ? filterPhotosByExpenseId(photos, editingExpenseId)
@@ -507,7 +565,9 @@ function handleSplitModeChange(mode: SplitMode) {
   }
 
   function removeStagedFile(index: number) {
-    setStagedFiles((current) => current.filter((_, position) => position !== index));
+    setStagedFiles((current) =>
+      current.filter((_, position) => position !== index),
+    );
   }
 
   async function handleAiReceipt(file: File | undefined) {
@@ -516,7 +576,10 @@ function handleSplitModeChange(mode: SplitMode) {
     setAiError("");
     try {
       const data = await readFileAsBase64(file);
-      const { suggestion } = await aiReceipt.mutateAsync({ mimeType: file.type, data });
+      const { suggestion } = await aiReceipt.mutateAsync({
+        mimeType: file.type,
+        data,
+      });
       applyAiSuggestion(suggestion);
       // Giu lai anh hoa don vua quet lam anh dinh kem cua khoan chi.
       await handlePickPhotos([file]);
@@ -530,7 +593,9 @@ function handleSplitModeChange(mode: SplitMode) {
     const values: Record<string, string> = {};
     for (const split of expense.splits) {
       values[split.participantId] =
-        expense.splitMode === "shares" ? String(split.weight || 1) : String(split.amount);
+        expense.splitMode === "shares"
+          ? String(split.weight || 1)
+          : String(split.amount);
     }
     form.reset({
       kind: expense.kind === "income" ? "income" : "expense",
@@ -591,13 +656,19 @@ function handleSplitModeChange(mode: SplitMode) {
 
     const input: ExpenseInput = {
       kind: values.kind,
-      category: values.kind === "income" ? "" : normalizeCategory(values.category),
-      title: values.title || (values.kind === "income" ? DEFAULT_INCOME_TITLE : DEFAULT_EXPENSE_TITLE),
+      category:
+        values.kind === "income" ? "" : normalizeCategory(values.category),
+      title:
+        values.title ||
+        (values.kind === "income"
+          ? DEFAULT_INCOME_TITLE
+          : DEFAULT_EXPENSE_TITLE),
       amount: parseMoney(values.amount),
       note: "",
       payerParticipantId: values.payerId,
       splitMode: values.splitMode,
-      splitParticipantIds: values.splitMode === "equal" ? values.splitParticipantIds : [],
+      splitParticipantIds:
+        values.splitMode === "equal" ? values.splitParticipantIds : [],
       splits:
         values.splitMode === "equal"
           ? []
@@ -621,7 +692,9 @@ function handleSplitModeChange(mode: SplitMode) {
           await uploader.upload(stagedFiles, { expenseId: created.id });
         }
       }
-      toast.success(editingExpenseId ? "Đã lưu khoản chi" : "Đã thêm khoản chi");
+      toast.success(
+        editingExpenseId ? "Đã lưu khoản chi" : "Đã thêm khoản chi",
+      );
     } catch {
       toast.error("Không lưu được khoản chi");
       return;
@@ -646,7 +719,9 @@ function handleSplitModeChange(mode: SplitMode) {
     <section className="rounded-lg border border-border bg-surface p-4 shadow-sm">
       <div className="mb-4 flex items-center gap-2">
         <Banknote size={18} className="text-amber-500" />
-        <h3 className="text-lg font-semibold text-stone-950 dark:text-stone-50">Khoản chi</h3>
+        <h3 className="text-lg font-semibold text-stone-950 dark:text-stone-50">
+          Khoản chi
+        </h3>
       </div>
 
       <div className="mb-4">
@@ -695,7 +770,9 @@ function handleSplitModeChange(mode: SplitMode) {
           </button>
           <label
             className={`inline-flex h-11 shrink-0 cursor-pointer items-center gap-2 rounded-md border border-violet-300 bg-white px-3 text-sm font-medium text-violet-800 transition hover:bg-violet-100 dark:border-violet-500/40 dark:bg-stone-800 dark:text-violet-300 dark:hover:bg-stone-700 sm:h-10 ${
-              aiPending || participants.length === 0 ? "pointer-events-none opacity-50" : ""
+              aiPending || participants.length === 0
+                ? "pointer-events-none opacity-50"
+                : ""
             }`}
             title="Quét ảnh hóa đơn"
           >
@@ -736,11 +813,17 @@ function handleSplitModeChange(mode: SplitMode) {
                   : "text-stone-600 hover:text-stone-950 dark:text-stone-400 dark:hover:text-stone-100"
               }`}
             >
-              {option === "income" ? "Khoản thu" : option === "transfer" ? "Trả nợ" : "Khoản chi"}
+              {option === "income"
+                ? "Khoản thu"
+                : option === "transfer"
+                  ? "Trả nợ"
+                  : "Khoản chi"}
             </button>
           ))}
         </div>
-        <Field label={kind === "transfer" ? "Nội dung (không bắt buộc)" : "Nội dung"}>
+        <Field
+          label={kind === "transfer" ? "Nội dung (không bắt buộc)" : "Nội dung"}
+        >
           <input
             {...form.register("title")}
             className="field"
@@ -786,7 +869,9 @@ function handleSplitModeChange(mode: SplitMode) {
                   aria-pressed={selected}
                   // Bam lai danh muc dang chon la bo chon: khong can them nut
                   // "khong phan loai" rieng.
-                  onClick={() => form.setValue("category", selected ? "" : option.id)}
+                  onClick={() =>
+                    form.setValue("category", selected ? "" : option.id)
+                  }
                   className={`inline-flex h-9 items-center gap-1.5 rounded-full border px-3 text-sm transition ${
                     selected
                       ? "border-violet-500 bg-violet-50 font-semibold text-violet-800 dark:bg-violet-500/15 dark:text-violet-200"
@@ -821,16 +906,26 @@ function handleSplitModeChange(mode: SplitMode) {
           <ParticipantSelect
             participants={participants}
             value={payerId}
-            onChange={(id) => form.setValue("payerId", id, { shouldValidate: form.formState.isSubmitted })}
+            onChange={(id) =>
+              form.setValue("payerId", id, {
+                shouldValidate: form.formState.isSubmitted,
+              })
+            }
             ariaLabel="Chọn người trả"
           />
         </Field>
         {kind === "transfer" && (
           <Field label="Người nhận" error={form.formState.errors.toId?.message}>
             <ParticipantSelect
-              participants={participants.filter((participant) => participant.id !== payerId)}
+              participants={participants.filter(
+                (participant) => participant.id !== payerId,
+              )}
               value={toId}
-              onChange={(id) => form.setValue("toId", id, { shouldValidate: form.formState.isSubmitted })}
+              onChange={(id) =>
+                form.setValue("toId", id, {
+                  shouldValidate: form.formState.isSubmitted,
+                })
+              }
               ariaLabel="Chọn người nhận"
             />
           </Field>
@@ -840,7 +935,9 @@ function handleSplitModeChange(mode: SplitMode) {
             {/* Nut chon tat ca dat canh nhan, khong ep vao segmented control keo
                 nguoi dung tuong la tab thu 4. */}
             <div className="flex items-center gap-3">
-              <p className="text-sm font-medium text-stone-700 dark:text-stone-300">Chia cho ai</p>
+              <p className="text-sm font-medium text-stone-700 dark:text-stone-300">
+                Chia cho ai
+              </p>
               {participants.length > 1 && (
                 <button
                   type="button"
@@ -926,7 +1023,10 @@ function handleSplitModeChange(mode: SplitMode) {
                             }
                           />
                           <span className="tabular text-xs text-fg-muted">
-                            ≈ {formatMoney(sharesPreviewById.get(participant.id) || 0)}
+                            ≈{" "}
+                            {formatMoney(
+                              sharesPreviewById.get(participant.id) || 0,
+                            )}
                           </span>
                         </div>
                       ) : (
@@ -966,7 +1066,10 @@ function handleSplitModeChange(mode: SplitMode) {
           )}
           {form.formState.errors.splitValues && (
             <p className="mt-1 text-xs text-danger">
-              {(form.formState.errors.splitValues as { message?: string }).message}
+              {
+                (form.formState.errors.splitValues as { message?: string })
+                  .message
+              }
             </p>
           )}
         </div>
@@ -985,8 +1088,11 @@ function handleSplitModeChange(mode: SplitMode) {
                 >
                   <Paperclip size={15} />
                   Ảnh hóa đơn
-                  <span className="font-normal text-stone-400">(không bắt buộc)</span>
-                  {hasPhotos && ` (${editingPhotos.length + stagedFiles.length})`}
+                  <span className="font-normal text-stone-400">
+                    (không bắt buộc)
+                  </span>
+                  {hasPhotos &&
+                    ` (${editingPhotos.length + stagedFiles.length})`}
                   <ChevronDown
                     size={15}
                     className={`text-stone-400 transition ${open ? "rotate-180" : ""}`}
@@ -1035,7 +1141,11 @@ function handleSplitModeChange(mode: SplitMode) {
                   key={url}
                   className="relative h-16 w-16 overflow-hidden rounded-md border border-violet-300 dark:border-violet-500/50"
                 >
-                  <img src={url} alt="" className="h-full w-full object-cover" />
+                  <img
+                    src={url}
+                    alt=""
+                    className="h-full w-full object-cover"
+                  />
                   <button
                     type="button"
                     onClick={() => removeStagedFile(index)}
@@ -1148,7 +1258,8 @@ function handleSplitModeChange(mode: SplitMode) {
                         </span>
                       </div>
                       <p className="mt-0.5 text-xs text-fg-muted">
-                        {payer?.name || "Không rõ"} {expense.kind === "income" ? "nhận" : "trả"} ·{" "}
+                        {payer?.name || "Không rõ"}{" "}
+                        {expense.kind === "income" ? "nhận" : "trả"} ·{" "}
                         {expense.splitParticipantIds.length} người
                         {SPLIT_MODE_BADGES[expense.splitMode] &&
                           ` · ${SPLIT_MODE_BADGES[expense.splitMode]}`}
@@ -1173,12 +1284,20 @@ function handleSplitModeChange(mode: SplitMode) {
                         {
                           label: isEditing ? "Hủy sửa" : "Sửa",
                           icon: <Pencil size={15} />,
-                          onSelect: () => (isEditing ? cancelEditExpense() : startEditExpense(expense)),
+                          onSelect: () =>
+                            isEditing
+                              ? cancelEditExpense()
+                              : startEditExpense(expense),
                         },
                         {
                           label: expense.excluded ? "Tính lại" : "Bỏ tính",
-                          icon: expense.excluded ? <Eye size={15} /> : <EyeOff size={15} />,
-                          onSelect: () => onToggleExcluded(expense.id, !expense.excluded),
+                          icon: expense.excluded ? (
+                            <Eye size={15} />
+                          ) : (
+                            <EyeOff size={15} />
+                          ),
+                          onSelect: () =>
+                            onToggleExcluded(expense.id, !expense.excluded),
                         },
                         {
                           label: "Xóa",
@@ -1192,26 +1311,30 @@ function handleSplitModeChange(mode: SplitMode) {
 
                   {attachedPhotos.length > 0 && (
                     <div className="ml-7 mt-2 flex flex-wrap items-center gap-2">
-                      {attachedPhotos.slice(0, EXPENSE_THUMB_LIMIT).map((photo, index) => (
-                        <button
-                          key={photo.id}
-                          type="button"
-                          onClick={() => openExpensePhotos(expense.id, index)}
-                          className="h-12 w-12 overflow-hidden rounded-md border border-stone-200 transition active:scale-95 dark:border-stone-700"
-                          aria-label={`Xem ảnh của ${expense.title}`}
-                        >
-                          <img
-                            src={toDataUrl(photo.mimeType, photo.thumbData)}
-                            alt=""
-                            loading="lazy"
-                            className="h-full w-full object-cover"
-                          />
-                        </button>
-                      ))}
+                      {attachedPhotos
+                        .slice(0, EXPENSE_THUMB_LIMIT)
+                        .map((photo, index) => (
+                          <button
+                            key={photo.id}
+                            type="button"
+                            onClick={() => openExpensePhotos(expense.id, index)}
+                            className="h-12 w-12 overflow-hidden rounded-md border border-stone-200 transition active:scale-95 dark:border-stone-700"
+                            aria-label={`Xem ảnh của ${expense.title}`}
+                          >
+                            <img
+                              src={toDataUrl(photo.mimeType, photo.thumbData)}
+                              alt=""
+                              loading="lazy"
+                              className="h-full w-full object-cover"
+                            />
+                          </button>
+                        ))}
                       {hiddenPhotoCount > 0 && (
                         <button
                           type="button"
-                          onClick={() => openExpensePhotos(expense.id, EXPENSE_THUMB_LIMIT)}
+                          onClick={() =>
+                            openExpensePhotos(expense.id, EXPENSE_THUMB_LIMIT)
+                          }
                           className="h-12 w-12 rounded-md border border-stone-200 text-xs font-semibold text-stone-600 transition active:scale-95 dark:border-stone-700 dark:text-stone-300"
                         >
                           +{hiddenPhotoCount}
@@ -1221,7 +1344,9 @@ function handleSplitModeChange(mode: SplitMode) {
                         label=""
                         ariaLabel={`Thêm ảnh cho ${expense.title}`}
                         disabled={uploader.pending}
-                        onPick={(files) => uploader.upload(files, { expenseId: expense.id })}
+                        onPick={(files) =>
+                          uploader.upload(files, { expenseId: expense.id })
+                        }
                         className="h-12 border border-dashed border-stone-300 text-xs text-stone-500 hover:bg-stone-50 dark:border-stone-700 dark:text-stone-400 dark:hover:bg-stone-800"
                       >
                         <Paperclip size={14} />

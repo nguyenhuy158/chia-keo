@@ -118,7 +118,15 @@ describe("ContactBookCard", () => {
   it("is collapsed by default, remembers the choice and only offers + when open", () => {
     window.localStorage.clear();
     state.contacts = [
-      { key: "a", id: "a", name: "An", bankId: "", accountNo: "", accountName: "", source: "book" },
+      {
+        key: "a",
+        id: "a",
+        name: "An",
+        bankId: "",
+        accountNo: "",
+        accountName: "",
+        source: "book",
+      },
     ] as Contact[];
     render();
     expect(host.textContent).toContain("Danh bạ");

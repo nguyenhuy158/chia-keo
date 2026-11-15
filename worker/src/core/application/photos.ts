@@ -5,7 +5,11 @@ import {
   type PhotoUpdateInput,
 } from "../../../../shared/schemas";
 import { createId, nowIso } from "../../lib/ids";
-import type { GameRepository, PhotoDetailRow, PhotoRow } from "../ports/game-repository";
+import type {
+  GameRepository,
+  PhotoDetailRow,
+  PhotoRow,
+} from "../ports/game-repository";
 import { BadRequestError, InvalidInputError, NotFoundError } from "./errors";
 import { getAccessibleGame, hasGameAccess } from "./game-detail";
 import { getSharedGame } from "./share-links";
@@ -30,15 +34,24 @@ function toApiPhotoDetail(row: PhotoDetailRow): ApiPhotoDetail {
 }
 
 /** Anh chi duoc gan vao khoan chi cua chinh cuoc chia do. */
-async function assertExpenseInGame(repo: GameRepository, expenseId: string, gameId: string) {
+async function assertExpenseInGame(
+  repo: GameRepository,
+  expenseId: string,
+  gameId: string,
+) {
   const expense = await repo.expenses.getById(expenseId);
   if (!expense || expense.gameId !== gameId) throw new InvalidInputError();
 }
 
 /** Anh + cuoc chia, chi khi nguoi dung la chu cuoc chia. */
-async function getOwnedPhoto(repo: GameRepository, photoId: string, userId: string) {
+async function getOwnedPhoto(
+  repo: GameRepository,
+  photoId: string,
+  userId: string,
+) {
   const row = await repo.photos.getWithGame(photoId);
-  if (!row || !(await hasGameAccess(repo, row.game, userId))) throw new NotFoundError();
+  if (!row || !(await hasGameAccess(repo, row.game, userId)))
+    throw new NotFoundError();
   return row;
 }
 
@@ -65,7 +78,8 @@ export async function addGamePhoto(
   if ((await repo.photos.countByGame(game.id)) >= MAX_PHOTOS_PER_GAME) {
     throw new BadRequestError(PHOTO_LIMIT_ERROR);
   }
-  if (input.expenseId) await assertExpenseInGame(repo, input.expenseId, game.id);
+  if (input.expenseId)
+    await assertExpenseInGame(repo, input.expenseId, game.id);
 
   const row: PhotoDetailRow = {
     id: createId("photo"),
@@ -104,7 +118,8 @@ export async function updatePhoto(
   input: PhotoUpdateInput,
 ): Promise<ApiPhoto> {
   const row = await getOwnedPhoto(repo, photoId, userId);
-  if (input.expenseId) await assertExpenseInGame(repo, input.expenseId, row.game.id);
+  if (input.expenseId)
+    await assertExpenseInGame(repo, input.expenseId, row.game.id);
 
   const fields = {
     ...(input.caption !== undefined ? { caption: input.caption } : {}),

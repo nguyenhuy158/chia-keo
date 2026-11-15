@@ -15,7 +15,10 @@ import type { SsoClaims } from "./sso";
  * preferences deu khoa theo userId) khong phai biet nguoi dung dang nhap kieu
  * nao.
  */
-export async function resolveSsoUserId(db: D1Database, claims: SsoClaims): Promise<string> {
+export async function resolveSsoUserId(
+  db: D1Database,
+  claims: SsoClaims,
+): Promise<string> {
   const orm = drizzle(db, { schema });
 
   const existing = await orm

@@ -2,13 +2,13 @@ import { describe, expect, it } from "vitest";
 import {
   allocateAmount,
   allocateByWeights,
+  type BalanceRow,
   calculateBalances,
   calculateHostTransfers,
   calculateSettlements,
   computeSplitRows,
-  MAX_SPLIT_WEIGHT,
-  type BalanceRow,
   type ExpenseInput,
+  MAX_SPLIT_WEIGHT,
   resolveHostParticipantId,
   roundUpToUnit,
 } from "./split";
@@ -33,7 +33,10 @@ describe("allocateAmount", () => {
   it("tong split luon bang tong tien goc", () => {
     const ids = ["a", "b", "c", "d", "e", "f", "g"];
     for (const amount of [1, 99, 1000, 123457, 999999999]) {
-      const total = allocateAmount(amount, ids).reduce((sum, share) => sum + share.amount, 0);
+      const total = allocateAmount(amount, ids).reduce(
+        (sum, share) => sum + share.amount,
+        0,
+      );
       expect(total).toBe(amount);
     }
   });
@@ -58,9 +61,12 @@ describe("allocateByWeights", () => {
 
   it("trong so bang nhau cho ket qua nhu allocateAmount", () => {
     const ids = ["a", "b", "c"];
-    expect(allocateByWeights(100, ids.map((id) => ({ participantId: id, weight: 1 })))).toEqual(
-      allocateAmount(100, ids),
-    );
+    expect(
+      allocateByWeights(
+        100,
+        ids.map((id) => ({ participantId: id, weight: 1 })),
+      ),
+    ).toEqual(allocateAmount(100, ids));
   });
 
   it("cong phan du lan luot cho nguoi dau danh sach", () => {
@@ -100,12 +106,16 @@ describe("allocateByWeights", () => {
       { participantId: "c", weight: 0 },
     ]);
     expect(shares.map((share) => share.participantId)).toEqual(["a", "b"]);
-    expect(shares.reduce((sum, share) => sum + share.amount, 0)).toBe(1_000_000_000_000);
+    expect(shares.reduce((sum, share) => sum + share.amount, 0)).toBe(
+      1_000_000_000_000,
+    );
   });
 
   it("tra ve mang rong khi khong co trong so hop le", () => {
     expect(allocateByWeights(100, [])).toEqual([]);
-    expect(allocateByWeights(100, [{ participantId: "a", weight: 0 }])).toEqual([]);
+    expect(allocateByWeights(100, [{ participantId: "a", weight: 0 }])).toEqual(
+      [],
+    );
   });
 });
 
@@ -120,10 +130,15 @@ describe("computeSplitRows", () => {
 
   it("mode shares chia theo so phan va luu weight", () => {
     expect(
-      computeSplitRows(400, "shares", [], [
-        { participantId: "a", value: 1 },
-        { participantId: "b", value: 3 },
-      ]),
+      computeSplitRows(
+        400,
+        "shares",
+        [],
+        [
+          { participantId: "a", value: 1 },
+          { participantId: "b", value: 3 },
+        ],
+      ),
     ).toEqual([
       { participantId: "a", amount: 100, weight: 1 },
       { participantId: "b", amount: 300, weight: 3 },
@@ -132,10 +147,15 @@ describe("computeSplitRows", () => {
 
   it("mode amount giu nguyen so tien nhap", () => {
     expect(
-      computeSplitRows(90, "amount", [], [
-        { participantId: "a", value: 30 },
-        { participantId: "b", value: 60 },
-      ]),
+      computeSplitRows(
+        90,
+        "amount",
+        [],
+        [
+          { participantId: "a", value: 30 },
+          { participantId: "b", value: 60 },
+        ],
+      ),
     ).toEqual([
       { participantId: "a", amount: 30, weight: null },
       { participantId: "b", amount: 60, weight: null },
@@ -148,23 +168,36 @@ describe("computeSplitRows", () => {
     expect(computeSplitRows(100, "shares", [], [])).toBeNull();
     // Trung nguoi
     expect(
-      computeSplitRows(100, "amount", [], [
-        { participantId: "a", value: 50 },
-        { participantId: "a", value: 50 },
-      ]),
+      computeSplitRows(
+        100,
+        "amount",
+        [],
+        [
+          { participantId: "a", value: 50 },
+          { participantId: "a", value: 50 },
+        ],
+      ),
     ).toBeNull();
     // So phan qua lon
     expect(
-      computeSplitRows(100, "shares", [], [
-        { participantId: "a", value: MAX_SPLIT_WEIGHT + 1 },
-      ]),
+      computeSplitRows(
+        100,
+        "shares",
+        [],
+        [{ participantId: "a", value: MAX_SPLIT_WEIGHT + 1 }],
+      ),
     ).toBeNull();
     // Tong tien tuy chinh lech tong khoan chi
     expect(
-      computeSplitRows(100, "amount", [], [
-        { participantId: "a", value: 30 },
-        { participantId: "b", value: 60 },
-      ]),
+      computeSplitRows(
+        100,
+        "amount",
+        [],
+        [
+          { participantId: "a", value: 30 },
+          { participantId: "b", value: 60 },
+        ],
+      ),
     ).toBeNull();
   });
 });
@@ -231,8 +264,16 @@ describe("calculateBalances", () => {
   it("khoan tra no (mot nguoi nhan toan bo) can bang lai cong no", () => {
     // b no a 100 sau khoan chi dau; b tra no 100 -> ca hai ve 0.
     const expenses: ExpenseInput[] = [
-      { payerParticipantId: "a", amount: 200, shares: allocateAmount(200, ["a", "b"]) },
-      { payerParticipantId: "b", amount: 100, shares: [{ participantId: "a", amount: 100 }] },
+      {
+        payerParticipantId: "a",
+        amount: 200,
+        shares: allocateAmount(200, ["a", "b"]),
+      },
+      {
+        payerParticipantId: "b",
+        amount: 100,
+        shares: [{ participantId: "a", amount: 100 }],
+      },
     ];
 
     const balances = calculateBalances(["a", "b"], expenses);
@@ -246,9 +287,21 @@ describe("calculateBalances", () => {
   it("tong balance cua ca nhom bang 0", () => {
     const ids = ["a", "b", "c", "d"];
     const expenses: ExpenseInput[] = [
-      { payerParticipantId: "a", amount: 1001, shares: allocateAmount(1001, ids) },
-      { payerParticipantId: "b", amount: 250, shares: allocateAmount(250, ["b", "c"]) },
-      { payerParticipantId: "d", amount: 77, shares: allocateAmount(77, ["a", "d"]) },
+      {
+        payerParticipantId: "a",
+        amount: 1001,
+        shares: allocateAmount(1001, ids),
+      },
+      {
+        payerParticipantId: "b",
+        amount: 250,
+        shares: allocateAmount(250, ["b", "c"]),
+      },
+      {
+        payerParticipantId: "d",
+        amount: 77,
+        shares: allocateAmount(77, ["a", "d"]),
+      },
     ];
 
     const totalBalance = calculateBalances(ids, expenses).reduce(
@@ -262,7 +315,11 @@ describe("calculateBalances", () => {
     // a chi 300 chia deu 3 nguoi -> moi nguoi no a 100.
     // Sau do nhom nhan hoan tien 90, a giu tien, chia deu 3 nguoi -> moi nguoi bot 30 no.
     const expenses: ExpenseInput[] = [
-      { payerParticipantId: "a", amount: 300, shares: allocateAmount(300, ["a", "b", "c"]) },
+      {
+        payerParticipantId: "a",
+        amount: 300,
+        shares: allocateAmount(300, ["a", "b", "c"]),
+      },
       {
         payerParticipantId: "a",
         amount: 90,
@@ -284,9 +341,16 @@ describe("calculateBalances", () => {
 
 describe("calculateSettlements", () => {
   it("ghep nguoi no voi nguoi nhan", () => {
-    const balances = calculateBalances(["a", "b"], [
-      { payerParticipantId: "a", amount: 200, shares: allocateAmount(200, ["a", "b"]) },
-    ]);
+    const balances = calculateBalances(
+      ["a", "b"],
+      [
+        {
+          payerParticipantId: "a",
+          amount: 200,
+          shares: allocateAmount(200, ["a", "b"]),
+        },
+      ],
+    );
 
     expect(calculateSettlements(balances)).toEqual([
       { fromParticipantId: "b", toParticipantId: "a", amount: 100 },
@@ -318,17 +382,37 @@ describe("calculateSettlements", () => {
   it("tong tien chuyen di bang tong tien nhan ve va can bang het no", () => {
     const ids = ["a", "b", "c", "d", "e"];
     const expenses: ExpenseInput[] = [
-      { payerParticipantId: "a", amount: 999999, shares: allocateAmount(999999, ids) },
-      { payerParticipantId: "b", amount: 12345, shares: allocateAmount(12345, ["b", "c", "d"]) },
-      { payerParticipantId: "c", amount: 67, shares: allocateAmount(67, ["d", "e"]) },
+      {
+        payerParticipantId: "a",
+        amount: 999999,
+        shares: allocateAmount(999999, ids),
+      },
+      {
+        payerParticipantId: "b",
+        amount: 12345,
+        shares: allocateAmount(12345, ["b", "c", "d"]),
+      },
+      {
+        payerParticipantId: "c",
+        amount: 67,
+        shares: allocateAmount(67, ["d", "e"]),
+      },
     ];
     const balances = calculateBalances(ids, expenses);
     const settlements = calculateSettlements(balances);
 
-    const net = new Map(balances.map((row) => [row.participantId, row.balance]));
+    const net = new Map(
+      balances.map((row) => [row.participantId, row.balance]),
+    );
     for (const settlement of settlements) {
-      net.set(settlement.fromParticipantId, net.get(settlement.fromParticipantId)! + settlement.amount);
-      net.set(settlement.toParticipantId, net.get(settlement.toParticipantId)! - settlement.amount);
+      net.set(
+        settlement.fromParticipantId,
+        net.get(settlement.fromParticipantId)! + settlement.amount,
+      );
+      net.set(
+        settlement.toParticipantId,
+        net.get(settlement.toParticipantId)! - settlement.amount,
+      );
     }
 
     for (const balance of net.values()) {
@@ -345,7 +429,9 @@ describe("resolveHostParticipantId", () => {
   ];
 
   it("lay nguoi ung nhieu nhat o che do host, bo qua nguoi da chon", () => {
-    expect(resolveHostParticipantId(balances, "host", "thieu")).toBe("ung-nhieu");
+    expect(resolveHostParticipantId(balances, "host", "thieu")).toBe(
+      "ung-nhieu",
+    );
   });
 
   it("khong chon host khi cuoc chia khong co nguoi", () => {
@@ -362,7 +448,9 @@ describe("resolveHostParticipantId", () => {
   });
 
   it("nguoi da chon khong con trong cuoc thi ve nguoi ung nhieu nhat", () => {
-    expect(resolveHostParticipantId(balances, "pick", "da-bi-xoa")).toBe("ung-nhieu");
+    expect(resolveHostParticipantId(balances, "pick", "da-bi-xoa")).toBe(
+      "ung-nhieu",
+    );
   });
 
   it("khong co dau moi o cac che do khac", () => {
@@ -397,7 +485,9 @@ describe("calculateHostTransfers", () => {
     const transfers = calculateHostTransfers(balances, "huy");
 
     expect(transfers).toHaveLength(5);
-    expect(transfers.every((row) => row.toHost && row.amount === 62000)).toBe(true);
+    expect(transfers.every((row) => row.toHost && row.amount === 62000)).toBe(
+      true,
+    );
   });
 
   it("khong lam tron so host tra lai", () => {
@@ -410,6 +500,10 @@ describe("calculateHostTransfers", () => {
       "huy",
     );
 
-    expect(back).toEqual({ participantId: "kiet", amount: 20000, toHost: false });
+    expect(back).toEqual({
+      participantId: "kiet",
+      amount: 20000,
+      toHost: false,
+    });
   });
 });

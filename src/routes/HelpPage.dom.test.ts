@@ -42,7 +42,8 @@ describe("HelpPage", () => {
     ]);
     for (const group of HELP_GROUPS) {
       expect(host.textContent).toContain(group.title);
-      for (const topic of group.topics) expect(topicButton(topic.title)).toBeDefined();
+      for (const topic of group.topics)
+        expect(topicButton(topic.title)).toBeDefined();
     }
   });
 
@@ -51,19 +52,26 @@ describe("HelpPage", () => {
     expect(topicButton(first.title).getAttribute("aria-expanded")).toBe("true");
     expect(host.textContent).toContain(first.steps[0]);
 
-    const exclude = HELP_GROUPS[2].topics.find((topic) => topic.id === "exclude");
+    const exclude = HELP_GROUPS[2].topics.find(
+      (topic) => topic.id === "exclude",
+    );
     if (!exclude) throw new Error("missing exclude topic");
-    expect(topicButton(exclude.title).getAttribute("aria-expanded")).toBe("false");
+    expect(topicButton(exclude.title).getAttribute("aria-expanded")).toBe(
+      "false",
+    );
     expect(host.textContent).not.toContain(exclude.steps[0]);
     act(() => topicButton(exclude.title).click());
     expect(host.textContent).toContain(exclude.steps[0]);
   });
 
   it("gives every topic at least one step and unique ids", () => {
-    const ids = HELP_GROUPS.flatMap((group) => group.topics.map((topic) => topic.id));
+    const ids = HELP_GROUPS.flatMap((group) =>
+      group.topics.map((topic) => topic.id),
+    );
     expect(new Set(ids).size).toBe(ids.length);
     for (const group of HELP_GROUPS) {
-      for (const topic of group.topics) expect(topic.steps.length).toBeGreaterThan(0);
+      for (const topic of group.topics)
+        expect(topic.steps.length).toBeGreaterThan(0);
     }
   });
 });
