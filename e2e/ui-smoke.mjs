@@ -909,6 +909,16 @@ try {
     .waitFor({ state: "hidden", ...WAIT });
   assert.equal(await scrolls(), false, "Chia se cuon duoc tren dien thoai");
   ok("phone: Khác tab fits one screen with photos, history and share Sheets");
+
+  await page.goto(`${BASE}/`);
+  await page
+    .getByRole("button", { name: "Mở danh sách cuộc chơi" })
+    .first()
+    .waitFor({ state: "visible", ...WAIT });
+  assert.equal(await scrolls(), false, "trang chu cuon duoc tren dien thoai");
+  await page.getByRole("button", { name: "Cần tất toán", exact: true }).click();
+  assert.equal(await scrolls(), false, "trang chu cuon duoc o view khac");
+  ok("phone: home page fits one screen");
   await page.setViewportSize({ width: 1280, height: 720 });
   ok("phone: Chi tab fits one screen, pages the list and adds from a Sheet");
 

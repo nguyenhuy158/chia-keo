@@ -110,8 +110,9 @@ describe("HomePage", () => {
     render();
     expect(useCrossBalances).toHaveBeenLastCalledWith(true);
     expect(host.textContent).toContain("Chào buổi sáng");
-    expect(host.querySelectorAll('a[href^="/games/"]')).toHaveLength(4);
-    expect(host.textContent).not.toContain("Cầu 5");
+    const desktop = host.querySelector(".hidden") as HTMLElement;
+    expect(desktop.querySelectorAll('a[href^="/games/"]')).toHaveLength(4);
+    expect(desktop.textContent).not.toContain("Cầu 5");
     expect(host.textContent).not.toContain("Cần tất toán");
     expect(host.textContent).not.toContain("Vài con số");
     act(() => openButton().click());
@@ -189,5 +190,66 @@ describe("HomePage", () => {
     vi.setSystemTime(new Date(2026, 9, 24, hour));
     render();
     expect(host.textContent).toContain(greeting);
+  });
+});
+
+describe("HomePage compact", () => {
+  function pill(label: string) {
+    return [...host.querySelectorAll("button")].find(
+      (item) => item.textContent === label,
+    ) as HTMLButtonElement | undefined;
+  }
+
+  it("liệt kê mọi cuộc chơi có phân trang và không có tab khi thiếu dữ liệu", () => {
+    state.games = Array.from({ length: 5 }, (_, index) =>
+      game(String(index + 1)),
+    );
+    render();
+    const compact = host.querySelector("[data-one-screen]") as HTMLElement;
+    expect(compact.querySelectorAll('a[href^="/games/"]')).toHaveLength(5);
+    expect(pill("Cần tất toán")).toBeUndefined();
+    expect(pill("Vài con số")).toBeUndefined();
+  });
+
+  it("chuyển giữa các view và quay về Tiếp tục khi view không còn dữ liệu", () => {
+    state.games = [game("1")];
+    state.people = [
+      { name: "An", net: 5000 },
+      { name: "Bình", net: -3000 },
+    ];
+    state.stats = {
+      totalExpense: 250000,
+      topPayer: { name: "An" },
+      biggestExpense: { amount: 150000 },
+    };
+    render();
+    act(() => pill("Cần tất toán")?.click());
+    const compact = host.querySelector("[data-one-screen]") as HTMLElement;
+    expect(compact.textContent).toContain("Được nhận lại");
+    expect(compact.textContent).toContain("Còn phải trả");
+    expect(compact.textContent).toContain("3.000");
+    act(() => pill("Vài con số")?.click());
+    expect(compact.textContent).toContain("Ứng tiền nhiều nhất");
+    expect(compact.textContent).toContain("Khoản khủng nhất");
+    expect(compact.querySelector('a[href="/fun"]')).not.toBeNull();
+    state.stats = { totalExpense: 0 };
+    render();
+    expect(compact.textContent).toContain("Cầu 1");
+    expect(pill("Vài con số")).toBeUndefined();
+  });
+
+  it("bỏ ô người ứng nhiều nhất và khoản khủng nhất khi không có", () => {
+    state.games = [game("1")];
+    state.stats = {
+      totalExpense: 250000,
+      topPayer: null,
+      biggestExpense: null,
+    };
+    render();
+    act(() => pill("Vài con số")?.click());
+    const compact = host.querySelector("[data-one-screen]") as HTMLElement;
+    expect(compact.textContent).toContain("Tổng chi");
+    expect(compact.textContent).not.toContain("Ứng tiền nhiều nhất");
+    expect(compact.textContent).not.toContain("Khoản khủng nhất");
   });
 });
