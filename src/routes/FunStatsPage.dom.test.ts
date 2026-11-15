@@ -90,6 +90,37 @@ describe("FunStatsPage", () => {
     expect(host.textContent).toContain("Đã bỏ bớt 2 cuộc chơi");
   });
 
+  it("hiện bản gọn có phân trang trên điện thoại với số cuộc chơi đã bỏ bớt", () => {
+    state.data = {
+      gameCount: 3,
+      totalExpense: 450000,
+      topPayer: { name: "An", totalPaid: 300000 },
+      mostActive: null,
+      biggestGame: null,
+      biggestExpense: null,
+      favoriteWeekday: null,
+      omittedGameCount: 2,
+    };
+    render();
+    const compact = host.querySelector("[data-one-screen]") as HTMLElement;
+    expect(compact.textContent).toContain("Đại gia của hội");
+    expect(compact.textContent).toContain("Tổng đã chi");
+    expect(compact.textContent).toContain("Đã bỏ bớt 2 cuộc chơi cũ hơn");
+    state.data = {
+      gameCount: 1,
+      totalExpense: 1000,
+      topPayer: null,
+      mostActive: null,
+      biggestGame: null,
+      biggestExpense: null,
+      favoriteWeekday: 0,
+      omittedGameCount: 0,
+    };
+    render();
+    expect(compact.textContent).toContain("Chủ nhật");
+    expect(compact.textContent).not.toContain("cũ hơn");
+  });
+
   it("omits rankings that have no data", () => {
     state.data = {
       gameCount: 1,
