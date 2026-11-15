@@ -40,12 +40,7 @@ import { useAiScanReceipt, useAiSuggestExpense } from "../adapters/react-query/q
 import { Dropdown } from "./Dropdown";
 import { MoneyInput } from "./MoneyInput";
 import { Menu } from "../ui/Menu";
-import {
-  DRAG_HANDLE_CLASS,
-  DRAG_HANDLE_STYLE,
-  SortableItem,
-  SortableList,
-} from "./sortable";
+import { DRAG_HANDLE_CLASS, SortableItem, SortableList } from "./sortable";
 import { PhotoPickerButton } from "./PhotoPanel";
 import {
   categoryMeta,
@@ -1121,7 +1116,6 @@ function handleSplitModeChange(mode: SplitMode) {
                       ref={handle.setActivatorNodeRef}
                       {...handle.attributes}
                       {...handle.listeners}
-                      style={DRAG_HANDLE_STYLE}
                       className={`flex h-11 w-6 shrink-0 items-center justify-center text-stone-400 dark:text-stone-600 ${DRAG_HANDLE_CLASS}`}
                       aria-label={`Kéo để đổi thứ tự ${expense.title}`}
                     >

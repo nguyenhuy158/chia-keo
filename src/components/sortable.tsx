@@ -68,15 +68,7 @@ type SortableHandle = Pick<
  * Nhan giu tay cam tren dien thoai mo menu ngu canh cua he dieu hanh (popup
  * "nhan giu") va co the chon chu; chan o day de keo khong bi cat ngang.
  */
-export const DRAG_HANDLE_CLASS = "select-none [-webkit-touch-callout:none]";
-
-/**
- * Phai la style noi tuyen: tokens.css co `button { touch-action: manipulation }`
- * khong boc @layer, nen thang moi class tien ich cua Tailwind (nam trong layer),
- * ke ca `touch-none`. Khong co `touch-action: none` thi trinh duyet gianh cu
- * chi de cuon trang va keo bi cat ngang.
- */
-export const DRAG_HANDLE_STYLE = { touchAction: "none" } as const;
+export const DRAG_HANDLE_CLASS = "touch-none select-none [-webkit-touch-callout:none]";
 
 function blockContextMenu(event: MouseEvent) {
   event.preventDefault();

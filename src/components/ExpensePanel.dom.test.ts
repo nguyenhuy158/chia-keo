@@ -1057,7 +1057,7 @@ describe("ExpensePanel", () => {
     expect(event.defaultPrevented).toBe(true);
     expect(handle.className).toContain("select-none");
     expect(handle.className).toContain("[-webkit-touch-callout:none]");
-    expect(handle.style.touchAction).toBe("none");
+    expect(handle.className).toContain("touch-none");
   });
 
   it("hiển thị số tiền còn thiếu hoặc vượt khi chia tiền riêng", () => {
