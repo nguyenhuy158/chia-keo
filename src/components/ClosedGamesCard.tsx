@@ -1,9 +1,18 @@
 import { useNavigate } from "@tanstack/react-router";
-import { CircleCheckBig, RotateCcw } from "lucide-react";
+import { CircleCheckBig, Download, RotateCcw } from "lucide-react";
+import { useState } from "react";
 import { toast } from "sonner";
 import type { ApiGame } from "../../shared/api-types";
 import { describeCloseMode } from "../../shared/game-closing";
+import {
+  ALL_MONTHS,
+  filterByMonth,
+  formatMonthLabel,
+  listMonthKeys,
+} from "../../shared/monthly-report";
 import { useClosedGames, useReopenGame } from "../adapters/react-query/queries";
+import { Link } from "../ui/Link";
+import { Dropdown } from "./Dropdown";
 import { formatDateTime } from "./format-datetime";
 import { usePersistentOpen } from "./use-persistent-open";
 import { SkeletonCard } from "./ui";
@@ -19,7 +28,16 @@ export function ClosedGamesCard({ onNavigate }: { onNavigate?: () => void }) {
   const closedQuery = useClosedGames(open);
   const reopenGame = useReopenGame();
 
-  const games = closedQuery.data || [];
+  const [month, setMonth] = useState(ALL_MONTHS);
+
+  const allGames = closedQuery.data || [];
+  const months = listMonthKeys(allGames.map((game) => game.closedAt));
+  const activeMonth = months.includes(month) ? month : ALL_MONTHS;
+  const games = filterByMonth(allGames, activeMonth);
+  const monthOptions = [
+    { value: ALL_MONTHS, label: "Tất cả tháng" },
+    ...months.map((key) => ({ value: key, label: formatMonthLabel(key) })),
+  ];
 
   async function handleReopen(game: ApiGame) {
     try {
@@ -65,6 +83,26 @@ export function ClosedGamesCard({ onNavigate }: { onNavigate?: () => void }) {
             </p>
           ) : (
             <div className="mt-1 space-y-2">
+              <div className="flex items-center gap-2">
+                <div className="min-w-0 flex-1">
+                  <Dropdown
+                    options={monthOptions}
+                    value={activeMonth}
+                    onChange={setMonth}
+                    ariaLabel="Lọc theo tháng"
+                  />
+                </div>
+                {activeMonth !== ALL_MONTHS && (
+                  <Link
+                    href={`/api/games/closed/report?month=${activeMonth}`}
+                    download
+                    className="h-11 shrink-0 px-2 text-xs"
+                  >
+                    <Download size={13} />
+                    Tải CSV
+                  </Link>
+                )}
+              </div>
               {games.map((game) => (
                 <div
                   key={game.id}
