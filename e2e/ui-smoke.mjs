@@ -236,6 +236,36 @@ try {
   assert.deepEqual(reloaded.expenses, beforeInvalid.expenses);
   ok("add expense with custom amounts");
 
+  // 5.5 Keo tha doi thu tu khoan chi bang chuot that (dnd-kit)
+  const expenseIds = async () => (await getGameDetail(page, gameId)).expenses.map((item) => item.id);
+  const dragFirstExpenseBelowSecond = async () => {
+    const handles = page.locator('button[aria-label^="Kéo để đổi thứ tự"]');
+    assert.ok((await handles.count()) >= 2);
+    await handles.nth(0).evaluate((element) => element.scrollIntoView({ block: "center" }));
+    const first = await handles.nth(0).boundingBox();
+    const second = await handles.nth(1).boundingBox();
+    const x = first.x + first.width / 2;
+    await page.mouse.move(x, first.y + first.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(x, first.y + first.height / 2 + 8, { steps: 4 });
+    await page.mouse.move(x, second.y + second.height / 2 + 24, { steps: 12 });
+    await page.mouse.up();
+  };
+  const waitForOrder = async (expected) => {
+    for (let attempt = 0; attempt < 25; attempt += 1) {
+      if (JSON.stringify(await expenseIds()) === JSON.stringify(expected)) return;
+      await page.waitForTimeout(200);
+    }
+    assert.deepEqual(await expenseIds(), expected);
+  };
+  const orderBefore = await expenseIds();
+  const [first, second, ...rest] = orderBefore;
+  await dragFirstExpenseBelowSecond();
+  await waitForOrder([second, first, ...rest]);
+  await dragFirstExpenseBelowSecond();
+  await waitForOrder(orderBefore);
+  ok("drag expenses to reorder and drag back");
+
   const invalidSplit = await page.evaluate(async ({ id, payerId, anId, binhId }) => {
     const response = await fetch(`/api/games/${id}/expenses`, {
       method: "POST",
