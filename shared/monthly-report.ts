@@ -51,6 +51,7 @@ export type ReportExpense = {
   category: string;
   amount: number;
   payerParticipantId: string;
+  excluded?: boolean;
 };
 
 export type ReportSplit = {
@@ -92,7 +93,9 @@ export function buildMonthlyCsv(
   splits: ReportSplit[],
   participants: ReportParticipant[],
 ) {
-  const spending = expenses.filter((row) => row.kind === EXPENSE_KIND);
+  const spending = expenses.filter(
+    (row) => row.kind === EXPENSE_KIND && !row.excluded,
+  );
   const spendingIds = new Set(spending.map((row) => row.id));
   const participantNames = new Map(
     participants.map((row) => [row.id, row.name]),

@@ -3,6 +3,8 @@ import {
   Banknote,
   Check,
   ChevronDown,
+  Eye,
+  EyeOff,
   GripVertical,
   ImagePlus,
   Minus,
@@ -150,6 +152,7 @@ type ExpensePanelProps = {
   onAdd: (input: ExpenseInput) => Promise<ApiGameDetail>;
   onUpdate: (expenseId: string, input: Partial<ExpenseInput>) => Promise<unknown>;
   onRemove: (expenseId: string) => void;
+  onToggleExcluded: (expenseId: string, excluded: boolean) => void;
   onAddTransfer: (input: TransferInput) => Promise<unknown>;
   onReorder: (expenseIds: string[]) => void;
 };
@@ -302,6 +305,7 @@ export function ExpensePanel({
   onAdd,
   onUpdate,
   onRemove,
+  onToggleExcluded,
   onAddTransfer,
   onReorder,
 }: ExpensePanelProps) {
@@ -1118,7 +1122,7 @@ function handleSplitModeChange(mode: SplitMode) {
                 isEditing
                   ? "border-violet-500 bg-primary-soft dark:border-violet-500"
                   : "border-border"
-              }`}
+              } ${expense.excluded ? "opacity-60" : ""}`}
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="flex min-w-0 items-start gap-1">
@@ -1136,6 +1140,11 @@ function handleSplitModeChange(mode: SplitMode) {
                   <div className="min-w-0">
                     <p className="truncate text-sm font-semibold text-stone-950 dark:text-stone-50">
                       {expense.title}
+                      {expense.excluded && (
+                        <span className="ml-1.5 rounded bg-surface-muted px-1.5 py-0.5 text-[10px] font-semibold text-fg-muted">
+                          Không tính
+                        </span>
+                      )}
                       {expense.kind === "income" && (
                         <span className="ml-1.5 rounded bg-emerald-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400">
                           Thu
@@ -1164,11 +1173,20 @@ function handleSplitModeChange(mode: SplitMode) {
                       expense.kind === "income"
                         ? "text-emerald-700 dark:text-emerald-400"
                         : "text-violet-700 dark:text-violet-400"
-                    }`}
+                    } ${expense.excluded ? "line-through" : ""}`}
                   >
                     {expense.kind === "income" ? "+" : ""}
                     {formatMoney(expense.amount)}
                   </span>
+                  <button
+                    type="button"
+                    onClick={() => onToggleExcluded(expense.id, !expense.excluded)}
+                    className="inline-flex h-11 w-11 items-center justify-center rounded-md text-fg-muted transition hover:bg-surface-muted"
+                    aria-label={`${expense.excluded ? "Tính lại" : "Bỏ tính"} ${expense.title}`}
+                    aria-pressed={expense.excluded}
+                  >
+                    {expense.excluded ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
                   <button
                     type="button"
                     onClick={() => (isEditing ? cancelEditExpense() : startEditExpense(expense))}

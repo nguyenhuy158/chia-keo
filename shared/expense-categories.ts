@@ -122,6 +122,7 @@ export type CategoryExpenseInput = {
   kind: string;
   amount: number;
   category: string;
+  excluded?: boolean;
 };
 
 export type CategoryBreakdownRow = {
@@ -160,7 +161,7 @@ export function buildCategoryBreakdown(expenses: CategoryExpenseInput[]): Catego
   let total = 0;
 
   for (const row of expenses) {
-    if (row.kind !== "expense") continue;
+    if (row.kind !== "expense" || row.excluded) continue;
     const category = normalizeCategory(row.category);
     const entry = totals.get(category) || { total: 0, count: 0 };
     entry.total += row.amount;

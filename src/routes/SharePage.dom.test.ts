@@ -55,6 +55,7 @@ function expense(overrides: Partial<ApiExpense> = {}): ApiExpense {
       { participantId: "an", amount: 50000, weight: null },
       { participantId: "binh", amount: 50000, weight: null },
     ],
+    excluded: false,
     createdAt: "2026-01-01T00:00:00Z",
     ...overrides,
   };
@@ -144,6 +145,18 @@ describe("SharePage", () => {
     expect(host.textContent).not.toContain("Trả nợ");
     expect(host.textContent).toContain("An trả, chia 2 người");
     expect(host.textContent).toContain("copy menu");
+  });
+
+  it("hides excluded expenses from the shared list", () => {
+    state.view = view({
+      expenses: [
+        expense(),
+        expense({ id: "hidden", title: "Khoản đã ẩn", excluded: true }),
+      ],
+    });
+    render();
+    expect(host.textContent).toContain("Tiền sân");
+    expect(host.textContent).not.toContain("Khoản đã ẩn");
   });
 
   it("shows an empty summary and a fallback for missing payers", () => {

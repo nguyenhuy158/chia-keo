@@ -17,6 +17,7 @@ function expenseRow(id: string, gameId: string, amount: number) {
     amount,
     note: "",
     splitMode: "equal",
+    excluded: false,
     sequence: 0,
     createdAt: AUGUST_CLOSED,
     updatedAt: AUGUST_CLOSED,
@@ -67,6 +68,19 @@ describe("getClosedMonthCsv", () => {
       "Người đã chi,An,90000",
       "Người phải chịu,An,90000",
     ]);
+  });
+
+  it("leaves out excluded expenses", async () => {
+    const { repo } = createFakeRepo({
+      games: [gameRow({ id: "aug", closedAt: AUGUST_CLOSED, closeMode: "auto" })],
+      expenses: [
+        expenseRow("e1", "aug", 90_000),
+        { ...expenseRow("e2", "aug", 500_000), excluded: true },
+      ],
+    });
+    const csv = await getClosedMonthCsv(repo, FAKE_OWNER, "2026-08");
+    expect(csv).toContain("Tổng chi,,90000");
+    expect(csv).not.toContain("500000");
   });
 
   it("returns a header and zero total when no game closed that month", async () => {

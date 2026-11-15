@@ -54,6 +54,7 @@ function expense(overrides: Partial<ApiExpense> = {}): ApiExpense {
       { participantId: "an", amount: 50_000, weight: null },
       { participantId: "binh", amount: 50_000, weight: null },
     ],
+    excluded: false,
     createdAt: "2026-01-01T00:00:00.000Z",
     ...overrides,
   };
@@ -61,7 +62,12 @@ function expense(overrides: Partial<ApiExpense> = {}): ApiExpense {
 
 type PanelHandlers = Pick<
   ComponentProps<typeof ExpensePanel>,
-  "onAdd" | "onUpdate" | "onRemove" | "onAddTransfer" | "onReorder"
+  | "onAdd"
+  | "onUpdate"
+  | "onRemove"
+  | "onToggleExcluded"
+  | "onAddTransfer"
+  | "onReorder"
 >;
 
 function panel(
@@ -82,6 +88,8 @@ function panel(
     options.onUpdate ||
     vi.fn<PanelHandlers["onUpdate"]>().mockResolvedValue({});
   const onRemove = options.onRemove || vi.fn<PanelHandlers["onRemove"]>();
+  const onToggleExcluded =
+    options.onToggleExcluded || vi.fn<PanelHandlers["onToggleExcluded"]>();
   const onAddTransfer =
     options.onAddTransfer ||
     vi.fn<PanelHandlers["onAddTransfer"]>().mockResolvedValue({});
@@ -102,6 +110,7 @@ function panel(
             onAdd,
             onUpdate,
             onRemove,
+            onToggleExcluded,
             onAddTransfer,
             onReorder: options.onReorder || vi.fn<PanelHandlers["onReorder"]>(),
           }),
@@ -109,7 +118,7 @@ function panel(
       ),
     ),
   );
-  return { onAdd, onUpdate, onRemove, onAddTransfer };
+  return { onAdd, onUpdate, onRemove, onToggleExcluded, onAddTransfer };
 }
 
 function input(placeholder: string) {
@@ -236,6 +245,34 @@ describe("ExpensePanel", () => {
       ).click(),
     );
     expect(onRemove).toHaveBeenCalledWith("expense-a");
+  });
+
+  it("bỏ tính và tính lại một khoản chi", () => {
+    const onToggleExcluded = vi.fn<PanelHandlers["onToggleExcluded"]>();
+    panel({
+      expenses: [
+        expense(),
+        expense({ id: "expense-b", title: "Nước", excluded: true }),
+      ],
+      onToggleExcluded,
+    });
+    expect(host.textContent).toContain("Không tính");
+    act(() =>
+      (
+        host.querySelector(
+          "button[aria-label='Bỏ tính Tiền sân']",
+        ) as HTMLButtonElement
+      ).click(),
+    );
+    expect(onToggleExcluded).toHaveBeenLastCalledWith("expense-a", true);
+    act(() =>
+      (
+        host.querySelector(
+          "button[aria-label='Tính lại Nước']",
+        ) as HTMLButtonElement
+      ).click(),
+    );
+    expect(onToggleExcluded).toHaveBeenLastCalledWith("expense-b", false);
   });
 
   it("thêm khoản thu với tên mặc định và không gắn danh mục", async () => {

@@ -22,6 +22,30 @@ describe("getFunStats", () => {
     expect(rows).not.toHaveBeenCalled();
   });
 
+  it("ignores excluded expenses", async () => {
+    const game = gameRow({ id: "game-x", name: "Kèo x" });
+    const { repo } = createFakeRepo({ games: [game] });
+    vi.spyOn(repo.expenses, "listByGameIds").mockResolvedValue([
+      {
+        id: "hidden",
+        gameId: game.id,
+        payerParticipantId: "payer",
+        kind: "expense",
+        category: "",
+        title: "Ẩn",
+        amount: 500_000,
+        note: "",
+        splitMode: "equal",
+        excluded: true,
+        sequence: 0,
+        createdAt: "2026-08-01T00:00:00.000Z",
+        updatedAt: "2026-08-01T00:00:00.000Z",
+      },
+    ]);
+    const result = await getFunStats(repo, FAKE_OWNER);
+    expect(result.totalExpense).toBe(0);
+  });
+
   it("caps old games and aggregates selected games in three batch reads", async () => {
     const games = Array.from({ length: MAX_FUN_STATS_GAMES + 1 }, (_, index) =>
       gameRow({ id: `game-${index}`, name: `Kèo ${index}` }),
@@ -43,6 +67,7 @@ describe("getFunStats", () => {
           amount: 90_000,
           note: "",
           splitMode: "equal",
+          excluded: false,
           sequence: 0,
           createdAt: "2026-08-01T00:00:00.000Z",
           updatedAt: "2026-08-01T00:00:00.000Z",

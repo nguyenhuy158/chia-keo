@@ -22,6 +22,7 @@ const expense: ExpenseRow = {
   amount: 1000,
   note: "",
   splitMode: "equal",
+  excluded: false,
   sequence: 0,
   createdAt: "2026-01-01",
   updatedAt: "2026-01-01",
@@ -46,6 +47,12 @@ describe("game detail mapping", () => {
         new Map(),
       ),
     ).toHaveLength(3);
+  });
+
+  it("skips excluded expenses in totals and balance inputs", () => {
+    const hidden = { ...expense, id: "hidden", excluded: true };
+    expect(sumTotalExpense([expense, hidden])).toBe(1000);
+    expect(toExpenseInputs([expense, hidden], new Map())).toHaveLength(1);
   });
 
   it("normalizes an old settlement mode from storage", async () => {

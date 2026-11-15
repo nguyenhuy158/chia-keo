@@ -104,6 +104,7 @@ export async function addExpense(
     amount: input.amount,
     note: input.note,
     splitMode: input.splitMode,
+    excluded: false,
     createdAt: now,
     updatedAt: now,
   });
@@ -192,6 +193,21 @@ export async function updateExpense(
   return loadGameDetail(repo, row.game, userId);
 }
 
+export async function setExpenseExcluded(
+  repo: GameRepository,
+  userId: string,
+  expenseId: string,
+  excluded: boolean,
+): Promise<ApiGameDetail> {
+  const row = await loadOwnedExpense(repo, expenseId, userId);
+  if (!row) throw new NotFoundError();
+  if (row.expense.kind === "transfer") throw new InvalidInputError();
+
+  await repo.expenses.update(row.expense.id, { excluded, updatedAt: nowIso() });
+
+  return loadGameDetail(repo, row.game, userId);
+}
+
 export async function removeExpense(
   repo: GameRepository,
   userId: string,
@@ -266,6 +282,7 @@ export async function insertTransfer(repo: GameRepository, gameId: string, input
     amount: input.amount,
     note: input.note,
     splitMode: "amount",
+    excluded: false,
     createdAt: now,
     updatedAt: now,
   });

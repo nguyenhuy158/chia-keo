@@ -123,6 +123,44 @@ describe("gamesRouter", () => {
     expect(await report.text()).toContain("Tổng chi,,0");
   });
 
+  it("bật tắt tính một khoản chi vào tổng", async () => {
+    const created = await json<ApiGameDetail>(
+      await request("POST", "/games", { name: "Cầu tối", participantCount: 2 }),
+    );
+    const [first, second] = created.participants;
+    const added = await json<ApiGameDetail>(
+      await request("POST", `/games/${created.id}/expenses`, {
+        title: "Sân",
+        amount: 100_000,
+        payerParticipantId: first.id,
+        splitMode: "equal",
+        splitParticipantIds: [first.id, second.id],
+      }),
+    );
+    const expenseId = added.expenses[0].id;
+    expect(added.summary.totalExpense).toBe(100_000);
+
+    expect(
+      (await request("PATCH", `/expenses/${expenseId}/excluded`, {})).status,
+    ).toBe(400);
+    expect(
+      (await request("PATCH", "/expenses/khong-co/excluded", { excluded: true })).status,
+    ).toBe(404);
+
+    const hidden = await request("PATCH", `/expenses/${expenseId}/excluded`, {
+      excluded: true,
+    });
+    expect(hidden.status).toBe(200);
+    const hiddenDetail = await json<ApiGameDetail>(hidden);
+    expect(hiddenDetail.summary.totalExpense).toBe(0);
+    expect(hiddenDetail.expenses[0].excluded).toBe(true);
+
+    const shown = await json<ApiGameDetail>(
+      await request("PATCH", `/expenses/${expenseId}/excluded`, { excluded: false }),
+    );
+    expect(shown.summary.totalExpense).toBe(100_000);
+  });
+
   it("không nuốt lỗi lạ khi tải CSV", async () => {
     vi.spyOn(fake.repo.games, "listByOwner").mockRejectedValue(
       new Error("db down"),
