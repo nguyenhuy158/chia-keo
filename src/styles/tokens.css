@@ -54,6 +54,14 @@
   --ui-ring: #ede9fe;
   --ui-radius: 0.5rem;
 
+  /* Luoi: 4 cot tren mobile, 12 cot tu 48rem (md) tro len. Le trai/phai la
+     --ui-grid-margin, khoang cach giua cot la --ui-grid-gutter. */
+  --ui-grid-cols: 4;
+  --ui-grid-gutter: 1rem;
+  --ui-grid-margin: 1rem;
+  --ui-container-max: 80rem;
+  --ui-space-section: 1.5rem;
+
   /* Chuyen dong kieu Fluent: vao thi giam toc (ease-out), ra thi tang toc
      (ease-in). Thoi luong ngan de cam giac phan hoi ngay. */
   --ui-ease-out: cubic-bezier(0.1, 0.9, 0.2, 1);
@@ -199,6 +207,41 @@ textarea {
     background-color: var(--ui-surface);
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
+  }
+}
+
+/* Luoi va bo cuc. Khoang cach chi dung bac thang 4px cua Tailwind:
+   1, 2, 3, 4, 6, 8, 12, 16 (gap-*, p-*, space-y-*). Giua cac khoi lon dung
+   --ui-space-section. */
+@media (min-width: 48rem) {
+  :root {
+    --ui-grid-cols: 12;
+    --ui-grid-gutter: 1.5rem;
+    --ui-grid-margin: 2rem;
+    --ui-space-section: 2rem;
+  }
+}
+
+.ui-container {
+  margin-inline: auto;
+  width: 100%;
+  max-width: var(--ui-container-max);
+  padding-inline: var(--ui-grid-margin);
+}
+
+.ui-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--ui-grid-cols), minmax(0, 1fr));
+  gap: var(--ui-grid-gutter);
+}
+
+.ui-col {
+  grid-column: span var(--ui-col-mobile, 4);
+}
+
+@media (min-width: 48rem) {
+  .ui-col {
+    grid-column: span var(--ui-col-desktop, 12);
   }
 }
 
