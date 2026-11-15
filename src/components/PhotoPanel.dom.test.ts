@@ -45,6 +45,7 @@ function panel(
   photos: ApiPhoto[] = [],
   loading = false,
   expenses: ApiExpense[] = [],
+  compact = false,
 ) {
   act(() =>
     root.render(
@@ -53,6 +54,7 @@ function panel(
         photos,
         expenses,
         loading,
+        compact,
       }),
     ),
   );
@@ -155,5 +157,55 @@ describe("PhotoPanel", () => {
       "Camera",
     );
     expect(picker().disabled).toBe(false);
+  });
+});
+
+describe("PhotoPanel compact", () => {
+  it("hiện album trống với nút chọn ảnh và trạng thái đang tải", () => {
+    panel([], false, [], true);
+    expect(host.textContent).toContain("Lưu ảnh hóa đơn");
+    expect(host.textContent).toContain(`0/${MAX_PHOTOS_PER_GAME}`);
+    panel([], true, [], true);
+    expect(host.textContent).not.toContain("Lưu ảnh hóa đơn");
+  });
+
+  it("xếp ảnh thành từng hàng ba ảnh và mở đúng ảnh", () => {
+    const expense = { id: "expense-1", title: "Cầu" } as ApiExpense;
+    const photos = [
+      { ...photo("a"), caption: "Kỷ niệm" },
+      { ...photo("b"), expenseId: "expense-1" },
+      photo("c"),
+      photo("d"),
+    ];
+    panel(photos, false, [expense], true);
+    expect(host.querySelectorAll("img")).toHaveLength(4);
+    act(() =>
+      (
+        host.querySelector("button[aria-label='Kỷ niệm']") as HTMLButtonElement
+      ).click(),
+    );
+    expect(open).toHaveBeenLastCalledWith(0);
+    act(() =>
+      (
+        host.querySelector("button[aria-label='Cầu']") as HTMLButtonElement
+      ).click(),
+    );
+    expect(open).toHaveBeenLastCalledWith(1);
+    act(() =>
+      (
+        host.querySelector("button[aria-label='Ảnh 4']") as HTMLButtonElement
+      ).click(),
+    );
+    expect(open).toHaveBeenLastCalledWith(3);
+  });
+
+  it("hiện lỗi tải và cảnh báo khi đủ ảnh", () => {
+    Object.assign(uploader, { error: "Không tải được" });
+    const photos = Array.from({ length: MAX_PHOTOS_PER_GAME }, (_, index) =>
+      photo(`p${index}`),
+    );
+    panel(photos, false, [], true);
+    expect(host.textContent).toContain("Không tải được");
+    expect(host.textContent).toContain(`Đã đủ ${MAX_PHOTOS_PER_GAME} ảnh`);
   });
 });

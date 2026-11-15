@@ -27,12 +27,17 @@ function person(id: string, bankId = "", accountNo = ""): ApiParticipant {
   return { id, name: id, bankId, accountNo, accountName: "" };
 }
 
-function render(participants: ApiParticipant[] = [], pending = false) {
+function render(
+  participants: ApiParticipant[] = [],
+  pending = false,
+  compact = false,
+) {
   act(() =>
     root.render(
       createElement(ParticipantPanel, {
         participants,
         pending,
+        compact,
         onAdd,
         onAddMany,
         onUpdate,
@@ -200,5 +205,120 @@ describe("ParticipantPanel", () => {
     await act(async () => button("Xóa An")?.click());
     expect(onRemove).toHaveBeenCalledWith("An");
     expect(success).toHaveBeenCalledWith("Đã xóa An");
+  });
+});
+
+describe("ParticipantPanel compact", () => {
+  function sheetButton(label: string) {
+    return [...document.body.querySelectorAll("button")].find(
+      (item) =>
+        !host.contains(item) &&
+        (item.textContent?.trim() === label ||
+          item.getAttribute("aria-label") === label),
+    ) as HTMLButtonElement | undefined;
+  }
+
+  function sheetName() {
+    return document.body.querySelector(
+      "input[placeholder='Huy']",
+    ) as HTMLInputElement | null;
+  }
+
+  function typeName(value: string) {
+    act(() => {
+      const input = sheetName() as HTMLInputElement;
+      Object.getOwnPropertyDescriptor(
+        HTMLInputElement.prototype,
+        "value",
+      )?.set?.call(input, value);
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+  }
+
+  async function submitSheet() {
+    await act(async () =>
+      document.body
+        .querySelector("form")
+        ?.dispatchEvent(
+          new Event("submit", { bubbles: true, cancelable: true }),
+        ),
+    );
+  }
+
+  function pressEscape() {
+    act(() => {
+      document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+    });
+  }
+
+  function openActions(name: string) {
+    act(() => button(`Tùy chọn ${name}`)?.click());
+  }
+
+  it("hiện trạng thái trống, số người và thông tin QR", () => {
+    render([], false, true);
+    expect(host.textContent).toContain("Chưa có người tham gia.");
+    expect(host.textContent).toContain("0 người");
+    render([person("An", "MB", "123"), person("Bình")], false, true);
+    expect(host.textContent).toContain("2 người");
+    expect(host.textContent).toContain("123");
+    expect(host.textContent).toContain("Chưa có thông tin QR");
+  });
+
+  it("thêm người trong Sheet rồi đóng bằng Escape", async () => {
+    render([person("An")], false, true);
+    expect(sheetName()).toBeNull();
+    act(() => button("Mở form thêm người")?.click());
+    typeName("Châu");
+    await submitSheet();
+    expect(onAdd).toHaveBeenCalledWith(
+      expect.objectContaining({ name: "Châu" }),
+    );
+    pressEscape();
+    await vi.waitFor(() => expect(sheetName()).toBeNull());
+  });
+
+  it("đưa lên, đưa xuống và khóa nút ở đầu, cuối danh sách", () => {
+    render([person("An"), person("Bình"), person("Châu")], false, true);
+    openActions("An");
+    expect(sheetButton("Đưa lên")?.disabled).toBe(true);
+    act(() => sheetButton("Đưa xuống")?.click());
+    expect(onReorder).toHaveBeenLastCalledWith(["Bình", "An", "Châu"]);
+    openActions("Châu");
+    expect(sheetButton("Đưa xuống")?.disabled).toBe(true);
+    act(() => sheetButton("Đưa lên")?.click());
+    expect(onReorder).toHaveBeenLastCalledWith(["An", "Châu", "Bình"]);
+  });
+
+  it("sửa người trong Sheet và lưu thì đóng Sheet", async () => {
+    render([person("An")], false, true);
+    openActions("An");
+    act(() => sheetButton("Sửa")?.click());
+    expect(document.body.textContent).toContain("Sửa người");
+    expect(sheetName()?.value).toBe("An");
+    typeName("Anh");
+    await submitSheet();
+    expect(onUpdate).toHaveBeenCalledWith(
+      "An",
+      expect.objectContaining({ name: "Anh" }),
+    );
+    await vi.waitFor(() => expect(sheetName()).toBeNull());
+  });
+
+  it("xóa người sau khi xác nhận và đóng Sheet tùy chọn bằng Escape", async () => {
+    render([person("An")], false, true);
+    openActions("An");
+    pressEscape();
+    await vi.waitFor(() => expect(sheetButton("Xóa")).toBeUndefined());
+    openActions("An");
+    await act(async () => sheetButton("Xóa")?.click());
+    expect(confirm).toHaveBeenCalled();
+    expect(onRemove).toHaveBeenCalledWith("An");
+  });
+
+  it("khóa các nút tùy chọn khi đang lưu", () => {
+    render([person("An"), person("Bình")], true, true);
+    openActions("An");
+    expect(sheetButton("Sửa")?.disabled).toBe(true);
   });
 });

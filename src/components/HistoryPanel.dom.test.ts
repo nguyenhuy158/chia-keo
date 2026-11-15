@@ -29,9 +29,11 @@ import { HistoryPanel } from "./HistoryPanel";
 let host: HTMLDivElement;
 let root: Root;
 
-function render(collapsible = false) {
+function render(collapsible = false, compact = false) {
   act(() =>
-    root.render(createElement(HistoryPanel, { gameId: "game", collapsible })),
+    root.render(
+      createElement(HistoryPanel, { gameId: "game", collapsible, compact }),
+    ),
   );
 }
 
@@ -142,5 +144,31 @@ describe("HistoryPanel", () => {
     state.undoPending = true;
     render();
     expect(button("Hoàn tác").disabled).toBe(true);
+  });
+});
+
+describe("HistoryPanel compact", () => {
+  it("hiện khung chờ, trạng thái trống và danh sách có phân trang", () => {
+    state.loading = true;
+    render(false, true);
+    expect(host.querySelector("ul")).toBeNull();
+    state.loading = false;
+    state.events = [];
+    render(false, true);
+    expect(host.textContent).toContain("Chưa có gì trong lịch sử");
+    expect(host.textContent).toContain("0 việc");
+    state.events = [event(), event({ id: "event-2" })];
+    render(false, true);
+    expect(host.textContent).toContain("2 việc");
+    expect(host.querySelectorAll("li")).toHaveLength(0);
+    expect(host.textContent).toContain("Hoàn tác");
+  });
+
+  it("hoàn tác một việc từ danh sách gọn", async () => {
+    state.events = [event()];
+    render(false, true);
+    await act(async () => button("Hoàn tác").click());
+    expect(undo).toHaveBeenCalledWith("event-1");
+    expect(success).toHaveBeenCalled();
   });
 });

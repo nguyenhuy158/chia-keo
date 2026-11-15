@@ -4,6 +4,7 @@ import {
   ChevronDown,
   ChevronUp,
   Landmark,
+  MoreHorizontal,
   Pencil,
   Plus,
   Trash2,
@@ -17,6 +18,8 @@ import { z } from "zod";
 import type { ApiParticipant } from "../../shared/api-types";
 import type { ParticipantInput } from "../../shared/schemas";
 import { getVietQrBankLabel } from "../adapters/browser/vietqr";
+import { PagedList } from "../ui/PagedList";
+import { Sheet } from "../ui/Sheet";
 import { SwipeAction } from "../ui/SwipeAction";
 import { Avatar } from "./Avatar";
 import { BankSelect } from "./BankSelect";
@@ -40,6 +43,8 @@ const emptyForm: ParticipantFormValues = {
   accountName: "",
 };
 
+const COMPACT_ROW_HEIGHT_PX = 60;
+
 type ParticipantPanelProps = {
   participants: ApiParticipant[];
   pending: boolean;
@@ -51,6 +56,7 @@ type ParticipantPanelProps = {
   ) => Promise<unknown>;
   onRemove: (participantId: string) => void;
   onReorder: (participantIds: string[]) => void;
+  compact?: boolean;
 };
 
 export function ParticipantPanel({
@@ -61,12 +67,16 @@ export function ParticipantPanel({
   onUpdate,
   onRemove,
   onReorder,
+  compact = false,
 }: ParticipantPanelProps) {
   const confirm = useConfirm();
   const [editingParticipantId, setEditingParticipantId] = useState<
     string | null
   >(null);
   const [showBank, setShowBank] = useState(false);
+  const [formOpen, setFormOpen] = useState(false);
+  const [actionsOpen, setActionsOpen] = useState(false);
+  const [actionParticipantId, setActionParticipantId] = useState("");
   const bankVisible = Boolean(editingParticipantId) || showBank;
   const form = useForm<ParticipantFormValues>({
     resolver: zodResolver(participantFormSchema),
@@ -115,6 +125,7 @@ export function ParticipantPanel({
   });
 
   function startEdit(participant: ApiParticipant) {
+    setFormOpen(true);
     setEditingParticipantId(participant.id);
     form.reset({
       name: participant.name,
@@ -125,6 +136,7 @@ export function ParticipantPanel({
   }
 
   function cancelEdit() {
+    setFormOpen(false);
     setEditingParticipantId(null);
     form.reset(emptyForm);
   }
@@ -139,15 +151,8 @@ export function ParticipantPanel({
     }
   });
 
-  return (
-    <section className="rounded-lg border border-border bg-surface p-4 shadow-sm">
-      <div className="mb-4 flex items-center gap-2">
-        <Users size={18} className="text-violet-600 dark:text-violet-400" />
-        <h3 className="text-lg font-semibold text-stone-950 dark:text-stone-50">
-          Người tham gia
-        </h3>
-      </div>
-
+  const formBlock = (
+    <>
       {/* Chi hien luc them nguoi moi: dang sua mot nguoi thi form o duoi la trong tam. */}
       {!editingParticipantId && (
         <ContactPicker
@@ -236,6 +241,152 @@ export function ParticipantPanel({
           )}
         </div>
       </form>
+    </>
+  );
+
+  if (compact) {
+    const actionParticipant = participants.find(
+      (participant) => participant.id === actionParticipantId,
+    );
+    const actionIndex = participants.findIndex(
+      (participant) => participant.id === actionParticipantId,
+    );
+    const actions = actionParticipant
+      ? [
+          {
+            label: "Đưa lên",
+            icon: <ChevronUp size={15} />,
+            disabled: actionIndex === 0,
+            onSelect: () => move(actionParticipant.id, -1),
+          },
+          {
+            label: "Đưa xuống",
+            icon: <ChevronDown size={15} />,
+            disabled: actionIndex === participants.length - 1,
+            onSelect: () => move(actionParticipant.id, 1),
+          },
+          {
+            label: "Sửa",
+            icon: <Pencil size={15} />,
+            disabled: false,
+            onSelect: () => startEdit(actionParticipant),
+          },
+          {
+            label: "Xóa",
+            icon: <Trash2 size={15} />,
+            disabled: false,
+            destructive: true,
+            onSelect: () => handleRemove(actionParticipant),
+          },
+        ]
+      : [];
+    return (
+      <section className="flex h-full min-h-0 flex-col">
+        <div className="flex shrink-0 items-center gap-2 pb-2">
+          <Users size={18} className="text-violet-600 dark:text-violet-400" />
+          <h3 className="text-base font-semibold text-stone-950 dark:text-stone-50">
+            Người tham gia
+          </h3>
+          <span className="text-xs text-fg-muted tabular">
+            {participants.length} người
+          </span>
+          <button
+            type="button"
+            onClick={() => setFormOpen(true)}
+            aria-label="Mở form thêm người"
+            className="ml-auto inline-flex h-11 items-center gap-1.5 rounded-md bg-primary px-3 text-sm font-semibold text-white transition hover:bg-primary-hover active:scale-95"
+          >
+            <Plus size={16} />
+            Thêm
+          </button>
+        </div>
+        <div className="min-h-0 flex-1">
+          <PagedList
+            items={participants}
+            getKey={(participant) => participant.id}
+            rowHeight={COMPACT_ROW_HEIGHT_PX}
+            empty={
+              <p className="py-6 text-center text-sm text-fg-muted">
+                Chưa có người tham gia.
+              </p>
+            }
+            renderItem={(participant) => (
+              <div className="flex h-full items-center gap-2 rounded-md border border-border pl-3 pr-1">
+                <Avatar name={participant.name} size={32} />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold text-stone-950 dark:text-stone-50">
+                    {participant.name}
+                  </p>
+                  <p className="truncate text-xs text-fg-muted">
+                    {participant.bankId && participant.accountNo
+                      ? `${getVietQrBankLabel(participant.bankId)} · ${participant.accountNo}`
+                      : "Chưa có thông tin QR"}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  aria-haspopup="dialog"
+                  aria-label={`Tùy chọn ${participant.name}`}
+                  onClick={() => {
+                    setActionParticipantId(participant.id);
+                    setActionsOpen(true);
+                  }}
+                  className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md text-fg-muted transition hover:bg-surface-muted"
+                >
+                  <MoreHorizontal size={18} />
+                </button>
+              </div>
+            )}
+          />
+        </div>
+        <Sheet
+          open={formOpen}
+          onClose={cancelEdit}
+          title={editingParticipantId ? "Sửa người" : "Thêm người"}
+        >
+          {formBlock}
+        </Sheet>
+        <Sheet
+          open={actionsOpen}
+          onClose={() => setActionsOpen(false)}
+          title={actionParticipant?.name ?? ""}
+        >
+          <div className="flex flex-col gap-2 pb-2">
+            {actions.map((action) => (
+              <button
+                key={action.label}
+                type="button"
+                disabled={action.disabled || pending}
+                onClick={() => {
+                  setActionsOpen(false);
+                  action.onSelect();
+                }}
+                className={`inline-flex h-11 w-full items-center justify-center gap-2 rounded-md border px-3 text-sm font-medium transition active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-40 ${
+                  action.destructive
+                    ? "border-danger/40 text-danger"
+                    : "border-border text-stone-700 hover:bg-surface-muted dark:text-stone-200"
+                }`}
+              >
+                {action.icon}
+                {action.label}
+              </button>
+            ))}
+          </div>
+        </Sheet>
+      </section>
+    );
+  }
+
+  return (
+    <section className="rounded-lg border border-border bg-surface p-4 shadow-sm">
+      <div className="mb-4 flex items-center gap-2">
+        <Users size={18} className="text-violet-600 dark:text-violet-400" />
+        <h3 className="text-lg font-semibold text-stone-950 dark:text-stone-50">
+          Người tham gia
+        </h3>
+      </div>
+
+      {formBlock}
 
       <div className="mt-5 space-y-2">
         {participants.map((participant, index) => (
