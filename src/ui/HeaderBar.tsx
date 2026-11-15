@@ -25,7 +25,7 @@ export function HeaderBar({
   return (
     <header
       className={cn(
-        "safe-top z-30 border-b border-border bg-surface/90 backdrop-blur",
+        "safe-top z-30 border-b border-border ui-acrylic",
         sticky && "sticky top-0",
         className,
       )}

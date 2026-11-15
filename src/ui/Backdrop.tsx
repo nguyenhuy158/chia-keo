@@ -27,12 +27,12 @@ export function Backdrop({ open, onClose, children }: BackdropProps) {
       style={{
         animation: motion(
           closing,
-          "ui-fade-in 150ms ease-out",
-          "ui-fade-out 150ms ease-in",
+          "ui-fade-in var(--ui-dur-fast) var(--ui-ease-out)",
+          "ui-fade-out var(--ui-dur-fast) var(--ui-ease-in)",
         ),
       }}
       className={cn(
-        "fixed inset-0 z-[70] grid place-items-center bg-black/50 text-white pointer-fine:backdrop-blur-sm",
+        "fixed inset-0 z-[70] grid place-items-center bg-black/50 text-white backdrop-blur-sm",
         closing && "pointer-events-none",
       )}
     >

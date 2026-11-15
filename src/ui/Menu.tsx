@@ -47,13 +47,13 @@ export function Menu({
           style={{
             animation: motion(
               closing,
-              "ui-slide-down 120ms ease-out",
-              "ui-slide-down-out 120ms ease-in",
+              "ui-slide-down var(--ui-dur-fast) var(--ui-ease-out)",
+              "ui-slide-down-out var(--ui-dur-fast) var(--ui-ease-in)",
             ),
           }}
           className={cn(
             closing && "pointer-events-none",
-            "absolute z-50 mt-1 min-w-44 overflow-hidden rounded-ui border border-border bg-surface py-1 shadow-lg",
+            "absolute z-50 mt-1 min-w-44 overflow-hidden rounded-ui border border-border ui-acrylic py-1 shadow-lg",
             align === "right" ? "right-0" : "left-0",
           )}
         >

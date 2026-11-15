@@ -139,15 +139,15 @@ export function CommandPalette({
       style={{
         animation: motion(
           closing,
-          "ui-fade-in 150ms ease-out",
-          "ui-fade-out 150ms ease-in",
+          "ui-fade-in var(--ui-dur-fast) var(--ui-ease-out)",
+          "ui-fade-out var(--ui-dur-fast) var(--ui-ease-in)",
         ),
       }}
     >
       <div
         aria-hidden="true"
         onClick={onClose}
-        className="absolute inset-0 bg-black/50 pointer-fine:backdrop-blur-[2px]"
+        className="absolute inset-0 bg-black/50 backdrop-blur-[2px]"
       />
 
       <div
@@ -159,8 +159,8 @@ export function CommandPalette({
         style={{
           animation: motion(
             closing,
-            "ui-zoom-in 160ms ease-out",
-            "ui-zoom-out 150ms ease-in",
+            "ui-zoom-in var(--ui-dur) var(--ui-ease-out)",
+            "ui-zoom-out var(--ui-dur-fast) var(--ui-ease-in)",
           ),
         }}
         className="relative flex max-h-[70dvh] w-full max-w-lg flex-col overflow-hidden rounded-ui bg-surface shadow-xl outline-none"

@@ -174,8 +174,8 @@ export function Combobox({
           style={{
             animation: motion(
               closing,
-              "ui-slide-down 120ms ease-out",
-              "ui-slide-down-out 120ms ease-in",
+              "ui-slide-down var(--ui-dur-fast) var(--ui-ease-out)",
+              "ui-slide-down-out var(--ui-dur-fast) var(--ui-ease-in)",
             ),
           }}
           className={cn(

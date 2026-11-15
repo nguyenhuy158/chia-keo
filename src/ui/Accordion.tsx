@@ -20,8 +20,8 @@ function AccordionPanel({
       style={{
         animation: motion(
           closing,
-          `ui-expand ${ACCORDION_MS}ms ease-out`,
-          `ui-collapse ${ACCORDION_MS}ms ease-in`,
+          "ui-expand var(--ui-dur) var(--ui-ease-out)",
+          "ui-collapse var(--ui-dur) var(--ui-ease-in)",
         ),
       }}
     >

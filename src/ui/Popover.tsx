@@ -43,13 +43,13 @@ export function Popover({
           style={{
             animation: motion(
               closing,
-              "ui-slide-down 120ms ease-out",
-              "ui-slide-down-out 120ms ease-in",
+              "ui-slide-down var(--ui-dur-fast) var(--ui-ease-out)",
+              "ui-slide-down-out var(--ui-dur-fast) var(--ui-ease-in)",
             ),
           }}
           className={cn(
             closing && "pointer-events-none",
-            "absolute z-50 min-w-56 rounded-ui border border-border bg-surface p-3 shadow-lg",
+            "absolute z-50 min-w-56 rounded-ui border border-border ui-acrylic p-3 shadow-lg",
             side === "bottom" ? "top-full mt-1" : "bottom-full mb-1",
             align === "right" ? "right-0" : "left-0",
             panelClassName,

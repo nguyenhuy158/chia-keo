@@ -36,7 +36,7 @@ export function BottomNav<TId extends string = string>({
     <div
       role="tablist"
       className={cn(
-        "safe-bottom fixed inset-x-0 bottom-0 z-40 border-t border-border bg-surface/95 backdrop-blur",
+        "safe-bottom fixed inset-x-0 bottom-0 z-40 border-t border-border ui-acrylic",
         mobileOnly && "lg:hidden",
         className,
       )}

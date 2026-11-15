@@ -54,7 +54,7 @@ export function Tabs<TId extends string = string>({
             transform: `translateX(${bar.left}px)`,
           }}
           className={cn(
-            "pointer-events-none absolute left-0 transition-[transform,width] duration-200 ease-out",
+            "pointer-events-none absolute left-0 transition-[transform,width] duration-200",
             variant === "line" && "bottom-0 h-0.5 bg-primary",
             variant === "pill" &&
               "inset-y-1 rounded-[calc(var(--ui-radius)-0.25rem)] bg-surface shadow-sm",

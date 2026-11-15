@@ -95,8 +95,8 @@ export function Lightbox({
       style={{
         animation: motion(
           closing,
-          "ui-fade-in 150ms ease-out",
-          "ui-fade-out 150ms ease-in",
+          "ui-fade-in var(--ui-dur-fast) var(--ui-ease-out)",
+          "ui-fade-out var(--ui-dur-fast) var(--ui-ease-in)",
         ),
       }}
       className={cn(

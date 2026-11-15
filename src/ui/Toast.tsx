@@ -115,8 +115,8 @@ export function ToastProvider({
               style={{
                 animation: motion(
                   toast.closing === true,
-                  "ui-slide-up 200ms ease-out",
-                  "ui-slide-up-out 150ms ease-in",
+                  "ui-slide-up var(--ui-dur) var(--ui-ease-out)",
+                  "ui-slide-up-out var(--ui-dur-fast) var(--ui-ease-in)",
                 ),
               }}
               className={cn(
