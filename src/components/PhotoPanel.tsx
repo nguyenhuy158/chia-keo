@@ -2,10 +2,9 @@ import { Images, ImageUp } from "lucide-react";
 import type { ReactNode } from "react";
 import { toast } from "sonner";
 import type { ApiExpense, ApiPhoto } from "../../shared/api-types";
-import { toDataUrl } from "../../shared/photos";
 import { MAX_PHOTOS_PER_GAME } from "../../shared/schemas";
 import { usePhotoUploader } from "../adapters/react-query/photo-upload";
-import { PagedList } from "../ui/PagedList";
+import { PagedPhotoGrid } from "./PagedPhotoGrid";
 import { PhotoGrid } from "./PhotoGrid";
 import { SkeletonPhotoGrid } from "./ui";
 import { usePhotoViewer } from "./use-photo-viewer";
@@ -55,25 +54,6 @@ export function PhotoPickerButton({
       />
     </label>
   );
-}
-
-const COMPACT_PHOTOS_PER_ROW = 3;
-const COMPACT_ROW_HEIGHT_PX = 104;
-
-type PhotoRow = {
-  id: string;
-  photos: Array<{ photo: ApiPhoto; index: number }>;
-};
-
-function toPhotoRows(photos: ApiPhoto[]) {
-  const rows: PhotoRow[] = [];
-  photos.forEach((photo, index) => {
-    if (index % COMPACT_PHOTOS_PER_ROW === 0) {
-      rows.push({ id: photo.id, photos: [] });
-    }
-    rows[rows.length - 1].photos.push({ photo, index });
-  });
-  return rows;
 }
 
 type PhotoPanelProps = {
@@ -145,10 +125,10 @@ export function PhotoPanel({
           {loading ? (
             <SkeletonPhotoGrid />
           ) : (
-            <PagedList
-              items={toPhotoRows(photos)}
-              getKey={(row) => row.id}
-              rowHeight={COMPACT_ROW_HEIGHT_PX}
+            <PagedPhotoGrid
+              photos={photos}
+              expenseTitleById={expenseTitleById}
+              onOpen={photoViewer.open}
               empty={
                 <div className="flex flex-col items-center gap-3 rounded-md border border-dashed border-stone-300 p-6 text-center dark:border-stone-700">
                   <Images size={28} className="text-stone-400" />
@@ -158,33 +138,6 @@ export function PhotoPanel({
                   {addButton}
                 </div>
               }
-              renderItem={(row) => (
-                <div className="grid h-full grid-cols-3 gap-2">
-                  {row.photos.map(({ photo, index }) => {
-                    const expenseTitle = photo.expenseId
-                      ? expenseTitleById.get(photo.expenseId)
-                      : undefined;
-                    const label =
-                      photo.caption || expenseTitle || `Ảnh ${index + 1}`;
-                    return (
-                      <button
-                        key={photo.id}
-                        type="button"
-                        onClick={() => photoViewer.open(index)}
-                        aria-label={label}
-                        className="overflow-hidden rounded-md border border-border bg-stone-100 transition active:scale-[0.98] dark:bg-stone-800"
-                      >
-                        <img
-                          src={toDataUrl(photo.mimeType, photo.thumbData)}
-                          alt=""
-                          loading="lazy"
-                          className="h-full w-full object-cover"
-                        />
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
             />
           )}
         </div>

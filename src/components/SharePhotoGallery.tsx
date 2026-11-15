@@ -3,6 +3,7 @@ import { useState } from "react";
 import type { ApiExpense } from "../../shared/api-types";
 import { stepPhotoIndex } from "../../shared/photos";
 import { useSharePhoto, useSharePhotos } from "../adapters/react-query/queries";
+import { PagedPhotoGrid } from "./PagedPhotoGrid";
 import { PhotoGrid } from "./PhotoGrid";
 import { PhotoViewer } from "./PhotoViewer";
 import { EmptyState, SkeletonPhotoGrid } from "./ui";
@@ -10,10 +11,15 @@ import { EmptyState, SkeletonPhotoGrid } from "./ui";
 type SharePhotoGalleryProps = {
   token: string;
   expenses: ApiExpense[];
+  compact?: boolean;
 };
 
 /** Album anh chi doc cho nguoi xem qua link chia se. */
-export function SharePhotoGallery({ token, expenses }: SharePhotoGalleryProps) {
+export function SharePhotoGallery({
+  token,
+  expenses,
+  compact = false,
+}: SharePhotoGalleryProps) {
   const photosQuery = useSharePhotos(token);
   const [index, setIndex] = useState(-1);
 
@@ -36,19 +42,37 @@ export function SharePhotoGallery({ token, expenses }: SharePhotoGalleryProps) {
   }
 
   return (
-    <section className="rounded-lg border border-border bg-surface p-4 shadow-sm">
-      <div className="mb-4 flex items-center gap-2">
+    <section
+      className={
+        compact
+          ? "flex h-full min-h-0 flex-col"
+          : "rounded-lg border border-border bg-surface p-4 shadow-sm"
+      }
+    >
+      <div
+        className={`flex items-center gap-2 ${compact ? "shrink-0 pb-2" : "mb-4"}`}
+      >
         <Images size={18} className="text-sky-500" />
         <h2 className="text-sm font-semibold text-stone-950 dark:text-stone-50">
           Ảnh ({photos.length})
         </h2>
       </div>
 
-      <PhotoGrid
-        photos={photos}
-        expenseTitleById={expenseTitleById}
-        onOpen={setIndex}
-      />
+      {compact ? (
+        <div className="min-h-0 flex-1">
+          <PagedPhotoGrid
+            photos={photos}
+            expenseTitleById={expenseTitleById}
+            onOpen={setIndex}
+          />
+        </div>
+      ) : (
+        <PhotoGrid
+          photos={photos}
+          expenseTitleById={expenseTitleById}
+          onOpen={setIndex}
+        />
+      )}
 
       {photo && (
         <PhotoViewer

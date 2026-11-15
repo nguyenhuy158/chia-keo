@@ -171,7 +171,7 @@ describe("SharePage", () => {
     expect(host.textContent).toContain("Không rõ trả");
   });
 
-  it("switches between summary, photos, and matrix views", () => {
+  it("switches between summary, photos, and matrix views", async () => {
     state.view = view({
       expenses: [
         expense(),
@@ -190,11 +190,39 @@ describe("SharePage", () => {
     expect(host.textContent).toContain("photo gallery");
     act(() => tab("Bảng chia").click());
     expect(host.textContent).toContain("3 khoản");
-    expect(host.textContent).toContain("Tùy chỉnh");
     expect(host.textContent).toContain("50.000");
     expect(host.textContent).not.toContain("Trả nợ");
     expect(host.querySelectorAll("table tbody tr")).toHaveLength(3);
-    expect(host.querySelectorAll("article")).toHaveLength(3);
+    expect(host.querySelectorAll("article")).toHaveLength(0);
+    act(() =>
+      (
+        host.querySelector(
+          "button[aria-label='Chi tiết Tiền sân']",
+        ) as HTMLButtonElement
+      ).click(),
+    );
+    expect(document.body.textContent).not.toContain("Tùy chỉnh");
+    act(() => {
+      document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+    });
+    await vi.waitFor(() =>
+      expect(document.body.querySelectorAll("article")).toHaveLength(0),
+    );
+    act(() =>
+      (
+        host.querySelector(
+          "button[aria-label='Chi tiết Bữa tối']",
+        ) as HTMLButtonElement
+      ).click(),
+    );
+    expect(document.body.querySelectorAll("article")).toHaveLength(1);
+    expect(document.body.textContent).toContain("Tùy chỉnh");
+    act(() => {
+      document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+    });
+    await vi.waitFor(() =>
+      expect(document.body.querySelectorAll("article")).toHaveLength(0),
+    );
     act(() => tab("Tổng kết").click());
     expect(host.textContent).toContain("game dashboard");
   });
@@ -208,11 +236,17 @@ describe("SharePage", () => {
     render();
     act(() => tab("Bảng chia").click());
     expect(host.textContent).toContain("0 khoản");
+    expect(host.textContent).toContain("Chưa có khoản chi nào.");
     expect(host.querySelectorAll("table tbody tr")).toHaveLength(0);
     state.view = view({
       summary: { totalExpense: 0, balances: [], settlements: [] },
     });
     render();
     expect(host.querySelectorAll("table thead th")).toHaveLength(6);
+    state.view = view({
+      expenses: [expense({ payerParticipantId: "missing" })],
+    });
+    render();
+    expect(host.textContent).toContain("Không rõ trả, chia 2 người");
   });
 });

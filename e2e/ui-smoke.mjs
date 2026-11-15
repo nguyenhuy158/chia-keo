@@ -433,8 +433,8 @@ try {
   await anonPage.waitForSelector("text=E2E Trip", WAIT);
   await anonPage.waitForSelector("text=Binh → An", WAIT);
   await anonPage.click('button:has-text("Ảnh")');
-  await anonPage.waitForSelector("text=Ảnh (2)", WAIT);
-  await anonPage.click('button[aria-label="Hoa don san"]');
+  await anonPage.waitForSelector("text=Ảnh (2) >> visible=true", WAIT);
+  await anonPage.click('button[aria-label="Hoa don san"] >> visible=true');
   await anonPage.waitForSelector(
     '[role="dialog"] button[aria-label="Đóng"]',
     WAIT,
@@ -468,6 +468,47 @@ try {
   await anonPage.close();
   assert.equal((await getGameDetail(page, gameId)).expenses.length, 3);
   ok("public share page works without login");
+
+  const sharePhone = await browser.newPage({
+    viewport: { width: 390, height: 844 },
+  });
+  const shareScrolls = () =>
+    sharePhone.evaluate(() => {
+      const root = document.documentElement;
+      const panes = [...document.body.querySelectorAll("*")].filter((el) => {
+        const overflowY = getComputedStyle(el).overflowY;
+        return (
+          (overflowY === "auto" || overflowY === "scroll") &&
+          el.scrollHeight > el.clientHeight + 1
+        );
+      });
+      return root.scrollHeight > innerHeight + 1 || panes.length > 0;
+    });
+  await sharePhone.goto(`${BASE}/share/${detail.shareLink.token}`);
+  await sharePhone
+    .getByRole("button", { name: "Chuyển khoản", exact: true })
+    .waitFor({ state: "visible", ...WAIT });
+  assert.equal(await shareScrolls(), false, "share Tong ket cuon duoc");
+  await sharePhone
+    .getByRole("button", { name: "Bảng chia", exact: true })
+    .click();
+  const shareRow = sharePhone
+    .getByRole("button", { name: /^Chi tiết / })
+    .first();
+  await shareRow.waitFor({ state: "visible", ...WAIT });
+  assert.equal(await shareScrolls(), false, "share Bang chia cuon duoc");
+  await shareRow.click();
+  const shareDialog = sharePhone.getByRole("dialog");
+  await shareDialog.waitFor({ state: "visible", ...WAIT });
+  await sharePhone.keyboard.press("Escape");
+  await shareDialog.waitFor({ state: "hidden", ...WAIT });
+  await sharePhone.getByRole("button", { name: "Ảnh", exact: true }).click();
+  await sharePhone
+    .locator("text=Ảnh (2) >> visible=true")
+    .waitFor({ state: "visible", ...WAIT });
+  assert.equal(await shareScrolls(), false, "share Anh cuon duoc");
+  await sharePhone.close();
+  ok("phone: public share page fits one screen on every tab");
 
   // 7.5 Ghi nhan tra no: bam "Đã trả" -> transfer duoc luu, het cong no
   await page.click('button:has-text("Đã trả")');

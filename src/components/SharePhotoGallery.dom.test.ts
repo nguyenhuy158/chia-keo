@@ -53,10 +53,14 @@ function photo(id: string, expenseId: string | null = null): ApiPhoto {
   } as ApiPhoto;
 }
 
-function render(expenses: ApiExpense[] = []) {
+function render(expenses: ApiExpense[] = [], compact = false) {
   act(() =>
     root.render(
-      createElement(SharePhotoGallery, { token: "share-token", expenses }),
+      createElement(SharePhotoGallery, {
+        token: "share-token",
+        expenses,
+        compact,
+      }),
     ),
   );
 }
@@ -112,5 +116,20 @@ describe("SharePhotoGallery", () => {
     expect(useSharePhoto).toHaveBeenLastCalledWith("share-token", "one");
     act(() => button("Close").click());
     expect(button("Close")).toBeUndefined();
+  });
+});
+
+describe("SharePhotoGallery compact", () => {
+  it("hiện ảnh theo hàng ba ảnh và mở xem ảnh", () => {
+    state.photos = [photo("one", "expense"), photo("two")];
+    render([{ id: "expense", title: "Tiền sân" } as ApiExpense], true);
+    expect(host.textContent).toContain("Ảnh (2)");
+    expect(host.querySelectorAll("img")).toHaveLength(2);
+    act(() =>
+      (
+        host.querySelector("button[aria-label='Tiền sân']") as HTMLButtonElement
+      ).click(),
+    );
+    expect(useSharePhoto).toHaveBeenLastCalledWith("share-token", "one");
   });
 });
