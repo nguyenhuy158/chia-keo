@@ -3,6 +3,7 @@ import {
   Banknote,
   Check,
   ChevronDown,
+  ChevronUp,
   Eye,
   EyeOff,
   GripVertical,
@@ -55,6 +56,8 @@ import {
 } from "../adapters/react-query/queries";
 import { formatMoney, parseMoney } from "../core/domain/money";
 import { Menu } from "../ui/Menu";
+import { PagedList } from "../ui/PagedList";
+import { Sheet } from "../ui/Sheet";
 import { Dropdown } from "./Dropdown";
 import { MoneyInput } from "./MoneyInput";
 import { PhotoPickerButton } from "./PhotoPanel";
@@ -164,6 +167,18 @@ const SPLIT_MODE_BADGES: Record<SplitMode, string> = {
 
 /** So anh hien thi truc tiep tren mot dong khoan chi. */
 const EXPENSE_THUMB_LIMIT = 3;
+const COMPACT_ROW_HEIGHT_PX = 68;
+const MOVE_UP = -1;
+const MOVE_DOWN = 1;
+
+function moveId(ids: string[], id: string, offset: number) {
+  const from = ids.indexOf(id);
+  const to = from + offset;
+  if (from < 0 || to < 0 || to >= ids.length) return ids;
+  const next = [...ids];
+  next.splice(to, 0, ...next.splice(from, 1));
+  return next;
+}
 
 type ExpensePanelProps = {
   gameId: string;
@@ -180,6 +195,7 @@ type ExpensePanelProps = {
   onToggleExcluded: (expenseId: string, excluded: boolean) => void;
   onAddTransfer: (input: TransferInput) => Promise<unknown>;
   onReorder: (expenseIds: string[]) => void;
+  compact?: boolean;
 };
 
 const AI_ERROR_MESSAGES: Record<string, string> = {
@@ -350,6 +366,7 @@ export function ExpensePanel({
   onToggleExcluded,
   onAddTransfer,
   onReorder,
+  compact = false,
 }: ExpensePanelProps) {
   const participantById = new Map(
     participants.map((participant) => [participant.id, participant]),
@@ -522,6 +539,7 @@ export function ExpensePanel({
   }
 
   const [editingExpenseId, setEditingExpenseId] = useState("");
+  const [formOpen, setFormOpen] = useState(false);
 
   // Anh dinh kem: khoan chi da luu thi tai len ngay, khoan chi moi thi giu tam
   // trong form roi tai len sau khi co id.
@@ -591,6 +609,7 @@ export function ExpensePanel({
   }
 
   function startEditExpense(expense: ApiExpense) {
+    setFormOpen(true);
     setEditingExpenseId(expense.id);
     const values: Record<string, string> = {};
     for (const split of expense.splits) {
@@ -613,6 +632,7 @@ export function ExpensePanel({
   }
 
   function cancelEditExpense() {
+    setFormOpen(false);
     setEditingExpenseId("");
     setStagedFiles([]);
     form.reset({
@@ -697,6 +717,7 @@ export function ExpensePanel({
       toast.success(
         editingExpenseId ? "Đã lưu khoản chi" : "Đã thêm khoản chi",
       );
+      setFormOpen(false);
     } catch {
       toast.error("Không lưu được khoản chi");
       return;
@@ -717,15 +738,8 @@ export function ExpensePanel({
     });
   });
 
-  return (
-    <section className="rounded-lg border border-border bg-surface p-4 shadow-sm">
-      <div className="mb-4 flex items-center gap-2">
-        <Banknote size={18} className="text-amber-500" />
-        <h3 className="text-lg font-semibold text-stone-950 dark:text-stone-50">
-          Khoản chi
-        </h3>
-      </div>
-
+  const formBlock = (
+    <>
       <div className="mb-4">
         <button
           type="button"
@@ -1199,6 +1213,163 @@ export function ExpensePanel({
           )}
         </div>
       </form>
+    </>
+  );
+
+  if (compact) {
+    const orderedIds = visibleExpenses.map((expense) => expense.id);
+    const closeForm = () => cancelEditExpense();
+    const reorderBy = (id: string, offset: number) => {
+      const next = moveId(orderedIds, id, offset);
+      if (next !== orderedIds) onReorder(next);
+    };
+    return (
+      <section className="flex h-full min-h-0 flex-col">
+        <div className="flex shrink-0 items-center gap-2 pb-2">
+          <Banknote size={18} className="text-amber-500" />
+          <h3 className="text-base font-semibold text-stone-950 dark:text-stone-50">
+            Khoản chi
+          </h3>
+          <span className="text-xs text-fg-muted tabular">
+            {visibleExpenses.filter((expense) => !expense.excluded).length}{" "}
+            khoản
+          </span>
+          <button
+            type="button"
+            onClick={() => setFormOpen(true)}
+            aria-label="Thêm khoản chi"
+            className="ml-auto inline-flex h-11 items-center gap-1.5 rounded-md bg-primary px-3 text-sm font-semibold text-white transition hover:bg-primary-hover active:scale-95"
+          >
+            <Plus size={16} />
+            Thêm
+          </button>
+        </div>
+        <div className="min-h-0 flex-1">
+          <PagedList
+            items={visibleExpenses}
+            getKey={(expense) => expense.id}
+            rowHeight={COMPACT_ROW_HEIGHT_PX}
+            empty={
+              <p className="py-6 text-center text-sm text-fg-muted">
+                Chưa có khoản chi nào.
+              </p>
+            }
+            renderItem={(expense) => {
+              const payer = participantById.get(expense.payerParticipantId);
+              const photoCount = photoCountByExpenseId.get(expense.id) || 0;
+              return (
+                <div
+                  className={`flex h-full items-center gap-1 rounded-md border border-border px-2 ${
+                    expense.excluded ? "opacity-60" : ""
+                  }`}
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-baseline justify-between gap-2">
+                      <p className="min-w-0 truncate text-sm font-semibold text-stone-950 dark:text-stone-50">
+                        {expense.title}
+                      </p>
+                      <span
+                        className={`shrink-0 text-sm font-bold tabular ${
+                          expense.kind === "income"
+                            ? "text-emerald-700 dark:text-emerald-400"
+                            : "text-violet-700 dark:text-violet-400"
+                        } ${expense.excluded ? "line-through" : ""}`}
+                      >
+                        {expense.kind === "income" ? "+" : ""}
+                        {formatMoney(expense.amount)}
+                      </span>
+                    </div>
+                    <p className="truncate text-xs text-fg-muted">
+                      {payer?.name || "Không rõ"}{" "}
+                      {expense.kind === "income" ? "nhận" : "trả"} ·{" "}
+                      {expense.splitParticipantIds.length} người
+                      {expense.excluded && " · Không tính"}
+                    </p>
+                  </div>
+                  {photoCount > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => openExpensePhotos(expense.id, 0)}
+                      aria-label={`Xem ảnh của ${expense.title}`}
+                      className="inline-flex h-11 shrink-0 items-center gap-1 rounded-md px-2 text-xs font-semibold text-fg-muted transition hover:bg-surface-muted"
+                    >
+                      <Paperclip size={14} />
+                      {photoCount}
+                    </button>
+                  )}
+                  <Menu
+                    trigger={(props) => (
+                      <button
+                        type="button"
+                        {...props}
+                        aria-haspopup="menu"
+                        aria-label={`Tùy chọn ${expense.title}`}
+                        className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md text-fg-muted transition hover:bg-surface-muted"
+                      >
+                        <MoreHorizontal size={18} />
+                      </button>
+                    )}
+                    items={[
+                      {
+                        label: "Đưa lên",
+                        icon: <ChevronUp size={15} />,
+                        onSelect: () => reorderBy(expense.id, MOVE_UP),
+                      },
+                      {
+                        label: "Đưa xuống",
+                        icon: <ChevronDown size={15} />,
+                        onSelect: () => reorderBy(expense.id, MOVE_DOWN),
+                      },
+                      {
+                        label: "Sửa",
+                        icon: <Pencil size={15} />,
+                        onSelect: () => startEditExpense(expense),
+                      },
+                      {
+                        label: expense.excluded ? "Tính lại" : "Bỏ tính",
+                        icon: expense.excluded ? (
+                          <Eye size={15} />
+                        ) : (
+                          <EyeOff size={15} />
+                        ),
+                        onSelect: () =>
+                          onToggleExcluded(expense.id, !expense.excluded),
+                      },
+                      {
+                        label: "Xóa",
+                        icon: <Trash2 size={15} />,
+                        destructive: true,
+                        onSelect: () => onRemove(expense.id),
+                      },
+                    ]}
+                  />
+                </div>
+              );
+            }}
+          />
+        </div>
+        <Sheet
+          open={formOpen}
+          onClose={closeForm}
+          title={editingExpenseId ? "Sửa khoản chi" : "Thêm khoản chi"}
+        >
+          {formBlock}
+        </Sheet>
+        {photoViewer.viewer}
+      </section>
+    );
+  }
+
+  return (
+    <section className="rounded-lg border border-border bg-surface p-4 shadow-sm">
+      <div className="mb-4 flex items-center gap-2">
+        <Banknote size={18} className="text-amber-500" />
+        <h3 className="text-lg font-semibold text-stone-950 dark:text-stone-50">
+          Khoản chi
+        </h3>
+      </div>
+
+      {!compact && formBlock}
 
       <SortableList
         ids={visibleExpenses.map((expense) => expense.id)}
