@@ -257,9 +257,14 @@ export type ApiPaymentOption = {
   amount: number;
 };
 
+export type ApiPaymentUnavailableReason =
+  | "not-configured"
+  | "receiver-not-linked";
+
 export type ApiPaymentOptions = {
   receiver: ApiParticipant | null;
   options: ApiPaymentOption[];
+  unavailableReason?: ApiPaymentUnavailableReason;
 };
 
 export type ApiPaymentRequest = {
