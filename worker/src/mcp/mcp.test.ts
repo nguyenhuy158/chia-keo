@@ -84,7 +84,8 @@ describe("MCP protocol", () => {
     });
 
     expect(
-      (response?.result as { protocolVersion: string }).protocolVersion,
+      (response as { result: { protocolVersion: string } }).result
+        .protocolVersion,
     ).toBe(MCP_PROTOCOL_VERSION);
   });
 
@@ -100,9 +101,11 @@ describe("MCP protocol", () => {
       id: 1,
       method: "tools/list",
     });
-    const { tools } = response?.result as {
-      tools: { name: string; inputSchema: unknown }[];
-    };
+    const { tools } = (
+      response as {
+        result: { tools: { name: string; inputSchema: unknown }[] };
+      }
+    ).result;
 
     expect(tools.map((tool) => tool.name)).toEqual([
       "get_version",
@@ -120,7 +123,8 @@ describe("MCP protocol", () => {
       { jsonrpc: "2.0", id: 1, method: "tools/list" },
       { scopes: ["share:read"] },
     );
-    const { tools } = response?.result as { tools: { name: string }[] };
+    const { tools } = (response as { result: { tools: { name: string }[] } })
+      .result;
 
     // get_version khong doi scope nen luon co mat.
     expect(tools.map((tool) => tool.name)).toEqual([
@@ -153,7 +157,8 @@ describe("MCP protocol", () => {
       { jsonrpc: "2.0", id: 1, method: "tools/list" },
       { scopes: [] },
     );
-    const { tools } = response?.result as { tools: { name: string }[] };
+    const { tools } = (response as { result: { tools: { name: string }[] } })
+      .result;
 
     expect(tools.map((tool) => tool.name)).toEqual(["get_version"]);
   });

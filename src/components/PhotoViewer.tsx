@@ -35,6 +35,7 @@ export function PhotoViewer({
 }: PhotoViewerProps) {
   const [captionDraft, setCaptionDraft] = useState<string | null>(null);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: reset the draft whenever the photo changes
   useEffect(() => {
     setCaptionDraft(null);
   }, [photo.id]);

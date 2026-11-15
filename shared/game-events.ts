@@ -76,9 +76,7 @@ const SETTLEMENT_LABELS: Record<string, string> = {
 };
 
 /** Chi khoan chi da xoa moi hoan tac duoc, va chi khi con du du lieu de dung lai. */
-export function canUndoEvent(
-  event: ApiGameEvent,
-): event is ApiGameEvent & {
+export function canUndoEvent(event: ApiGameEvent): event is ApiGameEvent & {
   payload: Extract<GameEventPayload, { kind: "expense_removed" }>;
 } {
   return (
