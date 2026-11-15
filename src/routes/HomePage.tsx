@@ -10,7 +10,7 @@ import {
   TrendingUp,
   Users,
 } from "lucide-react";
-import type { ReactNode } from "react";
+import { type ReactNode, useState } from "react";
 import { useCrossBalances } from "../adapters/react-query/cross-balances-query";
 import { useFunStats } from "../adapters/react-query/fun-stats-query";
 import { useGames } from "../adapters/react-query/queries";
@@ -18,11 +18,18 @@ import { Avatar } from "../components/Avatar";
 import { useMobileShell } from "../components/mobile-shell";
 import { EmptyState, SkeletonCard } from "../components/ui";
 import { formatMoney } from "../core/domain/money";
+import { PagedList } from "../ui/PagedList";
 
 /** Bao nhieu cuoc gan nhat hien o phan "tiep tuc". Du de nhan ra, khong tran man hinh. */
 const RECENT_LIMIT = 4;
 /** Bao nhieu nguoi hien o phan cong no truoc khi cat bot. */
 const DEBT_LIMIT = 5;
+
+const COMPACT_ROW_HEIGHT_PX = 60;
+
+type HomeView = "recent" | "debts" | "stats";
+
+type DebtRow = { name: string; net: number };
 
 function greet(hour: number) {
   if (hour < 5) return "Khuya rồi";
@@ -91,6 +98,7 @@ function StatTile({
  */
 export function HomePage() {
   const shell = useMobileShell();
+  const [view, setView] = useState<HomeView>("recent");
   const gamesQuery = useGames();
   const funStatsQuery = useFunStats();
 
@@ -138,100 +146,98 @@ export function HomePage() {
     );
   }
 
-  return (
-    <div className="space-y-4">
-      <div>
-        <h1 className="text-xl font-bold text-stone-950 dark:text-stone-50">
+  const hasStats = Boolean(stats && stats.totalExpense > 0);
+  const views: Array<{ id: HomeView; label: string }> = [
+    { id: "recent", label: "Tiếp tục" },
+    ...(hasDebts ? [{ id: "debts" as const, label: "Cần tất toán" }] : []),
+    ...(hasStats ? [{ id: "stats" as const, label: "Vài con số" }] : []),
+  ];
+  const activeView = views.some((item) => item.id === view) ? view : "recent";
+  const debtRows: DebtRow[] = [...owedToMe, ...owedByMe];
+
+  const compact = (
+    <div
+      data-one-screen
+      className="flex h-full min-h-0 flex-col gap-2 lg:hidden"
+    >
+      <div className="shrink-0">
+        <h1 className="text-lg font-bold text-stone-950 dark:text-stone-50">
           {greet(new Date().getHours())} 👋
         </h1>
-        <p className="mt-0.5 text-sm text-fg-muted">
+        <p className="text-xs text-fg-muted">
           {games.length} cuộc chơi · nhấn để tiếp tục chỗ đang dở.
         </p>
       </div>
-
-      <Section title="Tiếp tục" icon={<ArrowRight size={16} />}>
-        <div className="grid gap-2 sm:grid-cols-2">
-          {recent.map((game) => (
-            <Link
-              key={game.id}
-              to="/games/$gameId"
-              params={{ gameId: game.id }}
-              className="group rounded-lg border border-stone-200 bg-white p-3 transition hover:border-violet-600 hover:bg-violet-50 dark:border-stone-800 dark:bg-stone-950 dark:hover:border-violet-500 dark:hover:bg-violet-500/10"
+      {views.length > 1 && (
+        <div className="flex shrink-0 gap-1 rounded-lg bg-surface-muted p-1">
+          {views.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              aria-pressed={activeView === item.id}
+              onClick={() => setView(item.id)}
+              className={`inline-flex h-11 flex-1 items-center justify-center whitespace-nowrap rounded-md px-1 text-[13px] font-semibold transition ${
+                activeView === item.id
+                  ? "bg-surface text-violet-700 shadow-sm dark:text-violet-300"
+                  : "text-fg-muted"
+              }`}
             >
-              <p className="truncate text-sm font-semibold text-stone-950 dark:text-stone-50">
-                {game.name}
-              </p>
-              <p className="mt-1 text-xs text-fg-muted">
-                {game.participantCount} người · {game.expenseCount} khoản
-              </p>
-            </Link>
+              {item.label}
+            </button>
           ))}
         </div>
-      </Section>
-
-      {hasDebts && (
-        <Section title="Cần tất toán" icon={<Users size={16} />}>
-          <div className="grid gap-4 sm:grid-cols-2">
-            {owedToMe.length > 0 && (
-              <div>
-                <p className="mb-2 flex items-center gap-1.5 text-xs font-medium text-success">
-                  <TrendingUp size={14} />
-                  Được nhận lại
-                </p>
-                <ul className="space-y-1.5">
-                  {owedToMe.map((person) => (
-                    <li key={person.name} className="flex items-center gap-2">
-                      <Avatar name={person.name} size={26} />
-                      <span className="min-w-0 flex-1 truncate text-sm text-stone-900 dark:text-stone-100">
-                        {person.name}
-                      </span>
-                      <span className="shrink-0 text-sm font-semibold text-success">
-                        {formatMoney(person.net)}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-            {owedByMe.length > 0 && (
-              <div>
-                <p className="mb-2 flex items-center gap-1.5 text-xs font-medium text-danger">
-                  <TrendingDown size={14} />
-                  Còn phải trả
-                </p>
-                <ul className="space-y-1.5">
-                  {owedByMe.map((person) => (
-                    <li key={person.name} className="flex items-center gap-2">
-                      <Avatar name={person.name} size={26} />
-                      <span className="min-w-0 flex-1 truncate text-sm text-stone-900 dark:text-stone-100">
-                        {person.name}
-                      </span>
-                      <span className="shrink-0 text-sm font-semibold text-danger">
-                        {formatMoney(Math.abs(person.net))}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </div>
-        </Section>
       )}
-
-      {stats && stats.totalExpense > 0 && (
-        <Section
-          title="Vài con số"
-          icon={<Sparkles size={16} />}
-          action={
-            <Link
-              to="/fun"
-              className="text-xs font-medium text-violet-600 hover:underline dark:text-violet-400"
-            >
-              Xem hết
-            </Link>
-          }
-        >
-          <div className="grid gap-2 sm:grid-cols-3">
+      <div className="min-h-0 flex-1">
+        {activeView === "recent" && (
+          <PagedList
+            items={games}
+            getKey={(game) => game.id}
+            rowHeight={COMPACT_ROW_HEIGHT_PX}
+            renderItem={(game) => (
+              <Link
+                to="/games/$gameId"
+                params={{ gameId: game.id }}
+                className="flex h-full flex-col justify-center rounded-lg border border-border px-3 transition active:bg-surface-muted"
+              >
+                <span className="truncate text-sm font-semibold text-stone-950 dark:text-stone-50">
+                  {game.name}
+                </span>
+                <span className="text-xs text-fg-muted">
+                  {game.participantCount} người · {game.expenseCount} khoản
+                </span>
+              </Link>
+            )}
+          />
+        )}
+        {activeView === "debts" && (
+          <PagedList
+            items={debtRows}
+            getKey={(person) => `${person.name}-${person.net}`}
+            rowHeight={COMPACT_ROW_HEIGHT_PX}
+            renderItem={(person) => (
+              <div className="flex h-full items-center gap-2 rounded-lg border border-border px-3">
+                <Avatar name={person.name} size={28} />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm text-stone-900 dark:text-stone-100">
+                    {person.name}
+                  </p>
+                  <p
+                    className={`text-xs font-medium ${person.net > 0 ? "text-success" : "text-danger"}`}
+                  >
+                    {person.net > 0 ? "Được nhận lại" : "Còn phải trả"}
+                  </p>
+                </div>
+                <span
+                  className={`shrink-0 text-sm font-semibold ${person.net > 0 ? "text-success" : "text-danger"}`}
+                >
+                  {formatMoney(Math.abs(person.net))}
+                </span>
+              </div>
+            )}
+          />
+        )}
+        {activeView === "stats" && stats && (
+          <div className="space-y-2">
             <StatTile
               icon={<Receipt size={14} />}
               label="Tổng chi"
@@ -251,18 +257,153 @@ export function HomePage() {
                 value={formatMoney(stats.biggestExpense.amount)}
               />
             )}
+            <Link
+              to="/fun"
+              className="block text-center text-xs font-medium text-violet-600 hover:underline dark:text-violet-400"
+            >
+              Xem hết
+            </Link>
           </div>
-        </Section>
-      )}
-
+        )}
+      </div>
       <button
         type="button"
         onClick={() => shell?.openGames()}
-        className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-semibold text-white transition hover:bg-primary-hover active:scale-[0.99] lg:hidden"
+        className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-semibold text-white transition hover:bg-primary-hover active:scale-[0.99]"
       >
         <ListChecks size={18} />
         Mở danh sách cuộc chơi
       </button>
     </div>
+  );
+
+  return (
+    <>
+      {compact}
+      <div className="hidden lg:block">
+        <div className="space-y-4">
+          <div>
+            <h1 className="text-xl font-bold text-stone-950 dark:text-stone-50">
+              {greet(new Date().getHours())} 👋
+            </h1>
+            <p className="mt-0.5 text-sm text-fg-muted">
+              {games.length} cuộc chơi · nhấn để tiếp tục chỗ đang dở.
+            </p>
+          </div>
+
+          <Section title="Tiếp tục" icon={<ArrowRight size={16} />}>
+            <div className="grid gap-2 sm:grid-cols-2">
+              {recent.map((game) => (
+                <Link
+                  key={game.id}
+                  to="/games/$gameId"
+                  params={{ gameId: game.id }}
+                  className="group rounded-lg border border-stone-200 bg-white p-3 transition hover:border-violet-600 hover:bg-violet-50 dark:border-stone-800 dark:bg-stone-950 dark:hover:border-violet-500 dark:hover:bg-violet-500/10"
+                >
+                  <p className="truncate text-sm font-semibold text-stone-950 dark:text-stone-50">
+                    {game.name}
+                  </p>
+                  <p className="mt-1 text-xs text-fg-muted">
+                    {game.participantCount} người · {game.expenseCount} khoản
+                  </p>
+                </Link>
+              ))}
+            </div>
+          </Section>
+
+          {hasDebts && (
+            <Section title="Cần tất toán" icon={<Users size={16} />}>
+              <div className="grid gap-4 sm:grid-cols-2">
+                {owedToMe.length > 0 && (
+                  <div>
+                    <p className="mb-2 flex items-center gap-1.5 text-xs font-medium text-success">
+                      <TrendingUp size={14} />
+                      Được nhận lại
+                    </p>
+                    <ul className="space-y-1.5">
+                      {owedToMe.map((person) => (
+                        <li
+                          key={person.name}
+                          className="flex items-center gap-2"
+                        >
+                          <Avatar name={person.name} size={26} />
+                          <span className="min-w-0 flex-1 truncate text-sm text-stone-900 dark:text-stone-100">
+                            {person.name}
+                          </span>
+                          <span className="shrink-0 text-sm font-semibold text-success">
+                            {formatMoney(person.net)}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {owedByMe.length > 0 && (
+                  <div>
+                    <p className="mb-2 flex items-center gap-1.5 text-xs font-medium text-danger">
+                      <TrendingDown size={14} />
+                      Còn phải trả
+                    </p>
+                    <ul className="space-y-1.5">
+                      {owedByMe.map((person) => (
+                        <li
+                          key={person.name}
+                          className="flex items-center gap-2"
+                        >
+                          <Avatar name={person.name} size={26} />
+                          <span className="min-w-0 flex-1 truncate text-sm text-stone-900 dark:text-stone-100">
+                            {person.name}
+                          </span>
+                          <span className="shrink-0 text-sm font-semibold text-danger">
+                            {formatMoney(Math.abs(person.net))}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            </Section>
+          )}
+
+          {stats && stats.totalExpense > 0 && (
+            <Section
+              title="Vài con số"
+              icon={<Sparkles size={16} />}
+              action={
+                <Link
+                  to="/fun"
+                  className="text-xs font-medium text-violet-600 hover:underline dark:text-violet-400"
+                >
+                  Xem hết
+                </Link>
+              }
+            >
+              <div className="grid gap-2 sm:grid-cols-3">
+                <StatTile
+                  icon={<Receipt size={14} />}
+                  label="Tổng chi"
+                  value={formatMoney(stats.totalExpense)}
+                />
+                {stats.topPayer && (
+                  <StatTile
+                    icon={<Crown size={14} />}
+                    label="Ứng tiền nhiều nhất"
+                    value={stats.topPayer.name}
+                  />
+                )}
+                {stats.biggestExpense && (
+                  <StatTile
+                    icon={<Flame size={14} />}
+                    label="Khoản khủng nhất"
+                    value={formatMoney(stats.biggestExpense.amount)}
+                  />
+                )}
+              </div>
+            </Section>
+          )}
+        </div>
+      </div>
+    </>
   );
 }
