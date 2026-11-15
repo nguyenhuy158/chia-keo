@@ -31,24 +31,40 @@ function pageItems(page: number, pageCount: number): (number | "gap")[] {
 const ITEM =
   "inline-flex h-10 min-w-10 items-center justify-center rounded-ui px-2 text-sm outline-none transition focus-visible:ring-2 focus-visible:ring-ring";
 
-export function Pagination({ page, pageCount, onChange, className }: PaginationProps) {
+export function Pagination({
+  page,
+  pageCount,
+  onChange,
+  className,
+}: PaginationProps) {
   if (pageCount <= 1) return null;
 
   return (
-    <nav aria-label="Phân trang" className={cn("flex items-center justify-center gap-1", className)}>
+    <nav
+      aria-label="Phân trang"
+      className={cn("flex items-center justify-center gap-1", className)}
+    >
       <button
         type="button"
         onClick={() => onChange(page - 1)}
         disabled={page <= 1}
         aria-label="Trang trước"
-        className={cn(ITEM, "text-fg-muted hover:bg-surface-muted disabled:opacity-40")}
+        className={cn(
+          ITEM,
+          "text-fg-muted hover:bg-surface-muted disabled:opacity-40",
+        )}
       >
         ‹
       </button>
 
       {pageItems(page, pageCount).map((item, index) =>
         item === "gap" ? (
-          <span key={`gap-${index}`} aria-hidden="true" className="px-1 text-fg-muted">
+          <span
+            // biome-ignore lint/suspicious/noArrayIndexKey: gaps have no id, position is stable
+            key={`gap-${index}`}
+            aria-hidden="true"
+            className="px-1 text-fg-muted"
+          >
             …
           </span>
         ) : (
@@ -75,7 +91,10 @@ export function Pagination({ page, pageCount, onChange, className }: PaginationP
         onClick={() => onChange(page + 1)}
         disabled={page >= pageCount}
         aria-label="Trang sau"
-        className={cn(ITEM, "text-fg-muted hover:bg-surface-muted disabled:opacity-40")}
+        className={cn(
+          ITEM,
+          "text-fg-muted hover:bg-surface-muted disabled:opacity-40",
+        )}
       >
         ›
       </button>

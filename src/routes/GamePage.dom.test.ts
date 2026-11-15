@@ -238,6 +238,17 @@ async function click(label: string) {
   });
 }
 
+function menuItems() {
+  return [...host.querySelectorAll("[role='menuitem']")] as HTMLButtonElement[];
+}
+
+async function menuAction(label: string) {
+  await click("Thêm tùy chọn cuộc chơi");
+  const item = menuItems().find((entry) => entry.textContent?.trim() === label);
+  if (!item) throw new Error(`Missing menu item ${label}`);
+  await act(async () => item.click());
+}
+
 beforeEach(() => {
   Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
   mocks.game = game();
@@ -364,9 +375,9 @@ describe("GamePage", () => {
       "game-1",
     );
     mocks.confirm.mockResolvedValueOnce(false);
-    await click("Xóa");
+    await menuAction("Xóa cuộc chơi");
     expect(mocks.mutation.DeleteGame.mutateAsync).not.toHaveBeenCalled();
-    await click("Xóa");
+    await menuAction("Xóa cuộc chơi");
     expect(mocks.navigate).toHaveBeenCalledWith({ to: "/" });
   });
 
@@ -391,31 +402,31 @@ describe("GamePage", () => {
 
   it("handles share link and email actions", async () => {
     render();
-    await click("Tạo link share");
+    await menuAction("Tạo link share");
     expect(mocks.mutation.RotateShareLink.mutate).toHaveBeenCalled();
     mocks.game = game({ shareLink: { token: "token", enabled: true } });
     render();
     expect(
       (mocks.props.CopyMenu.input as { shareUrl: string }).shareUrl,
     ).toContain("/share/token");
-    await click("Tắt link");
+    await menuAction("Tắt link");
     expect(mocks.mutation.SetShareLinkEnabled.mutate).toHaveBeenCalledWith(
       false,
       expect.anything(),
     );
     mocks.confirm.mockResolvedValueOnce(false);
-    await click("Đổi link");
-    await click("Đổi link");
+    await menuAction("Đổi link");
+    await menuAction("Đổi link");
     expect(mocks.mutation.RotateShareLink.mutate).toHaveBeenCalledTimes(2);
     const fetchMock = vi.fn().mockResolvedValue({ ok: true });
     vi.stubGlobal("fetch", fetchMock);
-    await click("Email cho tôi");
+    await menuAction("Email cho tôi");
     expect(fetchMock).toHaveBeenCalledWith(
       "https://api.example/api/games/game-1/email-summary",
       expect.anything(),
     );
     fetchMock.mockResolvedValueOnce({ ok: false });
-    await click("Email cho tôi");
+    await menuAction("Email cho tôi");
     expect(mocks.toast.error).toHaveBeenCalled();
   });
 
@@ -567,8 +578,20 @@ describe("GamePage", () => {
     expect(host.textContent).not.toContain("close sheet");
     mocks.game = game({ isOwner: false });
     render();
-    expect(host.textContent).not.toContain("Xóa");
+    await click("Thêm tùy chọn cuộc chơi");
+    expect(menuItems().map((item) => item.textContent)).not.toContain("Xóa cuộc chơi");
     expect(host.textContent).not.toContain("Đóng");
+  });
+
+  it("toggles the share link from the mobile options sheet", async () => {
+    mocks.game = game({ shareLink: { token: "token", enabled: true } });
+    render();
+    await click("Tùy chọn cuộc chơi");
+    await click("Tắt link");
+    expect(mocks.mutation.SetShareLinkEnabled.mutate).toHaveBeenCalledWith(
+      false,
+      expect.anything(),
+    );
   });
 
   it("handles disabled share link and cancelled settlement", async () => {
@@ -577,7 +600,7 @@ describe("GamePage", () => {
     expect(
       (mocks.props.CopyMenu.input as { shareUrl?: string }).shareUrl,
     ).toBeUndefined();
-    await click("Bật link");
+    await menuAction("Bật link");
     expect(mocks.mutation.SetShareLinkEnabled.mutate).toHaveBeenCalledWith(
       true,
       expect.anything(),

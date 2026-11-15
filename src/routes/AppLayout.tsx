@@ -1,9 +1,18 @@
 import { Link, Navigate, Outlet, useNavigate } from "@tanstack/react-router";
-import { LogOut, Menu, PartyPopper, Settings, Volleyball } from "lucide-react";
+import {
+  CircleHelp,
+  LogOut,
+  Menu,
+  MoreHorizontal,
+  PartyPopper,
+  Settings,
+  Volleyball,
+} from "lucide-react";
 import { useState } from "react";
 import { BrandMark } from "../components/brand";
 import { GamesSidebar } from "../components/GamesSidebar";
 import { MobileShellContext } from "../components/mobile-shell";
+import { Menu as DropdownMenu } from "../ui/Menu";
 import { Sheet } from "../ui/Sheet";
 import { ThemeToggle } from "../components/theme";
 import { LoadingState } from "../components/ui";
@@ -89,7 +98,7 @@ export function AppLayout() {
               to="/shuttles"
               aria-label="Kho cầu"
               title="Kho cầu"
-              className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-stone-300 bg-white text-stone-700 transition hover:bg-stone-50 active:bg-stone-100 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-200 dark:hover:bg-stone-800 dark:active:bg-stone-700"
+              className="hidden h-11 w-11 shrink-0 items-center justify-center rounded-md border border-stone-300 bg-white text-stone-700 transition hover:bg-stone-50 active:bg-stone-100 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-200 dark:hover:bg-stone-800 dark:active:bg-stone-700 sm:inline-flex"
               activeProps={{
                 className:
                   "border-violet-600 bg-violet-50 text-violet-700 dark:border-violet-500 dark:bg-violet-500/15 dark:text-violet-300",
@@ -101,7 +110,7 @@ export function AppLayout() {
               to="/fun"
               aria-label="Thống kê vui"
               title="Thống kê vui"
-              className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-stone-300 bg-white text-stone-700 transition hover:bg-stone-50 active:bg-stone-100 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-200 dark:hover:bg-stone-800 dark:active:bg-stone-700"
+              className="hidden h-11 w-11 shrink-0 items-center justify-center rounded-md border border-stone-300 bg-white text-stone-700 transition hover:bg-stone-50 active:bg-stone-100 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-200 dark:hover:bg-stone-800 dark:active:bg-stone-700 sm:inline-flex"
               activeProps={{
                 className:
                   "border-violet-600 bg-violet-50 text-violet-700 dark:border-violet-500 dark:bg-violet-500/15 dark:text-violet-300",
@@ -113,13 +122,56 @@ export function AppLayout() {
               to="/settings"
               aria-label="Cài đặt"
               title="Cài đặt"
-              className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-stone-300 bg-white text-stone-700 transition hover:bg-stone-50 active:bg-stone-100 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-200 dark:hover:bg-stone-800 dark:active:bg-stone-700"
+              className="hidden h-11 w-11 shrink-0 items-center justify-center rounded-md border border-stone-300 bg-white text-stone-700 transition hover:bg-stone-50 active:bg-stone-100 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-200 dark:hover:bg-stone-800 dark:active:bg-stone-700 sm:inline-flex"
               activeProps={{
                 className:
                   "border-violet-600 bg-violet-50 text-violet-700 dark:border-violet-500 dark:bg-violet-500/15 dark:text-violet-300",
               }}
             >
               <Settings size={18} />
+            </Link>
+            <DropdownMenu
+              className="sm:hidden"
+              trigger={(props) => (
+                <button
+                  type="button"
+                  {...props}
+                  aria-haspopup="menu"
+                  aria-label="Thêm"
+                  className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-stone-300 bg-white text-stone-700 transition hover:bg-stone-50 active:bg-stone-100 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-200 dark:hover:bg-stone-800 dark:active:bg-stone-700"
+                >
+                  <MoreHorizontal size={18} />
+                </button>
+              )}
+              items={[
+                {
+                  label: "Kho cầu",
+                  icon: <Volleyball size={15} />,
+                  onSelect: () => navigate({ to: "/shuttles" }),
+                },
+                {
+                  label: "Thống kê vui",
+                  icon: <PartyPopper size={15} />,
+                  onSelect: () => navigate({ to: "/fun" }),
+                },
+                {
+                  label: "Cài đặt",
+                  icon: <Settings size={15} />,
+                  onSelect: () => navigate({ to: "/settings" }),
+                },
+              ]}
+            />
+            <Link
+              to="/help"
+              aria-label="Hướng dẫn sử dụng"
+              title="Hướng dẫn sử dụng"
+              className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-stone-300 bg-white text-stone-700 transition hover:bg-stone-50 active:bg-stone-100 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-200 dark:hover:bg-stone-800 dark:active:bg-stone-700"
+              activeProps={{
+                className:
+                  "border-violet-600 bg-violet-50 text-violet-700 dark:border-violet-500 dark:bg-violet-500/15 dark:text-violet-300",
+              }}
+            >
+              <CircleHelp size={18} />
             </Link>
             <ThemeToggle />
             <button

@@ -1,8 +1,8 @@
-import { useId, type ReactNode } from "react";
+import { type ReactNode, useId } from "react";
 import { createPortal } from "react-dom";
+import { Button } from "./Button";
 import { cn } from "./cn";
 import { useOverlay } from "./use-overlay";
-import { Button } from "./Button";
 
 export type ModalProps = {
   open: boolean;
@@ -68,7 +68,9 @@ export function Modal({
           )}
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">{children}</div>
+        <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
+          {children}
+        </div>
 
         {footer && (
           <div className="safe-bottom flex justify-end gap-2 border-t border-border px-4 py-3">

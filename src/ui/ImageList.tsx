@@ -11,20 +11,47 @@ export type ImageListProps = {
   className?: string;
 };
 
-const GRID_COLS = { 2: "grid-cols-2", 3: "grid-cols-2 sm:grid-cols-3", 4: "grid-cols-2 sm:grid-cols-4" };
-const MASONRY_COLS = { 2: "columns-2", 3: "columns-2 sm:columns-3", 4: "columns-2 sm:columns-4" };
+const GRID_COLS = {
+  2: "grid-cols-2",
+  3: "grid-cols-2 sm:grid-cols-3",
+  4: "grid-cols-2 sm:grid-cols-4",
+};
+const MASONRY_COLS = {
+  2: "columns-2",
+  3: "columns-2 sm:columns-3",
+  4: "columns-2 sm:columns-4",
+};
 
 /**
  * Luoi anh. Masonry dung CSS `columns` thuan: khong JS do chieu cao, nhung thu tu
  * doc theo cot (tren xuong roi sang phai) thay vi theo hang.
  */
-export function ImageList({ items, variant = "grid", cols = 3, onSelect, className }: ImageListProps) {
+export function ImageList({
+  items,
+  variant = "grid",
+  cols = 3,
+  onSelect,
+  className,
+}: ImageListProps) {
   const masonry = variant === "masonry";
 
   return (
-    <ul className={cn(masonry ? cn("gap-2", MASONRY_COLS[cols]) : cn("grid gap-2", GRID_COLS[cols]), className)}>
+    <ul
+      className={cn(
+        masonry
+          ? cn("gap-2", MASONRY_COLS[cols])
+          : cn("grid gap-2", GRID_COLS[cols]),
+        className,
+      )}
+    >
       {items.map((item) => (
-        <li key={item.src} className={cn("group relative overflow-hidden rounded-ui bg-surface-muted", masonry && "mb-2 break-inside-avoid")}>
+        <li
+          key={item.src}
+          className={cn(
+            "group relative overflow-hidden rounded-ui bg-surface-muted",
+            masonry && "mb-2 break-inside-avoid",
+          )}
+        >
           <button
             type="button"
             onClick={() => onSelect?.(item)}
@@ -34,7 +61,10 @@ export function ImageList({ items, variant = "grid", cols = 3, onSelect, classNa
               src={item.src}
               alt={item.alt}
               loading="lazy"
-              className={cn("w-full transition group-hover:scale-105", masonry ? "h-auto" : "aspect-square object-cover")}
+              className={cn(
+                "w-full transition group-hover:scale-105",
+                masonry ? "h-auto" : "aspect-square object-cover",
+              )}
             />
             {item.title && (
               <span className="absolute inset-x-0 bottom-0 truncate bg-gradient-to-t from-black/70 to-transparent px-2 pb-1.5 pt-6 text-left text-xs font-medium text-white">

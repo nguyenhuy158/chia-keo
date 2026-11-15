@@ -20,8 +20,19 @@ export function Link({ external, className, children, ...rest }: LinkProps) {
     >
       {children}
       {external && (
-        <svg viewBox="0 0 20 20" aria-hidden="true" className="size-3.5" fill="none" stroke="currentColor" strokeWidth="2">
-          <path d="M8 4H4v12h12v-4M11 4h5v5M16 4l-7 7" strokeLinecap="round" strokeLinejoin="round" />
+        <svg
+          viewBox="0 0 20 20"
+          aria-hidden="true"
+          className="size-3.5"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+        >
+          <path
+            d="M8 4H4v12h12v-4M11 4h5v5M16 4l-7 7"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
         </svg>
       )}
     </a>

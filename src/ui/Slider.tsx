@@ -1,7 +1,10 @@
 import type { InputHTMLAttributes } from "react";
 import { cn } from "./cn";
 
-export type SliderProps = Omit<InputHTMLAttributes<HTMLInputElement>, "type" | "value" | "onChange"> & {
+export type SliderProps = Omit<
+  InputHTMLAttributes<HTMLInputElement>,
+  "type" | "value" | "onChange"
+> & {
   value: number;
   onChange: (value: number) => void;
   min?: number;
@@ -49,7 +52,11 @@ export function Slider({
         )}
         {...rest}
       />
-      {format && <span className="tabular w-12 shrink-0 text-right text-sm text-fg">{format(value)}</span>}
+      {format && (
+        <span className="tabular w-12 shrink-0 text-right text-sm text-fg">
+          {format(value)}
+        </span>
+      )}
     </div>
   );
 }

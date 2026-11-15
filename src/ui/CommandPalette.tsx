@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { cn } from "./cn";
 import { useOverlay } from "./use-overlay";
@@ -18,13 +18,15 @@ export type Command = {
 
 /** Bo dau tieng Viet de go khong dau van tim duoc. */
 function normalize(text: string): string {
-  return text
-    .normalize("NFD")
-    // U+0300..U+036F la day dau thanh tach ra sau khi chuan hoa NFD.
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/đ/g, "d")
-    .replace(/Đ/g, "D")
-    .toLowerCase();
+  return (
+    text
+      .normalize("NFD")
+      // U+0300..U+036F la day dau thanh tach ra sau khi chuan hoa NFD.
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/đ/g, "d")
+      .replace(/Đ/g, "D")
+      .toLowerCase()
+  );
 }
 
 /**
@@ -73,7 +75,9 @@ export function CommandPalette({
     if (!query) return commands;
     const needle = normalize(query);
     return commands.filter((command) =>
-      normalize(`${command.label} ${command.group ?? ""} ${command.keywords ?? ""}`).includes(needle),
+      normalize(
+        `${command.label} ${command.group ?? ""} ${command.keywords ?? ""}`,
+      ).includes(needle),
     );
   }, [commands, query]);
 
@@ -85,6 +89,7 @@ export function CommandPalette({
     inputRef.current?.focus();
   }, [open]);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: reset highlight whenever the query changes
   useEffect(() => {
     setHighlight(0);
   }, [query]);
@@ -101,7 +106,9 @@ export function CommandPalette({
       event.preventDefault();
       const delta = event.key === "ArrowDown" ? 1 : -1;
       setHighlight((current) =>
-        filtered.length === 0 ? 0 : (current + delta + filtered.length) % filtered.length,
+        filtered.length === 0
+          ? 0
+          : (current + delta + filtered.length) % filtered.length,
       );
       return;
     }
@@ -116,7 +123,8 @@ export function CommandPalette({
   let flatIndex = -1;
   const groups = filtered.reduce<Record<string, Command[]>>((acc, command) => {
     const key = command.group ?? "";
-    (acc[key] ??= []).push(command);
+    acc[key] ??= [];
+    acc[key].push(command);
     return acc;
   }, {});
 
@@ -125,7 +133,11 @@ export function CommandPalette({
       className="fixed inset-0 z-50 flex items-start justify-center p-4 pt-[10vh]"
       style={{ animation: "ui-fade-in 150ms ease-out" }}
     >
-      <div aria-hidden="true" onClick={onClose} className="absolute inset-0 bg-black/50 backdrop-blur-[2px]" />
+      <div
+        aria-hidden="true"
+        onClick={onClose}
+        className="absolute inset-0 bg-black/50 backdrop-blur-[2px]"
+      />
 
       <div
         ref={overlayRef}
@@ -137,7 +149,14 @@ export function CommandPalette({
         className="relative flex max-h-[70dvh] w-full max-w-lg flex-col overflow-hidden rounded-ui bg-surface shadow-xl outline-none"
       >
         <div className="flex items-center gap-2 border-b border-border px-4">
-          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.75" className="h-4 w-4 shrink-0 text-fg-muted">
+          <svg
+            aria-hidden="true"
+            viewBox="0 0 20 20"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.75"
+            className="h-4 w-4 shrink-0 text-fg-muted"
+          >
             <circle cx="9" cy="9" r="5.5" />
             <path d="M13 13l4 4" strokeLinecap="round" />
           </svg>
@@ -156,7 +175,9 @@ export function CommandPalette({
 
         <div role="listbox" className="min-h-0 flex-1 overflow-y-auto p-2">
           {filtered.length === 0 && (
-            <p className="px-2 py-6 text-center text-sm text-fg-muted">{emptyLabel}</p>
+            <p className="px-2 py-6 text-center text-sm text-fg-muted">
+              {emptyLabel}
+            </p>
           )}
 
           {Object.entries(groups).map(([group, items]) => (
@@ -181,11 +202,15 @@ export function CommandPalette({
                     onClick={() => run(command)}
                     className={cn(
                       "flex w-full items-center gap-2.5 rounded-ui px-2 py-2.5 text-left text-sm transition",
-                      index === highlight ? "bg-surface-muted text-fg" : "text-fg",
+                      index === highlight
+                        ? "bg-surface-muted text-fg"
+                        : "text-fg",
                     )}
                   >
                     {command.icon}
-                    <span className="min-w-0 flex-1 truncate">{command.label}</span>
+                    <span className="min-w-0 flex-1 truncate">
+                      {command.label}
+                    </span>
                     {command.shortcut && (
                       <kbd className="rounded border border-border px-1.5 py-0.5 text-[11px] text-fg-muted">
                         {command.shortcut}

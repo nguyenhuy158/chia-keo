@@ -28,6 +28,7 @@ import { ExpenseFab, type GameSection, MobileGameNav } from "../components/Mobil
 import { useMobileShell } from "../components/mobile-shell";
 import { ParticipantPanel } from "../components/ParticipantPanel";
 import { SummaryImageCard } from "../components/SummaryImageCard";
+import { Menu, type MenuItem } from "../ui/Menu";
 import { Sheet } from "../ui/Sheet";
 import { useConfirm } from "../components/ConfirmDialog";
 import { toast } from "sonner";
@@ -316,28 +317,40 @@ export function GamePage() {
   }
 
   const summaryImageCard = (
-    <SummaryImageCard input={summaryInput} onShare={publishSharePreview} />
+    <SummaryImageCard input={summaryInput} onShare={publishSharePreview} collapsible />
   );
+
+  async function handleEmailSummary() {
+    setEmailPending(true);
+    try {
+      const response = await fetch(`${API_BASE}/api/games/${game.id}/email-summary`, {
+        method: "POST",
+        credentials: "include",
+      });
+      if (!response.ok) throw new Error();
+      toast.success("Đã gửi email tóm tắt về hộp thư của bạn");
+    } catch {
+      toast.error("Gửi email thất bại, thử lại sau");
+    } finally {
+      setEmailPending(false);
+    }
+  }
+
+  function handleToggleShareLink(enabled: boolean) {
+    setShareLinkEnabled.mutate(!enabled, {
+      onSuccess: () => toast.success(enabled ? "Đã tắt link" : "Đã bật link"),
+    });
+  }
+
+  function handleCreateShareLink() {
+    rotateShareLink.mutate(undefined, { onSuccess: () => toast.success("Đã tạo link chia sẻ") });
+  }
 
   const emailAction = (
     <button
       type="button"
       disabled={emailPending}
-      onClick={async () => {
-        setEmailPending(true);
-        try {
-          const response = await fetch(`${API_BASE}/api/games/${game.id}/email-summary`, {
-            method: "POST",
-            credentials: "include",
-          });
-          if (!response.ok) throw new Error();
-          toast.success("Đã gửi email tóm tắt về hộp thư của bạn");
-        } catch {
-          toast.error("Gửi email thất bại, thử lại sau");
-        } finally {
-          setEmailPending(false);
-        }
-      }}
+      onClick={handleEmailSummary}
       className="inline-flex h-11 items-center justify-center gap-2 rounded-md border border-stone-300 bg-surface px-3 text-sm font-medium text-stone-700 transition hover:bg-surface-muted disabled:opacity-50 dark:border-stone-700 dark:text-stone-200"
     >
       <Mail size={15} />
@@ -351,11 +364,7 @@ export function GamePage() {
     <>
       <button
         type="button"
-        onClick={() =>
-          setShareLinkEnabled.mutate(!shareLink.enabled, {
-            onSuccess: () => toast.success(shareLink.enabled ? "Đã tắt link" : "Đã bật link"),
-          })
-        }
+        onClick={() => handleToggleShareLink(shareLink.enabled)}
         disabled={setShareLinkEnabled.isPending}
         className="inline-flex h-11 items-center justify-center gap-2 rounded-md border border-stone-300 bg-surface px-3 text-sm font-medium text-stone-700 transition hover:bg-surface-muted dark:border-stone-700 dark:text-stone-200"
         title={shareLink.enabled ? "Tắt link share" : "Bật link share"}
@@ -384,9 +393,7 @@ export function GamePage() {
   ) : (
     <button
       type="button"
-      onClick={() =>
-        rotateShareLink.mutate(undefined, { onSuccess: () => toast.success("Đã tạo link chia sẻ") })
-      }
+      onClick={handleCreateShareLink}
       disabled={rotateShareLink.isPending}
       className="inline-flex h-11 items-center justify-center gap-2 rounded-md border border-stone-300 bg-surface px-3 text-sm font-medium text-stone-700 transition hover:bg-surface-muted dark:border-stone-700 dark:text-stone-200"
     >
@@ -434,11 +441,55 @@ export function GamePage() {
     </button>
   ) : null;
 
+  const moreItems: MenuItem[] = [
+    {
+      label: emailPending ? "Đang gửi..." : "Email cho tôi",
+      icon: <Mail size={15} />,
+      disabled: emailPending,
+      onSelect: handleEmailSummary,
+    },
+    ...(shareLink
+      ? [
+          {
+            label: shareLink.enabled ? "Tắt link" : "Bật link",
+            icon: <Power size={15} />,
+            disabled: setShareLinkEnabled.isPending,
+            onSelect: () => handleToggleShareLink(shareLink.enabled),
+          },
+          {
+            label: "Đổi link",
+            icon: <RefreshCw size={15} />,
+            disabled: rotateShareLink.isPending,
+            onSelect: handleRotateShareLink,
+          },
+        ]
+      : [
+          {
+            label: "Tạo link share",
+            icon: <LinkIcon size={15} />,
+            disabled: rotateShareLink.isPending,
+            onSelect: handleCreateShareLink,
+          },
+        ]),
+    ...(game.isOwner
+      ? [
+          {
+            label: "Xóa cuộc chơi",
+            icon: <Trash2 size={15} />,
+            destructive: true,
+            disabled: deleteGame.isPending,
+            onSelect: handleDeleteGame,
+          },
+        ]
+      : []),
+  ];
+
   const collaboratorsPanel = (
     <CollaboratorsPanel
       gameId={game.id}
       isOwner={game.isOwner}
       collaborators={game.collaborators}
+      collapsible
     />
   );
 
@@ -499,13 +550,24 @@ export function GamePage() {
             </div>
           )}
         </div>
-        {/* Desktop: cac nut hien inline. */}
-        <div className="hidden flex-wrap items-center justify-end gap-2 lg:flex">
+        {/* Desktop: hai nut chinh, phan con lai nam trong menu. */}
+        <div className="hidden items-center justify-end gap-2 lg:flex">
           {copyAction}
-          {emailAction}
-          {shareActions}
           {closeAction}
-          {deleteAction}
+          <Menu
+            trigger={(props) => (
+              <button
+                type="button"
+                {...props}
+                aria-haspopup="menu"
+                aria-label="Thêm tùy chọn cuộc chơi"
+                className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-stone-300 text-stone-700 transition hover:bg-surface-muted dark:border-stone-700 dark:text-stone-200"
+              >
+                <MoreHorizontal size={20} />
+              </button>
+            )}
+            items={moreItems}
+          />
         </div>
         {/* Mobile: nut chuyen cuoc choi va nut mo bottom sheet tuy chon. */}
         <button

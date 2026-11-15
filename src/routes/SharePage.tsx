@@ -334,13 +334,13 @@ export function SharePage() {
               key={tab.id}
               type="button"
               onClick={() => setActiveTab(tab.id)}
-              className={`inline-flex h-10 items-center justify-center gap-2 rounded-md px-3 text-sm font-semibold transition ${
+              className={`inline-flex h-10 items-center justify-center gap-2 whitespace-nowrap rounded-md px-2 text-sm font-semibold transition sm:px-3 ${
                 isActive
                   ? "bg-white text-violet-700 shadow-sm dark:bg-stone-800 dark:text-violet-300"
                   : "text-stone-600 hover:text-stone-950 dark:text-stone-400 dark:hover:text-stone-100"
               }`}
             >
-              <Icon size={17} />
+              <Icon size={17} className="hidden sm:block" />
               {tab.label}
             </button>
           );

@@ -1,11 +1,11 @@
 import {
   createContext,
+  type ReactNode,
   useCallback,
   useContext,
   useEffect,
   useMemo,
   useState,
-  type ReactNode,
 } from "react";
 import { cn } from "./cn";
 
@@ -16,16 +16,23 @@ const STORAGE_KEY = "ui-theme";
 function readStored(): ThemeMode {
   if (typeof localStorage === "undefined") return "system";
   const value = localStorage.getItem(STORAGE_KEY);
-  return value === "light" || value === "dark" || value === "system" ? value : "system";
+  return value === "light" || value === "dark" || value === "system"
+    ? value
+    : "system";
 }
 
 export function resolveTheme(mode: ThemeMode): "light" | "dark" {
   if (mode !== "system") return mode;
-  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  return window.matchMedia("(prefers-color-scheme: dark)").matches
+    ? "dark"
+    : "light";
 }
 
 function applyTheme(mode: ThemeMode) {
-  document.documentElement.classList.toggle("dark", resolveTheme(mode) === "dark");
+  document.documentElement.classList.toggle(
+    "dark",
+    resolveTheme(mode) === "dark",
+  );
 }
 
 type ThemeContextValue = {
@@ -68,7 +75,9 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     [mode, setMode],
   );
 
-  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
+  return (
+    <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
+  );
 }
 
 const NEXT: Record<ThemeMode, ThemeMode> = {
@@ -85,15 +94,24 @@ const LABEL: Record<ThemeMode, string> = {
 
 const ICON: Record<ThemeMode, ReactNode> = {
   system: (
-    <path d="M4 5h16v10H4zM8 19h8" strokeLinecap="round" strokeLinejoin="round" />
+    <path
+      d="M4 5h16v10H4zM8 19h8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
   ),
   light: (
     <>
       <circle cx="12" cy="12" r="4" />
-      <path d="M12 3v2m0 14v2M3 12h2m14 0h2M5.6 5.6l1.4 1.4m10 10l1.4 1.4m0-12.8l-1.4 1.4m-10 10l-1.4 1.4" strokeLinecap="round" />
+      <path
+        d="M12 3v2m0 14v2M3 12h2m14 0h2M5.6 5.6l1.4 1.4m10 10l1.4 1.4m0-12.8l-1.4 1.4m-10 10l-1.4 1.4"
+        strokeLinecap="round"
+      />
     </>
   ),
-  dark: <path d="M20 13a8 8 0 11-9-9 6.5 6.5 0 009 9z" strokeLinejoin="round" />,
+  dark: (
+    <path d="M20 13a8 8 0 11-9-9 6.5 6.5 0 009 9z" strokeLinejoin="round" />
+  ),
 };
 
 /** Nut nho xoay vong system -> light -> dark. */
@@ -112,7 +130,14 @@ export function ThemeToggle({ className }: { className?: string }) {
         className,
       )}
     >
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" className="h-5 w-5">
+      <svg
+        aria-hidden="true"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.75"
+        className="h-5 w-5"
+      >
         {ICON[mode]}
       </svg>
     </button>

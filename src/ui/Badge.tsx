@@ -1,7 +1,12 @@
 import type { ReactNode } from "react";
 import { cn } from "./cn";
 
-export type BadgeTone = "neutral" | "primary" | "success" | "warning" | "danger";
+export type BadgeTone =
+  | "neutral"
+  | "primary"
+  | "success"
+  | "warning"
+  | "danger";
 
 const TONE: Record<BadgeTone, string> = {
   neutral: "bg-surface-muted text-fg-muted",
@@ -19,7 +24,12 @@ export type BadgeProps = {
   children: ReactNode;
 };
 
-export function Badge({ tone = "neutral", dot = false, className, children }: BadgeProps) {
+export function Badge({
+  tone = "neutral",
+  dot = false,
+  className,
+  children,
+}: BadgeProps) {
   return (
     <span
       className={cn(
@@ -28,7 +38,12 @@ export function Badge({ tone = "neutral", dot = false, className, children }: Ba
         className,
       )}
     >
-      {dot && <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-current" />}
+      {dot && (
+        <span
+          aria-hidden="true"
+          className="h-1.5 w-1.5 rounded-full bg-current"
+        />
+      )}
       {children}
     </span>
   );

@@ -35,10 +35,14 @@ export function HeaderBar({
 
         <div className="min-w-0 flex-1">
           <h1 className="truncate text-base font-semibold text-fg">{title}</h1>
-          {subtitle && <p className="truncate text-xs text-fg-muted">{subtitle}</p>}
+          {subtitle && (
+            <p className="truncate text-xs text-fg-muted">{subtitle}</p>
+          )}
         </div>
 
-        {actions && <div className="flex shrink-0 items-center gap-1">{actions}</div>}
+        {actions && (
+          <div className="flex shrink-0 items-center gap-1">{actions}</div>
+        )}
       </div>
     </header>
   );

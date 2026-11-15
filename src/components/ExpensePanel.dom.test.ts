@@ -138,6 +138,20 @@ function type(target: HTMLInputElement, value: string) {
   });
 }
 
+function rowAction(label: string, title: string) {
+  act(() =>
+    (
+      host.querySelector(
+        `button[aria-label='Tùy chọn ${title}']`,
+      ) as HTMLButtonElement
+    ).click(),
+  );
+  const item = [...host.querySelectorAll("[role='menuitem']")].find(
+    (entry) => entry.textContent?.trim() === label,
+  ) as HTMLButtonElement;
+  act(() => item.click());
+}
+
 function button(label: string) {
   return [...host.querySelectorAll("button")].find(
     (item) => item.textContent?.trim() === label,
@@ -218,13 +232,7 @@ describe("ExpensePanel", () => {
     const onRemove = vi.fn<PanelHandlers["onRemove"]>();
     panel({ expenses: [expense()], onUpdate, onRemove });
     expect(host.textContent).toContain("Tiền sân");
-    act(() =>
-      (
-        host.querySelector(
-          "button[aria-label='Sửa Tiền sân']",
-        ) as HTMLButtonElement
-      ).click(),
-    );
+    rowAction("Sửa", "Tiền sân");
     expect(button("Lưu khoản chi")).toBeDefined();
     await act(async () => {
       host
@@ -237,13 +245,7 @@ describe("ExpensePanel", () => {
       "expense-a",
       expect.objectContaining({ title: "Tiền sân" }),
     );
-    act(() =>
-      (
-        host.querySelector(
-          "button[aria-label='Xóa Tiền sân']",
-        ) as HTMLButtonElement
-      ).click(),
-    );
+    rowAction("Xóa", "Tiền sân");
     expect(onRemove).toHaveBeenCalledWith("expense-a");
   });
 
@@ -257,21 +259,9 @@ describe("ExpensePanel", () => {
       onToggleExcluded,
     });
     expect(host.textContent).toContain("Không tính");
-    act(() =>
-      (
-        host.querySelector(
-          "button[aria-label='Bỏ tính Tiền sân']",
-        ) as HTMLButtonElement
-      ).click(),
-    );
+    rowAction("Bỏ tính", "Tiền sân");
     expect(onToggleExcluded).toHaveBeenLastCalledWith("expense-a", true);
-    act(() =>
-      (
-        host.querySelector(
-          "button[aria-label='Tính lại Nước']",
-        ) as HTMLButtonElement
-      ).click(),
-    );
+    rowAction("Tính lại", "Nước");
     expect(onToggleExcluded).toHaveBeenLastCalledWith("expense-b", false);
   });
 
@@ -531,13 +521,7 @@ describe("ExpensePanel", () => {
     panel({ expenses: [expense()], photos });
     act(() => button("+1").click());
     expect(photoViewerOpen).toHaveBeenCalledWith(3);
-    act(() =>
-      (
-        host.querySelector(
-          "button[aria-label='Sửa Tiền sân']",
-        ) as HTMLButtonElement
-      ).click(),
-    );
+    rowAction("Sửa", "Tiền sân");
     const picker = host.querySelector(
       "label[aria-label='Đính kèm ảnh hóa đơn'] input[type='file']",
     ) as HTMLInputElement;
@@ -573,13 +557,7 @@ describe("ExpensePanel", () => {
     });
     expect(onAdd).toHaveBeenCalled();
     expect(input("500.000").value).toContain("25");
-    act(() =>
-      (
-        host.querySelector(
-          "button[aria-label='Sửa Tiền sân']",
-        ) as HTMLButtonElement
-      ).click(),
-    );
+    rowAction("Sửa", "Tiền sân");
     expect(button("Hủy sửa")).toBeDefined();
     act(() => button("Hủy sửa").click());
     expect(button("Thêm khoản chi")).toBeDefined();
@@ -828,13 +806,7 @@ describe("ExpensePanel", () => {
     const file = new File(["image"], "new.png", { type: "image/png" });
     chooseFile(picker, file);
     expect(uploadMock).toHaveBeenCalledWith([file], { expenseId: "expense-a" });
-    act(() =>
-      (
-        host.querySelector(
-          "button[aria-label='Sửa Hoàn tiền']",
-        ) as HTMLButtonElement
-      ).click(),
-    );
+    rowAction("Sửa", "Hoàn tiền");
     expect(button("Lưu khoản thu")).toBeDefined();
     expect(button("Khoản chi").disabled).toBe(true);
   });
@@ -1043,8 +1015,7 @@ describe("ExpensePanel", () => {
     const rows = [
       ...host.querySelectorAll("button[aria-label^='Kéo để đổi thứ tự']"),
     ].map(
-      (button) =>
-        button.parentElement?.parentElement?.parentElement as HTMLElement,
+      (button) => button.parentElement?.parentElement as HTMLElement,
     );
     rows[0].getBoundingClientRect = () => ({ top: 0, height: 50 }) as DOMRect;
     rows[1].getBoundingClientRect = () => ({ top: 100, height: 50 }) as DOMRect;
@@ -1110,12 +1081,9 @@ describe("ExpensePanel", () => {
 
   it("bấm sửa lần nữa để hủy sửa", () => {
     panel({ expenses: [expense()] });
-    const edit = host.querySelector(
-      "button[aria-label='Sửa Tiền sân']",
-    ) as HTMLButtonElement;
-    act(() => edit.click());
+    rowAction("Sửa", "Tiền sân");
     expect(button("Lưu khoản chi")).toBeDefined();
-    act(() => edit.click());
+    rowAction("Hủy sửa", "Tiền sân");
     expect(button("Thêm khoản chi")).toBeDefined();
   });
 
@@ -1148,13 +1116,7 @@ describe("ExpensePanel", () => {
 
   it("đổi về người trả trống khi hủy sửa sau lúc xóa hết người", () => {
     panel({ expenses: [expense()] });
-    act(() =>
-      (
-        host.querySelector(
-          "button[aria-label='Sửa Tiền sân']",
-        ) as HTMLButtonElement
-      ).click(),
-    );
+    rowAction("Sửa", "Tiền sân");
     panel({ expenses: [expense()], participants: [] });
     act(() => button("Hủy sửa").click());
     expect(button("Thêm khoản chi").disabled).toBe(true);

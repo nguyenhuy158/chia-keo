@@ -1,9 +1,13 @@
-import { useState, type ReactNode } from "react";
+import { type ReactNode, useState } from "react";
 import { cn } from "./cn";
 import { Tooltip } from "./Tooltip";
 import { useDismiss } from "./use-dismiss";
 
-export type SpeedDialAction = { label: string; icon: ReactNode; onSelect: () => void };
+export type SpeedDialAction = {
+  label: string;
+  icon: ReactNode;
+  onSelect: () => void;
+};
 
 export type SpeedDialProps = {
   actions: SpeedDialAction[];
@@ -18,7 +22,13 @@ export type SpeedDialProps = {
  * Nut tron chinh bung ra vai hanh dong phu. Dat vi tri bang className
  * (vi du "fixed bottom-20 right-4"); mac dinh nam trong dong chay trang.
  */
-export function SpeedDial({ actions, icon, label = "Hành động", direction = "up", className }: SpeedDialProps) {
+export function SpeedDial({
+  actions,
+  icon,
+  label = "Hành động",
+  direction = "up",
+  className,
+}: SpeedDialProps) {
   const [open, setOpen] = useState(false);
   const ref = useDismiss(open, () => setOpen(false));
 
@@ -51,7 +61,9 @@ export function SpeedDial({ actions, icon, label = "Hành động", direction = 
                 action.onSelect();
                 setOpen(false);
               }}
-              style={{ animation: `ui-zoom-in 150ms ease-out ${index * 30}ms both` }}
+              style={{
+                animation: `ui-zoom-in 150ms ease-out ${index * 30}ms both`,
+              }}
               className="inline-flex size-11 items-center justify-center rounded-full border border-border bg-surface text-fg shadow-md outline-none transition hover:bg-surface-muted focus-visible:ring-2 focus-visible:ring-ring"
             >
               {action.icon}

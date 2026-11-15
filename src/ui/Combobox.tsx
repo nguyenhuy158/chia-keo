@@ -1,4 +1,11 @@
-import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
+import {
+  type ReactNode,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { cn } from "./cn";
 
 export type ComboboxOption = {
@@ -23,13 +30,15 @@ export type ComboboxProps = {
 
 /** Bo dau tieng Viet de go "an toi" van tim ra "Ăn tối". */
 function normalize(text: string): string {
-  return text
-    .normalize("NFD")
-    // U+0300..U+036F la day dau thanh/dau mu tach ra sau khi chuan hoa NFD.
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/đ/g, "d")
-    .replace(/Đ/g, "D")
-    .toLowerCase();
+  return (
+    text
+      .normalize("NFD")
+      // U+0300..U+036F la day dau thanh/dau mu tach ra sau khi chuan hoa NFD.
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/đ/g, "d")
+      .replace(/Đ/g, "D")
+      .toLowerCase()
+  );
 }
 
 /**
@@ -65,6 +74,7 @@ export function Combobox({
   }, [options, query]);
 
   // Loc lai thi muc dang sang co the khong con ton tai, keo ve dau danh sach.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: reset highlight whenever the query changes
   useEffect(() => {
     setHighlight(0);
   }, [query]);
@@ -103,7 +113,9 @@ export function Combobox({
       const delta = event.key === "ArrowDown" ? 1 : -1;
       // Chia lay du de chay vong tu cuoi ve dau va nguoc lai.
       setHighlight((current) =>
-        filtered.length === 0 ? 0 : (current + delta + filtered.length) % filtered.length,
+        filtered.length === 0
+          ? 0
+          : (current + delta + filtered.length) % filtered.length,
       );
       return;
     }
@@ -155,6 +167,7 @@ export function Combobox({
       {open && (
         <ul
           id={listId}
+          // biome-ignore lint/a11y/noNoninteractiveElementToInteractiveRole: standard listbox pattern
           role="listbox"
           style={{ animation: "ui-slide-down 120ms ease-out" }}
           className="absolute z-50 mt-1 max-h-64 w-full overflow-y-auto rounded-ui border border-border bg-surface py-1 shadow-lg"
@@ -179,7 +192,9 @@ export function Combobox({
                 className={cn(
                   "flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm transition",
                   index === highlight ? "bg-surface-muted" : "bg-transparent",
-                  option.value === value ? "font-semibold text-primary" : "text-fg",
+                  option.value === value
+                    ? "font-semibold text-primary"
+                    : "text-fg",
                 )}
               >
                 {option.icon}

@@ -8,6 +8,7 @@ import {
   GripVertical,
   ImagePlus,
   Minus,
+  MoreHorizontal,
   Paperclip,
   Pencil,
   Plus,
@@ -39,6 +40,7 @@ import { useAiScanReceipt, useAiSuggestExpense } from "../adapters/react-query/q
 import { Dropdown } from "./Dropdown";
 import { useDragReorder } from "./use-drag-reorder";
 import { MoneyInput } from "./MoneyInput";
+import { Menu } from "../ui/Menu";
 import { PhotoPickerButton } from "./PhotoPanel";
 import {
   categoryMeta,
@@ -1124,21 +1126,21 @@ function handleSplitModeChange(mode: SplitMode) {
                   : "border-border"
               } ${expense.excluded ? "opacity-60" : ""}`}
             >
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex min-w-0 items-start gap-1">
-                  <button
-                    type="button"
-                    onPointerDown={(event) => handleDragPointerDown(expense.id, event)}
-                    onPointerMove={handleDragPointerMove}
-                    onPointerUp={handleDragPointerUp}
-                    onPointerCancel={handleDragPointerUp}
-                    className="flex h-11 w-6 shrink-0 items-center justify-center text-stone-400 [touch-action:none] dark:text-stone-600"
-                    aria-label={`Kéo để đổi thứ tự ${expense.title}`}
-                  >
-                    <GripVertical size={16} />
-                  </button>
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold text-stone-950 dark:text-stone-50">
+              <div className="flex items-start gap-1">
+                <button
+                  type="button"
+                  onPointerDown={(event) => handleDragPointerDown(expense.id, event)}
+                  onPointerMove={handleDragPointerMove}
+                  onPointerUp={handleDragPointerUp}
+                  onPointerCancel={handleDragPointerUp}
+                  className="flex h-11 w-6 shrink-0 items-center justify-center text-stone-400 [touch-action:none] dark:text-stone-600"
+                  aria-label={`Kéo để đổi thứ tự ${expense.title}`}
+                >
+                  <GripVertical size={16} />
+                </button>
+                <div className="min-w-0 flex-1 pt-2.5">
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="min-w-0 break-words text-sm font-semibold text-stone-950 dark:text-stone-50">
                       {expense.title}
                       {expense.excluded && (
                         <span className="ml-1.5 rounded bg-surface-muted px-1.5 py-0.5 text-[10px] font-semibold text-fg-muted">
@@ -1150,98 +1152,99 @@ function handleSplitModeChange(mode: SplitMode) {
                           Thu
                         </span>
                       )}
-                      {expense.kind !== "income" && categoryMeta(expense.category) && (
-                        <span
-                          className={`ml-1.5 rounded px-1.5 py-0.5 text-[10px] font-semibold ${categoryMeta(expense.category)?.badgeClassName}`}
-                        >
-                          {categoryMeta(expense.category)?.emoji}{" "}
-                          {categoryMeta(expense.category)?.label}
-                        </span>
-                      )}
                     </p>
-                    <p className="mt-1 text-xs text-fg-muted">
-                      {payer?.name || "Không rõ"} {expense.kind === "income" ? "nhận" : "trả"}, chia{" "}
-                      {expense.splitParticipantIds.length} người
-                      {SPLIT_MODE_BADGES[expense.splitMode] &&
-                        ` · ${SPLIT_MODE_BADGES[expense.splitMode]}`}
-                    </p>
+                    <span
+                      className={`shrink-0 text-sm font-bold tabular ${
+                        expense.kind === "income"
+                          ? "text-emerald-700 dark:text-emerald-400"
+                          : "text-violet-700 dark:text-violet-400"
+                      } ${expense.excluded ? "line-through" : ""}`}
+                    >
+                      {expense.kind === "income" ? "+" : ""}
+                      {formatMoney(expense.amount)}
+                    </span>
                   </div>
+                  <p className="mt-0.5 text-xs text-fg-muted">
+                    {payer?.name || "Không rõ"} {expense.kind === "income" ? "nhận" : "trả"} ·{" "}
+                    {expense.splitParticipantIds.length} người
+                    {SPLIT_MODE_BADGES[expense.splitMode] &&
+                      ` · ${SPLIT_MODE_BADGES[expense.splitMode]}`}
+                    {expense.kind !== "income" &&
+                      categoryMeta(expense.category) &&
+                      ` · ${categoryMeta(expense.category)?.emoji} ${categoryMeta(expense.category)?.label}`}
+                  </p>
                 </div>
-                <div className="flex shrink-0 items-center gap-1">
-                  <span
-                    className={`text-sm font-bold tabular ${
-                      expense.kind === "income"
-                        ? "text-emerald-700 dark:text-emerald-400"
-                        : "text-violet-700 dark:text-violet-400"
-                    } ${expense.excluded ? "line-through" : ""}`}
-                  >
-                    {expense.kind === "income" ? "+" : ""}
-                    {formatMoney(expense.amount)}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => onToggleExcluded(expense.id, !expense.excluded)}
-                    className="inline-flex h-11 w-11 items-center justify-center rounded-md text-fg-muted transition hover:bg-surface-muted"
-                    aria-label={`${expense.excluded ? "Tính lại" : "Bỏ tính"} ${expense.title}`}
-                    aria-pressed={expense.excluded}
-                  >
-                    {expense.excluded ? <EyeOff size={16} /> : <Eye size={16} />}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => (isEditing ? cancelEditExpense() : startEditExpense(expense))}
-                    className="inline-flex h-11 w-11 items-center justify-center rounded-md text-violet-700 transition hover:bg-primary-soft active:bg-violet-100 dark:text-violet-400 dark:active:bg-violet-500/20"
-                    aria-label={`Sửa ${expense.title}`}
-                  >
-                    <Pencil size={16} />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => onRemove(expense.id)}
-                    className="inline-flex h-11 w-11 items-center justify-center rounded-md text-danger transition hover:bg-danger-soft active:bg-rose-100 dark:active:bg-rose-500/20"
-                    aria-label={`Xóa ${expense.title}`}
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                </div>
+                <Menu
+                  trigger={(props) => (
+                    <button
+                      type="button"
+                      {...props}
+                      aria-haspopup="menu"
+                      aria-label={`Tùy chọn ${expense.title}`}
+                      className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md text-fg-muted transition hover:bg-surface-muted"
+                    >
+                      <MoreHorizontal size={18} />
+                    </button>
+                  )}
+                  items={[
+                    {
+                      label: isEditing ? "Hủy sửa" : "Sửa",
+                      icon: <Pencil size={15} />,
+                      onSelect: () => (isEditing ? cancelEditExpense() : startEditExpense(expense)),
+                    },
+                    {
+                      label: expense.excluded ? "Tính lại" : "Bỏ tính",
+                      icon: expense.excluded ? <Eye size={15} /> : <EyeOff size={15} />,
+                      onSelect: () => onToggleExcluded(expense.id, !expense.excluded),
+                    },
+                    {
+                      label: "Xóa",
+                      icon: <Trash2 size={15} />,
+                      destructive: true,
+                      onSelect: () => onRemove(expense.id),
+                    },
+                  ]}
+                />
               </div>
 
-              <div className="mt-2 flex flex-wrap items-center gap-2">
-                {attachedPhotos.slice(0, EXPENSE_THUMB_LIMIT).map((photo, index) => (
-                  <button
-                    key={photo.id}
-                    type="button"
-                    onClick={() => openExpensePhotos(expense.id, index)}
-                    className="h-12 w-12 overflow-hidden rounded-md border border-stone-200 transition active:scale-95 dark:border-stone-700"
-                    aria-label={`Xem ảnh của ${expense.title}`}
+              {attachedPhotos.length > 0 && (
+                <div className="ml-7 mt-2 flex flex-wrap items-center gap-2">
+                  {attachedPhotos.slice(0, EXPENSE_THUMB_LIMIT).map((photo, index) => (
+                    <button
+                      key={photo.id}
+                      type="button"
+                      onClick={() => openExpensePhotos(expense.id, index)}
+                      className="h-12 w-12 overflow-hidden rounded-md border border-stone-200 transition active:scale-95 dark:border-stone-700"
+                      aria-label={`Xem ảnh của ${expense.title}`}
+                    >
+                      <img
+                        src={toDataUrl(photo.mimeType, photo.thumbData)}
+                        alt=""
+                        loading="lazy"
+                        className="h-full w-full object-cover"
+                      />
+                    </button>
+                  ))}
+                  {hiddenPhotoCount > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => openExpensePhotos(expense.id, EXPENSE_THUMB_LIMIT)}
+                      className="h-12 w-12 rounded-md border border-stone-200 text-xs font-semibold text-stone-600 transition active:scale-95 dark:border-stone-700 dark:text-stone-300"
+                    >
+                      +{hiddenPhotoCount}
+                    </button>
+                  )}
+                  <PhotoPickerButton
+                    label=""
+                    ariaLabel={`Thêm ảnh cho ${expense.title}`}
+                    disabled={uploader.pending}
+                    onPick={(files) => uploader.upload(files, { expenseId: expense.id })}
+                    className="h-12 border border-dashed border-stone-300 text-xs text-stone-500 hover:bg-stone-50 dark:border-stone-700 dark:text-stone-400 dark:hover:bg-stone-800"
                   >
-                    <img
-                      src={toDataUrl(photo.mimeType, photo.thumbData)}
-                      alt=""
-                      loading="lazy"
-                      className="h-full w-full object-cover"
-                    />
-                  </button>
-                ))}
-                {hiddenPhotoCount > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => openExpensePhotos(expense.id, EXPENSE_THUMB_LIMIT)}
-                    className="h-12 w-12 rounded-md border border-stone-200 text-xs font-semibold text-stone-600 transition active:scale-95 dark:border-stone-700 dark:text-stone-300"
-                  >
-                    +{hiddenPhotoCount}
-                  </button>
-                )}
-                <PhotoPickerButton
-                  label={attachedPhotos.length > 0 ? "" : "Thêm ảnh"}
-                  ariaLabel={`Thêm ảnh cho ${expense.title}`}
-                  disabled={uploader.pending}
-                  onPick={(files) => uploader.upload(files, { expenseId: expense.id })}
-                  className="h-12 border border-dashed border-stone-300 text-xs text-stone-500 hover:bg-stone-50 dark:border-stone-700 dark:text-stone-400 dark:hover:bg-stone-800"
-                >
-                  <Paperclip size={14} />
-                </PhotoPickerButton>
-              </div>
+                    <Paperclip size={14} />
+                  </PhotoPickerButton>
+                </div>
+              )}
             </div>
           );
         })}

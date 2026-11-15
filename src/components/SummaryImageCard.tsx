@@ -10,8 +10,10 @@ import { copyImage, copyText, downloadBlob } from "../adapters/browser/clipboard
 import { usePreferences, useUpdatePreferences } from "../adapters/react-query/queries";
 import { buildSummaryImageFileName, renderSummaryImage } from "../adapters/browser/summary-image";
 import { ImageLightbox } from "./overlays";
+import { CollapsibleHeading } from "./CollapsibleHeading";
 import { SummaryBackgroundPicker } from "./SummaryBackgroundPicker";
 import { Switch } from "./ui";
+import { usePersistentOpen } from "./use-persistent-open";
 import { useSummaryImageBackground } from "./use-summary-image-background";
 
 const VARIANTS: { value: SummaryVariant; label: string; hint: string }[] = [
@@ -64,10 +66,14 @@ const ACTION_CLASS =
 export function SummaryImageCard({
   input,
   onShare,
+  collapsible = false,
 }: {
   input: SummaryTextInput;
   onShare?: (backgroundId: string) => void;
+  collapsible?: boolean;
 }) {
+  const [open, setOpen] = usePersistentOpen("summary-preview", false);
+  const expanded = !collapsible || open;
   const [backgroundId, chooseBackground] = useSummaryImageBackground();
   const [variant, setVariant] = useState<SummaryVariant>("compact");
   // Nho lua chon o server: bat/tat QR la thoi quen cua tung nhom, va giu
@@ -175,86 +181,94 @@ export function SummaryImageCard({
 
   return (
     <section className="rounded-lg border border-border bg-surface p-4 shadow-sm">
-      <h3 className="text-lg font-semibold text-stone-950 dark:text-stone-50">Xem trước</h3>
-      <p className="mt-1 text-xs text-fg-muted">
-        {viewMode === "image"
-          ? "Đúng ảnh sẽ được copy — bấm vào ảnh để xem to."
-          : "Bản chữ để dán vào Zalo/Messenger."}
-      </p>
+      <CollapsibleHeading
+        title="Xem trước"
+        open={expanded}
+        onToggle={collapsible ? () => setOpen((current) => !current) : undefined}
+      />
+      {expanded && (
+        <>
+          <p className="mt-1 text-xs text-fg-muted">
+            {viewMode === "image"
+              ? "Đúng ảnh sẽ được copy — bấm vào ảnh để xem to."
+              : "Bản chữ để dán vào Zalo/Messenger."}
+          </p>
 
-      <div className="mt-3 space-y-2">
-        <Segmented options={VIEW_MODES} value={viewMode} onChange={setViewMode} />
-        <Segmented options={VARIANTS} value={variant} onChange={setVariant} />
-      </div>
+          <div className="mt-3 space-y-2">
+            <Segmented options={VIEW_MODES} value={viewMode} onChange={setViewMode} />
+            <Segmented options={VARIANTS} value={variant} onChange={setVariant} />
+          </div>
 
-      {viewMode === "image" && (
-        <div className="mt-3 space-y-2">
-          <SummaryBackgroundPicker value={backgroundId} onChange={chooseBackground} />
-          <Switch
-            checked={showQr}
-            onChange={(next) => updatePreferences.mutate({ summaryShowQr: next })}
-            label="Hiện QR chuyển khoản trên ảnh"
-          />
-          <Switch
-            checked={showAvatar}
-            onChange={(next) => updatePreferences.mutate({ summaryShowAvatar: next })}
-            label="Hiện avatar trước tên trên ảnh"
-          />
-        </div>
-      )}
-
-      {viewMode === "image" ? (
-        <div className="mt-3 overflow-hidden rounded-md border border-stone-200 dark:border-stone-700">
-          {failed ? (
-            <p className="p-4 text-sm text-fg-muted">
-              Không vẽ được ảnh trên trình duyệt này. Chuyển sang bản Chữ vẫn dùng được.
-            </p>
-          ) : previewUrl ? (
-            <button
-              type="button"
-              onClick={() => setZoomed(true)}
-              aria-label="Xem ảnh to"
-              className="group relative block w-full cursor-zoom-in"
-            >
-              <img
-                // Anh mo dan trong luc ve ban moi cho biet la dang cap nhat.
-                className={`block w-full transition-opacity ${pending ? "opacity-50" : "opacity-100"}`}
-                src={previewUrl}
-                alt="Xem trước ảnh tổng kết"
+          {viewMode === "image" && (
+            <div className="mt-3 space-y-2">
+              <SummaryBackgroundPicker value={backgroundId} onChange={chooseBackground} />
+              <Switch
+                checked={showQr}
+                onChange={(next) => updatePreferences.mutate({ summaryShowQr: next })}
+                label="Hiện QR chuyển khoản trên ảnh"
               />
-              <span className="absolute right-2 top-2 inline-flex h-8 w-8 items-center justify-center rounded-full bg-black/45 text-white opacity-80 transition group-hover:opacity-100">
-                <Expand size={15} />
-              </span>
-            </button>
-          ) : (
-            <p className="p-4 text-sm text-fg-muted">Đang vẽ ảnh...</p>
+              <Switch
+                checked={showAvatar}
+                onChange={(next) => updatePreferences.mutate({ summaryShowAvatar: next })}
+                label="Hiện avatar trước tên trên ảnh"
+              />
+            </div>
           )}
-        </div>
-      ) : (
-        <pre className="mt-3 max-h-[26rem] overflow-auto whitespace-pre-wrap break-words rounded-md border border-stone-200 bg-stone-50 p-3 text-[13px] leading-relaxed text-stone-800 dark:border-stone-700 dark:bg-stone-950 dark:text-stone-200">
-          {summaryText}
-        </pre>
-      )}
 
-      <div className="mt-3 flex gap-2">
-        {viewMode === "image" ? (
-          <>
-            <button type="button" onClick={copyPreview} disabled={!blob} className={ACTION_CLASS}>
-              <Copy size={16} />
-              Copy ảnh
-            </button>
-            <button type="button" onClick={savePreview} disabled={!blob} className={ACTION_CLASS}>
-              <Download size={16} />
-              Lưu về máy
-            </button>
-          </>
-        ) : (
-          <button type="button" onClick={copySummaryText} className={ACTION_CLASS}>
-            <Copy size={16} />
-            Copy chữ
-          </button>
-        )}
-      </div>
+          {viewMode === "image" ? (
+            <div className="mt-3 overflow-hidden rounded-md border border-stone-200 dark:border-stone-700">
+              {failed ? (
+                <p className="p-4 text-sm text-fg-muted">
+                  Không vẽ được ảnh trên trình duyệt này. Chuyển sang bản Chữ vẫn dùng được.
+                </p>
+              ) : previewUrl ? (
+                <button
+                  type="button"
+                  onClick={() => setZoomed(true)}
+                  aria-label="Xem ảnh to"
+                  className="group relative block w-full cursor-zoom-in"
+                >
+                  <img
+                    // Anh mo dan trong luc ve ban moi cho biet la dang cap nhat.
+                    className={`block w-full transition-opacity ${pending ? "opacity-50" : "opacity-100"}`}
+                    src={previewUrl}
+                    alt="Xem trước ảnh tổng kết"
+                  />
+                  <span className="absolute right-2 top-2 inline-flex h-8 w-8 items-center justify-center rounded-full bg-black/45 text-white opacity-80 transition group-hover:opacity-100">
+                    <Expand size={15} />
+                  </span>
+                </button>
+              ) : (
+                <p className="p-4 text-sm text-fg-muted">Đang vẽ ảnh...</p>
+              )}
+            </div>
+          ) : (
+            <pre className="mt-3 max-h-[26rem] overflow-auto whitespace-pre-wrap break-words rounded-md border border-stone-200 bg-stone-50 p-3 text-[13px] leading-relaxed text-stone-800 dark:border-stone-700 dark:bg-stone-950 dark:text-stone-200">
+              {summaryText}
+            </pre>
+          )}
+
+          <div className="mt-3 flex gap-2">
+            {viewMode === "image" ? (
+              <>
+                <button type="button" onClick={copyPreview} disabled={!blob} className={ACTION_CLASS}>
+                  <Copy size={16} />
+                  Copy ảnh
+                </button>
+                <button type="button" onClick={savePreview} disabled={!blob} className={ACTION_CLASS}>
+                  <Download size={16} />
+                  Lưu về máy
+                </button>
+              </>
+            ) : (
+              <button type="button" onClick={copySummaryText} className={ACTION_CLASS}>
+                <Copy size={16} />
+                Copy chữ
+              </button>
+            )}
+          </div>
+        </>
+      )}
 
       <ImageLightbox
         open={zoomed && previewUrl !== null}

@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { type ReactNode, useState } from "react";
 import { cn } from "./cn";
 import { useDismiss } from "./use-dismiss";
 
@@ -13,20 +13,31 @@ export type MenuItem = {
 
 export type MenuProps = {
   /** Nut mo menu. Nhan onClick tu Menu, thuong la mot <Button size="icon">. */
-  trigger: (props: { onClick: () => void; "aria-expanded": boolean }) => ReactNode;
+  trigger: (props: {
+    onClick: () => void;
+    "aria-expanded": boolean;
+  }) => ReactNode;
   items: MenuItem[];
   align?: "left" | "right";
   className?: string;
 };
 
 /** Menu tha xuong. Dong khi bam ra ngoai, bam Esc, hoac chon mot muc. */
-export function Menu({ trigger, items, align = "right", className }: MenuProps) {
+export function Menu({
+  trigger,
+  items,
+  align = "right",
+  className,
+}: MenuProps) {
   const [open, setOpen] = useState(false);
   const ref = useDismiss(open, () => setOpen(false));
 
   return (
     <div ref={ref} className={cn("relative", className)}>
-      {trigger({ onClick: () => setOpen((value) => !value), "aria-expanded": open })}
+      {trigger({
+        onClick: () => setOpen((value) => !value),
+        "aria-expanded": open,
+      })}
 
       {open && (
         <div

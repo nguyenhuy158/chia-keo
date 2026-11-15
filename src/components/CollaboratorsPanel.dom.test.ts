@@ -94,6 +94,29 @@ afterEach(() => {
 });
 
 describe("CollaboratorsPanel", () => {
+  it("collapses when collapsible and remembers the choice", () => {
+    window.localStorage.clear();
+    act(() =>
+      root.render(
+        createElement(CollaboratorsPanel, {
+          gameId: "game-1",
+          isOwner: true,
+          collaborators: [
+            { userId: "user-1", name: "An", email: "an@example.com" },
+          ],
+          collapsible: true,
+        }),
+      ),
+    );
+    expect(host.textContent).toContain("Chia sẻ cuộc chơi");
+    expect(host.textContent).not.toContain("an@example.com");
+    act(() => button("Xem")?.click());
+    expect(host.textContent).toContain("an@example.com");
+    act(() => button("Ẩn")?.click());
+    expect(host.textContent).not.toContain("an@example.com");
+    window.localStorage.clear();
+  });
+
   it("hides empty shared access and shows registered and pending collaborators", () => {
     render(false);
     expect(host.textContent).toBe("");

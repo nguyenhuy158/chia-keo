@@ -305,8 +305,12 @@ try {
   ok("attach photo to expense");
 
   // 7. Share link read-only mo duoc khong can dang nhap
-  await page.click("text=Tạo link share");
-  await page.waitForSelector('button:has-text("Đổi link")', WAIT);
+  const moreOptions = 'button[aria-label="Thêm tùy chọn cuộc chơi"]';
+  await page.click(moreOptions);
+  await page.click('[role="menuitem"]:has-text("Tạo link share")');
+  await page.click(moreOptions);
+  await page.waitForSelector('[role="menuitem"]:has-text("Đổi link")', WAIT);
+  await page.keyboard.press("Escape");
   const detail = await page.evaluate(async () => {
     const gameId = location.pathname.split("/").pop();
     const response = await fetch(`/api/games/${gameId}`, { credentials: "include" });

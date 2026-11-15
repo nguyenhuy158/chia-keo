@@ -55,6 +55,12 @@ const shareRoute = createRoute({
   component: lazyRouteComponent(() => import("./routes/SharePage"), "SharePage"),
 });
 
+const helpRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/help",
+  component: lazyRouteComponent(() => import("./routes/HelpPage"), "HelpPage"),
+});
+
 const appRoute = createRoute({
   getParentRoute: () => rootRoute,
   id: "app",
@@ -94,6 +100,7 @@ const funStatsRoute = createRoute({
 const routeTree = rootRoute.addChildren([
   loginRoute,
   shareRoute,
+  helpRoute,
   appRoute.addChildren([homeRoute, gameRoute, settingsRoute, shuttlesRoute, funStatsRoute]),
 ]);
 

@@ -26,7 +26,9 @@ export function Stepper({
   return (
     <ol
       className={cn(
-        orientation === "horizontal" ? "flex items-start" : "flex flex-col gap-1",
+        orientation === "horizontal"
+          ? "flex items-start"
+          : "flex flex-col gap-1",
         className,
       )}
     >
@@ -47,8 +49,19 @@ export function Stepper({
             )}
           >
             {done ? (
-              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2.5" className="h-3.5 w-3.5">
-                <path d="M3.5 8.5l3 3 6-6.5" strokeLinecap="round" strokeLinejoin="round" />
+              <svg
+                aria-hidden="true"
+                viewBox="0 0 16 16"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                className="h-3.5 w-3.5"
+              >
+                <path
+                  d="M3.5 8.5l3 3 6-6.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
               </svg>
             ) : (
               index + 1
@@ -57,7 +70,13 @@ export function Stepper({
         );
 
         const text = (
-          <span className={cn(orientation === "horizontal" ? "mt-1.5 block text-center" : "block")}>
+          <span
+            className={cn(
+              orientation === "horizontal"
+                ? "mt-1.5 block text-center"
+                : "block",
+            )}
+          >
             <span
               className={cn(
                 "block text-xs font-medium",
@@ -67,7 +86,9 @@ export function Stepper({
               {step.label}
             </span>
             {step.description && (
-              <span className="mt-0.5 block text-[11px] text-fg-muted">{step.description}</span>
+              <span className="mt-0.5 block text-[11px] text-fg-muted">
+                {step.description}
+              </span>
             )}
           </span>
         );
@@ -89,11 +110,19 @@ export function Stepper({
                   <span
                     className={cn(
                       "h-px flex-1",
-                      index === 0 ? "bg-transparent" : done || active ? "bg-primary" : "bg-border",
+                      index === 0
+                        ? "bg-transparent"
+                        : done || active
+                          ? "bg-primary"
+                          : "bg-border",
                     )}
                   />
                   {clickable ? (
-                    <button type="button" onClick={() => onStepClick!(index)} className="outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-full">
+                    <button
+                      type="button"
+                      onClick={() => onStepClick!(index)}
+                      className="outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-full"
+                    >
                       {bubble}
                     </button>
                   ) : (
@@ -102,7 +131,11 @@ export function Stepper({
                   <span
                     className={cn(
                       "h-px flex-1",
-                      index === steps.length - 1 ? "bg-transparent" : done ? "bg-primary" : "bg-border",
+                      index === steps.length - 1
+                        ? "bg-transparent"
+                        : done
+                          ? "bg-primary"
+                          : "bg-border",
                     )}
                   />
                 </div>
@@ -112,14 +145,23 @@ export function Stepper({
               <>
                 <div className="flex flex-col items-center self-stretch">
                   {clickable ? (
-                    <button type="button" onClick={() => onStepClick!(index)} className="rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                    <button
+                      type="button"
+                      onClick={() => onStepClick!(index)}
+                      className="rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
                       {bubble}
                     </button>
                   ) : (
                     bubble
                   )}
                   {index < steps.length - 1 && (
-                    <span className={cn("w-px flex-1 py-1", done ? "bg-primary" : "bg-border")} />
+                    <span
+                      className={cn(
+                        "w-px flex-1 py-1",
+                        done ? "bg-primary" : "bg-border",
+                      )}
+                    />
                   )}
                 </div>
                 <span className="pb-4 pt-1.5">{text}</span>

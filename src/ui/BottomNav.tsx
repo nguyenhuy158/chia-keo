@@ -43,7 +43,9 @@ export function BottomNav<TId extends string = string>({
     >
       <div
         className="mx-auto grid max-w-md"
-        style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }}
+        style={{
+          gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))`,
+        }}
       >
         {items.map((item) => {
           const Icon = item.icon;
@@ -89,7 +91,13 @@ export type FabProps = {
 };
 
 /** Nut hanh dong chinh noi o goc phai duoi. */
-export function Fab({ onClick, label, icon, aboveNav = true, className }: FabProps) {
+export function Fab({
+  onClick,
+  label,
+  icon,
+  aboveNav = true,
+  className,
+}: FabProps) {
   return (
     <button
       type="button"

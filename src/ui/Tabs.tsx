@@ -56,13 +56,17 @@ export function Tabs<TId extends string = string>({
               variant === "pill" &&
                 cn(
                   "rounded-[calc(var(--ui-radius)-0.25rem)]",
-                  isActive ? "bg-surface text-fg shadow-sm" : "text-fg-muted hover:text-fg",
+                  isActive
+                    ? "bg-surface text-fg shadow-sm"
+                    : "text-fg-muted hover:text-fg",
                 ),
             )}
           >
             {item.label}
             {item.count !== undefined && (
-              <span className="ml-1.5 text-xs text-fg-muted tabular">{item.count}</span>
+              <span className="ml-1.5 text-xs text-fg-muted tabular">
+                {item.count}
+              </span>
             )}
           </button>
         );

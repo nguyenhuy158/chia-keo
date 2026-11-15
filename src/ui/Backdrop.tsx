@@ -15,6 +15,8 @@ export function Backdrop({ open, onClose, children }: BackdropProps) {
   if (!open) return null;
 
   return createPortal(
+    // biome-ignore lint/a11y/noStaticElementInteractions: pointer-only dismiss, the host owns keyboard handling
+    // biome-ignore lint/a11y/useKeyWithClickEvents: pointer-only dismiss, the host owns keyboard handling
     <div
       aria-busy="true"
       onClick={onClose}

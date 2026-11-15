@@ -186,6 +186,20 @@ afterEach(() => {
 });
 
 describe("SummaryImageCard", () => {
+  it("collapses the preview when collapsible and expands on demand", () => {
+    window.localStorage.clear();
+    act(() =>
+      root.render(createElement(SummaryImageCard, { input, collapsible: true })),
+    );
+    expect(host.textContent).toContain("Xem trước");
+    expect(host.textContent).not.toContain("Copy ảnh");
+    act(() => button("Xem").click());
+    expect(host.textContent).toContain("Copy ảnh");
+    act(() => button("Ẩn").click());
+    expect(host.textContent).not.toContain("Copy ảnh");
+    window.localStorage.clear();
+  });
+
   it("renders, copies, downloads, and enlarges an image", async () => {
     render();
     expect(host.textContent).toContain("Đang vẽ ảnh");
