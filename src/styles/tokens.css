@@ -145,10 +145,12 @@ textarea {
   font: inherit;
 }
 
-button,
-a,
-[role="button"] {
-  touch-action: manipulation;
+@layer base {
+  button,
+  a,
+  [role="button"] {
+    touch-action: manipulation;
+  }
 }
 
 /* So thang cot, dung cho bang tien/so lieu. */

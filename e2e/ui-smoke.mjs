@@ -241,6 +241,8 @@ try {
   const dragFirstExpenseBelowSecond = async () => {
     const handles = page.locator('button[aria-label^="Kéo để đổi thứ tự"]');
     assert.ok((await handles.count()) >= 2);
+    const touchAction = await handles.nth(0).evaluate((element) => getComputedStyle(element).touchAction);
+    assert.equal(touchAction, "none");
     await handles.nth(0).evaluate((element) => element.scrollIntoView({ block: "center" }));
     const first = await handles.nth(0).boundingBox();
     const second = await handles.nth(1).boundingBox();

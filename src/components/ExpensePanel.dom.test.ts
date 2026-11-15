@@ -1042,6 +1042,24 @@ describe("ExpensePanel", () => {
     expect(onReorder).toHaveBeenCalledWith(["expense-b", "expense-a"]);
   });
 
+  it("chặn menu nhấn giữ và chọn chữ trên tay cầm kéo", () => {
+    panel({ expenses: [expense()] });
+    const handle = host.querySelector(
+      "button[aria-label='Kéo để đổi thứ tự Tiền sân']",
+    ) as HTMLButtonElement;
+    const event = new MouseEvent("contextmenu", {
+      bubbles: true,
+      cancelable: true,
+    });
+    act(() => {
+      handle.dispatchEvent(event);
+    });
+    expect(event.defaultPrevented).toBe(true);
+    expect(handle.className).toContain("select-none");
+    expect(handle.className).toContain("[-webkit-touch-callout:none]");
+    expect(handle.className).toContain("touch-none");
+  });
+
   it("hiển thị số tiền còn thiếu hoặc vượt khi chia tiền riêng", () => {
     panel();
     act(() => button("Số tiền").click());
