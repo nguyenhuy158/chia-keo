@@ -15,6 +15,7 @@ export type BottomNavProps<TId extends string = string> = {
   onChange: (id: TId) => void;
   /** An tren desktop khi da co sidebar. Dat false neu app chi co mot layout. */
   mobileOnly?: boolean;
+  inline?: boolean;
   className?: string;
 };
 
@@ -30,13 +31,15 @@ export function BottomNav<TId extends string = string>({
   active,
   onChange,
   mobileOnly = true,
+  inline = false,
   className,
 }: BottomNavProps<TId>) {
   return (
     <div
       role="tablist"
       className={cn(
-        "safe-bottom fixed inset-x-0 bottom-0 z-40 border-t border-border ui-acrylic",
+        "safe-bottom border-t border-border ui-acrylic",
+        !inline && "fixed inset-x-0 bottom-0 z-40",
         mobileOnly && "lg:hidden",
         className,
       )}
@@ -66,11 +69,11 @@ export function BottomNav<TId extends string = string>({
             >
               <span className="relative">
                 <Icon size={20} />
-                {Boolean(item.badge) && (
+                {item.badge ? (
                   <span className="absolute -right-2 -top-1 min-w-4 rounded-full bg-danger px-1 text-[10px] font-bold leading-4 text-white">
-                    {item.badge! > 99 ? "99+" : item.badge}
+                    {item.badge > 99 ? "99+" : item.badge}
                   </span>
-                )}
+                ) : null}
               </span>
               <span className="text-[11px] font-medium">{item.label}</span>
             </button>

@@ -21,6 +21,15 @@ import { LoadingState } from "../components/ui";
 import { Menu as DropdownMenu } from "../ui/Menu";
 import { Sheet } from "../ui/Sheet";
 
+/**
+ * Mot man hinh, khong cuon: trang nao dat `data-one-screen` thi tren dien thoai
+ * khung chiem dung chieu cao man hinh va ruot trang tu chia chieu cao.
+ */
+const APP_FRAME_CLASS =
+  "flex min-h-dvh flex-col max-lg:has-[[data-one-screen]]:h-dvh max-lg:has-[[data-one-screen]]:overflow-hidden";
+const MAIN_CLASS =
+  "mx-auto grid min-h-0 w-full max-w-7xl flex-1 gap-5 px-4 py-4 sm:px-5 sm:py-5 lg:grid-cols-[320px_minmax(0,1fr)] max-lg:has-[[data-one-screen]]:grid-rows-[minmax(0,1fr)] max-lg:has-[[data-one-screen]]:py-2";
+
 export function AppLayout() {
   const navigate = useNavigate();
   // Nguon su that duy nhat: /api/session thay ca better-auth lan cookie SSO.
@@ -66,18 +75,19 @@ export function AppLayout() {
     <MobileShellContext.Provider
       value={{ openGames: () => setGamesOpen(true) }}
     >
-      <header className="sticky top-0 z-30 border-b border-border bg-surface">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 px-4 py-3 sm:gap-3 sm:px-5 sm:py-4">
-          <div className="flex min-w-0 items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setGamesOpen(true)}
-              aria-label="Danh sách cuộc chơi"
-              className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-stone-300 text-stone-700 transition hover:bg-surface-muted active:bg-stone-100 dark:border-stone-700 dark:text-stone-200 dark:active:bg-stone-700 lg:hidden"
-            >
-              <Menu size={20} />
-            </button>
-            {/* Logo la duong ve trang chu. Truoc day no la <h1> tron: vao mot
+      <div className={APP_FRAME_CLASS}>
+        <header className="sticky top-0 z-30 shrink-0 border-b border-border bg-surface">
+          <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 px-4 py-3 sm:gap-3 sm:px-5 sm:py-4">
+            <div className="flex min-w-0 items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setGamesOpen(true)}
+                aria-label="Danh sách cuộc chơi"
+                className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-stone-300 text-stone-700 transition hover:bg-surface-muted active:bg-stone-100 dark:border-stone-700 dark:text-stone-200 dark:active:bg-stone-700 lg:hidden"
+              >
+                <Menu size={20} />
+              </button>
+              {/* Logo la duong ve trang chu. Truoc day no la <h1> tron: vao mot
                 cuoc chia tren mobile la khong con nut nao ve home — sidebar bi
                 thu vao drawer, ma drawer chi liet ke cac cuoc chia.
 
@@ -85,121 +95,122 @@ export function AppLayout() {
                 trong cho ten cuoc choi. Ten app van o trong <h1> sr-only ben
                 duoi — bo han thi trang mat heading, hong ca screen reader lan
                 SEO. */}
-            <Link to="/" aria-label="Về trang chủ" className="shrink-0">
-              <h1 className="sr-only">Chia kèo</h1>
-              <BrandMark size={42} className="sm:hidden" />
-              <BrandMark size={48} className="hidden sm:block" />
-            </Link>
-          </div>
-          {/* gap hep hon logo/hamburger phia trai: cum nay toan nut co dinh
+              <Link to="/" aria-label="Về trang chủ" className="shrink-0">
+                <h1 className="sr-only">Chia kèo</h1>
+                <BrandMark size={42} className="sm:hidden" />
+                <BrandMark size={48} className="hidden sm:block" />
+              </Link>
+            </div>
+            {/* gap hep hon logo/hamburger phia trai: cum nay toan nut co dinh
               (44px), khong co gi de co giãn nhu logo, nen phai tu nhuong
               truoc de logo con dat ten cuoc choi o man ~360px (TODO B5). */}
-          <div className="flex items-center gap-1.5 sm:gap-3">
-            <span className="hidden text-sm text-stone-600 dark:text-stone-400 sm:inline">
-              {displayName}
-            </span>
-            <Link
-              to="/shuttles"
-              aria-label="Kho cầu"
-              title="Kho cầu"
-              className="hidden h-11 w-11 shrink-0 items-center justify-center rounded-md border border-stone-300 bg-white text-stone-700 transition hover:bg-stone-50 active:bg-stone-100 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-200 dark:hover:bg-stone-800 dark:active:bg-stone-700 sm:inline-flex"
-              activeProps={{
-                className:
-                  "border-violet-600 bg-violet-50 text-violet-700 dark:border-violet-500 dark:bg-violet-500/15 dark:text-violet-300",
-              }}
-            >
-              <Volleyball size={18} />
-            </Link>
-            <Link
-              to="/fun"
-              aria-label="Thống kê vui"
-              title="Thống kê vui"
-              className="hidden h-11 w-11 shrink-0 items-center justify-center rounded-md border border-stone-300 bg-white text-stone-700 transition hover:bg-stone-50 active:bg-stone-100 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-200 dark:hover:bg-stone-800 dark:active:bg-stone-700 sm:inline-flex"
-              activeProps={{
-                className:
-                  "border-violet-600 bg-violet-50 text-violet-700 dark:border-violet-500 dark:bg-violet-500/15 dark:text-violet-300",
-              }}
-            >
-              <PartyPopper size={18} />
-            </Link>
-            <Link
-              to="/settings"
-              aria-label="Cài đặt"
-              title="Cài đặt"
-              className="hidden h-11 w-11 shrink-0 items-center justify-center rounded-md border border-stone-300 bg-white text-stone-700 transition hover:bg-stone-50 active:bg-stone-100 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-200 dark:hover:bg-stone-800 dark:active:bg-stone-700 sm:inline-flex"
-              activeProps={{
-                className:
-                  "border-violet-600 bg-violet-50 text-violet-700 dark:border-violet-500 dark:bg-violet-500/15 dark:text-violet-300",
-              }}
-            >
-              <Settings size={18} />
-            </Link>
-            <DropdownMenu
-              className="sm:hidden"
-              trigger={(props) => (
-                <button
-                  type="button"
-                  {...props}
-                  aria-haspopup="menu"
-                  aria-label="Thêm"
-                  className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-stone-300 bg-white text-stone-700 transition hover:bg-stone-50 active:bg-stone-100 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-200 dark:hover:bg-stone-800 dark:active:bg-stone-700"
-                >
-                  <MoreHorizontal size={18} />
-                </button>
-              )}
-              items={[
-                {
-                  label: "Kho cầu",
-                  icon: <Volleyball size={15} />,
-                  onSelect: () => navigate({ to: "/shuttles" }),
-                },
-                {
-                  label: "Thống kê vui",
-                  icon: <PartyPopper size={15} />,
-                  onSelect: () => navigate({ to: "/fun" }),
-                },
-                {
-                  label: "Cài đặt",
-                  icon: <Settings size={15} />,
-                  onSelect: () => navigate({ to: "/settings" }),
-                },
-              ]}
-            />
-            <Link
-              to="/help"
-              aria-label="Hướng dẫn sử dụng"
-              title="Hướng dẫn sử dụng"
-              className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-stone-300 bg-white text-stone-700 transition hover:bg-stone-50 active:bg-stone-100 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-200 dark:hover:bg-stone-800 dark:active:bg-stone-700"
-              activeProps={{
-                className:
-                  "border-violet-600 bg-violet-50 text-violet-700 dark:border-violet-500 dark:bg-violet-500/15 dark:text-violet-300",
-              }}
-            >
-              <CircleHelp size={18} />
-            </Link>
-            <ThemeToggle />
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="inline-flex h-11 items-center gap-2 rounded-md border border-stone-300 bg-surface px-2 text-sm font-medium text-stone-700 transition hover:bg-surface-muted active:bg-stone-100 dark:border-stone-700 dark:text-stone-200 dark:active:bg-stone-700 sm:px-3"
-            >
-              <LogOut size={16} />
-              <span className="hidden sm:inline">Thoát</span>
-            </button>
+            <div className="flex items-center gap-1.5 sm:gap-3">
+              <span className="hidden text-sm text-stone-600 dark:text-stone-400 sm:inline">
+                {displayName}
+              </span>
+              <Link
+                to="/shuttles"
+                aria-label="Kho cầu"
+                title="Kho cầu"
+                className="hidden h-11 w-11 shrink-0 items-center justify-center rounded-md border border-stone-300 bg-white text-stone-700 transition hover:bg-stone-50 active:bg-stone-100 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-200 dark:hover:bg-stone-800 dark:active:bg-stone-700 sm:inline-flex"
+                activeProps={{
+                  className:
+                    "border-violet-600 bg-violet-50 text-violet-700 dark:border-violet-500 dark:bg-violet-500/15 dark:text-violet-300",
+                }}
+              >
+                <Volleyball size={18} />
+              </Link>
+              <Link
+                to="/fun"
+                aria-label="Thống kê vui"
+                title="Thống kê vui"
+                className="hidden h-11 w-11 shrink-0 items-center justify-center rounded-md border border-stone-300 bg-white text-stone-700 transition hover:bg-stone-50 active:bg-stone-100 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-200 dark:hover:bg-stone-800 dark:active:bg-stone-700 sm:inline-flex"
+                activeProps={{
+                  className:
+                    "border-violet-600 bg-violet-50 text-violet-700 dark:border-violet-500 dark:bg-violet-500/15 dark:text-violet-300",
+                }}
+              >
+                <PartyPopper size={18} />
+              </Link>
+              <Link
+                to="/settings"
+                aria-label="Cài đặt"
+                title="Cài đặt"
+                className="hidden h-11 w-11 shrink-0 items-center justify-center rounded-md border border-stone-300 bg-white text-stone-700 transition hover:bg-stone-50 active:bg-stone-100 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-200 dark:hover:bg-stone-800 dark:active:bg-stone-700 sm:inline-flex"
+                activeProps={{
+                  className:
+                    "border-violet-600 bg-violet-50 text-violet-700 dark:border-violet-500 dark:bg-violet-500/15 dark:text-violet-300",
+                }}
+              >
+                <Settings size={18} />
+              </Link>
+              <DropdownMenu
+                className="sm:hidden"
+                trigger={(props) => (
+                  <button
+                    type="button"
+                    {...props}
+                    aria-haspopup="menu"
+                    aria-label="Thêm"
+                    className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-stone-300 bg-white text-stone-700 transition hover:bg-stone-50 active:bg-stone-100 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-200 dark:hover:bg-stone-800 dark:active:bg-stone-700"
+                  >
+                    <MoreHorizontal size={18} />
+                  </button>
+                )}
+                items={[
+                  {
+                    label: "Kho cầu",
+                    icon: <Volleyball size={15} />,
+                    onSelect: () => navigate({ to: "/shuttles" }),
+                  },
+                  {
+                    label: "Thống kê vui",
+                    icon: <PartyPopper size={15} />,
+                    onSelect: () => navigate({ to: "/fun" }),
+                  },
+                  {
+                    label: "Cài đặt",
+                    icon: <Settings size={15} />,
+                    onSelect: () => navigate({ to: "/settings" }),
+                  },
+                ]}
+              />
+              <Link
+                to="/help"
+                aria-label="Hướng dẫn sử dụng"
+                title="Hướng dẫn sử dụng"
+                className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-stone-300 bg-white text-stone-700 transition hover:bg-stone-50 active:bg-stone-100 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-200 dark:hover:bg-stone-800 dark:active:bg-stone-700"
+                activeProps={{
+                  className:
+                    "border-violet-600 bg-violet-50 text-violet-700 dark:border-violet-500 dark:bg-violet-500/15 dark:text-violet-300",
+                }}
+              >
+                <CircleHelp size={18} />
+              </Link>
+              <ThemeToggle />
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="inline-flex h-11 items-center gap-2 rounded-md border border-stone-300 bg-surface px-2 text-sm font-medium text-stone-700 transition hover:bg-surface-muted active:bg-stone-100 dark:border-stone-700 dark:text-stone-200 dark:active:bg-stone-700 sm:px-3"
+              >
+                <LogOut size={16} />
+                <span className="hidden sm:inline">Thoát</span>
+              </button>
+            </div>
           </div>
-        </div>
-      </header>
+        </header>
 
-      <main className="mx-auto grid w-full max-w-7xl gap-5 px-4 py-4 sm:px-5 sm:py-5 lg:grid-cols-[320px_minmax(0,1fr)]">
-        <div className="hidden lg:block">
-          <GamesSidebar />
-        </div>
-        {/* min-w-0: cot grid mac dinh no theo min-content, mot chuoi dai khong
+        <main className={MAIN_CLASS}>
+          <div className="hidden lg:block">
+            <GamesSidebar />
+          </div>
+          {/* min-w-0: cot grid mac dinh no theo min-content, mot chuoi dai khong
             ngat duoc (token, lenh CLI) se keo ca trang rong ra neu khong chan. */}
-        <section className="min-w-0">
-          <Outlet />
-        </section>
-      </main>
+          <section className="min-h-0 min-w-0">
+            <Outlet />
+          </section>
+        </main>
+      </div>
 
       <Sheet
         side="left"

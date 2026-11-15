@@ -720,6 +720,83 @@ try {
   assert.deepEqual(afterInvalidWeight.summary, weightedReloaded.summary);
   ok("invalid weighted split leaves stored game unchanged");
 
+  // 7b. Dien thoai: tab Chi vua mot man hinh, chia trang, them bang Sheet
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.evaluate(
+    async ({ id, payerId, participantIds }) => {
+      for (let n = 1; n <= 14; n += 1) {
+        await fetch(`/api/games/${id}/expenses`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            title: `Phone ${n}`,
+            amount: 10000 * n,
+            payerParticipantId: payerId,
+            splitMode: "equal",
+            splitParticipantIds: participantIds,
+          }),
+        });
+      }
+    },
+    { id: gameId, payerId: an.id, participantIds: [an.id, binh.id] },
+  );
+  await page.goto(`${BASE}/games/${gameId}`);
+  const phoneRows = page.locator("main div[style*='height: 68px']");
+  await phoneRows.first().waitFor({ state: "visible", ...WAIT });
+  const scrolls = () =>
+    page.evaluate(() => {
+      const root = document.documentElement;
+      const panes = [...document.body.querySelectorAll("*")].filter((el) => {
+        const overflowY = getComputedStyle(el).overflowY;
+        return (
+          (overflowY === "auto" || overflowY === "scroll") &&
+          el.scrollHeight > el.clientHeight + 1
+        );
+      });
+      return root.scrollHeight > innerHeight + 1 || panes.length > 0;
+    });
+  assert.equal(await scrolls(), false, "tab Chi cuon duoc tren dien thoai");
+  const firstPageTitle = await phoneRows.first().innerText();
+  assert.ok(
+    (await phoneRows.count()) < 14,
+    "danh sach khong chia trang tren dien thoai",
+  );
+  await page.getByRole("button", { name: "Trang sau" }).click();
+  assert.notEqual(await phoneRows.first().innerText(), firstPageTitle);
+  assert.equal(await scrolls(), false, "tab Chi cuon duoc o trang sau");
+  await phoneRows
+    .first()
+    .getByRole("button", { name: /^Tùy chọn / })
+    .click();
+  const moveUp = page.getByRole("button", { name: "Đưa lên", exact: true });
+  await moveUp.waitFor({ state: "visible", ...WAIT });
+  assert.ok(
+    await moveUp.isVisible(),
+    "menu dong khoan chi bi cat tren dien thoai",
+  );
+  await page.keyboard.press("Escape");
+  await moveUp.waitFor({ state: "hidden", ...WAIT });
+  await page.getByRole("button", { name: "Thêm khoản chi" }).first().click();
+  await page.fill("input[placeholder='Ăn tối']:visible", "Them tu Sheet");
+  await page.fill("input[placeholder='500.000']:visible", "45000");
+  await page.click("button[type='submit']:visible");
+  await page
+    .locator("input[placeholder='Ăn tối']:visible")
+    .waitFor({ state: "hidden", ...WAIT });
+  await page.waitForFunction(
+    (id) =>
+      fetch(`/api/games/${id}`, { credentials: "include" })
+        .then((response) => response.json())
+        .then((game) =>
+          game.expenses.some((item) => item.title === "Them tu Sheet"),
+        ),
+    gameId,
+    WAIT,
+  );
+  await page.setViewportSize({ width: 1280, height: 720 });
+  ok("phone: Chi tab fits one screen, pages the list and adds from a Sheet");
+
   // 8. Logout
   await page.click("text=Thoát");
   await page.waitForURL("**/login", WAIT);

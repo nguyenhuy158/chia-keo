@@ -91,6 +91,7 @@ function panel(
     participants?: ApiParticipant[];
     photos?: ApiPhoto[];
     pending?: boolean;
+    compact?: boolean;
     onReorder?: PanelHandlers["onReorder"];
   } = {},
 ) {
@@ -108,6 +109,7 @@ function panel(
   const onAddTransfer =
     options.onAddTransfer ||
     vi.fn<PanelHandlers["onAddTransfer"]>().mockResolvedValue({});
+  const onReorder = options.onReorder || vi.fn<PanelHandlers["onReorder"]>();
   act(() =>
     root.render(
       createElement(
@@ -118,6 +120,7 @@ function panel(
           null,
           createElement(ExpensePanel, {
             gameId: "game",
+            compact: options.compact,
             participants: options.participants ?? participants,
             expenses: options.expenses || [],
             photos: options.photos || [],
@@ -127,13 +130,20 @@ function panel(
             onRemove,
             onToggleExcluded,
             onAddTransfer,
-            onReorder: options.onReorder || vi.fn<PanelHandlers["onReorder"]>(),
+            onReorder,
           }),
         ),
       ),
     ),
   );
-  return { onAdd, onUpdate, onRemove, onToggleExcluded, onAddTransfer };
+  return {
+    onAdd,
+    onUpdate,
+    onRemove,
+    onToggleExcluded,
+    onAddTransfer,
+    onReorder,
+  };
 }
 
 function input(placeholder: string) {
@@ -1214,5 +1224,143 @@ describe("ExpensePanel", () => {
     await vi.waitFor(() =>
       expect(host.textContent).not.toContain("Đang quét..."),
     );
+  });
+});
+
+describe("ExpensePanel compact", () => {
+  function menuAction(label: string, title: string) {
+    act(() =>
+      (
+        host.querySelector(
+          `button[aria-label='Tùy chọn ${title}']`,
+        ) as HTMLButtonElement
+      ).click(),
+    );
+    const item = [...document.body.querySelectorAll("button")].find(
+      (entry) => entry.textContent?.trim() === label && !host.contains(entry),
+    ) as HTMLButtonElement;
+    act(() => item.click());
+  }
+
+  function sheetInput(placeholder: string) {
+    return document.body.querySelector(
+      `input[placeholder='${placeholder}']`,
+    ) as HTMLInputElement;
+  }
+
+  const rows = () => [
+    expense({ id: "a", title: "Tiền sân" }),
+    expense({ id: "b", title: "Cầu", amount: 60_000 }),
+    expense({ id: "c", title: "Nước", excluded: true }),
+  ];
+
+  it("hiện trạng thái trống và đếm khoản chi đang tính", () => {
+    panel({ compact: true });
+    expect(host.textContent).toContain("Chưa có khoản chi nào.");
+    expect(host.textContent).toContain("0 khoản");
+    panel({ compact: true, expenses: rows() });
+    expect(host.textContent).toContain("2 khoản");
+    expect(host.textContent).toContain("Không tính");
+  });
+
+  it("mở form trong Sheet, thêm khoản rồi đóng Sheet", async () => {
+    const { onAdd } = panel({ compact: true });
+    expect(sheetInput("Ăn tối")).toBeNull();
+    act(() =>
+      (
+        host.querySelector(
+          "button[aria-label='Thêm khoản chi']",
+        ) as HTMLButtonElement
+      ).click(),
+    );
+    type(sheetInput("Ăn tối"), "Trà đá");
+    type(sheetInput("500.000"), "30000");
+    await act(async () => {
+      document.body
+        .querySelector("form")
+        ?.dispatchEvent(
+          new Event("submit", { bubbles: true, cancelable: true }),
+        );
+    });
+    await vi.waitFor(() => expect(onAdd).toHaveBeenCalledOnce());
+    await vi.waitFor(() => expect(sheetInput("Ăn tối")).toBeNull());
+  });
+
+  it("đưa lên và đưa xuống, bỏ qua ở đầu và cuối danh sách", () => {
+    const onReorder = vi.fn<PanelHandlers["onReorder"]>();
+    panel({ compact: true, expenses: rows(), onReorder });
+    menuAction("Đưa lên", "Cầu");
+    expect(onReorder).toHaveBeenLastCalledWith(["b", "a", "c"]);
+    menuAction("Đưa xuống", "Tiền sân");
+    expect(onReorder).toHaveBeenLastCalledWith(["b", "a", "c"]);
+    onReorder.mockClear();
+    menuAction("Đưa lên", "Tiền sân");
+    menuAction("Đưa xuống", "Nước");
+    expect(onReorder).not.toHaveBeenCalled();
+  });
+
+  it("sửa khoản trong Sheet và hủy sửa khi đóng", async () => {
+    panel({ compact: true, expenses: rows() });
+    menuAction("Sửa", "Tiền sân");
+    expect(document.body.textContent).toContain("Sửa khoản chi");
+    expect(sheetInput("Ăn tối").value).toBe("Tiền sân");
+    act(() => {
+      document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+    });
+    await vi.waitFor(() => expect(sheetInput("Ăn tối")).toBeNull());
+  });
+
+  it("bỏ tính, xóa và mở ảnh từ dòng khoản chi", () => {
+    const { onToggleExcluded, onRemove } = panel({
+      compact: true,
+      expenses: [
+        ...rows(),
+        expense({ id: "d", title: "Thu", kind: "income", amount: 20_000 }),
+        expense({ id: "e", title: "Lạ", payerParticipantId: "ghost" }),
+      ],
+      photos: [
+        {
+          id: "p1",
+          expenseId: "a",
+          mimeType: "image/png",
+          thumbData: "x",
+        } as ApiPhoto,
+      ],
+    });
+    menuAction("Bỏ tính", "Tiền sân");
+    expect(onToggleExcluded).toHaveBeenCalledWith("a", true);
+    menuAction("Tính lại", "Nước");
+    expect(onToggleExcluded).toHaveBeenCalledWith("c", false);
+    menuAction("Xóa", "Cầu");
+    expect(onRemove).toHaveBeenCalledWith("b");
+    expect(host.textContent).toContain("+20.000");
+    expect(host.textContent).toContain("Không rõ trả");
+    act(() =>
+      (
+        host.querySelector(
+          "button[aria-label='Xem ảnh của Tiền sân']",
+        ) as HTMLButtonElement
+      ).click(),
+    );
+    expect(photoViewerOpen).toHaveBeenCalledWith(0);
+  });
+
+  it("đóng Sheet tùy chọn bằng phím Escape mà không đổi gì", async () => {
+    const { onRemove } = panel({ compact: true, expenses: rows() });
+    act(() =>
+      (
+        host.querySelector(
+          "button[aria-label='Tùy chọn Cầu']",
+        ) as HTMLButtonElement
+      ).click(),
+    );
+    expect(document.body.textContent).toContain("Đưa xuống");
+    act(() => {
+      document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+    });
+    await vi.waitFor(() =>
+      expect(document.body.textContent).not.toContain("Đưa xuống"),
+    );
+    expect(onRemove).not.toHaveBeenCalled();
   });
 });

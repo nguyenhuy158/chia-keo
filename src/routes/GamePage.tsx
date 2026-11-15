@@ -238,25 +238,27 @@ export function GamePage() {
 
   const photos = photosQuery.data || [];
 
-  const expensePanel = (
-    <ExpensePanel
-      gameId={game.id}
-      participants={game.participants}
-      expenses={game.expenses}
-      photos={photos}
-      pending={addExpense.isPending || updateExpense.isPending}
-      onAdd={(input) => addExpense.mutateAsync(input)}
-      onUpdate={(expenseId, input) =>
-        updateExpense.mutateAsync({ expenseId, input })
-      }
-      onRemove={handleRemoveExpense}
-      onToggleExcluded={(expenseId, excluded) =>
-        setExpenseExcluded.mutate({ expenseId, excluded })
-      }
-      onAddTransfer={(input) => addTransfer.mutateAsync(input)}
-      onReorder={(expenseIds) => reorderExpenses.mutate(expenseIds)}
-    />
-  );
+  const expensePanelProps = {
+    gameId: game.id,
+    participants: game.participants,
+    expenses: game.expenses,
+    photos,
+    pending: addExpense.isPending || updateExpense.isPending,
+    onAdd: (input: Parameters<typeof addExpense.mutateAsync>[0]) =>
+      addExpense.mutateAsync(input),
+    onUpdate: (
+      expenseId: string,
+      input: Parameters<typeof updateExpense.mutateAsync>[0]["input"],
+    ) => updateExpense.mutateAsync({ expenseId, input }),
+    onRemove: handleRemoveExpense,
+    onToggleExcluded: (expenseId: string, excluded: boolean) =>
+      setExpenseExcluded.mutate({ expenseId, excluded }),
+    onAddTransfer: (input: Parameters<typeof addTransfer.mutateAsync>[0]) =>
+      addTransfer.mutateAsync(input),
+    onReorder: (expenseIds: string[]) => reorderExpenses.mutate(expenseIds),
+  };
+  const expensePanel = <ExpensePanel {...expensePanelProps} />;
+  const compactExpensePanel = <ExpensePanel {...expensePanelProps} compact />;
 
   const photoPanel = (
     <PhotoPanel
@@ -528,8 +530,11 @@ export function GamePage() {
   );
 
   return (
-    <>
-      <div className="mb-5 flex items-center justify-between gap-3 rounded-lg border border-border bg-surface p-4 shadow-sm">
+    <div
+      data-one-screen
+      className="flex h-full min-h-0 flex-col lg:block lg:h-auto"
+    >
+      <div className="mb-2 flex shrink-0 items-center justify-between gap-3 rounded-lg border border-border bg-surface p-2 shadow-sm lg:mb-5 lg:p-4">
         <div className="min-w-0">
           <p className="text-sm font-medium text-violet-600 dark:text-violet-400">
             {game.code}
@@ -647,58 +652,68 @@ export function GamePage() {
         </div>
       </div>
 
-      {/* Mobile layout: mot phan mot man hinh, dieu huong bang bottom nav. */}
-      <div className="space-y-5 pb-28 lg:hidden">
-        {activeSection === "people" && participantPanel}
-        {activeSection === "expenses" && expensePanel}
-        {activeSection === "summary" && dashboard}
-        {activeSection === "summary" && summaryImageCard}
-        {activeSection === "summary" && collaboratorsPanel}
-        {activeSection === "more" && (
-          <div className="space-y-4">
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => setMoreTab("photos")}
-                className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition ${
-                  moreTab === "photos"
-                    ? "bg-primary text-white"
-                    : "border border-stone-300 text-stone-600 dark:border-stone-700 dark:text-stone-300"
-                }`}
-              >
-                <Images size={14} className="mr-1 inline" />
-                Ảnh
-              </button>
-              <button
-                type="button"
-                onClick={() => setMoreTab("history")}
-                className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition ${
-                  moreTab === "history"
-                    ? "bg-primary text-white"
-                    : "border border-stone-300 text-stone-600 dark:border-stone-700 dark:text-stone-300"
-                }`}
-              >
-                Lịch sử
-              </button>
+      {/* Mobile layout: mot phan mot man hinh, dieu huong bang bottom nav.
+          Tab da gon (Chi) tu chia trang, khong cuon; cac tab con lai tam thoi
+          cuon trong khung cho toi khi doi xong (chiakeo#76). */}
+      <div className="flex min-h-0 flex-1 flex-col lg:hidden">
+        <div
+          className={`min-h-0 flex-1 space-y-3 ${
+            activeSection === "expenses"
+              ? "overflow-hidden"
+              : "overflow-y-auto pb-20"
+          }`}
+        >
+          {activeSection === "people" && participantPanel}
+          {activeSection === "expenses" && compactExpensePanel}
+          {activeSection === "summary" && dashboard}
+          {activeSection === "summary" && summaryImageCard}
+          {activeSection === "summary" && collaboratorsPanel}
+          {activeSection === "more" && (
+            <div className="space-y-4">
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setMoreTab("photos")}
+                  className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition ${
+                    moreTab === "photos"
+                      ? "bg-primary text-white"
+                      : "border border-stone-300 text-stone-600 dark:border-stone-700 dark:text-stone-300"
+                  }`}
+                >
+                  <Images size={14} className="mr-1 inline" />
+                  Ảnh
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMoreTab("history")}
+                  className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition ${
+                    moreTab === "history"
+                      ? "bg-primary text-white"
+                      : "border border-stone-300 text-stone-600 dark:border-stone-700 dark:text-stone-300"
+                  }`}
+                >
+                  Lịch sử
+                </button>
+              </div>
+              {moreTab === "photos" && photoPanel}
+              {moreTab === "history" && <HistoryPanel gameId={game.id} />}
             </div>
-            {moreTab === "photos" && photoPanel}
-            {moreTab === "history" && <HistoryPanel gameId={game.id} />}
-          </div>
-        )}
-        {activeSection === "summary" && (
-          <div className="flex flex-col gap-2 rounded-lg border border-border bg-surface p-3 shadow-sm [&>button]:w-full">
-            {copyAction}
-            {emailAction}
-          </div>
-        )}
-      </div>
+          )}
+          {activeSection === "summary" && (
+            <div className="flex flex-col gap-2 rounded-lg border border-border bg-surface p-3 shadow-sm [&>button]:w-full">
+              {copyAction}
+              {emailAction}
+            </div>
+          )}
+        </div>
 
-      {/* Tab anh (trong Khac) co nut them anh rieng nen khong hien FAB khoan chi. */}
-      {activeSection !== "expenses" &&
-        !(activeSection === "more" && moreTab === "photos") && (
-          <ExpenseFab onClick={() => setActiveSection("expenses")} />
-        )}
-      <MobileGameNav active={activeSection} onChange={setActiveSection} />
+        {/* Tab anh (trong Khac) co nut them anh rieng nen khong hien FAB khoan chi. */}
+        {activeSection !== "expenses" &&
+          !(activeSection === "more" && moreTab === "photos") && (
+            <ExpenseFab onClick={() => setActiveSection("expenses")} />
+          )}
+        <MobileGameNav active={activeSection} onChange={setActiveSection} />
+      </div>
 
       <Sheet
         open={actionsOpen}
@@ -713,6 +728,6 @@ export function GamePage() {
           {deleteAction}
         </div>
       </Sheet>
-    </>
+    </div>
   );
 }
