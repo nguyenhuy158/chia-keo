@@ -103,7 +103,7 @@ How this repo fits with the other `*.huyab.cfd` apps:
 - Talks to: `sso` (auth.huyab.cfd: `huyab_sso` JWT verified against its
   JWKS) and `mailer` (`MAILER` service binding, `POST /send`).
 - Called by: `chia-keo-ios` (same API with the SSO JWT), Claude MCP clients
-  (`/api/mcp`), and `mytools` (uptime ping).
+  (`/api/mcp`), and `huyabhome` (uptime ping).
 
 ## Build, Test, and Development Commands
 
