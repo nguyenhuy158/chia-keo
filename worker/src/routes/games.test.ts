@@ -123,6 +123,15 @@ describe("gamesRouter", () => {
     expect(await report.text()).toContain("Tổng chi,,0");
   });
 
+  it("không nuốt lỗi lạ khi tải CSV", async () => {
+    vi.spyOn(fake.repo.games, "listByOwner").mockRejectedValue(
+      new Error("db down"),
+    );
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const report = await request("GET", "/games/closed/report?month=2026-08");
+    expect(report.status).toBe(500);
+  });
+
   it("chuyển vào thùng rác, khôi phục và xóa hẳn", async () => {
     const removed = await request("DELETE", `/games/${FAKE_GAME_ID}`);
     expect(removed.status).toBe(200);
