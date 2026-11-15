@@ -113,6 +113,14 @@ describe("thanh toan qua link share", () => {
     });
   });
 
+  it("cuoc da dong thi tat thanh toan, khong goi y", async () => {
+    const game = env.fake.state.games[0];
+    game.closedAt = "2026-08-02T00:00:00.000Z";
+    game.closeMode = "manual";
+    const options = await getPaymentOptions(env.context, TOKEN);
+    expect(options).toEqual({ receiver: null, options: [] });
+  });
+
   it("bao khi tai khoan nguoi nhan chua lien ket SePay", async () => {
     env.context.bankFeed.listAccountNumbers = async () => ["0000"];
     const options = await getPaymentOptions(env.context, TOKEN);
