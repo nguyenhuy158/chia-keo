@@ -47,7 +47,9 @@ import {
   listContacts,
   updateContact,
 } from "../core/application/contacts";
+import { InvalidInputError } from "../core/application/errors";
 import { listGameEvents, undoGameEvent } from "../core/application/game-events";
+import { getClosedMonthCsv } from "../core/application/monthly-report";
 import {
   addParticipant,
   addParticipants,
@@ -126,6 +128,20 @@ gamesRouter.post("/games", async (c) => {
 gamesRouter.get("/games/closed", (c) =>
   respond(c, () => listClosedGames(c.get("repo"), c.get("userId"))),
 );
+
+gamesRouter.get("/games/closed/report", async (c) => {
+  const month = c.req.query("month") ?? "";
+  try {
+    const csv = await getClosedMonthCsv(c.get("repo"), c.get("userId"), month);
+    return c.body(csv, 200, {
+      "Content-Type": "text/csv; charset=utf-8",
+      "Content-Disposition": `attachment; filename="chiakeo-${month}.csv"`,
+    });
+  } catch (error) {
+    if (error instanceof InvalidInputError) return invalidInput(c);
+    throw error;
+  }
+});
 
 gamesRouter.get("/games/trash", (c) =>
   respond(c, () => listDeletedGames(c.get("repo"), c.get("userId"))),

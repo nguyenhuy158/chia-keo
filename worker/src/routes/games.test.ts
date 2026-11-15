@@ -108,6 +108,21 @@ describe("gamesRouter", () => {
     ).toBeGreaterThan(0);
   });
 
+  it("tải CSV tổng kết tháng của cuộc đã đóng", async () => {
+    expect((await request("GET", "/games/closed/report")).status).toBe(400);
+    expect(
+      (await request("GET", "/games/closed/report?month=2026-13")).status,
+    ).toBe(400);
+
+    const report = await request("GET", "/games/closed/report?month=2026-08");
+    expect(report.status).toBe(200);
+    expect(report.headers.get("content-type")).toContain("text/csv");
+    expect(report.headers.get("content-disposition")).toBe(
+      'attachment; filename="chiakeo-2026-08.csv"',
+    );
+    expect(await report.text()).toContain("Tổng chi,,0");
+  });
+
   it("chuyển vào thùng rác, khôi phục và xóa hẳn", async () => {
     const removed = await request("DELETE", `/games/${FAKE_GAME_ID}`);
     expect(removed.status).toBe(200);
