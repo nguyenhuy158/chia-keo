@@ -2,6 +2,7 @@ import { type ReactNode, useId } from "react";
 import { createPortal } from "react-dom";
 import { cn } from "./cn";
 import { useOverlay } from "./use-overlay";
+import { motion, usePresence } from "./use-presence";
 
 export type SheetProps = {
   open: boolean;
@@ -12,18 +13,23 @@ export type SheetProps = {
   children?: ReactNode;
 };
 
+const SHEET_EXIT_MS = 180;
+
 const SIDE = {
   bottom: {
     position: "inset-x-0 bottom-0 max-h-[85dvh] w-full rounded-t-2xl",
     animation: "ui-slide-up 220ms cubic-bezier(0.32, 0.72, 0, 1)",
+    exit: "ui-sheet-out-bottom 180ms ease-in",
   },
   left: {
     position: "inset-y-0 left-0 h-full w-[85%] max-w-xs",
     animation: "ui-slide-in-left 220ms cubic-bezier(0.32, 0.72, 0, 1)",
+    exit: "ui-sheet-out-left 180ms ease-in",
   },
   right: {
     position: "inset-y-0 right-0 h-full w-[85%] max-w-xs",
     animation: "ui-slide-in-right 220ms cubic-bezier(0.32, 0.72, 0, 1)",
+    exit: "ui-sheet-out-right 180ms ease-in",
   },
 };
 
@@ -37,13 +43,20 @@ export function Sheet({
 }: SheetProps) {
   const ref = useOverlay(open, onClose);
   const titleId = useId();
+  const { mounted, closing } = usePresence(open, SHEET_EXIT_MS);
 
-  if (!open) return null;
+  if (!mounted) return null;
 
   return createPortal(
     <div
-      className="fixed inset-0 z-50"
-      style={{ animation: "ui-fade-in 150ms ease-out" }}
+      className={cn("fixed inset-0 z-50", closing && "pointer-events-none")}
+      style={{
+        animation: motion(
+          closing,
+          "ui-fade-in 150ms ease-out",
+          "ui-fade-out 180ms ease-in",
+        ),
+      }}
     >
       <div
         aria-hidden="true"
@@ -57,7 +70,9 @@ export function Sheet({
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
-        style={{ animation: SIDE[side].animation }}
+        style={{
+          animation: motion(closing, SIDE[side].animation, SIDE[side].exit),
+        }}
         className={cn(
           "absolute flex flex-col bg-surface shadow-xl outline-none",
           SIDE[side].position,

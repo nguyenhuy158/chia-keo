@@ -1,5 +1,6 @@
 import { type ReactNode, useId, useState } from "react";
 import { cn } from "./cn";
+import { motion, usePresence } from "./use-presence";
 
 export type TooltipProps = {
   label: string;
@@ -28,6 +29,7 @@ export function Tooltip({
 }: TooltipProps) {
   const [open, setOpen] = useState(false);
   const id = useId();
+  const { mounted, closing } = usePresence(open);
 
   return (
     // biome-ignore lint/a11y/noStaticElementInteractions: hover and focus listeners only toggle the hint
@@ -41,11 +43,17 @@ export function Tooltip({
       {/* aria-describedby tren the boc: screen reader doc them chu goi y sau noi dung. */}
       <span aria-describedby={open ? id : undefined}>{children}</span>
 
-      {open && (
+      {mounted && (
         <span
           id={id}
           role="tooltip"
-          style={{ animation: "ui-slide-down 120ms ease-out" }}
+          style={{
+            animation: motion(
+              closing,
+              "ui-slide-down 120ms ease-out",
+              "ui-slide-down-out 120ms ease-in",
+            ),
+          }}
           className={cn(
             "pointer-events-none absolute left-1/2 z-50 -translate-x-1/2 whitespace-nowrap",
             "rounded-md bg-fg px-2 py-1 text-xs font-medium text-bg shadow-lg",

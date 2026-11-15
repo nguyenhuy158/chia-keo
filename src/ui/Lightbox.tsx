@@ -3,6 +3,7 @@ import { type ReactNode, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { cn } from "./cn";
 import { useOverlay } from "./use-overlay";
+import { motion, usePresence } from "./use-presence";
 
 const SWIPE_THRESHOLD_PX = 48;
 
@@ -58,6 +59,7 @@ export function Lightbox({
   footer,
 }: LightboxProps) {
   const ref = useOverlay(open, onClose);
+  const { mounted, closing } = usePresence(open);
   const touchStartX = useRef<number | null>(null);
   const navigation = useRef({ onPrev, onNext });
   navigation.current = { onPrev, onNext };
@@ -72,7 +74,7 @@ export function Lightbox({
     return () => window.removeEventListener("keydown", handleKey);
   }, [open]);
 
-  if (!open) return null;
+  if (!mounted) return null;
 
   function handleTouchEnd(endX: number) {
     const startX = touchStartX.current;
@@ -90,8 +92,17 @@ export function Lightbox({
       aria-modal="true"
       aria-label={alt}
       tabIndex={-1}
-      style={{ animation: "ui-fade-in 150ms ease-out" }}
-      className="fixed inset-0 z-50 flex flex-col bg-black text-white outline-none"
+      style={{
+        animation: motion(
+          closing,
+          "ui-fade-in 150ms ease-out",
+          "ui-fade-out 150ms ease-in",
+        ),
+      }}
+      className={cn(
+        "fixed inset-0 z-50 flex flex-col bg-black text-white outline-none",
+        closing && "pointer-events-none",
+      )}
     >
       <div className="safe-top flex shrink-0 items-center justify-between gap-2 px-2 py-2">
         <LightboxButton label="Đóng" onClick={onClose}>

@@ -141,6 +141,9 @@ describe("SharePaymentPanel", () => {
     act(() =>
       document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" })),
     );
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 200));
+    });
     expect(document.querySelector('[role="dialog"]')).toBeNull();
   });
 

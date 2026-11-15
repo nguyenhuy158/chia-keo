@@ -1,6 +1,8 @@
 import type { ReactNode } from "react";
 import { createPortal } from "react-dom";
+import { cn } from "./cn";
 import { Spinner } from "./Spinner";
+import { motion, usePresence } from "./use-presence";
 
 export type BackdropProps = {
   open: boolean;
@@ -12,7 +14,9 @@ export type BackdropProps = {
 
 /** Lop mo phu toan man hinh, chan thao tac trong luc cho. */
 export function Backdrop({ open, onClose, children }: BackdropProps) {
-  if (!open) return null;
+  const { mounted, closing } = usePresence(open);
+
+  if (!mounted) return null;
 
   return createPortal(
     // biome-ignore lint/a11y/noStaticElementInteractions: pointer-only dismiss, the host owns keyboard handling
@@ -20,8 +24,17 @@ export function Backdrop({ open, onClose, children }: BackdropProps) {
     <div
       aria-busy="true"
       onClick={onClose}
-      style={{ animation: "ui-fade-in 150ms ease-out" }}
-      className="fixed inset-0 z-[70] grid place-items-center bg-black/50 text-white backdrop-blur-sm"
+      style={{
+        animation: motion(
+          closing,
+          "ui-fade-in 150ms ease-out",
+          "ui-fade-out 150ms ease-in",
+        ),
+      }}
+      className={cn(
+        "fixed inset-0 z-[70] grid place-items-center bg-black/50 text-white pointer-fine:backdrop-blur-sm",
+        closing && "pointer-events-none",
+      )}
     >
       {children ?? (
         <div className="flex flex-col items-center gap-3">

@@ -9,6 +9,7 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import { cn } from "./cn";
+import { EXIT_MS, motion } from "./use-presence";
 
 export type ToastTone = "info" | "success" | "warning" | "error";
 
@@ -17,6 +18,7 @@ type Toast = {
   tone: ToastTone;
   message: string;
   description?: string;
+  closing?: boolean;
 };
 
 type ToastOptions = { description?: string; duration?: number };
@@ -57,7 +59,14 @@ export function ToastProvider({
   const nextId = useRef(1);
 
   const dismiss = useCallback((id: number) => {
-    setToasts((list) => list.filter((toast) => toast.id !== id));
+    setToasts((list) =>
+      list.map((toast) =>
+        toast.id === id ? { ...toast, closing: true } : toast,
+      ),
+    );
+    window.setTimeout(() => {
+      setToasts((list) => list.filter((toast) => toast.id !== id));
+    }, EXIT_MS);
   }, []);
 
   const show = useCallback(
@@ -103,7 +112,13 @@ export function ToastProvider({
               key={toast.id}
               type="button"
               onClick={() => dismiss(toast.id)}
-              style={{ animation: "ui-slide-up 200ms ease-out" }}
+              style={{
+                animation: motion(
+                  toast.closing === true,
+                  "ui-slide-up 200ms ease-out",
+                  "ui-slide-up-out 150ms ease-in",
+                ),
+              }}
               className={cn(
                 "pointer-events-auto w-full max-w-sm rounded-ui border px-4 py-3 text-left shadow-lg",
                 TONE[toast.tone],

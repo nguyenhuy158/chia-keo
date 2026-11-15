@@ -11,6 +11,7 @@ export function Spinner({ size = 16, className, label }: SpinnerProps) {
   return (
     <span
       role="status"
+      data-keep-motion=""
       aria-label={label ?? "Đang tải"}
       style={{
         width: size,

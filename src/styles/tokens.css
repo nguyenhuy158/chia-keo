@@ -150,6 +150,7 @@ textarea {
   a,
   [role="button"] {
     touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
   }
 }
 
@@ -196,6 +197,71 @@ textarea {
   }
 }
 
+@keyframes ui-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes ui-zoom-out {
+  to {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}
+
+@keyframes ui-slide-down-out {
+  to {
+    opacity: 0;
+    transform: translateY(-0.5rem);
+  }
+}
+
+@keyframes ui-slide-up-out {
+  to {
+    opacity: 0;
+    transform: translateY(0.5rem);
+  }
+}
+
+@keyframes ui-sheet-out-bottom {
+  to {
+    transform: translateY(100%);
+  }
+}
+
+@keyframes ui-sheet-out-left {
+  to {
+    transform: translateX(-100%);
+  }
+}
+
+@keyframes ui-sheet-out-right {
+  to {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes ui-expand {
+  from {
+    grid-template-rows: 0fr;
+    opacity: 0;
+  }
+  to {
+    grid-template-rows: 1fr;
+  }
+}
+
+@keyframes ui-collapse {
+  from {
+    grid-template-rows: 1fr;
+  }
+  to {
+    grid-template-rows: 0fr;
+    opacity: 0;
+  }
+}
+
 @keyframes ui-spin {
   to {
     transform: rotate(360deg);
@@ -228,9 +294,9 @@ textarea {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
+  *:not([data-keep-motion]),
+  *:not([data-keep-motion])::before,
+  *:not([data-keep-motion])::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
