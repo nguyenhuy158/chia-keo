@@ -38,3 +38,23 @@ yarn-error.log*
 
 # Anh chup luc E2E that bai
 e2e-failure.png
+
+# Environment / secrets
+!.env.example
+
+# More build and test output
+.eslintcache
+.turbo/
+.vite/
+.cache/
+playwright-report/
+test-results/
+
+# OS and editor files
+Thumbs.db
+*.swp
+*~
+
+# Claude Code local files
+.claude/settings.local.json
+CLAUDE.local.md
