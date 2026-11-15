@@ -57,4 +57,20 @@ describe("renderExpenseXlsx", () => {
     expect(sheet?.getCell("D4").value).toMatchObject({ result: 100 });
     expect(sheet?.getCell("F4").value).toBe(true);
   });
+
+  it("writes values instead of formulas for uneven splits", async () => {
+    const blob = await renderExpenseXlsx(
+      {
+        participants: people,
+        expenses: [{ ...expense, splitMode: "amount" }],
+        summary: { totalExpense: 200, settlements: [], balances: [] },
+      },
+      "",
+    );
+    const workbook = new Workbook();
+    await workbook.xlsx.load(await blob.arrayBuffer());
+    const sheet = workbook.getWorksheet("Chia kèo");
+    expect(sheet?.getCell("C4").value).toBe(2);
+    expect(sheet?.getCell("D4").value).toBe(100);
+  });
 });

@@ -74,6 +74,15 @@ describe("buildExpenseSheetModel", () => {
     expect(model.rows).toHaveLength(1);
   });
 
+  it("gives an expense with nobody in the split a share of 0", () => {
+    const model = buildExpenseSheetModel({
+      participants: people,
+      summary,
+      expenses: [expense("1", 90, [])],
+    });
+    expect(model.rows[0]).toMatchObject({ count: 0, perPerson: 0 });
+  });
+
   it("reads paid and owed per person, 0 when missing", () => {
     const model = buildExpenseSheetModel({
       participants: people,

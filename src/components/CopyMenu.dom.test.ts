@@ -8,6 +8,7 @@ const {
   copyText,
   downloadBlob,
   renderSummaryImage,
+  renderExpenseXlsx,
   chooseBackground,
   success,
   error,
@@ -17,6 +18,7 @@ const {
   copyText: vi.fn(),
   downloadBlob: vi.fn(),
   renderSummaryImage: vi.fn(),
+  renderExpenseXlsx: vi.fn(),
   chooseBackground: vi.fn(),
   success: vi.fn(),
   error: vi.fn(),
@@ -37,6 +39,7 @@ vi.mock("../adapters/browser/summary-image", () => ({
   buildSummaryImageFileName: (_input: unknown, variant = "compact") =>
     `${variant}.png`,
 }));
+vi.mock("../adapters/browser/expense-xlsx", () => ({ renderExpenseXlsx }));
 vi.mock("./use-summary-image-background", () => ({
   useSummaryImageBackground: () => ["plain", chooseBackground],
 }));
@@ -100,6 +103,7 @@ beforeEach(() => {
   copyText.mockReset().mockResolvedValue(true);
   downloadBlob.mockReset();
   renderSummaryImage.mockReset().mockResolvedValue(new Blob(["png"]));
+  renderExpenseXlsx.mockReset().mockResolvedValue(new Blob(["xlsx"]));
   chooseBackground.mockReset();
   success.mockReset();
   error.mockReset();
@@ -240,5 +244,17 @@ describe("CopyMenu", () => {
     open();
     await act(async () => item("Lưu ảnh về máy").click());
     expect(error).toHaveBeenCalledTimes(2);
+  });
+
+  it("downloads the Excel file and reports a failure", async () => {
+    render();
+    open();
+    await act(async () => item("Tải Excel").click());
+    expect(downloadBlob).toHaveBeenCalledWith(expect.any(Blob), "cau.xlsx");
+    expect(success).toHaveBeenCalledWith("Đã tải file Excel");
+    renderExpenseXlsx.mockRejectedValue(new Error("xlsx failed"));
+    open();
+    await act(async () => item("Tải Excel").click());
+    expect(error).toHaveBeenCalledWith("Không tạo được file Excel");
   });
 });
