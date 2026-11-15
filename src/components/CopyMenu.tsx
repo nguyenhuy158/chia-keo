@@ -3,6 +3,7 @@ import {
   ChevronDown,
   Copy,
   Download,
+  FileSpreadsheet,
   Image as ImageIcon,
   Images,
   Link as LinkIcon,
@@ -12,6 +13,7 @@ import {
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { toast } from "sonner";
+import { buildExpenseSheetFileName } from "../../shared/expense-sheet";
 import {
   buildSummaryText,
   type SummaryTextInput,
@@ -22,6 +24,7 @@ import {
   copyText,
   downloadBlob,
 } from "../adapters/browser/clipboard";
+import { renderExpenseXlsx } from "../adapters/browser/expense-xlsx";
 import {
   buildSummaryImageFileName,
   renderSummaryImage,
@@ -161,6 +164,18 @@ export function CopyMenu({ input, className, onShare }: CopyMenuProps) {
     }
   }
 
+  async function saveExcel() {
+    try {
+      downloadBlob(
+        await renderExpenseXlsx(input, input.name),
+        buildExpenseSheetFileName(input.name, input.code),
+      );
+      toast.success("Đã tải file Excel");
+    } catch {
+      toast.error("Không tạo được file Excel");
+    }
+  }
+
   const actions: MenuAction[] = [
     {
       id: "text",
@@ -196,6 +211,13 @@ export function CopyMenu({ input, className, onShare }: CopyMenuProps) {
       hint: "Tải file PNG",
       icon: Download,
       run: saveSummaryImage,
+    },
+    {
+      id: "excel",
+      label: "Tải Excel",
+      hint: "File .xlsx giống bảng tính tiền",
+      icon: FileSpreadsheet,
+      run: saveExcel,
     },
   ];
 
