@@ -1,5 +1,15 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Check, ChevronDown, ChevronUp, Pencil, Plus, Trash2, Users, X } from "lucide-react";
+import {
+  Check,
+  ChevronDown,
+  ChevronUp,
+  Landmark,
+  Pencil,
+  Plus,
+  Trash2,
+  Users,
+  X,
+} from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -51,6 +61,8 @@ export function ParticipantPanel({
 }: ParticipantPanelProps) {
   const confirm = useConfirm();
   const [editingParticipantId, setEditingParticipantId] = useState<string | null>(null);
+  const [showBank, setShowBank] = useState(false);
+  const bankVisible = Boolean(editingParticipantId) || showBank;
   const form = useForm<ParticipantFormValues>({
     resolver: zodResolver(participantFormSchema),
     defaultValues: emptyForm,
@@ -87,6 +99,7 @@ export function ParticipantPanel({
     try {
       await onAdd(values);
       form.reset(emptyForm);
+      setShowBank(false);
       toast.success("Đã thêm người tham gia");
     } catch {
       toast.error("Không lưu được");
@@ -131,21 +144,49 @@ export function ParticipantPanel({
       )}
 
       <form onSubmit={editingParticipantId ? handleSaveEdit : handleAdd} className="grid gap-3 md:grid-cols-2">
-        <Field label="Tên" error={form.formState.errors.name?.message}>
-          <input {...form.register("name")} className="field" placeholder="Huy" />
-        </Field>
-        <Field label="Ngân hàng">
-          <BankSelect
-            value={form.watch("bankId")}
-            onChange={(bankId) => form.setValue("bankId", bankId)}
-          />
-        </Field>
-        <Field label="Số tài khoản">
-          <input {...form.register("accountNo")} className="field" placeholder="0123456789" />
-        </Field>
-        <Field label="Tên chủ tài khoản">
-          <input {...form.register("accountName")} className="field" placeholder="NGUYEN VAN A" />
-        </Field>
+        <div className={bankVisible ? "" : "md:col-span-2"}>
+          <Field label="Tên" error={form.formState.errors.name?.message}>
+            <input {...form.register("name")} className="field" placeholder="Huy" />
+          </Field>
+        </div>
+        {!editingParticipantId && (
+          <button
+            type="button"
+            onClick={() => setShowBank((current) => !current)}
+            aria-expanded={showBank}
+            className="flex min-h-11 w-full items-center gap-2 text-left text-sm font-medium text-violet-700 dark:text-violet-300 md:col-span-2"
+          >
+            <Landmark size={15} className="shrink-0" />
+            <span className="min-w-0 flex-1">
+              Tài khoản nhận tiền{" "}
+              <span className="font-normal text-fg-muted">(không bắt buộc, để có QR)</span>
+            </span>
+            <ChevronDown
+              size={15}
+              className={`shrink-0 transition ${showBank ? "rotate-180" : ""}`}
+            />
+          </button>
+        )}
+        {bankVisible && (
+          <>
+            <Field label="Ngân hàng">
+              <BankSelect
+                value={form.watch("bankId")}
+                onChange={(bankId) => form.setValue("bankId", bankId)}
+              />
+            </Field>
+            <Field label="Số tài khoản">
+              <input {...form.register("accountNo")} className="field" placeholder="0123456789" />
+            </Field>
+            <Field label="Tên chủ tài khoản">
+              <input
+                {...form.register("accountName")}
+                className="field"
+                placeholder="NGUYEN VAN A"
+              />
+            </Field>
+          </>
+        )}
         <div className="md:col-span-2">
           <button
             type="submit"

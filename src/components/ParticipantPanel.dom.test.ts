@@ -51,6 +51,12 @@ function button(label: string) {
   ) as HTMLButtonElement | undefined;
 }
 
+function bankToggle() {
+  return [...host.querySelectorAll("button")].find((item) =>
+    item.textContent?.includes("Tài khoản nhận tiền"),
+  ) as HTMLButtonElement | undefined;
+}
+
 function field(label: string) {
   return [...host.querySelectorAll("label")]
     .find((item) => item.querySelector("span")?.textContent?.includes(label))
@@ -104,6 +110,10 @@ describe("ParticipantPanel", () => {
     expect(host.textContent).toContain("Nhập tên người tham gia");
     expect(onAdd).not.toHaveBeenCalled();
     fill("Tên", "  An  ");
+    expect(host.querySelector('input[placeholder="0123456789"]')).toBeNull();
+    expect(bankToggle()?.getAttribute("aria-expanded")).toBe("false");
+    act(() => bankToggle()?.click());
+    expect(bankToggle()?.getAttribute("aria-expanded")).toBe("true");
     act(() =>
       (
         host.querySelector('[aria-haspopup="listbox"]') as HTMLButtonElement
@@ -124,6 +134,15 @@ describe("ParticipantPanel", () => {
     });
     expect(success).toHaveBeenCalledWith("Đã thêm người tham gia");
     expect(field("Tên").value).toBe("");
+    expect(host.querySelector('input[placeholder="0123456789"]')).toBeNull();
+  });
+
+  it("shows the bank fields while editing even when the section is folded", () => {
+    render([person("An", "MB", "12345678")]);
+    expect(host.querySelector('input[placeholder="0123456789"]')).toBeNull();
+    act(() => button("Sửa An")?.click());
+    expect(host.querySelector('input[placeholder="0123456789"]')).not.toBeNull();
+    expect(bankToggle()).toBeUndefined();
   });
 
   it("reports add and update errors", async () => {

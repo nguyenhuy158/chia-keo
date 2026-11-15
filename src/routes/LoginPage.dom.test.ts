@@ -1,4 +1,4 @@
-import { act, createElement } from "react";
+import { act, createElement, type ReactNode } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -11,7 +11,11 @@ vi.mock("../adapters/react-query/session-query", () => ({
   useAppSession: () => ({ user: state.user, isPending: state.loading }),
 }));
 vi.mock("../adapters/browser/sso", () => ({ ssoLoginUrl }));
-vi.mock("@tanstack/react-router", () => ({ Navigate: () => "home redirect" }));
+vi.mock("@tanstack/react-router", () => ({
+  Navigate: () => "home redirect",
+  Link: ({ to, children }: { to: string; children: ReactNode }) =>
+    createElement("a", { href: to }, children),
+}));
 vi.mock("../components/theme", () => ({ ThemeToggle: () => "theme toggle" }));
 vi.mock("../components/brand", () => ({ BrandMark: () => "brand mark" }));
 vi.mock("../components/ui", () => ({ LoadingState: () => "loading session" }));
@@ -66,5 +70,11 @@ describe("LoginPage", () => {
     expect(fakeWindow.location.href).toBe("https://sso.example/login");
     expect(button.disabled).toBe(true);
     expect(button.textContent).toContain("Đang chuyển...");
+  });
+
+  it("links to the usage guide without requiring a login", () => {
+    render();
+    const link = host.querySelector('a[href="/help"]');
+    expect(link?.textContent).toBe("Xem hướng dẫn");
   });
 });

@@ -60,7 +60,8 @@ try {
   await page.waitForURL("**/login", WAIT);
   await page.getByRole("heading", { name: "Đăng nhập" }).waitFor(WAIT);
   await page.getByRole("button", { name: "Tiếp tục với Google" }).waitFor(WAIT);
-  ok("SPA redirects to /login and renders the SSO button");
+  await page.getByRole("link", { name: "Xem hướng dẫn" }).waitFor(WAIT);
+  ok("SPA redirects to /login and renders the SSO button and the guide link");
 
   await page.goto(BASE + "/help");
   await page.getByRole("heading", { name: "Hướng dẫn sử dụng" }).waitFor(WAIT);
