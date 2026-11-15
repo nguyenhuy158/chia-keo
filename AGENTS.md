@@ -121,7 +121,8 @@ How this repo fits with the other `*.huyab.cfd` apps:
 - `pnpm preview`: preview the production build locally on `127.0.0.1`.
 - `pnpm db:generate`: generate a D1 migration from the Drizzle schema;
   `pnpm db:migrate:local` / `pnpm db:migrate:remote` apply migrations.
-- `pnpm deploy`: build and `wrangler deploy` (normally CI deploys on push).
+- `pnpm deploy`: build and `wrangler deploy`. Do not run it locally: Workers
+  Builds deploys on push to `main`.
 - `pnpm e2e`: run both smoke suites end to end. It builds the frontend,
   applies D1 migrations locally, boots `wrangler dev`, runs
   `e2e/readonly-smoke.mjs` then drives the real UI in Chromium with
@@ -212,6 +213,10 @@ screenshots for visible UI changes.
 Setup commands are in [README.md](README.md). Every `pnpm` build/dev/test
 script is prefixed with `node scripts/build-info.mjs`; building by hand
 without it makes `/api/version` report a stale commit.
+
+Delivery rule (all repos, see `kit/docs/AGENTS-SKELETON.md`): CI runs lint and
+check on every pull request, and only Cloudflare Workers Builds deploys, never a
+local machine.
 
 Pushing to `main` triggers Cloudflare Workers Builds (build + deploy), which is
 not instant. Check whether prod really runs the new code:
