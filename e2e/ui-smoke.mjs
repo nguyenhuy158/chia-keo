@@ -835,9 +835,7 @@ try {
     gameId,
     WAIT,
   );
-  await page
-    .getByRole("button", { name: "Tổng kết", exact: true })
-    .evaluate((button) => button.click());
+  await page.getByRole("button", { name: "Tổng kết", exact: true }).click();
   await page.getByRole("button", { name: "Chuyển khoản", exact: true }).click();
   const settleRow = page.getByRole("button", { name: /^Chi tiết / }).first();
   await settleRow.waitFor({ state: "visible", ...WAIT });
@@ -858,9 +856,7 @@ try {
   );
 
   const openTab = (name) =>
-    page
-      .getByRole("button", { name, exact: true })
-      .evaluate((button) => button.click());
+    page.getByRole("button", { name, exact: true }).click();
   await openTab("Người");
   await page
     .getByRole("button", { name: "Mở form thêm người" })

@@ -31,6 +31,9 @@ const queryClient = new QueryClient({
   },
 });
 
+/** Cao hon thanh dieu huong duoi cua trang cuoc choi tren dien thoai de toast khong che no. */
+const MOBILE_TOAST_OFFSET = { bottom: "5rem" };
+
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
@@ -38,7 +41,12 @@ createRoot(document.getElementById("root")!).render(
         <ConfirmProvider>
           <RouterProvider router={router} />
         </ConfirmProvider>
-        <Toaster position="bottom-center" theme="system" richColors />
+        <Toaster
+          position="bottom-center"
+          mobileOffset={MOBILE_TOAST_OFFSET}
+          theme="system"
+          richColors
+        />
       </ThemeProvider>
     </QueryClientProvider>
   </StrictMode>,
