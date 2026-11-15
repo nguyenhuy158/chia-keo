@@ -137,6 +137,7 @@ try {
 
   // 4. Them 2 nguoi (1 nguoi co thong tin ngan hang)
   await page.fill('input[placeholder="Huy"]', "An");
+  await page.click('button:has-text("Tài khoản nhận tiền")');
   await page.click('button:has-text("Chọn ngân hàng")');
   await page.click('[role="option"]:has-text("Vietcombank (VCB)")');
   await page.fill('input[placeholder="0123456789"]', "111222333");

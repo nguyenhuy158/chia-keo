@@ -1,4 +1,4 @@
-import { Navigate } from "@tanstack/react-router";
+import { Link, Navigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { ssoLoginUrl } from "../adapters/browser/sso";
 import { useAppSession } from "../adapters/react-query/session-query";
@@ -85,6 +85,16 @@ export function LoginPage() {
           <GoogleMark />
           {googlePending ? "Đang chuyển..." : "Tiếp tục với Google"}
         </button>
+
+        <p className="mt-4 text-center text-sm text-fg-muted">
+          Chưa biết dùng?{" "}
+          <Link
+            to="/help"
+            className="font-medium text-violet-700 underline-offset-4 hover:underline dark:text-violet-300"
+          >
+            Xem hướng dẫn
+          </Link>
+        </p>
       </div>
     </section>
   );

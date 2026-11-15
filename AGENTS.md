@@ -95,7 +95,7 @@ e2e/                           # E2E (Playwright + wrangler dev), plumbing from 
 How this repo fits with the other `*.huyab.cfd` apps:
 [kit/docs/ECOSYSTEM.md](https://github.com/nguyenhuy158/kit/blob/main/docs/ECOSYSTEM.md).
 
-- Kit packages (`github:nguyenhuy158/kit#v0.1.0`): `@huyab/config`
+- Kit packages (`github:nguyenhuy158/kit#v0.2.0`): `@huyab/config`
   (`biome.json`, `tsconfig.*.json` extend it), `@huyab/e2e` (`e2e/run.mjs`
   server lifecycle, `findChromium`), and the reusable
   `.github/workflows/check.yml` (CI). `@huyab/sso` is not adopted yet:
