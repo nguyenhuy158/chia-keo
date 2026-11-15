@@ -9,6 +9,8 @@ import {
 } from "../adapters/react-query/queries";
 import { useConfirm } from "./ConfirmDialog";
 import { Avatar } from "./Avatar";
+import { CollapsibleHeading } from "./CollapsibleHeading";
+import { usePersistentOpen } from "./use-persistent-open";
 
 const ERROR_MESSAGES: Record<string, string> = {
   is_owner: "Đây là email của bạn rồi.",
@@ -25,13 +27,21 @@ type CollaboratorsPanelProps = {
   gameId: string;
   isOwner: boolean;
   collaborators: ApiCollaborator[];
+  collapsible?: boolean;
 };
 
 /**
  * Chi chu cuoc choi them/xoa duoc; nguoi duoc chia se chi xem danh sach nay
  * de biet ai khac cung dang sua cuoc choi.
  */
-export function CollaboratorsPanel({ gameId, isOwner, collaborators }: CollaboratorsPanelProps) {
+export function CollaboratorsPanel({
+  gameId,
+  isOwner,
+  collaborators,
+  collapsible = false,
+}: CollaboratorsPanelProps) {
+  const [open, setOpen] = usePersistentOpen("collaborators", false);
+  const expanded = !collapsible || open;
   const confirm = useConfirm();
   const addCollaborator = useAddCollaborator(gameId);
   const removeCollaborator = useRemoveCollaborator(gameId);
@@ -93,114 +103,120 @@ export function CollaboratorsPanel({ gameId, isOwner, collaborators }: Collabora
 
   return (
     <section className="rounded-lg border border-border bg-surface p-4 shadow-sm">
-      <h3 className="text-lg font-semibold text-stone-950 dark:text-stone-50">
-        Chia sẻ cuộc chơi
-      </h3>
-      <p className="mt-1 text-xs text-fg-muted">
-        Người được chia sẻ sửa được mọi thứ, trừ xóa cuộc chơi. Email chưa từng đăng nhập vẫn
-        chia sẻ được — họ đăng nhập vào là thấy ngay.
-      </p>
+      <CollapsibleHeading
+        title="Chia sẻ cuộc chơi"
+        open={expanded}
+        onToggle={collapsible ? () => setOpen((current) => !current) : undefined}
+      />
+      {expanded && (
+        <>
+          <p className="mt-1 text-xs text-fg-muted">
+            Người được chia sẻ sửa được mọi thứ, trừ xóa cuộc chơi. Email chưa từng đăng nhập vẫn
+            chia sẻ được — họ đăng nhập vào là thấy ngay.
+          </p>
 
-      {isOwner && (
-        <div className="mt-3">
-          <div className="relative flex items-center gap-2">
-            <input
-              type="email"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              onFocus={() => setDropdownOpen(true)}
-              onBlur={() => setDropdownOpen(false)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") handleAdd();
-                if (event.key === "Escape") setDropdownOpen(false);
-              }}
-              placeholder="Email người muốn chia sẻ, hoặc chọn từ danh sách"
-              className="field flex-1"
-            />
-            <button
-              type="button"
-              onClick={handleAdd}
-              disabled={addCollaborator.isPending || !email.trim()}
-              className="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-primary px-3 text-sm font-medium text-white transition hover:bg-primary-hover disabled:opacity-50"
-            >
-              <UserPlus size={15} />
-              Chia sẻ
-            </button>
-
-            {dropdownOpen && filteredCandidates.length > 0 && (
-              <ul className="absolute inset-x-0 top-full z-10 mt-1 max-h-60 overflow-y-auto rounded-md border border-stone-200 bg-surface py-1 shadow-lg dark:border-stone-700">
-                {filteredCandidates.map((candidate) => (
-                  <li key={candidate.id}>
-                    <button
-                      type="button"
-                      // onMouseDown chay truoc onBlur cua input nen chon duoc
-                      // truoc khi dropdown bi dong.
-                      onMouseDown={(event) => event.preventDefault()}
-                      onClick={() => handlePickCandidate(candidate)}
-                      className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-stone-100 dark:hover:bg-stone-800"
-                    >
-                      <Avatar name={candidate.name || candidate.email} size={24} />
-                      <div className="min-w-0">
-                        <p className="truncate font-medium text-stone-950 dark:text-stone-50">
-                          {candidate.name || candidate.email}
-                        </p>
-                        {candidate.name && (
-                          <p className="truncate text-xs text-fg-muted">
-                            {candidate.email}
-                          </p>
-                        )}
-                      </div>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-          {error && <p className="mt-2 text-xs text-danger">{error}</p>}
-        </div>
-      )}
-
-      {collaborators.length > 0 && (
-        <ul className="mt-4 space-y-2">
-          {collaborators.map((collaborator) => (
-            <li
-              key={collaborator.userId}
-              className="flex items-center justify-between gap-3 rounded-md border border-border p-2"
-            >
-              <div className="flex min-w-0 items-center gap-2">
-                <Avatar name={collaborator.name || collaborator.email} size={28} />
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-medium text-stone-950 dark:text-stone-50">
-                    {collaborator.name || collaborator.email}
-                  </p>
-                  {collaborator.userId ? (
-                    collaborator.name && (
-                      <p className="truncate text-xs text-fg-muted">
-                        {collaborator.email}
-                      </p>
-                    )
-                  ) : (
-                    <p className="flex items-center gap-1 text-xs text-warning">
-                      <Clock size={11} />
-                      Chờ đăng nhập
-                    </p>
-                  )}
-                </div>
-              </div>
-              {isOwner && (
+          {isOwner && (
+            <div className="mt-3">
+              <div className="relative flex items-center gap-2">
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                  onFocus={() => setDropdownOpen(true)}
+                  onBlur={() => setDropdownOpen(false)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") handleAdd();
+                    if (event.key === "Escape") setDropdownOpen(false);
+                  }}
+                  placeholder="Email người muốn chia sẻ, hoặc chọn từ danh sách"
+                  className="field flex-1"
+                />
                 <button
                   type="button"
-                  onClick={() => handleRemove(collaborator)}
-                  disabled={removeCollaborator.isPending || removePendingCollaborator.isPending}
-                  className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-danger transition hover:bg-danger-soft active:bg-rose-100 dark:active:bg-rose-500/20"
-                  aria-label={`Bỏ chia sẻ với ${collaborator.name || collaborator.email}`}
+                  onClick={handleAdd}
+                  disabled={addCollaborator.isPending || !email.trim()}
+                  className="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-primary px-3 text-sm font-medium text-white transition hover:bg-primary-hover disabled:opacity-50"
                 >
-                  <UserMinus size={15} />
+                  <UserPlus size={15} />
+                  Chia sẻ
                 </button>
-              )}
-            </li>
-          ))}
-        </ul>
+
+                {dropdownOpen && filteredCandidates.length > 0 && (
+                  <ul className="absolute inset-x-0 top-full z-10 mt-1 max-h-60 overflow-y-auto rounded-md border border-stone-200 bg-surface py-1 shadow-lg dark:border-stone-700">
+                    {filteredCandidates.map((candidate) => (
+                      <li key={candidate.id}>
+                        <button
+                          type="button"
+                          // onMouseDown chay truoc onBlur cua input nen chon duoc
+                          // truoc khi dropdown bi dong.
+                          onMouseDown={(event) => event.preventDefault()}
+                          onClick={() => handlePickCandidate(candidate)}
+                          className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-stone-100 dark:hover:bg-stone-800"
+                        >
+                          <Avatar name={candidate.name || candidate.email} size={24} />
+                          <div className="min-w-0">
+                            <p className="truncate font-medium text-stone-950 dark:text-stone-50">
+                              {candidate.name || candidate.email}
+                            </p>
+                            {candidate.name && (
+                              <p className="truncate text-xs text-fg-muted">
+                                {candidate.email}
+                              </p>
+                            )}
+                          </div>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+              {error && <p className="mt-2 text-xs text-danger">{error}</p>}
+            </div>
+          )}
+
+          {collaborators.length > 0 && (
+            <ul className="mt-4 space-y-2">
+              {collaborators.map((collaborator) => (
+                <li
+                  key={collaborator.userId}
+                  className="flex items-center justify-between gap-3 rounded-md border border-border p-2"
+                >
+                  <div className="flex min-w-0 items-center gap-2">
+                    <Avatar name={collaborator.name || collaborator.email} size={28} />
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium text-stone-950 dark:text-stone-50">
+                        {collaborator.name || collaborator.email}
+                      </p>
+                      {collaborator.userId ? (
+                        collaborator.name && (
+                          <p className="truncate text-xs text-fg-muted">
+                            {collaborator.email}
+                          </p>
+                        )
+                      ) : (
+                        <p className="flex items-center gap-1 text-xs text-warning">
+                          <Clock size={11} />
+                          Chờ đăng nhập
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  {isOwner && (
+                    <button
+                      type="button"
+                      onClick={() => handleRemove(collaborator)}
+                      disabled={removeCollaborator.isPending || removePendingCollaborator.isPending}
+                      className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-danger transition hover:bg-danger-soft active:bg-rose-100 dark:active:bg-rose-500/20"
+                      aria-label={`Bỏ chia sẻ với ${collaborator.name || collaborator.email}`}
+                    >
+                      <UserMinus size={15} />
+                    </button>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </>
       )}
     </section>
   );
