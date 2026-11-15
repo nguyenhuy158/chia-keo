@@ -65,7 +65,7 @@ function ExpenseMatrix({
     summary.balances.map((balance) => [balance.participantId, balance]),
   );
   const visibleExpenses = expenses.filter(
-    (expense) => expense.kind !== "transfer",
+    (expense) => expense.kind !== "transfer" && !expense.excluded,
   );
 
   return (
