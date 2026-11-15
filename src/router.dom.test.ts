@@ -64,11 +64,12 @@ describe("router", () => {
     document.body.append(host);
     root = createRoot(host);
     expect(router).toBe(state.routerOptions);
-    expect(state.routes).toHaveLength(9);
+    expect(state.routes).toHaveLength(10);
     expect(state.routes.map((route) => route.path)).toEqual([
       undefined,
       "/login",
       "/share/$token",
+      "/help",
       undefined,
       "/",
       "/games/$gameId",
@@ -88,7 +89,7 @@ describe("router", () => {
     expect(host.textContent).toContain("Về trang chủ");
     render(rootRoute.errorComponent);
     expect(host.textContent).toContain("Có lỗi xảy ra");
-    expect(state.lazy).toHaveLength(5);
+    expect(state.lazy).toHaveLength(6);
     for (const loader of state.lazy) expect(await loader()).toBeDefined();
   });
 });

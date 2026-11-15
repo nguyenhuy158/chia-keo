@@ -62,6 +62,11 @@ try {
   await page.getByRole("button", { name: "Tiếp tục với Google" }).waitFor(WAIT);
   ok("SPA redirects to /login and renders the SSO button");
 
+  await page.goto(BASE + "/help");
+  await page.getByRole("heading", { name: "Hướng dẫn sử dụng" }).waitFor(WAIT);
+  await page.getByRole("button", { name: "Tạo cuộc chơi và thêm người" }).waitFor(WAIT);
+  ok("GET /help renders the guide without login");
+
   if (pageErrors.length > 0) throw new Error(`loi JS tren trang: ${pageErrors.join(" | ")}`);
   ok("no uncaught page errors");
 } catch (error) {

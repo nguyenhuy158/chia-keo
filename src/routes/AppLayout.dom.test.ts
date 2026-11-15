@@ -120,6 +120,23 @@ describe("AppLayout", () => {
     expect(host.textContent).toContain("login redirect");
   });
 
+  it("opens the mobile menu and goes to the chosen page", () => {
+    state.user = { name: "An" };
+    render();
+    for (const [label, to] of [
+      ["Kho cầu", "/shuttles"],
+      ["Thống kê vui", "/fun"],
+      ["Cài đặt", "/settings"],
+    ] as const) {
+      act(() => button("Thêm").click());
+      const item = [...host.querySelectorAll("[role='menuitem']")].find(
+        (entry) => entry.textContent?.trim() === label,
+      ) as HTMLButtonElement;
+      act(() => item.click());
+      expect(navigate).toHaveBeenLastCalledWith({ to });
+    }
+  });
+
   it("shows the shell and opens and closes its mobile game drawer", () => {
     state.user = { name: "An" };
     render();
@@ -128,6 +145,7 @@ describe("AppLayout", () => {
     expect(host.querySelector('a[href="/settings"]')).not.toBeNull();
     expect(host.querySelector('a[href="/fun"]')).not.toBeNull();
     expect(host.querySelector('a[href="/shuttles"]')).not.toBeNull();
+    expect(host.querySelector('a[aria-label="Hướng dẫn sử dụng"]')).not.toBeNull();
     act(() => button("Danh sách cuộc chơi").click());
     expect(host.textContent).toContain("close drawer");
     act(() => button("navigate from drawer").click());
