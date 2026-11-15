@@ -540,6 +540,8 @@ export function ExpensePanel({
 
   const [editingExpenseId, setEditingExpenseId] = useState("");
   const [formOpen, setFormOpen] = useState(false);
+  const [actionsOpen, setActionsOpen] = useState(false);
+  const [actionExpenseId, setActionExpenseId] = useState("");
 
   // Anh dinh kem: khoan chi da luu thi tai len ngay, khoan chi moi thi giu tam
   // trong form roi tai len sau khi co id.
@@ -1223,6 +1225,37 @@ export function ExpensePanel({
       const next = moveId(orderedIds, id, offset);
       if (next !== orderedIds) onReorder(next);
     };
+    const actionExpense = visibleExpenses.find(
+      (expense) => expense.id === actionExpenseId,
+    );
+    const rowActions = (expense: ApiExpense) => [
+      {
+        label: "Đưa lên",
+        icon: <ChevronUp size={15} />,
+        onSelect: () => reorderBy(expense.id, MOVE_UP),
+      },
+      {
+        label: "Đưa xuống",
+        icon: <ChevronDown size={15} />,
+        onSelect: () => reorderBy(expense.id, MOVE_DOWN),
+      },
+      {
+        label: "Sửa",
+        icon: <Pencil size={15} />,
+        onSelect: () => startEditExpense(expense),
+      },
+      {
+        label: expense.excluded ? "Tính lại" : "Bỏ tính",
+        icon: expense.excluded ? <Eye size={15} /> : <EyeOff size={15} />,
+        onSelect: () => onToggleExcluded(expense.id, !expense.excluded),
+      },
+      {
+        label: "Xóa",
+        icon: <Trash2 size={15} />,
+        destructive: true,
+        onSelect: () => onRemove(expense.id),
+      },
+    ];
     return (
       <section className="flex h-full min-h-0 flex-col">
         <div className="flex shrink-0 items-center gap-2 pb-2">
@@ -1297,52 +1330,18 @@ export function ExpensePanel({
                       {photoCount}
                     </button>
                   )}
-                  <Menu
-                    trigger={(props) => (
-                      <button
-                        type="button"
-                        {...props}
-                        aria-haspopup="menu"
-                        aria-label={`Tùy chọn ${expense.title}`}
-                        className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md text-fg-muted transition hover:bg-surface-muted"
-                      >
-                        <MoreHorizontal size={18} />
-                      </button>
-                    )}
-                    items={[
-                      {
-                        label: "Đưa lên",
-                        icon: <ChevronUp size={15} />,
-                        onSelect: () => reorderBy(expense.id, MOVE_UP),
-                      },
-                      {
-                        label: "Đưa xuống",
-                        icon: <ChevronDown size={15} />,
-                        onSelect: () => reorderBy(expense.id, MOVE_DOWN),
-                      },
-                      {
-                        label: "Sửa",
-                        icon: <Pencil size={15} />,
-                        onSelect: () => startEditExpense(expense),
-                      },
-                      {
-                        label: expense.excluded ? "Tính lại" : "Bỏ tính",
-                        icon: expense.excluded ? (
-                          <Eye size={15} />
-                        ) : (
-                          <EyeOff size={15} />
-                        ),
-                        onSelect: () =>
-                          onToggleExcluded(expense.id, !expense.excluded),
-                      },
-                      {
-                        label: "Xóa",
-                        icon: <Trash2 size={15} />,
-                        destructive: true,
-                        onSelect: () => onRemove(expense.id),
-                      },
-                    ]}
-                  />
+                  <button
+                    type="button"
+                    aria-haspopup="dialog"
+                    aria-label={`Tùy chọn ${expense.title}`}
+                    onClick={() => {
+                      setActionExpenseId(expense.id);
+                      setActionsOpen(true);
+                    }}
+                    className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md text-fg-muted transition hover:bg-surface-muted"
+                  >
+                    <MoreHorizontal size={18} />
+                  </button>
                 </div>
               );
             }}
@@ -1354,6 +1353,33 @@ export function ExpensePanel({
           title={editingExpenseId ? "Sửa khoản chi" : "Thêm khoản chi"}
         >
           {formBlock}
+        </Sheet>
+        <Sheet
+          open={actionsOpen}
+          onClose={() => setActionsOpen(false)}
+          title={actionExpense?.title ?? ""}
+        >
+          <div className="flex flex-col gap-2 pb-2">
+            {actionExpense &&
+              rowActions(actionExpense).map((action) => (
+                <button
+                  key={action.label}
+                  type="button"
+                  onClick={() => {
+                    setActionsOpen(false);
+                    action.onSelect();
+                  }}
+                  className={`inline-flex h-11 w-full items-center justify-center gap-2 rounded-md border px-3 text-sm font-medium transition active:scale-[0.99] ${
+                    action.destructive
+                      ? "border-danger/40 text-danger"
+                      : "border-border text-stone-700 hover:bg-surface-muted dark:text-stone-200"
+                  }`}
+                >
+                  {action.icon}
+                  {action.label}
+                </button>
+              ))}
+          </div>
         </Sheet>
         {photoViewer.viewer}
       </section>
@@ -1369,7 +1395,7 @@ export function ExpensePanel({
         </h3>
       </div>
 
-      {!compact && formBlock}
+      {formBlock}
 
       <SortableList
         ids={visibleExpenses.map((expense) => expense.id)}

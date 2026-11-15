@@ -765,6 +765,18 @@ try {
   await page.getByRole("button", { name: "Trang sau" }).click();
   assert.notEqual(await phoneRows.first().innerText(), firstPageTitle);
   assert.equal(await scrolls(), false, "tab Chi cuon duoc o trang sau");
+  await phoneRows
+    .first()
+    .getByRole("button", { name: /^Tùy chọn / })
+    .click();
+  const moveUp = page.getByRole("button", { name: "Đưa lên", exact: true });
+  await moveUp.waitFor({ state: "visible", ...WAIT });
+  assert.ok(
+    await moveUp.isVisible(),
+    "menu dong khoan chi bi cat tren dien thoai",
+  );
+  await page.keyboard.press("Escape");
+  await moveUp.waitFor({ state: "hidden", ...WAIT });
   await page.getByRole("button", { name: "Thêm khoản chi" }).first().click();
   await page.fill("input[placeholder='Ăn tối']:visible", "Them tu Sheet");
   await page.fill("input[placeholder='500.000']:visible", "45000");

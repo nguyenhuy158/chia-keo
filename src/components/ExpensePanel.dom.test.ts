@@ -1229,13 +1229,16 @@ describe("ExpensePanel", () => {
 
 describe("ExpensePanel compact", () => {
   function menuAction(label: string, title: string) {
-    const trigger = host.querySelector(
-      `button[aria-label='Tùy chọn ${title}']`,
+    act(() =>
+      (
+        host.querySelector(
+          `button[aria-label='Tùy chọn ${title}']`,
+        ) as HTMLButtonElement
+      ).click(),
+    );
+    const item = [...document.body.querySelectorAll("button")].find(
+      (entry) => entry.textContent?.trim() === label && !host.contains(entry),
     ) as HTMLButtonElement;
-    act(() => trigger.click());
-    const item = [
-      ...(trigger.parentElement?.querySelectorAll("[role='menuitem']") ?? []),
-    ].find((entry) => entry.textContent?.trim() === label) as HTMLButtonElement;
     act(() => item.click());
   }
 
@@ -1340,5 +1343,24 @@ describe("ExpensePanel compact", () => {
       ).click(),
     );
     expect(photoViewerOpen).toHaveBeenCalledWith(0);
+  });
+
+  it("đóng Sheet tùy chọn bằng phím Escape mà không đổi gì", async () => {
+    const { onRemove } = panel({ compact: true, expenses: rows() });
+    act(() =>
+      (
+        host.querySelector(
+          "button[aria-label='Tùy chọn Cầu']",
+        ) as HTMLButtonElement
+      ).click(),
+    );
+    expect(document.body.textContent).toContain("Đưa xuống");
+    act(() => {
+      document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+    });
+    await vi.waitFor(() =>
+      expect(document.body.textContent).not.toContain("Đưa xuống"),
+    );
+    expect(onRemove).not.toHaveBeenCalled();
   });
 });
