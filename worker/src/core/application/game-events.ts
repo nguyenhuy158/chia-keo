@@ -103,6 +103,7 @@ export async function undoGameEvent(
     amount: restore.amount,
     note: restore.note,
     splitMode: restore.splitMode,
+    excluded: false,
     createdAt: now,
     updatedAt: now,
   });

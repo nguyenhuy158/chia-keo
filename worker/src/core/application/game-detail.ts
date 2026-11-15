@@ -45,7 +45,7 @@ type GameData = {
  */
 export function sumTotalExpense(expenseRows: ExpenseRow[]) {
   return expenseRows.reduce((total, row) => {
-    if (row.kind === "transfer") return total;
+    if (row.kind === "transfer" || row.excluded) return total;
     return row.kind === "income" ? total - row.amount : total + row.amount;
   }, 0);
 }
@@ -63,15 +63,17 @@ export function toExpenseInputs(
   expenseRows: ExpenseRow[],
   splitsByExpenseId: Map<string, ExpenseSplitRow[]>,
 ): ExpenseInput[] {
-  return expenseRows.map((row) => ({
-    payerParticipantId: row.payerParticipantId,
-    amount: row.amount,
-    kind: toExpenseKind(row.kind),
-    shares: (splitsByExpenseId.get(row.id) || []).map((split) => ({
-      participantId: split.participantId,
-      amount: split.amount,
-    })),
-  }));
+  return expenseRows
+    .filter((row) => !row.excluded)
+    .map((row) => ({
+      payerParticipantId: row.payerParticipantId,
+      amount: row.amount,
+      kind: toExpenseKind(row.kind),
+      shares: (splitsByExpenseId.get(row.id) || []).map((split) => ({
+        participantId: split.participantId,
+        amount: split.amount,
+      })),
+    }));
 }
 
 export function groupSplitsByExpenseId(splitRows: ExpenseSplitRow[]) {
@@ -128,6 +130,7 @@ async function loadGameData(repo: GameRepository, gameId: string): Promise<GameD
         amount: split.amount,
         weight: split.weight,
       })),
+      excluded: row.excluded,
       createdAt: row.createdAt,
     };
   });
@@ -147,7 +150,9 @@ async function loadGameData(repo: GameRepository, gameId: string): Promise<GameD
     participants,
     expenses,
     summary,
-    realExpenseCount: countRealExpenses(expenseRows.map((row) => row.kind)),
+    realExpenseCount: countRealExpenses(
+      expenseRows.filter((row) => !row.excluded).map((row) => row.kind),
+    ),
   };
 }
 

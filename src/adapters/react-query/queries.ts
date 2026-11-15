@@ -452,6 +452,12 @@ export function useUpdateExpense() {
   );
 }
 
+export function useSetExpenseExcluded() {
+  return useGameDetailMutation((variables: { expenseId: string; excluded: boolean }) =>
+    getGameApi().expenses.setExcluded(variables.expenseId, variables.excluded),
+  );
+}
+
 export function useRemoveExpense() {
   return useGameDetailMutation((expenseId: string) => getGameApi().expenses.remove(expenseId), {
     refreshPhotos: true,

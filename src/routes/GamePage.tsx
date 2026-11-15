@@ -45,6 +45,7 @@ import {
   useGame,
   usePhotos,
   useRemoveExpense,
+  useSetExpenseExcluded,
   useRemoveParticipant,
   useReorderExpenses,
   useReorderParticipants,
@@ -75,6 +76,7 @@ export function GamePage() {
   const addExpense = useAddExpense(gameId);
   const updateExpense = useUpdateExpense();
   const removeExpense = useRemoveExpense();
+  const setExpenseExcluded = useSetExpenseExcluded();
   const undoEvent = useUndoGameEvent();
   const reorderExpenses = useReorderExpenses(gameId);
   const addTransfer = useAddTransfer(gameId);
@@ -232,6 +234,9 @@ export function GamePage() {
       onAdd={(input) => addExpense.mutateAsync(input)}
       onUpdate={(expenseId, input) => updateExpense.mutateAsync({ expenseId, input })}
       onRemove={handleRemoveExpense}
+      onToggleExcluded={(expenseId, excluded) =>
+        setExpenseExcluded.mutate({ expenseId, excluded })
+      }
       onAddTransfer={(input) => addTransfer.mutateAsync(input)}
       onReorder={(expenseIds) => reorderExpenses.mutate(expenseIds)}
     />

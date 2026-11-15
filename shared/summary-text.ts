@@ -80,7 +80,9 @@ export function formatShortMoney(value: number) {
  * balance nen khong liet ke chung voi cac khoan chi.
  */
 function toListedExpenses(expenses: ApiExpense[]) {
-  return expenses.filter((expense) => expense.kind !== "transfer").reverse();
+  return expenses
+    .filter((expense) => expense.kind !== "transfer" && !expense.excluded)
+    .reverse();
 }
 
 /**

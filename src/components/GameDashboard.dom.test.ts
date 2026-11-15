@@ -74,6 +74,7 @@ function transfer(overrides: Partial<ApiExpense> = {}): ApiExpense {
     splitMode: "equal",
     splitParticipantIds: ["an"],
     splits: [{ participantId: "an", amount: 50000, weight: null }],
+    excluded: false,
     createdAt: "2026-01-01T00:00:00Z",
     ...overrides,
   };

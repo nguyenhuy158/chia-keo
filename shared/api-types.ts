@@ -61,6 +61,8 @@ export type ApiExpense = {
   splitMode: SplitMode;
   splitParticipantIds: string[];
   splits: ApiExpenseSplit[];
+  /** true la khoan van hien trong danh sach nhung khong tinh vao tong/so du. */
+  excluded: boolean;
   createdAt: string;
 };
 

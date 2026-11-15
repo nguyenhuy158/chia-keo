@@ -25,6 +25,7 @@ function makeExpense(
     note: "",
     payerParticipantId,
     splitMode: "equal",
+    excluded: false,
     splitParticipantIds,
     splits: allocateAmount(amount, splitParticipantIds).map((share) => ({
       ...share,
@@ -85,6 +86,20 @@ describe("formatThousands", () => {
 
   it("tra ve 0 khi khong co tien", () => {
     expect(formatThousands(0)).toBe("0");
+  });
+});
+
+describe("buildSummaryText excluded", () => {
+  it("does not list excluded expenses", () => {
+    const text = buildSummaryText(
+      {
+        ...input,
+        expenses: [traTac, { ...bunBo, excluded: true }],
+      },
+      "compact",
+    );
+    expect(text).toContain("Trà tắc");
+    expect(text).not.toContain("Bún bò");
   });
 });
 

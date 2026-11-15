@@ -62,6 +62,7 @@ export type ExpenseRow = {
   amount: number;
   note: string;
   splitMode: string;
+  excluded: boolean;
   sequence: number;
   createdAt: string;
   updatedAt: string;
@@ -180,7 +181,14 @@ export type GameEventRow = {
 export type ExpenseUpdate = Partial<
   Pick<
     ExpenseRow,
-    "kind" | "category" | "title" | "note" | "amount" | "payerParticipantId" | "splitMode"
+    | "kind"
+    | "category"
+    | "title"
+    | "note"
+    | "amount"
+    | "payerParticipantId"
+    | "splitMode"
+    | "excluded"
   >
 > & { updatedAt: string };
 

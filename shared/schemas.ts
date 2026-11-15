@@ -140,6 +140,10 @@ export const expenseReorderInputSchema = z.object({
   expenseIds: z.array(z.string().min(1)).min(1),
 });
 
+export const expenseExcludedInputSchema = z.object({
+  excluded: z.boolean(),
+});
+
 /** Danh sach id nguoi tham gia theo thu tu hien thi moi nguoi dung keo tha. */
 export const participantReorderInputSchema = z.object({
   participantIds: z.array(z.string().min(1)).min(1),
@@ -306,6 +310,7 @@ export type ContactInput = z.infer<typeof contactInputSchema>;
 export type ContactUpdateInput = z.infer<typeof contactUpdateSchema>;
 export type ExpenseInput = z.infer<typeof expenseInputSchema>;
 export type ExpenseReorderInput = z.infer<typeof expenseReorderInputSchema>;
+export type ExpenseExcludedInput = z.infer<typeof expenseExcludedInputSchema>;
 export type ParticipantReorderInput = z.infer<typeof participantReorderInputSchema>;
 export type ExpenseSplitInput = z.infer<typeof expenseSplitInputSchema>;
 export type SplitMode = z.infer<typeof splitModeSchema>;

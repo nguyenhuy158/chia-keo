@@ -53,6 +53,7 @@ vi.mock("../adapters/react-query/queries", () => {
     "RemoveExpense",
     "RemoveParticipant",
     "ReorderExpenses",
+    "SetExpenseExcluded",
     "ReorderParticipants",
     "RenameGame",
     "ReopenGame",
@@ -208,6 +209,7 @@ function game(overrides: Partial<ApiGameDetail> = {}): ApiGameDetail {
         splitMode: "equal",
         splitParticipantIds: ["an"],
         splits: [{ participantId: "an", amount: 100000, weight: null }],
+        excluded: false,
         createdAt: "2026-01-01T00:00:00Z",
       },
     ],
@@ -265,6 +267,7 @@ beforeEach(() => {
     "RemoveExpense",
     "RemoveParticipant",
     "ReorderExpenses",
+    "SetExpenseExcluded",
     "ReorderParticipants",
     "RenameGame",
     "ReopenGame",
@@ -440,6 +443,7 @@ describe("GamePage", () => {
       await expenses.onUpdate("expense-1", { title: "Uống" });
       await expenses.onAddTransfer({ amount: 100 });
       expenses.onReorder(["expense-1"]);
+      expenses.onToggleExcluded("expense-1", true);
       dashboard.onSettlementModeChange("host");
       dashboard.onSettlementHostChange("an");
       await dashboard.onSettle({
@@ -455,6 +459,10 @@ describe("GamePage", () => {
     expect(mocks.mutation.UpdateParticipant.mutateAsync).toHaveBeenCalledWith({
       participantId: "an",
       input: { name: "An mới" },
+    });
+    expect(mocks.mutation.SetExpenseExcluded.mutate).toHaveBeenCalledWith({
+      expenseId: "expense-1",
+      excluded: true,
     });
     expect(mocks.mutation.AddTransfer.mutateAsync).toHaveBeenCalledWith({
       fromParticipantId: "an",

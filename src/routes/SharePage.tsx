@@ -360,7 +360,9 @@ export function SharePage() {
               name={view.name}
               participants={view.participants}
               expenseCount={
-                view.expenses.filter((expense) => expense.kind !== "transfer").length
+                view.expenses.filter(
+                  (expense) => expense.kind !== "transfer" && !expense.excluded,
+                ).length
               }
               summary={view.summary}
               settlementMode={view.settlementMode}
@@ -375,7 +377,7 @@ export function SharePage() {
               <div className="mt-4 space-y-2">
                 {view.expenses.length > 0 ? (
                   view.expenses
-                    .filter((expense) => expense.kind !== "transfer")
+                    .filter((expense) => expense.kind !== "transfer" && !expense.excluded)
                     .map((expense) => {
                     const payer = participantById.get(expense.payerParticipantId);
                     return (

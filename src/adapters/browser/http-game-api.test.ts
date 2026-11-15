@@ -104,6 +104,12 @@ describe("HTTP Game API", () => {
     ["DELETE", "/api/expenses/e", () => api.expenses.remove("e")],
     [
       "PATCH",
+      "/api/expenses/e/excluded",
+      () => api.expenses.setExcluded("e", true),
+      '{"excluded":true}',
+    ],
+    [
+      "PATCH",
       "/api/games/g/expenses/reorder",
       () => api.expenses.reorder("g", ["e"]),
       '{"expenseIds":["e"]}',

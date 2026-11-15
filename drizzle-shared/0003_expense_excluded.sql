@@ -1,0 +1,1 @@
+ALTER TABLE `chiakeo_expenses` ADD `excluded` integer DEFAULT false NOT NULL;

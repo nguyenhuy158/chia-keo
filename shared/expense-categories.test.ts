@@ -28,6 +28,17 @@ describe("normalizeCategory", () => {
   });
 });
 
+describe("buildCategoryBreakdown excluded", () => {
+  it("skips excluded expenses", () => {
+    const result = buildCategoryBreakdown([
+      { kind: "expense", amount: 100, category: "food" },
+      { kind: "expense", amount: 900, category: "food", excluded: true },
+    ]);
+    expect(result.total).toBe(100);
+    expect(result.rows).toHaveLength(1);
+  });
+});
+
 describe("buildCategoryBreakdown", () => {
   it("gop tien theo danh muc va tinh phan tram", () => {
     const result = buildCategoryBreakdown([

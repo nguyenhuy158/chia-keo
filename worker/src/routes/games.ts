@@ -3,6 +3,7 @@ import {
   collaboratorInputSchema,
   contactInputSchema,
   contactUpdateSchema,
+  expenseExcludedInputSchema,
   expenseInputSchema,
   expenseReorderInputSchema,
   gameInputSchema,
@@ -25,6 +26,7 @@ import {
   recordTransfer,
   removeExpense,
   reorderExpenses,
+  setExpenseExcluded,
   updateExpense,
 } from "../core/application/expenses";
 import {
@@ -287,6 +289,20 @@ gamesRouter.patch("/expenses/:expenseId", async (c) => {
 
   return respond(c, () =>
     updateExpense(c.get("repo"), c.get("userId"), c.req.param("expenseId"), input),
+  );
+});
+
+gamesRouter.patch("/expenses/:expenseId/excluded", async (c) => {
+  const input = await readJson(c, expenseExcludedInputSchema);
+  if (!input) return invalidInput(c);
+
+  return respond(c, () =>
+    setExpenseExcluded(
+      c.get("repo"),
+      c.get("userId"),
+      c.req.param("expenseId"),
+      input.excluded,
+    ),
   );
 });
 

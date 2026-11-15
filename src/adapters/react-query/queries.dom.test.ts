@@ -48,6 +48,7 @@ import {
   usePurgeGame,
   useRemoveCollaborator,
   useRemoveExpense,
+  useSetExpenseExcluded,
   useRemoveParticipant,
   useRemovePendingCollaborator,
   useRemovePhoto,
@@ -333,6 +334,7 @@ describe("React Query game mutations", () => {
     const expenses = {
       create: vi.fn().mockResolvedValue(response),
       update: vi.fn().mockResolvedValue(response),
+      setExcluded: vi.fn().mockResolvedValue(response),
     };
     const transfers = { create: vi.fn().mockResolvedValue(response) };
     const gameEvents = { undo: vi.fn().mockResolvedValue(response) };
@@ -356,6 +358,10 @@ describe("React Query game mutations", () => {
       expenseId: "expense-a",
       input: { title: "Sân" },
     });
+    await execute(useSetExpenseExcluded, {
+      expenseId: "expense-a",
+      excluded: true,
+    });
     await execute(() => useAddTransfer("game"), {} as never);
     await execute(() => useSetSettlementMode("game"), "p2p");
     await execute(() => useSetSettlementHost("game"), "person-a");
@@ -372,6 +378,7 @@ describe("React Query game mutations", () => {
       name: "An",
     });
     expect(expenses.update).toHaveBeenCalledWith("expense-a", { title: "Sân" });
+    expect(expenses.setExcluded).toHaveBeenCalledWith("expense-a", true);
     expect(gameEvents.undo).toHaveBeenCalledWith("event-a");
     expect(client.getQueryData(gameKeys.detail("game"))).toEqual(response);
   });

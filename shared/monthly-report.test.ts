@@ -96,6 +96,23 @@ describe("buildMonthlyCsv", () => {
     ]);
   });
 
+  it("ignores excluded expenses", () => {
+    const lines = buildMonthlyCsv(
+      [
+        { ...expenses[0] },
+        { ...expenses[1], excluded: true },
+      ],
+      splits,
+      participants,
+    )
+      .slice(1)
+      .trimEnd()
+      .split("\r\n");
+    expect(lines).toContain("Tổng chi,,90000");
+    expect(lines.some((line) => line.includes("Chưa phân loại"))).toBe(false);
+    expect(lines).not.toContain("Người phải chịu,'=cmd,30000");
+  });
+
   it("starts with a BOM so Excel reads Vietnamese", () => {
     expect(buildMonthlyCsv([], [], []).startsWith("\uFEFF")).toBe(true);
   });

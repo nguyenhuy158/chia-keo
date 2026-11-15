@@ -51,13 +51,15 @@ export async function getFunStats(repo: GameRepository, userId: string): Promise
 
   return buildFunStats(
     gameInputs,
-    expenseRows.map((row) => ({
-      gameId: row.gameId,
-      kind: row.kind,
-      title: row.title,
-      amount: row.amount,
-      payerParticipantId: row.payerParticipantId,
-    })),
+    expenseRows
+      .filter((row) => !row.excluded)
+      .map((row) => ({
+        gameId: row.gameId,
+        kind: row.kind,
+        title: row.title,
+        amount: row.amount,
+        payerParticipantId: row.payerParticipantId,
+      })),
     gameById,
     participantNames,
     omittedGameCount,
