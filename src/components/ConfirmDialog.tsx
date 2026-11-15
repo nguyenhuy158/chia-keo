@@ -66,6 +66,7 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
     setPending(null);
   }
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: close is recreated every render, the effect must follow pending only
   useEffect(() => {
     if (!pending) return;
     const previous = document.body.style.overflow;

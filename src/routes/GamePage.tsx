@@ -542,6 +542,7 @@ export function GamePage() {
                   if (event.key === "Escape") setNameDraft(null);
                 }}
                 className="field max-w-xs text-lg font-semibold"
+                // biome-ignore lint/a11y/noAutofocus: inline rename opens on user action
                 autoFocus
               />
               <button

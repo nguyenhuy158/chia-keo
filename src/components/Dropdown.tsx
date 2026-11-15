@@ -65,6 +65,7 @@ export function Dropdown({
     setActiveIndex(selectedIndex >= 0 ? selectedIndex : 0);
   }, [open, visible, value]);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: choose is recreated every render, the effect must follow open only
   useEffect(() => {
     if (!open) return;
 
@@ -138,6 +139,7 @@ export function Dropdown({
 
   return (
     <div ref={rootRef} className="relative">
+      {/* biome-ignore lint/a11y/useAriaPropsSupportedByRole: combobox button points at the active option */}
       <button
         type="button"
         disabled={disabled}
@@ -180,6 +182,7 @@ export function Dropdown({
           )}
 
           <ul
+            // biome-ignore lint/a11y/noNoninteractiveElementToInteractiveRole: standard listbox pattern
             role="listbox"
             aria-label={ariaLabel}
             className="max-h-60 overflow-auto p-1"

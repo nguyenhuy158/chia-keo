@@ -462,6 +462,7 @@ export function ExpensePanel({
    * dang nhap = 0), thay vi bat nguoi dung tu go tung phan tu 0. Chi ap dung
    * luc con trong de khong ghi de gia tri nguoi dung da sua.
    */
+  // biome-ignore lint/correctness/useExhaustiveDependencies: seed the split once when the user has typed nothing yet
   useEffect(() => {
     if (splitMode !== "amount" || splitParticipantIds.length === 0) return;
     const total = parseMoney(amountValue);
@@ -478,7 +479,6 @@ export function ExpensePanel({
       nextValues[share.participantId] = String(share.amount);
     }
     form.setValue("splitValues", nextValues);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [splitMode, amountValue, splitParticipantIds]);
 
   const aiSuggest = useAiSuggestExpense(gameId);
@@ -532,7 +532,9 @@ export function ExpensePanel({
     [stagedFiles],
   );
   useEffect(() => {
-    return () => stagedPreviews.forEach((url) => URL.revokeObjectURL(url));
+    return () => {
+      for (const url of stagedPreviews) URL.revokeObjectURL(url);
+    };
   }, [stagedPreviews]);
 
   const photoCountByExpenseId = countPhotosByExpenseId(photos);
@@ -855,6 +857,7 @@ export function ExpensePanel({
               className={`text-stone-400 transition ${categoryOpen || category ? "rotate-180" : ""}`}
             />
           </button>
+          {/* biome-ignore lint/a11y/useSemanticElements: a fieldset would add default border and padding */}
           <div
             className={`flex-wrap gap-1.5 ${categoryOpen || category ? "flex" : "hidden"}`}
             role="group"

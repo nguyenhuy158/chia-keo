@@ -134,6 +134,7 @@ export function SkeletonPhotoGrid({ count = 6 }: { count?: number }) {
   return (
     <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
       {Array.from({ length: count }, (_unused, index) => (
+        // biome-ignore lint/suspicious/noArrayIndexKey: static placeholders never reorder
         <Skeleton key={index} className="aspect-square rounded-md" />
       ))}
     </div>
@@ -150,6 +151,7 @@ export function Field({
   children: ReactNode;
 }) {
   return (
+    // biome-ignore lint/a11y/noLabelWithoutControl: the control is passed in as children
     <label className="block">
       <span className="mb-2 block text-sm font-medium text-stone-700 dark:text-stone-300">
         {label}

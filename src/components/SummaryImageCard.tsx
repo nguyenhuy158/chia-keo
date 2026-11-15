@@ -116,6 +116,7 @@ export function SummaryImageCard({
 
   const urlRef = useRef<string | null>(null);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: renderKey already covers variant, backgroundId and content
   useEffect(() => {
     // Che do chu khong dung den anh; ve san chi ton canvas va vai luot tai QR.
     if (viewMode !== "image") return;
@@ -154,7 +155,6 @@ export function SummaryImageCard({
     return () => {
       cancelled = true;
     };
-    // renderKey da bao gom variant + backgroundId + noi dung.
   }, [renderKey, viewMode]);
 
   useEffect(
