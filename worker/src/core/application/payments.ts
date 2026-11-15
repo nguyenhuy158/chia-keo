@@ -54,7 +54,8 @@ async function loadPaymentOptions(
 ): Promise<ApiPaymentOptions> {
   const view = await loadShareView(repo, game);
   const empty: ApiPaymentOptions = { receiver: null, options: [] };
-  if (!bankFeed || view.closedAt) return empty;
+  if (view.closedAt) return empty;
+  if (!bankFeed) return { ...empty, unavailableReason: "not-configured" };
 
   const accountNumbers = new Set(await bankFeed.listAccountNumbers());
   const byId = new Map(view.participants.map((person) => [person.id, person]));
@@ -66,7 +67,11 @@ async function loadPaymentOptions(
   const receiver = due
     .map((row) => byId.get(row.toParticipantId))
     .find((person) => person && accountNumbers.has(person.accountNo.trim()));
-  if (!receiver) return empty;
+  if (!receiver) {
+    return due.length > 0
+      ? { ...empty, unavailableReason: "receiver-not-linked" }
+      : empty;
+  }
 
   return {
     receiver,

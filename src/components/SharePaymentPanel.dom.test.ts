@@ -101,6 +101,23 @@ describe("SharePaymentPanel", () => {
     expect(host.textContent).toBe("");
   });
 
+  it("hien goi y khi bi an do thieu cau hinh hoac TK chua lien ket", () => {
+    state.options = {
+      receiver: null,
+      options: [],
+      unavailableReason: "not-configured",
+    };
+    render();
+    expect(host.textContent).toContain("thiếu cấu hình SePay");
+    state.options = {
+      receiver: null,
+      options: [],
+      unavailableReason: "receiver-not-linked",
+    };
+    render();
+    expect(host.textContent).toContain("chưa liên kết với SePay");
+  });
+
   it("chon nguoi, tao QR roi cho tien ve", async () => {
     render();
     expect(host.textContent).toContain("Chuyển khoản cho Huy");

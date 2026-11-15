@@ -1,6 +1,10 @@
 import { CircleCheckBig, QrCode } from "lucide-react";
 import { useState } from "react";
-import type { ApiParticipant, ApiPaymentRequest } from "../../shared/api-types";
+import type {
+  ApiParticipant,
+  ApiPaymentRequest,
+  ApiPaymentUnavailableReason,
+} from "../../shared/api-types";
 import {
   useCreatePayment,
   usePaymentOptions,
@@ -14,6 +18,12 @@ import { Sheet } from "../ui/Sheet";
 type SharePaymentPanelProps = {
   token: string;
   participants: ApiParticipant[];
+};
+
+const UNAVAILABLE_HINTS: Record<ApiPaymentUnavailableReason, string> = {
+  "not-configured": "Chưa bật chuyển khoản tự động: thiếu cấu hình SePay.",
+  "receiver-not-linked":
+    "Chưa có chuyển khoản tự động: số tài khoản người nhận chưa liên kết với SePay.",
 };
 
 function PaymentStatus({ payment }: { payment: ApiPaymentRequest }) {
@@ -82,7 +92,15 @@ export function SharePaymentPanel({
 
   const receiver = optionsQuery.data?.receiver;
   const options = optionsQuery.data?.options || [];
-  if (!receiver || options.length === 0) return null;
+  const unavailableReason = optionsQuery.data?.unavailableReason;
+  if (!receiver || options.length === 0) {
+    if (!unavailableReason) return null;
+    return (
+      <p className="rounded-lg border border-border bg-surface-muted p-3 text-sm text-fg-muted">
+        {UNAVAILABLE_HINTS[unavailableReason]}
+      </p>
+    );
+  }
 
   const nameById = new Map(
     participants.map((person) => [person.id, person.name]),

@@ -106,7 +106,21 @@ describe("thanh toan qua link share", () => {
       { repo: env.fake.repo, bankFeed: null },
       TOKEN,
     );
-    expect(options).toEqual({ receiver: null, options: [] });
+    expect(options).toEqual({
+      receiver: null,
+      options: [],
+      unavailableReason: "not-configured",
+    });
+  });
+
+  it("bao khi tai khoan nguoi nhan chua lien ket SePay", async () => {
+    env.context.bankFeed.listAccountNumbers = async () => ["0000"];
+    const options = await getPaymentOptions(env.context, TOKEN);
+    expect(options).toEqual({
+      receiver: null,
+      options: [],
+      unavailableReason: "receiver-not-linked",
+    });
   });
 
   it("tu choi nguoi khong no", async () => {
