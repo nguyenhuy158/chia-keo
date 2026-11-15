@@ -1,15 +1,18 @@
 import { Clock, UserMinus, UserPlus } from "lucide-react";
 import { useState } from "react";
-import type { ApiCollaborator, ApiShareCandidate } from "../../shared/api-types";
+import type {
+  ApiCollaborator,
+  ApiShareCandidate,
+} from "../../shared/api-types";
 import {
   useAddCollaborator,
   useRemoveCollaborator,
   useRemovePendingCollaborator,
   useShareCandidates,
 } from "../adapters/react-query/queries";
-import { useConfirm } from "./ConfirmDialog";
 import { Avatar } from "./Avatar";
 import { CollapsibleHeading } from "./CollapsibleHeading";
+import { useConfirm } from "./ConfirmDialog";
 import { usePersistentOpen } from "./use-persistent-open";
 
 const ERROR_MESSAGES: Record<string, string> = {
@@ -106,13 +109,15 @@ export function CollaboratorsPanel({
       <CollapsibleHeading
         title="Chia sẻ cuộc chơi"
         open={expanded}
-        onToggle={collapsible ? () => setOpen((current) => !current) : undefined}
+        onToggle={
+          collapsible ? () => setOpen((current) => !current) : undefined
+        }
       />
       {expanded && (
         <>
           <p className="mt-1 text-xs text-fg-muted">
-            Người được chia sẻ sửa được mọi thứ, trừ xóa cuộc chơi. Email chưa từng đăng nhập vẫn
-            chia sẻ được — họ đăng nhập vào là thấy ngay.
+            Người được chia sẻ sửa được mọi thứ, trừ xóa cuộc chơi. Email chưa
+            từng đăng nhập vẫn chia sẻ được — họ đăng nhập vào là thấy ngay.
           </p>
 
           {isOwner && (
@@ -153,7 +158,10 @@ export function CollaboratorsPanel({
                           onClick={() => handlePickCandidate(candidate)}
                           className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-stone-100 dark:hover:bg-stone-800"
                         >
-                          <Avatar name={candidate.name || candidate.email} size={24} />
+                          <Avatar
+                            name={candidate.name || candidate.email}
+                            size={24}
+                          />
                           <div className="min-w-0">
                             <p className="truncate font-medium text-stone-950 dark:text-stone-50">
                               {candidate.name || candidate.email}
@@ -182,7 +190,10 @@ export function CollaboratorsPanel({
                   className="flex items-center justify-between gap-3 rounded-md border border-border p-2"
                 >
                   <div className="flex min-w-0 items-center gap-2">
-                    <Avatar name={collaborator.name || collaborator.email} size={28} />
+                    <Avatar
+                      name={collaborator.name || collaborator.email}
+                      size={28}
+                    />
                     <div className="min-w-0">
                       <p className="truncate text-sm font-medium text-stone-950 dark:text-stone-50">
                         {collaborator.name || collaborator.email}
@@ -205,7 +216,10 @@ export function CollaboratorsPanel({
                     <button
                       type="button"
                       onClick={() => handleRemove(collaborator)}
-                      disabled={removeCollaborator.isPending || removePendingCollaborator.isPending}
+                      disabled={
+                        removeCollaborator.isPending ||
+                        removePendingCollaborator.isPending
+                      }
                       className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-danger transition hover:bg-danger-soft active:bg-rose-100 dark:active:bg-rose-500/20"
                       aria-label={`Bỏ chia sẻ với ${collaborator.name || collaborator.email}`}
                     >

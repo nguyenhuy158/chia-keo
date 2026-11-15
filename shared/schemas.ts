@@ -38,7 +38,11 @@ export const PHOTO_THUMB_MAX_EDGE = 480;
  */
 export const PHOTO_DATA_MAX_LENGTH = 1_400_000;
 export const PHOTO_THUMB_DATA_MAX_LENGTH = 250_000;
-export const PHOTO_MIME_TYPES = ["image/jpeg", "image/png", "image/webp"] as const;
+export const PHOTO_MIME_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+] as const;
 
 /**
  * Cach hien phan chuyen tien cua mot cuoc choi:
@@ -69,7 +73,12 @@ export const gameInputSchema = z.object({
    * Tao san bay nhieu nguoi ten mac dinh de vao viec ngay, sua ten sau.
    * 0 la khong tao ai (hanh vi cu).
    */
-  participantCount: z.number().int().min(0).max(MAX_QUICK_PARTICIPANTS).default(0),
+  participantCount: z
+    .number()
+    .int()
+    .min(0)
+    .max(MAX_QUICK_PARTICIPANTS)
+    .default(0),
 });
 
 /**
@@ -109,7 +118,12 @@ export const participantInputSchema = z.object({
  * lap nhau nen gop schema se rang buoc sai cho.
  */
 export const contactInputSchema = z.object({
-  name: z.string().trim().min(1).max(PARTICIPANT_NAME_MAX_LENGTH).transform(capitalizeName),
+  name: z
+    .string()
+    .trim()
+    .min(1)
+    .max(PARTICIPANT_NAME_MAX_LENGTH)
+    .transform(capitalizeName),
   bankId: z.string().trim().max(20).default(""),
   accountNo: z.string().trim().max(30).default(""),
   accountName: z.string().trim().max(50).default(""),
@@ -118,7 +132,12 @@ export const contactInputSchema = z.object({
 /** Sua danh ba: khong dung .partial() de khong keo theo .default() — xem gameUpdateSchema. */
 export const contactUpdateSchema = z
   .object({
-    name: z.string().trim().min(1).max(PARTICIPANT_NAME_MAX_LENGTH).transform(capitalizeName),
+    name: z
+      .string()
+      .trim()
+      .min(1)
+      .max(PARTICIPANT_NAME_MAX_LENGTH)
+      .transform(capitalizeName),
     bankId: z.string().trim().max(20),
     accountNo: z.string().trim().max(30),
     accountName: z.string().trim().max(50),
@@ -311,7 +330,9 @@ export type ContactUpdateInput = z.infer<typeof contactUpdateSchema>;
 export type ExpenseInput = z.infer<typeof expenseInputSchema>;
 export type ExpenseReorderInput = z.infer<typeof expenseReorderInputSchema>;
 export type ExpenseExcludedInput = z.infer<typeof expenseExcludedInputSchema>;
-export type ParticipantReorderInput = z.infer<typeof participantReorderInputSchema>;
+export type ParticipantReorderInput = z.infer<
+  typeof participantReorderInputSchema
+>;
 export type ExpenseSplitInput = z.infer<typeof expenseSplitInputSchema>;
 export type SplitMode = z.infer<typeof splitModeSchema>;
 export type TransferInput = z.infer<typeof transferInputSchema>;

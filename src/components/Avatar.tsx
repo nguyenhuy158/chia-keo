@@ -1,5 +1,5 @@
-import { createAvatar } from "@dicebear/core";
 import { funEmoji } from "@dicebear/collection";
+import { createAvatar } from "@dicebear/core";
 import { useMemo } from "react";
 import { normalizeContactName } from "../../shared/contacts";
 

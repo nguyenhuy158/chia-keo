@@ -4,7 +4,10 @@ import {
   mergeContacts,
   normalizeContactName,
 } from "../../../../shared/contacts";
-import type { ContactInput, ContactUpdateInput } from "../../../../shared/schemas";
+import type {
+  ContactInput,
+  ContactUpdateInput,
+} from "../../../../shared/schemas";
 import { createId, nowIso } from "../../lib/ids";
 import type { GameRepository } from "../ports/game-repository";
 import { NotFoundError } from "./errors";
@@ -64,10 +67,14 @@ export async function updateContact(
   await repo.contacts.update(
     contactId,
     {
-      ...(input.name === undefined ? {} : { name: input.name, nameKey: normalizeContactName(input.name) }),
+      ...(input.name === undefined
+        ? {}
+        : { name: input.name, nameKey: normalizeContactName(input.name) }),
       ...(input.bankId === undefined ? {} : { bankId: input.bankId }),
       ...(input.accountNo === undefined ? {} : { accountNo: input.accountNo }),
-      ...(input.accountName === undefined ? {} : { accountName: input.accountName }),
+      ...(input.accountName === undefined
+        ? {}
+        : { accountName: input.accountName }),
     },
     nowIso(),
   );

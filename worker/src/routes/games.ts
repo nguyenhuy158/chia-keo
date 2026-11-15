@@ -22,6 +22,13 @@ import {
   unshareGameByEmail,
 } from "../core/application/collaborators";
 import {
+  createContact,
+  deleteContact,
+  listContacts,
+  updateContact,
+} from "../core/application/contacts";
+import { InvalidInputError } from "../core/application/errors";
+import {
   addExpense,
   recordTransfer,
   removeExpense,
@@ -29,6 +36,7 @@ import {
   setExpenseExcluded,
   updateExpense,
 } from "../core/application/expenses";
+import { listGameEvents, undoGameEvent } from "../core/application/game-events";
 import {
   closeGame,
   createGame,
@@ -38,19 +46,11 @@ import {
   listClosedGames,
   listDeletedGames,
   listGames,
-  reopenGame,
   purgeGame,
+  reopenGame,
   restoreGame,
   updateGame,
 } from "../core/application/games";
-import {
-  createContact,
-  deleteContact,
-  listContacts,
-  updateContact,
-} from "../core/application/contacts";
-import { InvalidInputError } from "../core/application/errors";
-import { listGameEvents, undoGameEvent } from "../core/application/game-events";
 import { getClosedMonthCsv } from "../core/application/monthly-report";
 import {
   addParticipant,
@@ -67,7 +67,7 @@ import {
 } from "../core/application/share-links";
 import { invalidInput, readJson, respond } from "../lib/http";
 import { createPaymentContext } from "../lib/payment-context";
-import { protectPaths, type AuthedEnv } from "../lib/require-user";
+import { type AuthedEnv, protectPaths } from "../lib/require-user";
 
 const participantUpdateSchema = participantInputSchema.partial();
 const expenseUpdateSchema = expenseInputSchema
@@ -77,7 +77,8 @@ const expenseUpdateSchema = expenseInputSchema
     title: expenseInputSchema.shape.title.removeDefault(),
     note: expenseInputSchema.shape.note.removeDefault(),
     splitMode: expenseInputSchema.shape.splitMode.removeDefault(),
-    splitParticipantIds: expenseInputSchema.shape.splitParticipantIds.removeDefault(),
+    splitParticipantIds:
+      expenseInputSchema.shape.splitParticipantIds.removeDefault(),
     splits: expenseInputSchema.shape.splits.removeDefault(),
   })
   .partial();
@@ -96,13 +97,19 @@ protectPaths(
   "/contacts/*",
 );
 
-gamesRouter.get("/contacts", (c) => respond(c, () => listContacts(c.get("repo"), c.get("userId"))));
+gamesRouter.get("/contacts", (c) =>
+  respond(c, () => listContacts(c.get("repo"), c.get("userId"))),
+);
 
 gamesRouter.post("/contacts", async (c) => {
   const input = await readJson(c, contactInputSchema);
   if (!input) return invalidInput(c);
 
-  return respond(c, () => createContact(c.get("repo"), c.get("userId"), input), 201);
+  return respond(
+    c,
+    () => createContact(c.get("repo"), c.get("userId"), input),
+    201,
+  );
 });
 
 gamesRouter.patch("/contacts/:contactId", async (c) => {
@@ -110,21 +117,34 @@ gamesRouter.patch("/contacts/:contactId", async (c) => {
   if (!input) return invalidInput(c);
 
   return respond(c, () =>
-    updateContact(c.get("repo"), c.get("userId"), c.req.param("contactId"), input),
+    updateContact(
+      c.get("repo"),
+      c.get("userId"),
+      c.req.param("contactId"),
+      input,
+    ),
   );
 });
 
 gamesRouter.delete("/contacts/:contactId", (c) =>
-  respond(c, () => deleteContact(c.get("repo"), c.get("userId"), c.req.param("contactId"))),
+  respond(c, () =>
+    deleteContact(c.get("repo"), c.get("userId"), c.req.param("contactId")),
+  ),
 );
 
-gamesRouter.get("/games", (c) => respond(c, () => listGames(c.get("repo"), c.get("userId"))));
+gamesRouter.get("/games", (c) =>
+  respond(c, () => listGames(c.get("repo"), c.get("userId"))),
+);
 
 gamesRouter.post("/games", async (c) => {
   const input = await readJson(c, gameInputSchema);
   if (!input) return invalidInput(c);
 
-  return respond(c, () => createGame(c.get("repo"), c.get("userId"), input), 201);
+  return respond(
+    c,
+    () => createGame(c.get("repo"), c.get("userId"), input),
+    201,
+  );
 });
 
 gamesRouter.get("/games/closed", (c) =>
@@ -150,17 +170,28 @@ gamesRouter.get("/games/trash", (c) =>
 );
 
 gamesRouter.post("/games/:gameId/close", (c) =>
-  respond(c, () => closeGame(c.get("repo"), c.get("userId"), c.req.param("gameId"))),
+  respond(c, () =>
+    closeGame(c.get("repo"), c.get("userId"), c.req.param("gameId")),
+  ),
 );
 
 gamesRouter.post("/games/:gameId/reopen", (c) =>
-  respond(c, () => reopenGame(c.get("repo"), c.get("userId"), c.req.param("gameId"))),
+  respond(c, () =>
+    reopenGame(c.get("repo"), c.get("userId"), c.req.param("gameId")),
+  ),
 );
 
 gamesRouter.get("/games/:gameId", (c) =>
   respond(c, async () => {
-    await reconcilePaymentsSafely(createPaymentContext(c.env, c.get("repo")), c.req.param("gameId"));
-    return getGameDetailForOwner(c.get("repo"), c.get("userId"), c.req.param("gameId"));
+    await reconcilePaymentsSafely(
+      createPaymentContext(c.env, c.get("repo")),
+      c.req.param("gameId"),
+    );
+    return getGameDetailForOwner(
+      c.get("repo"),
+      c.get("userId"),
+      c.req.param("gameId"),
+    );
   }),
 );
 
@@ -168,7 +199,9 @@ gamesRouter.patch("/games/:gameId", async (c) => {
   const input = await readJson(c, gameUpdateSchema);
   if (!input) return invalidInput(c);
 
-  return respond(c, () => updateGame(c.get("repo"), c.get("userId"), c.req.param("gameId"), input));
+  return respond(c, () =>
+    updateGame(c.get("repo"), c.get("userId"), c.req.param("gameId"), input),
+  );
 });
 
 gamesRouter.delete("/games/:gameId", (c) =>
@@ -179,7 +212,9 @@ gamesRouter.delete("/games/:gameId", (c) =>
 );
 
 gamesRouter.post("/games/:gameId/restore", (c) =>
-  respond(c, () => restoreGame(c.get("repo"), c.get("userId"), c.req.param("gameId"))),
+  respond(c, () =>
+    restoreGame(c.get("repo"), c.get("userId"), c.req.param("gameId")),
+  ),
 );
 
 gamesRouter.delete("/games/:gameId/purge", (c) =>
@@ -190,7 +225,11 @@ gamesRouter.delete("/games/:gameId/purge", (c) =>
 );
 
 gamesRouter.post("/games/:gameId/duplicate", (c) =>
-  respond(c, () => duplicateGame(c.get("repo"), c.get("userId"), c.req.param("gameId")), 201),
+  respond(
+    c,
+    () => duplicateGame(c.get("repo"), c.get("userId"), c.req.param("gameId")),
+    201,
+  ),
 );
 
 gamesRouter.get("/games/:gameId/summary", (c) =>
@@ -205,11 +244,15 @@ gamesRouter.get("/games/:gameId/summary", (c) =>
 );
 
 gamesRouter.get("/games/:gameId/events", (c) =>
-  respond(c, () => listGameEvents(c.get("repo"), c.get("userId"), c.req.param("gameId"))),
+  respond(c, () =>
+    listGameEvents(c.get("repo"), c.get("userId"), c.req.param("gameId")),
+  ),
 );
 
 gamesRouter.post("/events/:eventId/undo", (c) =>
-  respond(c, () => undoGameEvent(c.get("repo"), c.get("userId"), c.req.param("eventId"))),
+  respond(c, () =>
+    undoGameEvent(c.get("repo"), c.get("userId"), c.req.param("eventId")),
+  ),
 );
 
 gamesRouter.post("/games/:gameId/participants", async (c) => {
@@ -218,7 +261,13 @@ gamesRouter.post("/games/:gameId/participants", async (c) => {
 
   return respond(
     c,
-    () => addParticipant(c.get("repo"), c.get("userId"), c.req.param("gameId"), input),
+    () =>
+      addParticipant(
+        c.get("repo"),
+        c.get("userId"),
+        c.req.param("gameId"),
+        input,
+      ),
     201,
   );
 });
@@ -229,7 +278,13 @@ gamesRouter.post("/games/:gameId/participants/batch", async (c) => {
 
   return respond(
     c,
-    () => addParticipants(c.get("repo"), c.get("userId"), c.req.param("gameId"), input),
+    () =>
+      addParticipants(
+        c.get("repo"),
+        c.get("userId"),
+        c.req.param("gameId"),
+        input,
+      ),
     201,
   );
 });
@@ -253,13 +308,22 @@ gamesRouter.patch("/participants/:participantId", async (c) => {
   if (!input) return invalidInput(c);
 
   return respond(c, () =>
-    updateParticipant(c.get("repo"), c.get("userId"), c.req.param("participantId"), input),
+    updateParticipant(
+      c.get("repo"),
+      c.get("userId"),
+      c.req.param("participantId"),
+      input,
+    ),
   );
 });
 
 gamesRouter.delete("/participants/:participantId", (c) =>
   respond(c, () =>
-    removeParticipant(c.get("repo"), c.get("userId"), c.req.param("participantId")),
+    removeParticipant(
+      c.get("repo"),
+      c.get("userId"),
+      c.req.param("participantId"),
+    ),
   ),
 );
 
@@ -269,7 +333,8 @@ gamesRouter.post("/games/:gameId/expenses", async (c) => {
 
   return respond(
     c,
-    () => addExpense(c.get("repo"), c.get("userId"), c.req.param("gameId"), input),
+    () =>
+      addExpense(c.get("repo"), c.get("userId"), c.req.param("gameId"), input),
     201,
   );
 });
@@ -279,7 +344,12 @@ gamesRouter.patch("/games/:gameId/expenses/reorder", async (c) => {
   if (!input) return invalidInput(c);
 
   return respond(c, () =>
-    reorderExpenses(c.get("repo"), c.get("userId"), c.req.param("gameId"), input.expenseIds),
+    reorderExpenses(
+      c.get("repo"),
+      c.get("userId"),
+      c.req.param("gameId"),
+      input.expenseIds,
+    ),
   );
 });
 
@@ -288,7 +358,12 @@ gamesRouter.patch("/expenses/:expenseId", async (c) => {
   if (!input) return invalidInput(c);
 
   return respond(c, () =>
-    updateExpense(c.get("repo"), c.get("userId"), c.req.param("expenseId"), input),
+    updateExpense(
+      c.get("repo"),
+      c.get("userId"),
+      c.req.param("expenseId"),
+      input,
+    ),
   );
 });
 
@@ -307,7 +382,9 @@ gamesRouter.patch("/expenses/:expenseId/excluded", async (c) => {
 });
 
 gamesRouter.delete("/expenses/:expenseId", (c) =>
-  respond(c, () => removeExpense(c.get("repo"), c.get("userId"), c.req.param("expenseId"))),
+  respond(c, () =>
+    removeExpense(c.get("repo"), c.get("userId"), c.req.param("expenseId")),
+  ),
 );
 
 gamesRouter.post("/games/:gameId/transfers", async (c) => {
@@ -316,7 +393,13 @@ gamesRouter.post("/games/:gameId/transfers", async (c) => {
 
   return respond(
     c,
-    () => recordTransfer(c.get("repo"), c.get("userId"), c.req.param("gameId"), input),
+    () =>
+      recordTransfer(
+        c.get("repo"),
+        c.get("userId"),
+        c.req.param("gameId"),
+        input,
+      ),
     201,
   );
 });
@@ -333,7 +416,13 @@ gamesRouter.post("/games/:gameId/collaborators", async (c) => {
 
   return respond(
     c,
-    () => shareGame(c.get("repo"), c.get("userId"), c.req.param("gameId"), input.email),
+    () =>
+      shareGame(
+        c.get("repo"),
+        c.get("userId"),
+        c.req.param("gameId"),
+        input.email,
+      ),
     201,
   );
 });
@@ -361,7 +450,12 @@ gamesRouter.delete("/games/:gameId/collaborators/:collaboratorUserId", (c) =>
 );
 
 gamesRouter.post("/games/:gameId/share-links", (c) =>
-  respond(c, () => rotateShareLink(c.get("repo"), c.get("userId"), c.req.param("gameId")), 201),
+  respond(
+    c,
+    () =>
+      rotateShareLink(c.get("repo"), c.get("userId"), c.req.param("gameId")),
+    201,
+  ),
 );
 
 gamesRouter.patch("/games/:gameId/share-link", async (c) => {
@@ -369,7 +463,12 @@ gamesRouter.patch("/games/:gameId/share-link", async (c) => {
   if (!input) return invalidInput(c);
 
   return respond(c, () =>
-    setShareLinkEnabled(c.get("repo"), c.get("userId"), c.req.param("gameId"), input.enabled),
+    setShareLinkEnabled(
+      c.get("repo"),
+      c.get("userId"),
+      c.req.param("gameId"),
+      input.enabled,
+    ),
   );
 });
 
@@ -378,8 +477,11 @@ gamesRouter.post("/games/:gameId/share-preview", async (c) => {
   if (!input) return invalidInput(c);
 
   return respond(c, () =>
-    saveSharePreview(c.get("repo"), c.get("userId"), c.req.param("gameId"), input.data).then(
-      () => ({ ok: true }),
-    ),
+    saveSharePreview(
+      c.get("repo"),
+      c.get("userId"),
+      c.req.param("gameId"),
+      input.data,
+    ).then(() => ({ ok: true })),
   );
 });

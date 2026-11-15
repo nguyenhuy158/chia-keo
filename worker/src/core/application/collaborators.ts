@@ -26,7 +26,8 @@ export async function shareGame(
 
   const normalizedEmail = email.trim().toLowerCase();
   const invited = await repo.users.findIdByEmail(normalizedEmail);
-  if (invited && invited.id === game.ownerUserId) throw new BadRequestError(COLLABORATOR_ERROR.isOwner);
+  if (invited && invited.id === game.ownerUserId)
+    throw new BadRequestError(COLLABORATOR_ERROR.isOwner);
 
   const added = await repo.gameCollaborators.add({
     id: createId("collab"),
@@ -58,7 +59,9 @@ export async function listShareCandidates(
   ]);
 
   const sharedUserIds = new Set(
-    collaborators.map((collaborator) => collaborator.userId).filter((id): id is string => !!id),
+    collaborators
+      .map((collaborator) => collaborator.userId)
+      .filter((id): id is string => !!id),
   );
   return users.filter((user) => !sharedUserIds.has(user.id));
 }
@@ -86,7 +89,9 @@ export async function unshareGameByEmail(
   const game = await getOwnedGame(repo, gameId, userId);
   if (!game) throw new NotFoundError();
 
-  await repo.gameCollaborators.remove(game.id, { invitedEmail: email.trim().toLowerCase() });
+  await repo.gameCollaborators.remove(game.id, {
+    invitedEmail: email.trim().toLowerCase(),
+  });
 
   return loadGameDetail(repo, game, userId);
 }

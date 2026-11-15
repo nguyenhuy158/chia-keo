@@ -4,8 +4,8 @@ import type { ApiParticipant } from "../../shared/api-types";
 import { type Contact, normalizeContactName } from "../../shared/contacts";
 import type { ParticipantInput } from "../../shared/schemas";
 import { getVietQrBankLabel } from "../adapters/browser/vietqr";
-import { Avatar } from "./Avatar";
 import { useContacts } from "../adapters/react-query/queries";
+import { Avatar } from "./Avatar";
 
 type ContactPickerProps = {
   /** Nguoi da co trong cuoc chia; danh ba se danh dau san, khong cho chon lai. */
@@ -27,12 +27,21 @@ function toInput(contact: Contact): ParticipantInput {
  * Chon nhanh nguoi hay di cung. Danh sach gop tu card Danh ba (tu nhap) va cac
  * cuoc chia truoc do; chua co ai thi an luon khoi chiem cho.
  */
-export function ContactPicker({ participants, pending, onAddMany }: ContactPickerProps) {
+export function ContactPicker({
+  participants,
+  pending,
+  onAddMany,
+}: ContactPickerProps) {
   const contactsQuery = useContacts();
   const [chosen, setChosen] = useState<string[]>([]);
 
   const alreadyIn = useMemo(
-    () => new Set(participants.map((participant) => normalizeContactName(participant.name))),
+    () =>
+      new Set(
+        participants.map((participant) =>
+          normalizeContactName(participant.name),
+        ),
+      ),
     [participants],
   );
 
@@ -62,7 +71,9 @@ export function ContactPicker({ participants, pending, onAddMany }: ContactPicke
 
   function toggle(key: string) {
     setChosen((current) =>
-      current.includes(key) ? current.filter((item) => item !== key) : [...current, key],
+      current.includes(key)
+        ? current.filter((item) => item !== key)
+        : [...current, key],
     );
   }
 
@@ -104,7 +115,13 @@ export function ContactPicker({ participants, pending, onAddMany }: ContactPicke
             >
               <Avatar name={contact.name} size={16} />
               {contact.name}
-              {inGame ? <Check size={13} /> : picked ? <Check size={13} /> : <Plus size={13} />}
+              {inGame ? (
+                <Check size={13} />
+              ) : picked ? (
+                <Check size={13} />
+              ) : (
+                <Plus size={13} />
+              )}
             </button>
           );
         })}

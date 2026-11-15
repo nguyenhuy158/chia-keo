@@ -5,7 +5,7 @@ import {
   updateUserPreferences,
 } from "../core/application/user-preferences";
 import { invalidInput, readJson, respond } from "../lib/http";
-import { protectPaths, type AuthedEnv } from "../lib/require-user";
+import { type AuthedEnv, protectPaths } from "../lib/require-user";
 
 /** Tuy chon hien thi cua chinh minh; luon can dang nhap bang session. */
 export const userPreferencesRouter = new Hono<AuthedEnv>();
@@ -20,5 +20,7 @@ userPreferencesRouter.patch("/preferences", async (c) => {
   const input = await readJson(c, userPreferencesPatchSchema);
   if (!input) return invalidInput(c);
 
-  return respond(c, () => updateUserPreferences(c.get("repo"), c.get("userId"), input));
+  return respond(c, () =>
+    updateUserPreferences(c.get("repo"), c.get("userId"), input),
+  );
 });

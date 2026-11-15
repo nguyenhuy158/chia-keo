@@ -1,13 +1,25 @@
-import type { ApiGame, ApiGameDetail, ApiTrashGame } from "../../../../shared/api-types";
-import { TRASH_RETENTION_DAYS } from "../../../../shared/schemas";
+import type {
+  ApiGame,
+  ApiGameDetail,
+  ApiTrashGame,
+} from "../../../../shared/api-types";
+import {
+  CLOSE_MODE_NONE,
+  isClosed,
+  toCloseMode,
+} from "../../../../shared/game-closing";
 import type { GameInput, GameUpdateInput } from "../../../../shared/schemas";
 import {
   DEFAULT_SETTLEMENT_MODE,
   QUICK_PARTICIPANT_PREFIX,
+  TRASH_RETENTION_DAYS,
 } from "../../../../shared/schemas";
-import { CLOSE_MODE_NONE, isClosed, toCloseMode } from "../../../../shared/game-closing";
 import { createGameCode, createId, nowIso } from "../../lib/ids";
-import type { GameChanges, GameRepository, GameRow } from "../ports/game-repository";
+import type {
+  GameChanges,
+  GameRepository,
+  GameRow,
+} from "../ports/game-repository";
 import { BadRequestError, InvalidInputError, NotFoundError } from "./errors";
 import {
   getAccessibleGame,
@@ -61,14 +73,26 @@ async function listGamesWhere(
  * hoac da dong tay nam o `listClosedGames` — mo app ra thay dung viec dang lam
  * do chu khong phai ca dong cuoc da xong.
  */
-export async function listGames(repo: GameRepository, userId: string): Promise<ApiGame[]> {
+export async function listGames(
+  repo: GameRepository,
+  userId: string,
+): Promise<ApiGame[]> {
   return listGamesWhere(repo, userId, (row) => row.closedAt === null);
 }
 
 /** Cuoc choi da dong, moi dong truoc. */
-export async function listClosedGames(repo: GameRepository, userId: string): Promise<ApiGame[]> {
-  const games = await listGamesWhere(repo, userId, (row) => row.closedAt !== null);
-  return games.sort((left, right) => (right.closedAt as string).localeCompare(left.closedAt as string));
+export async function listClosedGames(
+  repo: GameRepository,
+  userId: string,
+): Promise<ApiGame[]> {
+  const games = await listGamesWhere(
+    repo,
+    userId,
+    (row) => row.closedAt !== null,
+  );
+  return games.sort((left, right) =>
+    (right.closedAt as string).localeCompare(left.closedAt as string),
+  );
 }
 
 /**
@@ -77,7 +101,10 @@ export async function listClosedGames(repo: GameRepository, userId: string): Pro
  * vua tat toan se thanh "khong tim thay". Danh sach cho nguoi dung xem thi
  * dung `listGames` / `listClosedGames`.
  */
-export async function listAllGames(repo: GameRepository, userId: string): Promise<ApiGame[]> {
+export async function listAllGames(
+  repo: GameRepository,
+  userId: string,
+): Promise<ApiGame[]> {
   return listGamesWhere(repo, userId, () => true);
 }
 
@@ -91,7 +118,9 @@ export function findGameByRef<T extends { id: string; code: string }>(
   ref: string,
 ): T | undefined {
   const wanted = ref.trim().toLowerCase();
-  return games.find((game) => game.id === ref.trim() || game.code.toLowerCase() === wanted);
+  return games.find(
+    (game) => game.id === ref.trim() || game.code.toLowerCase() === wanted,
+  );
 }
 
 export async function createGame(
@@ -159,8 +188,12 @@ export async function updateGame(
 
   const changes: GameChanges = {
     ...(input.name === undefined ? {} : { name: input.name }),
-    ...(input.settlementMode === undefined ? {} : { settlementMode: input.settlementMode }),
-    ...(input.settlementHostId === undefined ? {} : { settlementHostId: input.settlementHostId }),
+    ...(input.settlementMode === undefined
+      ? {}
+      : { settlementMode: input.settlementMode }),
+    ...(input.settlementHostId === undefined
+      ? {}
+      : { settlementHostId: input.settlementHostId }),
   };
 
   if (Object.keys(changes).length === 0) throw new InvalidInputError();
@@ -180,12 +213,16 @@ export async function updateGame(
   // nhan lay tu detail moi (id vua chon co the la nguoi nao trong danh sach).
   const detail = await loadGameDetail(repo, { ...game, ...changes }, userId);
 
-  if (changes.settlementMode !== undefined || changes.settlementHostId !== undefined) {
+  if (
+    changes.settlementMode !== undefined ||
+    changes.settlementHostId !== undefined
+  ) {
     const hostId = changes.settlementHostId ?? game.settlementHostId;
     await recordEvent(repo, game.id, {
       kind: "settlement_changed",
       mode: changes.settlementMode ?? game.settlementMode,
-      hostName: detail.participants.find((person) => person.id === hostId)?.name || "",
+      hostName:
+        detail.participants.find((person) => person.id === hostId)?.name || "",
     });
   }
 
@@ -206,7 +243,9 @@ export async function duplicateGame(
   const paymentRows = await repo.paymentProfiles.listByParticipantIds(
     participantRows.map((row) => row.id),
   );
-  const paymentByParticipantId = new Map(paymentRows.map((row) => [row.participantId, row]));
+  const paymentByParticipantId = new Map(
+    paymentRows.map((row) => [row.participantId, row]),
+  );
 
   const now = nowIso();
   // Participant o ban sao co id moi, nen dau moi da chon phai doi chieu sang id
@@ -267,7 +306,12 @@ export async function closeGame(
 ): Promise<ApiGameDetail> {
   const game = await getOwnedGame(repo, gameId, userId);
   if (!game) throw new NotFoundError();
-  if (isClosed({ closedAt: game.closedAt, closeMode: toCloseMode(game.closeMode) })) {
+  if (
+    isClosed({
+      closedAt: game.closedAt,
+      closeMode: toCloseMode(game.closeMode),
+    })
+  ) {
     throw new BadRequestError(GAME_ALREADY_CLOSED);
   }
 
@@ -275,7 +319,11 @@ export async function closeGame(
   await repo.games.setClosed(game.id, closedAt, "manual");
   await recordEvent(repo, game.id, { kind: "game_closed", mode: "manual" });
 
-  return loadGameDetail(repo, { ...game, closedAt, closeMode: "manual" }, userId);
+  return loadGameDetail(
+    repo,
+    { ...game, closedAt, closeMode: "manual" },
+    userId,
+  );
 }
 
 /** Mo lai cuoc da dong (ca cuoc tu dong dong): quay ve danh sach dang choi. */
@@ -286,7 +334,12 @@ export async function reopenGame(
 ): Promise<ApiGameDetail> {
   const game = await getOwnedGame(repo, gameId, userId);
   if (!game) throw new NotFoundError();
-  if (!isClosed({ closedAt: game.closedAt, closeMode: toCloseMode(game.closeMode) })) {
+  if (
+    !isClosed({
+      closedAt: game.closedAt,
+      closeMode: toCloseMode(game.closeMode),
+    })
+  ) {
     throw new BadRequestError(GAME_NOT_CLOSED);
   }
 
@@ -296,7 +349,11 @@ export async function reopenGame(
   });
   await repo.games.setClosed(game.id, null, CLOSE_MODE_NONE);
 
-  return loadGameDetail(repo, { ...game, closedAt: null, closeMode: CLOSE_MODE_NONE }, userId);
+  return loadGameDetail(
+    repo,
+    { ...game, closedAt: null, closeMode: CLOSE_MODE_NONE },
+    userId,
+  );
 }
 
 /**
@@ -324,7 +381,9 @@ export async function listDeletedGames(
   userId: string,
 ): Promise<ApiTrashGame[]> {
   const rows = await repo.games.listDeletedByOwner(userId);
-  const cutoff = new Date(Date.now() - TRASH_RETENTION_DAYS * 86_400_000).toISOString();
+  const cutoff = new Date(
+    Date.now() - TRASH_RETENTION_DAYS * 86_400_000,
+  ).toISOString();
 
   const kept: GameRow[] = [];
   for (const row of rows) {

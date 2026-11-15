@@ -1,4 +1,7 @@
-import type { ApiCreatedMcpToken, ApiMcpToken } from "../../../../shared/api-types";
+import type {
+  ApiCreatedMcpToken,
+  ApiMcpToken,
+} from "../../../../shared/api-types";
 import {
   MAX_MCP_TOKENS_PER_USER,
   MCP_SCOPES,
@@ -24,7 +27,9 @@ export type McpIdentity = {
 
 function generateSecret() {
   const bytes = crypto.getRandomValues(new Uint8Array(TOKEN_BYTES));
-  const body = Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
+  const body = Array.from(bytes, (byte) =>
+    byte.toString(16).padStart(2, "0"),
+  ).join("");
   return `${TOKEN_PREFIX}${body}`;
 }
 
@@ -33,10 +38,13 @@ function generateSecret() {
  * do nguoc, khac han mat khau nguoi dung tu chon.
  */
 export async function hashMcpToken(secret: string) {
-  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(secret));
-  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join(
-    "",
+  const digest = await crypto.subtle.digest(
+    "SHA-256",
+    new TextEncoder().encode(secret),
   );
+  return Array.from(new Uint8Array(digest), (byte) =>
+    byte.toString(16).padStart(2, "0"),
+  ).join("");
 }
 
 /** Bo scope la trong DB thi bi loai: quyen chi den tu danh sach da biet. */

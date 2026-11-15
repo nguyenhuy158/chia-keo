@@ -17,11 +17,11 @@ import { z } from "zod";
 import type { ApiParticipant } from "../../shared/api-types";
 import type { ParticipantInput } from "../../shared/schemas";
 import { getVietQrBankLabel } from "../adapters/browser/vietqr";
+import { SwipeAction } from "../ui/SwipeAction";
 import { Avatar } from "./Avatar";
 import { BankSelect } from "./BankSelect";
 import { useConfirm } from "./ConfirmDialog";
 import { ContactPicker } from "./ContactPicker";
-import { SwipeAction } from "../ui/SwipeAction";
 import { Field } from "./ui";
 
 const participantFormSchema = z.object({
@@ -45,7 +45,10 @@ type ParticipantPanelProps = {
   pending: boolean;
   onAdd: (input: ParticipantInput) => Promise<unknown>;
   onAddMany: (people: ParticipantInput[]) => Promise<unknown>;
-  onUpdate: (participantId: string, input: Partial<ParticipantInput>) => Promise<unknown>;
+  onUpdate: (
+    participantId: string,
+    input: Partial<ParticipantInput>,
+  ) => Promise<unknown>;
   onRemove: (participantId: string) => void;
   onReorder: (participantIds: string[]) => void;
 };
@@ -60,7 +63,9 @@ export function ParticipantPanel({
   onReorder,
 }: ParticipantPanelProps) {
   const confirm = useConfirm();
-  const [editingParticipantId, setEditingParticipantId] = useState<string | null>(null);
+  const [editingParticipantId, setEditingParticipantId] = useState<
+    string | null
+  >(null);
   const [showBank, setShowBank] = useState(false);
   const bankVisible = Boolean(editingParticipantId) || showBank;
   const form = useForm<ParticipantFormValues>({
@@ -76,7 +81,8 @@ export function ParticipantPanel({
   async function handleRemove(participant: ApiParticipant) {
     const ok = await confirm({
       title: `Xóa ${participant.name} khỏi cuộc chơi?`,
-      description: "Các khoản chi đã chia cho người này sẽ được chia lại cho những người còn lại.",
+      description:
+        "Các khoản chi đã chia cho người này sẽ được chia lại cho những người còn lại.",
       confirmLabel: "Xóa",
       destructive: true,
     });
@@ -88,7 +94,9 @@ export function ParticipantPanel({
 
   /** Doi cho voi nguoi ngay tren/duoi trong danh sach hien tai. */
   function move(participantId: string, direction: -1 | 1) {
-    const index = participants.findIndex((participant) => participant.id === participantId);
+    const index = participants.findIndex(
+      (participant) => participant.id === participantId,
+    );
     const targetIndex = index + direction;
     const order = participants.map((participant) => participant.id);
     [order[index], order[targetIndex]] = [order[targetIndex], order[index]];
@@ -135,18 +143,31 @@ export function ParticipantPanel({
     <section className="rounded-lg border border-border bg-surface p-4 shadow-sm">
       <div className="mb-4 flex items-center gap-2">
         <Users size={18} className="text-violet-600 dark:text-violet-400" />
-        <h3 className="text-lg font-semibold text-stone-950 dark:text-stone-50">Người tham gia</h3>
+        <h3 className="text-lg font-semibold text-stone-950 dark:text-stone-50">
+          Người tham gia
+        </h3>
       </div>
 
       {/* Chi hien luc them nguoi moi: dang sua mot nguoi thi form o duoi la trong tam. */}
       {!editingParticipantId && (
-        <ContactPicker participants={participants} pending={pending} onAddMany={onAddMany} />
+        <ContactPicker
+          participants={participants}
+          pending={pending}
+          onAddMany={onAddMany}
+        />
       )}
 
-      <form onSubmit={editingParticipantId ? handleSaveEdit : handleAdd} className="grid gap-3 md:grid-cols-2">
+      <form
+        onSubmit={editingParticipantId ? handleSaveEdit : handleAdd}
+        className="grid gap-3 md:grid-cols-2"
+      >
         <div className={bankVisible ? "" : "md:col-span-2"}>
           <Field label="Tên" error={form.formState.errors.name?.message}>
-            <input {...form.register("name")} className="field" placeholder="Huy" />
+            <input
+              {...form.register("name")}
+              className="field"
+              placeholder="Huy"
+            />
           </Field>
         </div>
         {!editingParticipantId && (
@@ -159,7 +180,9 @@ export function ParticipantPanel({
             <Landmark size={15} className="shrink-0" />
             <span className="min-w-0 flex-1">
               Tài khoản nhận tiền{" "}
-              <span className="font-normal text-fg-muted">(không bắt buộc, để có QR)</span>
+              <span className="font-normal text-fg-muted">
+                (không bắt buộc, để có QR)
+              </span>
             </span>
             <ChevronDown
               size={15}
@@ -176,7 +199,11 @@ export function ParticipantPanel({
               />
             </Field>
             <Field label="Số tài khoản">
-              <input {...form.register("accountNo")} className="field" placeholder="0123456789" />
+              <input
+                {...form.register("accountNo")}
+                className="field"
+                placeholder="0123456789"
+              />
             </Field>
             <Field label="Tên chủ tài khoản">
               <input
@@ -213,7 +240,11 @@ export function ParticipantPanel({
       <div className="mt-5 space-y-2">
         {participants.map((participant, index) => (
           <div key={participant.id}>
-            <SwipeAction label="Xóa" icon={<Trash2 size={15} />} onAction={handleRemove.bind(null, participant)}>
+            <SwipeAction
+              label="Xóa"
+              icon={<Trash2 size={15} />}
+              onAction={handleRemove.bind(null, participant)}
+            >
               <div className="rounded-md border border-border p-3">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex min-w-0 items-center gap-1">

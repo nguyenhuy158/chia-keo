@@ -3,20 +3,20 @@
 
 import type {
   ApiAiSuggestionResponse,
-  ApiCrossGameBalances,
   ApiCreatedMcpToken,
+  ApiCrossGameBalances,
   ApiFunStats,
   ApiGame,
   ApiGameDetail,
   ApiMcpToken,
+  ApiPaymentOptions,
+  ApiPaymentRequest,
   ApiPhoto,
   ApiPhotoDetail,
   ApiShareCandidate,
   ApiShareView,
   ApiShuttleStock,
   ApiTrashGame,
-  ApiPaymentOptions,
-  ApiPaymentRequest,
 } from "../../../shared/api-types";
 import type { Contact } from "../../../shared/contacts";
 import type { ApiGameEvent } from "../../../shared/game-events";
@@ -75,7 +75,9 @@ export type GameApiPort = {
     /** Tuy chon hien thi cua user, luu tren server nen doi may van con. */
     get(): Promise<{ preferences: UserPreferences }>;
     /** Chi gui field vua doi; tra ve toan bo tuy chon sau khi ghi. */
-    update(patch: UserPreferencesPatch): Promise<{ preferences: UserPreferences }>;
+    update(
+      patch: UserPreferencesPatch,
+    ): Promise<{ preferences: UserPreferences }>;
   };
   shuttles: {
     /** Kho cau ung truoc cho team: so cau con lai + lich su +/- gan nhat. */
@@ -90,20 +92,32 @@ export type GameApiPort = {
     list(): Promise<{ contacts: Contact[] }>;
     /** Ten da co trong danh ba thi cap nhat dong do, khong tao dong thu hai. */
     create(input: ContactInput): Promise<{ contacts: Contact[] }>;
-    update(contactId: string, input: ContactUpdateInput): Promise<{ contacts: Contact[] }>;
+    update(
+      contactId: string,
+      input: ContactUpdateInput,
+    ): Promise<{ contacts: Contact[] }>;
     remove(contactId: string): Promise<{ contacts: Contact[] }>;
   };
   participants: {
     create(gameId: string, input: ParticipantInput): Promise<ApiGameDetail>;
     /** Them nhieu nguoi mot request; dung khi chon tu danh ba. */
-    createMany(gameId: string, input: ParticipantBatchInput): Promise<ApiGameDetail>;
-    update(participantId: string, input: Partial<ParticipantInput>): Promise<ApiGameDetail>;
+    createMany(
+      gameId: string,
+      input: ParticipantBatchInput,
+    ): Promise<ApiGameDetail>;
+    update(
+      participantId: string,
+      input: Partial<ParticipantInput>,
+    ): Promise<ApiGameDetail>;
     remove(participantId: string): Promise<ApiGameDetail>;
     reorder(gameId: string, participantIds: string[]): Promise<ApiGameDetail>;
   };
   expenses: {
     create(gameId: string, input: ExpenseInput): Promise<ApiGameDetail>;
-    update(expenseId: string, input: Partial<ExpenseInput>): Promise<ApiGameDetail>;
+    update(
+      expenseId: string,
+      input: Partial<ExpenseInput>,
+    ): Promise<ApiGameDetail>;
     remove(expenseId: string): Promise<ApiGameDetail>;
     setExcluded(expenseId: string, excluded: boolean): Promise<ApiGameDetail>;
     reorder(gameId: string, expenseIds: string[]): Promise<ApiGameDetail>;
@@ -139,7 +153,10 @@ export type GameApiPort = {
     photos(token: string): Promise<ApiPhoto[]>;
     photo(token: string, photoId: string): Promise<ApiPhotoDetail>;
     paymentOptions(token: string): Promise<ApiPaymentOptions>;
-    createPayment(token: string, participantIds: string[]): Promise<ApiPaymentRequest>;
+    createPayment(
+      token: string,
+      participantIds: string[],
+    ): Promise<ApiPaymentRequest>;
     payment(token: string, code: string): Promise<ApiPaymentRequest>;
   };
   mcpTokens: {
@@ -149,7 +166,10 @@ export type GameApiPort = {
     revoke(tokenId: string): Promise<{ ok: boolean }>;
   };
   ai: {
-    suggestExpense(gameId: string, text: string): Promise<ApiAiSuggestionResponse>;
+    suggestExpense(
+      gameId: string,
+      text: string,
+    ): Promise<ApiAiSuggestionResponse>;
     scanReceipt(
       gameId: string,
       image: { mimeType: string; data: string },

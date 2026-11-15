@@ -1,4 +1,5 @@
 import type { ApiGameDetail } from "../../../../shared/api-types";
+import { normalizeCategory } from "../../../../shared/expense-categories";
 import {
   DEFAULT_TRANSFER_TITLE,
   defaultTitleForKind,
@@ -8,18 +9,25 @@ import {
 } from "../../../../shared/schemas";
 import {
   allocateByWeights,
-  computeSplitRows,
   type ComputedSplit,
+  computeSplitRows,
   type SplitMode,
 } from "../../../../shared/split";
-import { normalizeCategory } from "../../../../shared/expense-categories";
 import { createId, nowIso } from "../../lib/ids";
 import type { GameRepository } from "../ports/game-repository";
 import { InvalidInputError, NotFoundError } from "./errors";
-import { getAccessibleGame, hasGameAccess, loadGameDetail } from "./game-detail";
+import {
+  getAccessibleGame,
+  hasGameAccess,
+  loadGameDetail,
+} from "./game-detail";
 import { recordEvent } from "./game-events";
 
-async function loadOwnedExpense(repo: GameRepository, expenseId: string, userId: string) {
+async function loadOwnedExpense(
+  repo: GameRepository,
+  expenseId: string,
+  userId: string,
+) {
   const row = await repo.expenses.getWithGame(expenseId);
   if (!row || !(await hasGameAccess(repo, row.game, userId))) return null;
   return row;
@@ -40,7 +48,11 @@ function toNewSplitRows(expenseId: string, rows: ComputedSplit[]) {
  * `excludeExpenseId` khi dang sua). Dung de uu tien phan du cho nguoi dang
  * chia it hon, tranh mot nguoi lien tuc dinh tien le o nhieu khoan lien tiep.
  */
-async function loadPriorTotals(repo: GameRepository, gameId: string, excludeExpenseId?: string) {
+async function loadPriorTotals(
+  repo: GameRepository,
+  gameId: string,
+  excludeExpenseId?: string,
+) {
   const expenseRows = await repo.expenses.listByGame(gameId);
   const expenseIds = expenseRows
     .map((row) => row.id)
@@ -49,7 +61,10 @@ async function loadPriorTotals(repo: GameRepository, gameId: string, excludeExpe
 
   const totals = new Map<string, number>();
   for (const split of splitRows) {
-    totals.set(split.participantId, (totals.get(split.participantId) || 0) + split.amount);
+    totals.set(
+      split.participantId,
+      (totals.get(split.participantId) || 0) + split.amount,
+    );
   }
   return totals;
 }
@@ -112,7 +127,9 @@ export async function addExpense(
 
   const detail = await loadGameDetail(repo, game, userId);
   // Ten nguoi lay tu detail vua tai, khong query them.
-  const nameById = new Map(detail.participants.map((row) => [row.id, row.name]));
+  const nameById = new Map(
+    detail.participants.map((row) => [row.id, row.name]),
+  );
   await recordEvent(repo, game.id, {
     kind: "expense_added",
     title,
@@ -147,7 +164,8 @@ export async function updateExpense(
   // Khong gui splits moi thi dung lai splits dang luu; mode "amount" ma doi
   // tong tien nhung khong gui splits se bi computeSplitRows chan vi lech tong.
   const splitParticipantIds =
-    input.splitParticipantIds ?? currentSplits.map((split) => split.participantId);
+    input.splitParticipantIds ??
+    currentSplits.map((split) => split.participantId);
   const splits =
     input.splits ??
     currentSplits.map((split) => ({
@@ -156,14 +174,22 @@ export async function updateExpense(
     }));
 
   const priorTotals = await loadPriorTotals(repo, row.game.id, row.expense.id);
-  const rows = computeSplitRows(amount, splitMode, splitParticipantIds, splits, priorTotals);
+  const rows = computeSplitRows(
+    amount,
+    splitMode,
+    splitParticipantIds,
+    splits,
+    priorTotals,
+  );
   if (!rows) throw new InvalidInputError();
 
-  const payerParticipantId = input.payerParticipantId ?? row.expense.payerParticipantId;
+  const payerParticipantId =
+    input.payerParticipantId ?? row.expense.payerParticipantId;
   await assertMembers(repo, row.game.id, payerParticipantId, rows);
 
   // Doi qua lai giua chi va thu duoc; "transfer" da bi chan o tren.
-  const storedKind: ExpenseKindInput = row.expense.kind === "income" ? "income" : "expense";
+  const storedKind: ExpenseKindInput =
+    row.expense.kind === "income" ? "income" : "expense";
   const kind = input.kind ?? storedKind;
   const title = input.title ?? row.expense.title;
 
@@ -180,7 +206,10 @@ export async function updateExpense(
     splitMode,
     updatedAt: nowIso(),
   });
-  await repo.splits.replace(row.expense.id, toNewSplitRows(row.expense.id, rows));
+  await repo.splits.replace(
+    row.expense.id,
+    toNewSplitRows(row.expense.id, rows),
+  );
 
   await recordEvent(repo, row.game.id, {
     kind: "expense_updated",
@@ -220,7 +249,8 @@ export async function removeExpense(
   const splits = await repo.splits.listByExpense(row.expense.id);
   const participants = await repo.participants.listByGame(row.game.id);
   const payerName =
-    participants.find((person) => person.id === row.expense.payerParticipantId)?.name || "Không rõ";
+    participants.find((person) => person.id === row.expense.payerParticipantId)
+      ?.name || "Không rõ";
 
   await repo.expenses.delete(row.expense.id);
 
@@ -257,8 +287,13 @@ export async function recordTransfer(
   const game = await getAccessibleGame(repo, gameId, userId);
   if (!game) throw new NotFoundError();
 
-  const participantIds = new Set(await repo.participants.listIdsByGame(game.id));
-  if (!participantIds.has(input.fromParticipantId) || !participantIds.has(input.toParticipantId)) {
+  const participantIds = new Set(
+    await repo.participants.listIdsByGame(game.id),
+  );
+  if (
+    !participantIds.has(input.fromParticipantId) ||
+    !participantIds.has(input.toParticipantId)
+  ) {
     throw new InvalidInputError();
   }
 
@@ -266,7 +301,11 @@ export async function recordTransfer(
   return loadGameDetail(repo, game, userId);
 }
 
-export async function insertTransfer(repo: GameRepository, gameId: string, input: TransferInput) {
+export async function insertTransfer(
+  repo: GameRepository,
+  gameId: string,
+  input: TransferInput,
+) {
   const now = nowIso();
   const expenseId = createId("expense");
 
@@ -297,7 +336,9 @@ export async function insertTransfer(repo: GameRepository, gameId: string, input
   ]);
 
   const participants = await repo.participants.listByGame(gameId);
-  const nameById = new Map(participants.map((person) => [person.id, person.name]));
+  const nameById = new Map(
+    participants.map((person) => [person.id, person.name]),
+  );
   await recordEvent(repo, gameId, {
     kind: "transfer_added",
     fromName: nameById.get(input.fromParticipantId) as string,
@@ -320,8 +361,12 @@ export async function reorderExpenses(
   const game = await getAccessibleGame(repo, gameId, userId);
   if (!game) throw new NotFoundError();
 
-  const existingIds = new Set((await repo.expenses.listByGame(gameId)).map((row) => row.id));
-  const valid = new Set(orderedIds).size === orderedIds.length && orderedIds.every((id) => existingIds.has(id));
+  const existingIds = new Set(
+    (await repo.expenses.listByGame(gameId)).map((row) => row.id),
+  );
+  const valid =
+    new Set(orderedIds).size === orderedIds.length &&
+    orderedIds.every((id) => existingIds.has(id));
   if (!valid) throw new InvalidInputError();
 
   await repo.expenses.reorder(game.id, orderedIds);
@@ -329,7 +374,10 @@ export async function reorderExpenses(
   return loadGameDetail(repo, game, userId);
 }
 
-export async function reallocateExpenses(repo: GameRepository, expenseIds: string[]) {
+export async function reallocateExpenses(
+  repo: GameRepository,
+  expenseIds: string[],
+) {
   for (const expenseId of expenseIds) {
     const expense = await repo.expenses.getById(expenseId);
     if (!expense) continue;
@@ -350,13 +398,19 @@ export async function reallocateExpenses(repo: GameRepository, expenseIds: strin
         expense.amount,
         "shares",
         [],
-        splitRows.map((row) => ({ participantId: row.participantId, value: row.weight || 1 })),
+        splitRows.map((row) => ({
+          participantId: row.participantId,
+          value: row.weight || 1,
+        })),
       );
     } else if (expense.splitMode === "amount") {
       // Tong phan con lai khong con khop tong tien, chia lai theo ty le cu.
       rows = allocateByWeights(
         expense.amount,
-        splitRows.map((row) => ({ participantId: row.participantId, weight: row.amount })),
+        splitRows.map((row) => ({
+          participantId: row.participantId,
+          weight: row.amount,
+        })),
       ).map((share) => ({ ...share, weight: null }));
       if (rows.length === 0) rows = null;
     } else {

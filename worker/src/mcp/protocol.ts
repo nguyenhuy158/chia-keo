@@ -61,7 +61,11 @@ function ok(id: JsonRpcId, result: unknown): JsonRpcResponse {
   return { jsonrpc: "2.0", id, result };
 }
 
-function fail(id: JsonRpcId | null, code: number, message: string): JsonRpcResponse {
+function fail(
+  id: JsonRpcId | null,
+  code: number,
+  message: string,
+): JsonRpcResponse {
   return { jsonrpc: "2.0", id, error: { code, message } };
 }
 
@@ -75,13 +79,16 @@ function toolFailure(id: JsonRpcId, message: string): JsonRpcResponse {
 }
 
 function textResult(value: unknown) {
-  const text = typeof value === "string" ? value : JSON.stringify(value, null, 2);
+  const text =
+    typeof value === "string" ? value : JSON.stringify(value, null, 2);
   return { content: [{ type: "text", text }] };
 }
 
 function negotiateProtocolVersion(params: unknown) {
-  const requested = (params as { protocolVersion?: unknown } | null)?.protocolVersion;
-  return typeof requested === "string" && SUPPORTED_PROTOCOL_VERSIONS.includes(requested)
+  const requested = (params as { protocolVersion?: unknown } | null)
+    ?.protocolVersion;
+  return typeof requested === "string" &&
+    SUPPORTED_PROTOCOL_VERSIONS.includes(requested)
     ? requested
     : MCP_PROTOCOL_VERSION;
 }
@@ -112,7 +119,8 @@ async function callTool<Context>(
   }
 
   const tool = tools.find((candidate) => candidate.name === name);
-  if (!tool) return fail(id, JSON_RPC_ERROR.methodNotFound, `Không có tool "${name}"`);
+  if (!tool)
+    return fail(id, JSON_RPC_ERROR.methodNotFound, `Không có tool "${name}"`);
 
   // Noi ro thieu scope nao thay vi bao "khong co tool": ten tool khong phai bi
   // mat, con nguoi dung thi can biet phai tao lai token voi quyen gi.
@@ -125,7 +133,10 @@ async function callTool<Context>(
   }
 
   try {
-    const value = await tool.run((args || {}) as Record<string, unknown>, context);
+    const value = await tool.run(
+      (args || {}) as Record<string, unknown>,
+      context,
+    );
     return ok(id, textResult(value));
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
@@ -148,7 +159,11 @@ export async function handleMcpMessage<Context>(
   },
 ): Promise<JsonRpcResponse | null> {
   if (!message || typeof message !== "object" || Array.isArray(message)) {
-    return fail(null, JSON_RPC_ERROR.invalidRequest, "Message không phải JSON-RPC object");
+    return fail(
+      null,
+      JSON_RPC_ERROR.invalidRequest,
+      "Message không phải JSON-RPC object",
+    );
   }
 
   const { id, method, params } = message as {
@@ -199,6 +214,10 @@ export async function handleMcpMessage<Context>(
       return callTool(requestId, params, tools, scopes, context);
 
     default:
-      return fail(requestId, JSON_RPC_ERROR.methodNotFound, `Method không hỗ trợ: ${method}`);
+      return fail(
+        requestId,
+        JSON_RPC_ERROR.methodNotFound,
+        `Method không hỗ trợ: ${method}`,
+      );
   }
 }

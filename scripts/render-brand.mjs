@@ -8,10 +8,11 @@
 // Bien moi truong:
 // - PLAYWRIGHT_CHROMIUM_PATH: duong dan chromium co san; bo trong de
 //   playwright-core tu tim (can `npx playwright install chromium` truoc).
-import { chromium } from "playwright-core";
-import { mkdtemp, writeFile, copyFile, rm } from "node:fs/promises";
+
+import { copyFile, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join, basename, resolve } from "node:path";
+import { basename, join, resolve } from "node:path";
+import { chromium } from "playwright-core";
 
 const ROOT = resolve(import.meta.dirname, "..");
 const BRAND = join(ROOT, "public", "brand");
@@ -19,11 +20,31 @@ const PUBLIC = join(ROOT, "public");
 
 /** src: SVG goc, out: PNG dich, size: canh (px). */
 const TARGETS = [
-  { src: join(BRAND, "logo-mark.svg"), out: join(PUBLIC, "app-icon.png"), size: 512 },
-  { src: join(BRAND, "logo-mark.svg"), out: join(PUBLIC, "pwa-192.png"), size: 192 },
-  { src: join(BRAND, "logo-mark.svg"), out: join(PUBLIC, "apple-touch-icon.png"), size: 180 },
-  { src: join(BRAND, "logo-maskable.svg"), out: join(PUBLIC, "maskable-512.png"), size: 512 },
-  { src: join(PUBLIC, "favicon.svg"), out: join(PUBLIC, "favicon-32.png"), size: 32 },
+  {
+    src: join(BRAND, "logo-mark.svg"),
+    out: join(PUBLIC, "app-icon.png"),
+    size: 512,
+  },
+  {
+    src: join(BRAND, "logo-mark.svg"),
+    out: join(PUBLIC, "pwa-192.png"),
+    size: 192,
+  },
+  {
+    src: join(BRAND, "logo-mark.svg"),
+    out: join(PUBLIC, "apple-touch-icon.png"),
+    size: 180,
+  },
+  {
+    src: join(BRAND, "logo-maskable.svg"),
+    out: join(PUBLIC, "maskable-512.png"),
+    size: 512,
+  },
+  {
+    src: join(PUBLIC, "favicon.svg"),
+    out: join(PUBLIC, "favicon-32.png"),
+    size: 32,
+  },
 ];
 
 const browser = await chromium.launch({

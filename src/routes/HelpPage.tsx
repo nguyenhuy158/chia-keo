@@ -16,16 +16,22 @@ export function HelpPage() {
           <ArrowLeft size={14} />
           Trang chính
         </Link>
-        <h1 className="text-xl font-bold text-stone-950 dark:text-stone-50">Hướng dẫn sử dụng</h1>
+        <h1 className="text-xl font-bold text-stone-950 dark:text-stone-50">
+          Hướng dẫn sử dụng
+        </h1>
       </div>
 
       <p className="text-sm text-fg-muted">
-        Chia Kèo giúp chia tiền sau mỗi buổi chơi và tạo QR chuyển khoản. Bấm vào từng mục để xem
-        các bước.
+        Chia Kèo giúp chia tiền sau mỗi buổi chơi và tạo QR chuyển khoản. Bấm
+        vào từng mục để xem các bước.
       </p>
 
       {HELP_GROUPS.map((group) => (
-        <section key={group.id} aria-labelledby={`help-${group.id}`} className="space-y-2">
+        <section
+          key={group.id}
+          aria-labelledby={`help-${group.id}`}
+          className="space-y-2"
+        >
           <h2
             id={`help-${group.id}`}
             className="text-base font-semibold text-stone-950 dark:text-stone-50"

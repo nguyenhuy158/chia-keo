@@ -78,7 +78,9 @@ const SETTLEMENT_LABELS: Record<string, string> = {
 /** Chi khoan chi da xoa moi hoan tac duoc, va chi khi con du du lieu de dung lai. */
 export function canUndoEvent(
   event: ApiGameEvent,
-): event is ApiGameEvent & { payload: Extract<GameEventPayload, { kind: "expense_removed" }> } {
+): event is ApiGameEvent & {
+  payload: Extract<GameEventPayload, { kind: "expense_removed" }>;
+} {
   return (
     event.undoneAt === null &&
     event.payload.kind === "expense_removed" &&
@@ -96,7 +98,10 @@ export function describeGameEvent(payload: GameEventPayload): {
       return { title: `Tạo cuộc chia "${payload.name}"`, detail: "" };
 
     case "game_renamed":
-      return { title: `Đổi tên cuộc chia`, detail: `${payload.from} → ${payload.to}` };
+      return {
+        title: `Đổi tên cuộc chia`,
+        detail: `${payload.from} → ${payload.to}`,
+      };
 
     case "settlement_changed":
       return {
@@ -108,12 +113,18 @@ export function describeGameEvent(payload: GameEventPayload): {
 
     case "participant_added":
       return {
-        title: payload.names.length > 1 ? `Thêm ${payload.names.length} người` : "Thêm người",
+        title:
+          payload.names.length > 1
+            ? `Thêm ${payload.names.length} người`
+            : "Thêm người",
         detail: payload.names.join(", "),
       };
 
     case "participant_renamed":
-      return { title: "Đổi tên người", detail: `${payload.from} → ${payload.to}` };
+      return {
+        title: "Đổi tên người",
+        detail: `${payload.from} → ${payload.to}`,
+      };
 
     case "participant_removed":
       return { title: "Xóa người", detail: payload.name };
@@ -139,7 +150,9 @@ export function describeGameEvent(payload: GameEventPayload): {
       return {
         title: `Sửa khoản ${payload.title}`,
         // Sua nguoi tra hoac cach chia thi khong co gi de so sanh gon; noi chung chung.
-        detail: changes.length ? changes.join(" · ") : "cập nhật người trả hoặc cách chia",
+        detail: changes.length
+          ? changes.join(" · ")
+          : "cập nhật người trả hoặc cách chia",
       };
     }
 
@@ -164,7 +177,8 @@ export function describeGameEvent(payload: GameEventPayload): {
     case "game_closed":
       return {
         title: "Đóng cuộc chơi",
-        detail: payload.mode === "auto" ? "mọi người đã trả xong" : "đóng thủ công",
+        detail:
+          payload.mode === "auto" ? "mọi người đã trả xong" : "đóng thủ công",
       };
 
     case "game_reopened":

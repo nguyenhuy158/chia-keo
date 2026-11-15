@@ -60,13 +60,13 @@ describe("pham vi cua requireUser", () => {
     });
   }
 
-
   for (const [name, router] of PROTECTED_ROUTERS) {
     it(`router ${name} khong chan route public duoc mount sau`, async () => {
       const app = new Hono();
       app.route("/api", router);
       // Mount sau: day la truong hop de vo nhat.
-      for (const path of PUBLIC_PATHS) app.get(path, (c) => c.json({ ok: true }));
+      for (const path of PUBLIC_PATHS)
+        app.get(path, (c) => c.json({ ok: true }));
 
       for (const path of PUBLIC_PATHS) {
         const response = await app.request(path);

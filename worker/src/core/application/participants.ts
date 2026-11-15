@@ -1,13 +1,24 @@
 import type { ApiGameDetail } from "../../../../shared/api-types";
-import type { ParticipantBatchInput, ParticipantInput } from "../../../../shared/schemas";
+import type {
+  ParticipantBatchInput,
+  ParticipantInput,
+} from "../../../../shared/schemas";
 import { createId, nowIso } from "../../lib/ids";
 import type { GameRepository } from "../ports/game-repository";
 import { InvalidInputError, NotFoundError } from "./errors";
 import { reallocateExpenses } from "./expenses";
-import { getAccessibleGame, hasGameAccess, loadGameDetail } from "./game-detail";
+import {
+  getAccessibleGame,
+  hasGameAccess,
+  loadGameDetail,
+} from "./game-detail";
 import { recordEvent } from "./game-events";
 
-async function loadOwnedParticipant(repo: GameRepository, participantId: string, userId: string) {
+async function loadOwnedParticipant(
+  repo: GameRepository,
+  participantId: string,
+  userId: string,
+) {
   const row = await repo.participants.getWithGame(participantId);
   if (!row || !(await hasGameAccess(repo, row.game, userId))) return null;
   return row;
@@ -38,7 +49,10 @@ export async function addParticipant(
     },
   );
 
-  await recordEvent(repo, game.id, { kind: "participant_added", names: [input.name] });
+  await recordEvent(repo, game.id, {
+    kind: "participant_added",
+    names: [input.name],
+  });
 
   return loadGameDetail(repo, game, userId);
 }
@@ -104,11 +118,17 @@ export async function updateParticipant(
   const paymentFields = {
     ...(input.bankId !== undefined ? { bankId: input.bankId } : {}),
     ...(input.accountNo !== undefined ? { accountNo: input.accountNo } : {}),
-    ...(input.accountName !== undefined ? { accountName: input.accountName } : {}),
+    ...(input.accountName !== undefined
+      ? { accountName: input.accountName }
+      : {}),
   };
 
   if (Object.keys(paymentFields).length > 0) {
-    await repo.participants.upsertPaymentProfile(row.participant.id, paymentFields, now);
+    await repo.participants.upsertPaymentProfile(
+      row.participant.id,
+      paymentFields,
+      now,
+    );
   }
 
   return loadGameDetail(repo, row.game, userId);
@@ -122,7 +142,9 @@ export async function removeParticipant(
   const row = await loadOwnedParticipant(repo, participantId, userId);
   if (!row) throw new NotFoundError();
 
-  const affectedExpenseIds = await repo.expenses.listIdsSplitWith(row.participant.id);
+  const affectedExpenseIds = await repo.expenses.listIdsSplitWith(
+    row.participant.id,
+  );
 
   await repo.participants.delete(row.participant.id);
   await reallocateExpenses(repo, affectedExpenseIds);
@@ -144,9 +166,12 @@ export async function reorderParticipants(
   const game = await getAccessibleGame(repo, gameId, userId);
   if (!game) throw new NotFoundError();
 
-  const existingIds = new Set((await repo.participants.listByGame(gameId)).map((row) => row.id));
+  const existingIds = new Set(
+    (await repo.participants.listByGame(gameId)).map((row) => row.id),
+  );
   const valid =
-    new Set(orderedIds).size === orderedIds.length && orderedIds.every((id) => existingIds.has(id));
+    new Set(orderedIds).size === orderedIds.length &&
+    orderedIds.every((id) => existingIds.has(id));
   if (!valid) throw new InvalidInputError();
 
   await repo.participants.reorder(game.id, orderedIds);

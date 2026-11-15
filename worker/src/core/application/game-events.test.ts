@@ -1,8 +1,20 @@
 import { describe, expect, it } from "vitest";
-import type { GameEventPayload, RestorableExpense } from "../../../../shared/game-events";
-import type { ExpenseRow, GameEventRow, GameRepository, NewSplitRow } from "../ports/game-repository";
+import type {
+  GameEventPayload,
+  RestorableExpense,
+} from "../../../../shared/game-events";
+import type {
+  ExpenseRow,
+  GameEventRow,
+  GameRepository,
+  NewSplitRow,
+} from "../ports/game-repository";
 import { InvalidInputError, NotFoundError } from "./errors";
-import { createFakeRepo, FAKE_GAME_ID, FAKE_OWNER } from "./fake-game-repository";
+import {
+  createFakeRepo,
+  FAKE_GAME_ID,
+  FAKE_OWNER,
+} from "./fake-game-repository";
 import { listGameEvents, undoGameEvent } from "./game-events";
 
 const OWNER = "user_1";
@@ -86,7 +98,10 @@ function stubRepo(options: {
     paymentProfiles: { listByParticipantIds: async () => [] },
     photos: { countByGame: async () => 0 },
     shareLinks: { getLatestByGame: async () => null },
-    gameCollaborators: { listByGame: async () => [], isCollaborator: async () => false },
+    gameCollaborators: {
+      listByGame: async () => [],
+      isCollaborator: async () => false,
+    },
   } as unknown as GameRepository;
 
   return { repo, inserted, splits, undone, events };
@@ -114,7 +129,9 @@ describe("undoGameEvent", () => {
       note: "ghi chú",
       splitMode: "equal",
     });
-    expect(stub.splits.map((split) => [split.participantId, split.amount])).toEqual([
+    expect(
+      stub.splits.map((split) => [split.participantId, split.amount]),
+    ).toEqual([
       ["p1", 212_500],
       ["p2", 212_500],
     ]);
@@ -126,7 +143,9 @@ describe("undoGameEvent", () => {
     await undoGameEvent(stub.repo, OWNER, "ev_1");
 
     expect(stub.undone).toEqual(["ev_1"]);
-    expect(stub.events.map((event) => event.kind)).toEqual(["expense_restored"]);
+    expect(stub.events.map((event) => event.kind)).toEqual([
+      "expense_restored",
+    ]);
   });
 
   it("khoan dung lai co id moi, khong dung lai id cu", async () => {
@@ -135,34 +154,49 @@ describe("undoGameEvent", () => {
     await undoGameEvent(stub.repo, OWNER, "ev_1");
 
     expect(stub.inserted[0].id).not.toBe("ev_1");
-    expect(stub.splits.every((split) => split.expenseId === stub.inserted[0].id)).toBe(true);
+    expect(
+      stub.splits.every((split) => split.expenseId === stub.inserted[0].id),
+    ).toBe(true);
   });
 
   it("tu choi khi nguoi lien quan da bi xoa khoi cuoc chia", async () => {
     // p2 khong con: chen lai se vi pham khoa ngoai o expense_splits.
     const stub = stubRepo({ payload: removed, aliveParticipantIds: ["p1"] });
 
-    await expect(undoGameEvent(stub.repo, OWNER, "ev_1")).rejects.toThrow(InvalidInputError);
+    await expect(undoGameEvent(stub.repo, OWNER, "ev_1")).rejects.toThrow(
+      InvalidInputError,
+    );
     expect(stub.inserted).toHaveLength(0);
   });
 
   it("tu choi khi da hoan tac roi", async () => {
-    const stub = stubRepo({ payload: removed, undoneAt: "2026-08-05T11:00:00.000Z" });
+    const stub = stubRepo({
+      payload: removed,
+      undoneAt: "2026-08-05T11:00:00.000Z",
+    });
 
-    await expect(undoGameEvent(stub.repo, OWNER, "ev_1")).rejects.toThrow(InvalidInputError);
+    await expect(undoGameEvent(stub.repo, OWNER, "ev_1")).rejects.toThrow(
+      InvalidInputError,
+    );
     expect(stub.inserted).toHaveLength(0);
   });
 
   it("tu choi cac loai thao tac khong ho tro hoan tac", async () => {
-    const stub = stubRepo({ payload: { kind: "participant_removed", name: "Kiệt" } });
+    const stub = stubRepo({
+      payload: { kind: "participant_removed", name: "Kiệt" },
+    });
 
-    await expect(undoGameEvent(stub.repo, OWNER, "ev_1")).rejects.toThrow(InvalidInputError);
+    await expect(undoGameEvent(stub.repo, OWNER, "ev_1")).rejects.toThrow(
+      InvalidInputError,
+    );
   });
 
   it("khong cho hoan tac lich su cua cuoc chia nguoi khac", async () => {
     const stub = stubRepo({ payload: removed, ownerUserId: "user_khac" });
 
-    await expect(undoGameEvent(stub.repo, OWNER, "ev_1")).rejects.toThrow(NotFoundError);
+    await expect(undoGameEvent(stub.repo, OWNER, "ev_1")).rejects.toThrow(
+      NotFoundError,
+    );
     expect(stub.inserted).toHaveLength(0);
   });
 });
@@ -171,8 +205,22 @@ describe("listGameEvents", () => {
   it("skips a corrupted payload while keeping valid events", async () => {
     const { repo } = createFakeRepo({
       events: [
-        { id: "bad", gameId: FAKE_GAME_ID, kind: "game_closed", payload: "{broken", createdAt: "2026-01-01", undoneAt: null },
-        { id: "good", gameId: FAKE_GAME_ID, kind: "game_closed", payload: '{"kind":"game_closed","mode":"manual"}', createdAt: "2026-01-02", undoneAt: null },
+        {
+          id: "bad",
+          gameId: FAKE_GAME_ID,
+          kind: "game_closed",
+          payload: "{broken",
+          createdAt: "2026-01-01",
+          undoneAt: null,
+        },
+        {
+          id: "good",
+          gameId: FAKE_GAME_ID,
+          kind: "game_closed",
+          payload: '{"kind":"game_closed","mode":"manual"}',
+          createdAt: "2026-01-02",
+          undoneAt: null,
+        },
       ],
     });
     const result = await listGameEvents(repo, FAKE_OWNER, FAKE_GAME_ID);

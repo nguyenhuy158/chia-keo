@@ -20,13 +20,18 @@ export function SharePhotoGallery({ token, expenses }: SharePhotoGalleryProps) {
   const photos = photosQuery.data || [];
   const photo = index >= 0 ? photos[index] : undefined;
   const detail = useSharePhoto(token, photo?.id || "");
-  const expenseTitleById = new Map(expenses.map((expense) => [expense.id, expense.title]));
+  const expenseTitleById = new Map(
+    expenses.map((expense) => [expense.id, expense.title]),
+  );
 
   if (photosQuery.isPending) return <SkeletonPhotoGrid count={8} />;
 
   if (photos.length === 0) {
     return (
-      <EmptyState title="Chưa có ảnh" description="Cuộc chia này chưa có ảnh nào được thêm." />
+      <EmptyState
+        title="Chưa có ảnh"
+        description="Cuộc chia này chưa có ảnh nào được thêm."
+      />
     );
   }
 
@@ -39,7 +44,11 @@ export function SharePhotoGallery({ token, expenses }: SharePhotoGalleryProps) {
         </h2>
       </div>
 
-      <PhotoGrid photos={photos} expenseTitleById={expenseTitleById} onOpen={setIndex} />
+      <PhotoGrid
+        photos={photos}
+        expenseTitleById={expenseTitleById}
+        onOpen={setIndex}
+      />
 
       {photo && (
         <PhotoViewer
@@ -47,7 +56,9 @@ export function SharePhotoGallery({ token, expenses }: SharePhotoGalleryProps) {
           detail={detail.data}
           index={index}
           total={photos.length}
-          expenseTitle={photo.expenseId ? expenseTitleById.get(photo.expenseId) : undefined}
+          expenseTitle={
+            photo.expenseId ? expenseTitleById.get(photo.expenseId) : undefined
+          }
           onPrev={() => setIndex(stepPhotoIndex(index, -1, photos.length))}
           onNext={() => setIndex(stepPhotoIndex(index, 1, photos.length))}
           onClose={() => setIndex(-1)}

@@ -71,23 +71,37 @@ describe("SSO JWT verification", () => {
   it("reads Bearer tokens when the SSO cookie is absent", async () => {
     const { readSsoToken } = await import("./sso");
     expect(readSsoToken(new Headers())).toBeNull();
-    expect(readSsoToken(new Headers({ Authorization: "Basic token" }))).toBeNull();
-    expect(readSsoToken(new Headers({ Authorization: "Bearer   " }))).toBeNull();
-    expect(readSsoToken(new Headers({ Authorization: "Bearer token-1" }))).toBe("token-1");
-    expect(readSsoToken(new Headers({ Authorization: "bearer\ttoken-2 " }))).toBe("token-2");
-    expect(readSsoToken(new Headers({ Authorization: "Bearer two tokens" }))).toBeNull();
     expect(
-      readSsoToken(new Headers({
-        Cookie: "huyab_sso=cookie-token",
-        Authorization: "Bearer bearer-token",
-      })),
+      readSsoToken(new Headers({ Authorization: "Basic token" })),
+    ).toBeNull();
+    expect(
+      readSsoToken(new Headers({ Authorization: "Bearer   " })),
+    ).toBeNull();
+    expect(readSsoToken(new Headers({ Authorization: "Bearer token-1" }))).toBe(
+      "token-1",
+    );
+    expect(
+      readSsoToken(new Headers({ Authorization: "bearer\ttoken-2 " })),
+    ).toBe("token-2");
+    expect(
+      readSsoToken(new Headers({ Authorization: "Bearer two tokens" })),
+    ).toBeNull();
+    expect(
+      readSsoToken(
+        new Headers({
+          Cookie: "huyab_sso=cookie-token",
+          Authorization: "Bearer bearer-token",
+        }),
+      ),
     ).toBe("cookie-token");
   });
 
   it("verifies a signed JWT supplied through Bearer", async () => {
     const { readSsoToken, verifySsoToken } = await import("./sso");
     const token = await signedToken(validClaims());
-    const bearer = readSsoToken(new Headers({ Authorization: `Bearer ${token}` }));
+    const bearer = readSsoToken(
+      new Headers({ Authorization: `Bearer ${token}` }),
+    );
     expect(bearer).toBe(token);
     expect(await verifySsoToken(bearer as string)).toMatchObject({
       sub: "user-1",

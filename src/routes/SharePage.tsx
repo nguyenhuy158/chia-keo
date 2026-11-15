@@ -1,7 +1,19 @@
 import { useParams } from "@tanstack/react-router";
-import { Check, CircleCheckBig, Images, ListChecks, Square, Table2 } from "lucide-react";
+import {
+  Check,
+  CircleCheckBig,
+  Images,
+  ListChecks,
+  Square,
+  Table2,
+} from "lucide-react";
 import { useState } from "react";
-import type { ApiExpense, ApiParticipant, ApiSummary } from "../../shared/api-types";
+import type {
+  ApiExpense,
+  ApiParticipant,
+  ApiSummary,
+} from "../../shared/api-types";
+import { useShareView } from "../adapters/react-query/queries";
 import { CopyMenu } from "../components/CopyMenu";
 import { GameDashboard } from "../components/GameDashboard";
 import { SharePaymentPanel } from "../components/SharePaymentPanel";
@@ -9,7 +21,6 @@ import { SharePhotoGallery } from "../components/SharePhotoGallery";
 import { ThemeToggle } from "../components/theme";
 import { EmptyState, GamePageSkeleton } from "../components/ui";
 import { formatMoney } from "../core/domain/money";
-import { useShareView } from "../adapters/react-query/queries";
 
 type ShareTab = "summary" | "matrix" | "photos";
 
@@ -32,26 +43,38 @@ function getExpenseShare(expense: ApiExpense) {
   );
   // "/nguoi" chi co nghia khi chia deu; mode khac hien thi theo tung o.
   const shareAmount =
-    expense.splitMode === "equal" && splitCount > 0 ? Math.round(expense.amount / splitCount) : null;
+    expense.splitMode === "equal" && splitCount > 0
+      ? Math.round(expense.amount / splitCount)
+      : null;
 
   return { shareAmount, splitCount, shareByParticipantId };
 }
 
 function formatPlainMoney(value: number) {
-  return new Intl.NumberFormat("vi-VN", { maximumFractionDigits: 0 }).format(value);
+  return new Intl.NumberFormat("vi-VN", { maximumFractionDigits: 0 }).format(
+    value,
+  );
 }
 
-function ExpenseMatrix({ participants, expenses, summary }: ExpenseMatrixProps) {
+function ExpenseMatrix({
+  participants,
+  expenses,
+  summary,
+}: ExpenseMatrixProps) {
   const balanceByParticipantId = new Map(
     summary.balances.map((balance) => [balance.participantId, balance]),
   );
-  const visibleExpenses = expenses.filter((expense) => expense.kind !== "transfer");
+  const visibleExpenses = expenses.filter(
+    (expense) => expense.kind !== "transfer",
+  );
 
   return (
     <section className="min-h-0 overflow-hidden rounded-lg border border-border bg-surface shadow-sm">
       <div className="flex items-center justify-between gap-3 border-b border-border px-3 py-3">
         <div>
-          <h2 className="text-sm font-semibold text-stone-950 dark:text-stone-50">Bảng chia</h2>
+          <h2 className="text-sm font-semibold text-stone-950 dark:text-stone-50">
+            Bảng chia
+          </h2>
           <p className="mt-1 text-xs text-fg-muted">
             Ô vàng là phần tiền từng người trong khoản chi.
           </p>
@@ -63,7 +86,8 @@ function ExpenseMatrix({ participants, expenses, summary }: ExpenseMatrixProps) 
 
       <div className="max-h-[calc(100vh-13rem)] space-y-3 overflow-auto p-3 md:hidden">
         {visibleExpenses.map((expense) => {
-          const { shareAmount, splitCount, shareByParticipantId } = getExpenseShare(expense);
+          const { shareAmount, splitCount, shareByParticipantId } =
+            getExpenseShare(expense);
 
           return (
             <article
@@ -89,7 +113,9 @@ function ExpenseMatrix({ participants, expenses, summary }: ExpenseMatrixProps) 
                 <div className="rounded-md bg-stone-50 px-2 py-2 dark:bg-stone-950">
                   <p className="font-medium text-fg-muted">/người</p>
                   <p className="mt-1 font-semibold tabular text-stone-950 dark:text-stone-50">
-                    {shareAmount === null ? "Tùy chỉnh" : formatPlainMoney(shareAmount)}
+                    {shareAmount === null
+                      ? "Tùy chỉnh"
+                      : formatPlainMoney(shareAmount)}
                   </p>
                 </div>
               </div>
@@ -111,7 +137,9 @@ function ExpenseMatrix({ participants, expenses, summary }: ExpenseMatrixProps) 
                       {isIncluded ? <Check size={14} /> : <Square size={14} />}
                       <span className="truncate">{participant.name}</span>
                       {isIncluded && (
-                        <span className="ml-auto shrink-0 tabular">{formatPlainMoney(share)}</span>
+                        <span className="ml-auto shrink-0 tabular">
+                          {formatPlainMoney(share)}
+                        </span>
                       )}
                     </span>
                   );
@@ -125,13 +153,21 @@ function ExpenseMatrix({ participants, expenses, summary }: ExpenseMatrixProps) 
       <div className="hidden max-h-[calc(100vh-13rem)] overflow-auto md:block">
         <table
           className="w-full border-separate border-spacing-0 text-left text-sm"
-          style={{ minWidth: Math.max(MATRIX_MIN_WIDTH, 560 + participants.length * 112) }}
+          style={{
+            minWidth: Math.max(
+              MATRIX_MIN_WIDTH,
+              560 + participants.length * 112,
+            ),
+          }}
         >
           <thead>
             <tr className="bg-stone-50 text-stone-950 dark:bg-stone-950 dark:text-stone-50">
               <th
                 className="sticky left-0 top-0 z-30 border-b border-r border-dashed border-stone-300 bg-stone-50 px-3 py-3 font-semibold dark:border-stone-700 dark:bg-stone-950"
-                style={{ width: STICKY_DESCRIPTION_WIDTH, minWidth: STICKY_DESCRIPTION_WIDTH }}
+                style={{
+                  width: STICKY_DESCRIPTION_WIDTH,
+                  minWidth: STICKY_DESCRIPTION_WIDTH,
+                }}
               >
                 Nội dung
               </th>
@@ -158,7 +194,10 @@ function ExpenseMatrix({ participants, expenses, summary }: ExpenseMatrixProps) 
               <th
                 className="sticky top-0 z-20 border-b border-r border-dashed border-stone-300 bg-stone-50 px-2 py-3 text-right font-semibold dark:border-stone-700 dark:bg-stone-950"
                 style={{
-                  left: STICKY_DESCRIPTION_WIDTH + STICKY_TOTAL_WIDTH + STICKY_COUNT_WIDTH,
+                  left:
+                    STICKY_DESCRIPTION_WIDTH +
+                    STICKY_TOTAL_WIDTH +
+                    STICKY_COUNT_WIDTH,
                   width: STICKY_SHARE_WIDTH,
                   minWidth: STICKY_SHARE_WIDTH,
                 }}
@@ -184,13 +223,17 @@ function ExpenseMatrix({ participants, expenses, summary }: ExpenseMatrixProps) 
           </thead>
           <tbody>
             {visibleExpenses.map((expense) => {
-              const { shareAmount, splitCount, shareByParticipantId } = getExpenseShare(expense);
+              const { shareAmount, splitCount, shareByParticipantId } =
+                getExpenseShare(expense);
 
               return (
                 <tr key={expense.id}>
                   <td
                     className="sticky left-0 z-20 max-w-0 border-b border-r border-dashed border-stone-300 bg-surface px-3 py-2 font-medium text-stone-950 dark:border-stone-700 dark:text-stone-50"
-                    style={{ width: STICKY_DESCRIPTION_WIDTH, minWidth: STICKY_DESCRIPTION_WIDTH }}
+                    style={{
+                      width: STICKY_DESCRIPTION_WIDTH,
+                      minWidth: STICKY_DESCRIPTION_WIDTH,
+                    }}
                   >
                     <span className="block truncate">{expense.title}</span>
                   </td>
@@ -217,7 +260,10 @@ function ExpenseMatrix({ participants, expenses, summary }: ExpenseMatrixProps) 
                   <td
                     className="sticky z-10 border-b border-r border-dashed border-stone-300 bg-surface px-2 py-2 text-right text-stone-950 tabular dark:border-stone-700 dark:text-stone-50"
                     style={{
-                      left: STICKY_DESCRIPTION_WIDTH + STICKY_TOTAL_WIDTH + STICKY_COUNT_WIDTH,
+                      left:
+                        STICKY_DESCRIPTION_WIDTH +
+                        STICKY_TOTAL_WIDTH +
+                        STICKY_COUNT_WIDTH,
                       width: STICKY_SHARE_WIDTH,
                       minWidth: STICKY_SHARE_WIDTH,
                     }}
@@ -283,18 +329,23 @@ export function SharePage() {
   }
 
   const view = shareQuery.data;
-  const participantById = new Map(view.participants.map((participant) => [participant.id, participant]));
-  const tabs: Array<{ id: ShareTab; label: string; icon: typeof ListChecks }> = [
-    { id: "summary", label: "Tổng kết", icon: ListChecks },
-    { id: "matrix", label: "Bảng chia", icon: Table2 },
-    { id: "photos", label: "Ảnh", icon: Images },
-  ];
+  const participantById = new Map(
+    view.participants.map((participant) => [participant.id, participant]),
+  );
+  const tabs: Array<{ id: ShareTab; label: string; icon: typeof ListChecks }> =
+    [
+      { id: "summary", label: "Tổng kết", icon: ListChecks },
+      { id: "matrix", label: "Bảng chia", icon: Table2 },
+      { id: "photos", label: "Ảnh", icon: Images },
+    ];
 
   return (
     <div className="mx-auto flex h-screen w-full max-w-6xl flex-col gap-4 overflow-hidden px-4 py-4 sm:px-5">
       <div className="flex shrink-0 items-center justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-sm font-medium text-violet-600 dark:text-violet-400">{view.code}</p>
+          <p className="text-sm font-medium text-violet-600 dark:text-violet-400">
+            {view.code}
+          </p>
           <div className="flex items-center gap-2">
             <h1 className="truncate text-xl font-semibold text-stone-950 dark:text-stone-50">
               {view.name}
@@ -377,31 +428,36 @@ export function SharePage() {
               <div className="mt-4 space-y-2">
                 {view.expenses.length > 0 ? (
                   view.expenses
-                    .filter((expense) => expense.kind !== "transfer" && !expense.excluded)
+                    .filter(
+                      (expense) =>
+                        expense.kind !== "transfer" && !expense.excluded,
+                    )
                     .map((expense) => {
-                    const payer = participantById.get(expense.payerParticipantId);
-                    return (
-                      <div
-                        key={expense.id}
-                        className="rounded-md border border-border p-3"
-                      >
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="min-w-0">
-                            <p className="truncate text-sm font-semibold text-stone-950 dark:text-stone-50">
-                              {expense.title}
-                            </p>
-                            <p className="mt-1 text-xs text-fg-muted">
-                              {payer?.name || "Không rõ"} trả, chia{" "}
-                              {expense.splitParticipantIds.length} người
-                            </p>
+                      const payer = participantById.get(
+                        expense.payerParticipantId,
+                      );
+                      return (
+                        <div
+                          key={expense.id}
+                          className="rounded-md border border-border p-3"
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <p className="truncate text-sm font-semibold text-stone-950 dark:text-stone-50">
+                                {expense.title}
+                              </p>
+                              <p className="mt-1 text-xs text-fg-muted">
+                                {payer?.name || "Không rõ"} trả, chia{" "}
+                                {expense.splitParticipantIds.length} người
+                              </p>
+                            </div>
+                            <span className="shrink-0 text-sm font-semibold text-stone-950 tabular dark:text-stone-50">
+                              {formatMoney(expense.amount)}
+                            </span>
                           </div>
-                          <span className="shrink-0 text-sm font-semibold text-stone-950 tabular dark:text-stone-50">
-                            {formatMoney(expense.amount)}
-                          </span>
                         </div>
-                      </div>
-                    );
-                  })
+                      );
+                    })
                 ) : (
                   <p className="text-sm text-fg-muted">
                     Chưa có khoản chi nào.

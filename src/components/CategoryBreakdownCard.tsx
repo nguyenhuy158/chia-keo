@@ -11,7 +11,11 @@ import { formatMoney } from "../core/domain/money";
  * Toan bo phep gop nam o `buildCategoryBreakdown` (shared) de worker/MCP dung
  * lai duoc cung con so; o day chi ve.
  */
-export function CategoryBreakdownCard({ expenses }: { expenses: ApiExpense[] }) {
+export function CategoryBreakdownCard({
+  expenses,
+}: {
+  expenses: ApiExpense[];
+}) {
   const breakdown = buildCategoryBreakdown(expenses);
 
   // Chua co khoan chi nao (hoac chi co khoan thu / trả nợ) thi khong hien the

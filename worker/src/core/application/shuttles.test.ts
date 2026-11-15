@@ -1,15 +1,18 @@
 import { describe, expect, it } from "vitest";
+import { createFakeRepo, FAKE_OWNER } from "./fake-game-repository";
 import {
   createShuttleEntry,
   deleteShuttleEntry,
   getShuttleStock,
 } from "./shuttles";
-import { FAKE_OWNER, createFakeRepo } from "./fake-game-repository";
 
 describe("kho cau", () => {
   it("kho trong khi chua ghi gi", async () => {
     const { repo } = createFakeRepo();
-    expect(await getShuttleStock(repo, FAKE_OWNER)).toEqual({ stock: 0, entries: [] });
+    expect(await getShuttleStock(repo, FAKE_OWNER)).toEqual({
+      stock: 0,
+      entries: [],
+    });
   });
 
   it("mua them roi dung dan: kho la tong cac thao tac", async () => {
@@ -17,11 +20,16 @@ describe("kho cau", () => {
 
     await createShuttleEntry(repo, FAKE_OWNER, { kind: "add", quantity: 12 });
     await createShuttleEntry(repo, FAKE_OWNER, { kind: "use", quantity: 3 });
-    const view = await createShuttleEntry(repo, FAKE_OWNER, { kind: "use", quantity: 2 });
+    const view = await createShuttleEntry(repo, FAKE_OWNER, {
+      kind: "use",
+      quantity: 2,
+    });
 
     expect(view.stock).toBe(7);
     // Moi nhat truoc, kem so cau con lai ngay sau tung thao tac.
-    expect(view.entries.map((entry) => [entry.delta, entry.stockAfter])).toEqual([
+    expect(
+      view.entries.map((entry) => [entry.delta, entry.stockAfter]),
+    ).toEqual([
       [-2, 7],
       [-3, 9],
       [12, 12],
@@ -32,7 +40,10 @@ describe("kho cau", () => {
     const { repo } = createFakeRepo();
     await createShuttleEntry(repo, FAKE_OWNER, { kind: "add", quantity: 12 });
 
-    const view = await createShuttleEntry(repo, FAKE_OWNER, { kind: "set", quantity: 5 });
+    const view = await createShuttleEntry(repo, FAKE_OWNER, {
+      kind: "set",
+      quantity: 5,
+    });
 
     expect(view.stock).toBe(5);
     expect(view.entries[0]?.delta).toBe(-7);
@@ -42,7 +53,10 @@ describe("kho cau", () => {
     const { repo, state } = createFakeRepo();
     await createShuttleEntry(repo, FAKE_OWNER, { kind: "add", quantity: 4 });
 
-    const view = await createShuttleEntry(repo, FAKE_OWNER, { kind: "set", quantity: 4 });
+    const view = await createShuttleEntry(repo, FAKE_OWNER, {
+      kind: "set",
+      quantity: 4,
+    });
 
     expect(view.stock).toBe(4);
     expect(state.shuttleEntries).toHaveLength(1);
@@ -60,9 +74,16 @@ describe("kho cau", () => {
   it("xoa mot lan bam sai thi kho tinh lai theo cac dong con lai", async () => {
     const { repo } = createFakeRepo();
     await createShuttleEntry(repo, FAKE_OWNER, { kind: "add", quantity: 12 });
-    const withMistake = await createShuttleEntry(repo, FAKE_OWNER, { kind: "use", quantity: 5 });
+    const withMistake = await createShuttleEntry(repo, FAKE_OWNER, {
+      kind: "use",
+      quantity: 5,
+    });
 
-    const view = await deleteShuttleEntry(repo, FAKE_OWNER, withMistake.entries[0]!.id);
+    const view = await deleteShuttleEntry(
+      repo,
+      FAKE_OWNER,
+      withMistake.entries[0]!.id,
+    );
 
     expect(view.stock).toBe(12);
     expect(view.entries).toHaveLength(1);
@@ -70,7 +91,10 @@ describe("kho cau", () => {
 
   it("khong xoa dong lam kho thanh am", async () => {
     const { repo } = createFakeRepo();
-    const added = await createShuttleEntry(repo, FAKE_OWNER, { kind: "add", quantity: 12 });
+    const added = await createShuttleEntry(repo, FAKE_OWNER, {
+      kind: "add",
+      quantity: 12,
+    });
     await createShuttleEntry(repo, FAKE_OWNER, { kind: "use", quantity: 3 });
 
     await expect(
@@ -80,7 +104,10 @@ describe("kho cau", () => {
 
   it("khong xoa duoc dong cua nguoi khac", async () => {
     const { repo } = createFakeRepo();
-    const view = await createShuttleEntry(repo, FAKE_OWNER, { kind: "add", quantity: 6 });
+    const view = await createShuttleEntry(repo, FAKE_OWNER, {
+      kind: "add",
+      quantity: 6,
+    });
 
     await expect(
       deleteShuttleEntry(repo, "user_khac", view.entries[0]!.id),

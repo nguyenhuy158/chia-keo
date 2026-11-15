@@ -3,10 +3,10 @@ import { drizzle } from "drizzle-orm/d1";
 import { Hono } from "hono";
 import { buildSummaryText } from "../../../shared/summary-text";
 import * as schema from "../adapters/d1/schema";
-import { getGameDetailForOwner } from "../core/application/games";
 import { NotFoundError } from "../core/application/errors";
+import { getGameDetailForOwner } from "../core/application/games";
 import { notFound } from "../lib/http";
-import { protectPaths, type AuthedEnv } from "../lib/require-user";
+import { type AuthedEnv, protectPaths } from "../lib/require-user";
 
 /**
  * Gui ban tom tat (khoan chi + can chuyen) cua mot cuoc chia ve dung email
@@ -39,8 +39,9 @@ emailSummaryRouter.post("/games/:gameId/email-summary", async (c) => {
   const email = rows[0]?.email;
   if (!email) return c.json({ error: "user_has_no_email" }, 400);
 
-  const shareUrl =
-    detail.shareLink?.enabled ? `${new URL(c.req.url).origin}/share/${detail.shareLink.token}` : undefined;
+  const shareUrl = detail.shareLink?.enabled
+    ? `${new URL(c.req.url).origin}/share/${detail.shareLink.token}`
+    : undefined;
 
   const text = buildSummaryText(
     {

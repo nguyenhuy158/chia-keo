@@ -13,7 +13,10 @@ export function provideGameApi(port: GameApiPort) {
 }
 
 export function getGameApi(): GameApiPort {
-  if (!gameApi) throw new Error("GameApiPort chưa được đăng ký ở composition root (main.tsx)");
+  if (!gameApi)
+    throw new Error(
+      "GameApiPort chưa được đăng ký ở composition root (main.tsx)",
+    );
   return gameApi;
 }
 
@@ -23,7 +26,9 @@ export function provideQrProvider(port: QrProviderPort) {
 
 export function getQrProvider(): QrProviderPort {
   if (!qrProvider) {
-    throw new Error("QrProviderPort chưa được đăng ký ở composition root (main.tsx)");
+    throw new Error(
+      "QrProviderPort chưa được đăng ký ở composition root (main.tsx)",
+    );
   }
   return qrProvider;
 }

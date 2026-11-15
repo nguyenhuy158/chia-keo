@@ -1,15 +1,19 @@
 import { describe, expect, it } from "vitest";
 import {
-  MAX_SHUTTLE_STOCK,
   computeShuttleStock,
+  MAX_SHUTTLE_STOCK,
   shuttleDelta,
   shuttleStockError,
 } from "./shuttles";
 
 describe("computeShuttleStock", () => {
   it("cong don moi thay doi theo thu tu nao cung ra mot ket qua", () => {
-    expect(computeShuttleStock([{ delta: 12 }, { delta: -3 }, { delta: -2 }])).toBe(7);
-    expect(computeShuttleStock([{ delta: -2 }, { delta: 12 }, { delta: -3 }])).toBe(7);
+    expect(
+      computeShuttleStock([{ delta: 12 }, { delta: -3 }, { delta: -2 }]),
+    ).toBe(7);
+    expect(
+      computeShuttleStock([{ delta: -2 }, { delta: 12 }, { delta: -3 }]),
+    ).toBe(7);
   });
 
   it("kho trong la 0", () => {
@@ -38,6 +42,8 @@ describe("shuttleStockError", () => {
 
   it("khong cho vuot tran", () => {
     expect(shuttleStockError(MAX_SHUTTLE_STOCK)).toBeNull();
-    expect(shuttleStockError(MAX_SHUTTLE_STOCK + 1)).toBe("shuttle_stock_too_large");
+    expect(shuttleStockError(MAX_SHUTTLE_STOCK + 1)).toBe(
+      "shuttle_stock_too_large",
+    );
   });
 });

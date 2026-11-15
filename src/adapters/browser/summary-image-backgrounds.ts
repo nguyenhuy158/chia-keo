@@ -81,7 +81,10 @@ const EMOJI_SIZE = 30;
 const EMOJI_ALPHA = 0.16;
 const EMOJI_TILT = 0.18;
 
-function fillEmojiPattern(base: (c: CanvasRenderingContext2D, w: number, h: number) => void, emojis: string[]) {
+function fillEmojiPattern(
+  base: (c: CanvasRenderingContext2D, w: number, h: number) => void,
+  emojis: string[],
+) {
   return (context: CanvasRenderingContext2D, width: number, height: number) => {
     base(context, width, height);
 
@@ -96,7 +99,11 @@ function fillEmojiPattern(base: (c: CanvasRenderingContext2D, w: number, h: numb
       const indent = row % 2 === 0 ? 0 : EMOJI_SPACING_X / 2;
       let column = 0;
 
-      for (let x = indent + EMOJI_SPACING_X / 2; x < width; x += EMOJI_SPACING_X) {
+      for (
+        let x = indent + EMOJI_SPACING_X / 2;
+        x < width;
+        x += EMOJI_SPACING_X
+      ) {
         const emoji = emojis[(row + column) % emojis.length];
         // Nghieng qua lai cho ngau, khong thang hang cung nhu dan tem.
         context.save();
@@ -152,7 +159,12 @@ export const SUMMARY_IMAGE_BACKGROUNDS: SummaryImageBackground[] = [
       qrFrame: "#5eead4",
       qrMat: null,
     },
-    paint: fillEmojiPattern(fillVerticalGradient("#f0fdfa", "#ccfbf1"), ["🏸", "✨", "🏸", "🥇"]),
+    paint: fillEmojiPattern(fillVerticalGradient("#f0fdfa", "#ccfbf1"), [
+      "🏸",
+      "✨",
+      "🏸",
+      "🥇",
+    ]),
   },
   {
     id: "trang",
@@ -260,10 +272,13 @@ export const SUMMARY_IMAGE_BACKGROUNDS: SummaryImageBackground[] = [
   },
 ];
 
-export const DEFAULT_SUMMARY_IMAGE_BACKGROUND_ID = SUMMARY_IMAGE_BACKGROUNDS[0].id;
+export const DEFAULT_SUMMARY_IMAGE_BACKGROUND_ID =
+  SUMMARY_IMAGE_BACKGROUNDS[0].id;
 
 /** Id la khong ro (nguoi dung doi phien ban, localStorage cu) thi ve mac dinh. */
-export function getSummaryImageBackground(id: string | undefined): SummaryImageBackground {
+export function getSummaryImageBackground(
+  id: string | undefined,
+): SummaryImageBackground {
   return (
     SUMMARY_IMAGE_BACKGROUNDS.find((background) => background.id === id) ||
     SUMMARY_IMAGE_BACKGROUNDS[0]
@@ -279,7 +294,10 @@ const STORAGE_KEY = "chia-keo-summary-image-bg";
 export function getStoredSummaryImageBackgroundId(): string {
   try {
     const value = localStorage.getItem(STORAGE_KEY);
-    if (value && SUMMARY_IMAGE_BACKGROUNDS.some((background) => background.id === value)) {
+    if (
+      value &&
+      SUMMARY_IMAGE_BACKGROUNDS.some((background) => background.id === value)
+    ) {
       return value;
     }
   } catch {

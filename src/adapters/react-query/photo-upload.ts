@@ -1,7 +1,11 @@
 import { useState } from "react";
 import type { ApiPhoto } from "../../../shared/api-types";
 import { MAX_PHOTOS_PER_GAME } from "../../../shared/schemas";
-import { PHOTO_TOO_LARGE_ERROR, PHOTO_UNREADABLE_ERROR, preparePhoto } from "../browser/image";
+import {
+  PHOTO_TOO_LARGE_ERROR,
+  PHOTO_UNREADABLE_ERROR,
+  preparePhoto,
+} from "../browser/image";
 import { useAddPhoto } from "./queries";
 
 export const PHOTO_ERROR_MESSAGES: Record<string, string> = {
@@ -60,5 +64,12 @@ export function usePhotoUploader(gameId: string) {
     return uploaded;
   }
 
-  return { upload, pending: total > 0, done, total, error, clearError: () => setError("") };
+  return {
+    upload,
+    pending: total > 0,
+    done,
+    total,
+    error,
+    clearError: () => setError(""),
+  };
 }

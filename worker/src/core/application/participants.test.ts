@@ -19,7 +19,12 @@ const AN = "participant_an";
 const BINH = "participant_binh";
 
 function participantInput(name: string) {
-  return { name, bankId: "970436", accountNo: "0123456789", accountName: name.toUpperCase() };
+  return {
+    name,
+    bankId: "970436",
+    accountNo: "0123456789",
+    accountName: name.toUpperCase(),
+  };
 }
 
 describe("addParticipant", () => {
@@ -34,7 +39,10 @@ describe("addParticipant", () => {
     );
 
     expect(detail.participants).toHaveLength(1);
-    expect(detail.participants[0]).toMatchObject({ name: "An", bankId: "970436" });
+    expect(detail.participants[0]).toMatchObject({
+      name: "An",
+      bankId: "970436",
+    });
     expect(fake.state.events[0].kind).toBe("participant_added");
   });
 
@@ -42,16 +50,28 @@ describe("addParticipant", () => {
     const fake = createFakeRepo();
 
     await expect(
-      addParticipant(fake.repo, "user_la", FAKE_GAME_ID, participantInput("An")),
+      addParticipant(
+        fake.repo,
+        "user_la",
+        FAKE_GAME_ID,
+        participantInput("An"),
+      ),
     ).rejects.toThrow(NotFoundError);
     expect(fake.state.participants).toEqual([]);
   });
 
   it("cuoc chia trong thung rac thi khong them duoc", async () => {
-    const fake = createFakeRepo({ games: [gameRow({ deletedAt: "2026-08-02T00:00:00.000Z" })] });
+    const fake = createFakeRepo({
+      games: [gameRow({ deletedAt: "2026-08-02T00:00:00.000Z" })],
+    });
 
     await expect(
-      addParticipant(fake.repo, FAKE_OWNER, FAKE_GAME_ID, participantInput("An")),
+      addParticipant(
+        fake.repo,
+        FAKE_OWNER,
+        FAKE_GAME_ID,
+        participantInput("An"),
+      ),
     ).rejects.toThrow(NotFoundError);
   });
 });
@@ -61,10 +81,18 @@ describe("addParticipants", () => {
     const fake = createFakeRepo();
 
     const detail = await addParticipants(fake.repo, FAKE_OWNER, FAKE_GAME_ID, {
-      people: [participantInput("An"), participantInput("Bình"), participantInput("Cường")],
+      people: [
+        participantInput("An"),
+        participantInput("Bình"),
+        participantInput("Cường"),
+      ],
     });
 
-    expect(detail.participants.map((row) => row.name)).toEqual(["An", "Bình", "Cường"]);
+    expect(detail.participants.map((row) => row.name)).toEqual([
+      "An",
+      "Bình",
+      "Cường",
+    ]);
     // Mot dong lich su cho ca luot, khong phai ba dong.
     expect(fake.state.events).toHaveLength(1);
   });
@@ -74,7 +102,9 @@ describe("updateParticipant", () => {
   it("doi ten ghi lich su participant_renamed", async () => {
     const fake = createFakeRepo({ participants: [participantRow(AN, "An")] });
 
-    const detail = await updateParticipant(fake.repo, FAKE_OWNER, AN, { name: "An Anh" });
+    const detail = await updateParticipant(fake.repo, FAKE_OWNER, AN, {
+      name: "An Anh",
+    });
 
     expect(detail.participants[0].name).toBe("An Anh");
     expect(fake.state.events[0].kind).toBe("participant_renamed");
@@ -91,9 +121,14 @@ describe("updateParticipant", () => {
   it("chi sua tai khoan thi giu nguyen ten", async () => {
     const fake = createFakeRepo({ participants: [participantRow(AN, "An")] });
 
-    const detail = await updateParticipant(fake.repo, FAKE_OWNER, AN, { accountNo: "999" });
+    const detail = await updateParticipant(fake.repo, FAKE_OWNER, AN, {
+      accountNo: "999",
+    });
 
-    expect(detail.participants[0]).toMatchObject({ name: "An", accountNo: "999" });
+    expect(detail.participants[0]).toMatchObject({
+      name: "An",
+      accountNo: "999",
+    });
   });
 
   it("nguoi la khong sua duoc", async () => {
@@ -109,7 +144,10 @@ describe("updateParticipant", () => {
 describe("removeParticipant", () => {
   it("xoa nguoi va ghi lich su", async () => {
     const fake = createFakeRepo({
-      participants: [participantRow(AN, "An"), participantRow(BINH, "Bình", { sequence: 1 })],
+      participants: [
+        participantRow(AN, "An"),
+        participantRow(BINH, "Bình", { sequence: 1 }),
+      ],
     });
 
     const detail = await removeParticipant(fake.repo, FAKE_OWNER, AN);
@@ -121,7 +159,9 @@ describe("removeParticipant", () => {
   it("nguoi la khong xoa duoc", async () => {
     const fake = createFakeRepo({ participants: [participantRow(AN, "An")] });
 
-    await expect(removeParticipant(fake.repo, "user_la", AN)).rejects.toThrow(NotFoundError);
+    await expect(removeParticipant(fake.repo, "user_la", AN)).rejects.toThrow(
+      NotFoundError,
+    );
     expect(fake.state.participants).toHaveLength(1);
   });
 });
@@ -129,10 +169,18 @@ describe("removeParticipant", () => {
 describe("reorderParticipants", () => {
   it("sap lai thu tu hien thi", async () => {
     const fake = createFakeRepo({
-      participants: [participantRow(AN, "An"), participantRow(BINH, "Bình", { sequence: 1 })],
+      participants: [
+        participantRow(AN, "An"),
+        participantRow(BINH, "Bình", { sequence: 1 }),
+      ],
     });
 
-    const detail = await reorderParticipants(fake.repo, FAKE_OWNER, FAKE_GAME_ID, [BINH, AN]);
+    const detail = await reorderParticipants(
+      fake.repo,
+      FAKE_OWNER,
+      FAKE_GAME_ID,
+      [BINH, AN],
+    );
 
     expect(detail.participants.map((row) => row.id)).toEqual([BINH, AN]);
   });
@@ -144,7 +192,9 @@ describe("reorderParticipants", () => {
       reorderParticipants(fake.repo, FAKE_OWNER, FAKE_GAME_ID, [AN, AN]),
     ).rejects.toThrow(InvalidInputError);
     await expect(
-      reorderParticipants(fake.repo, FAKE_OWNER, FAKE_GAME_ID, ["participant_la"]),
+      reorderParticipants(fake.repo, FAKE_OWNER, FAKE_GAME_ID, [
+        "participant_la",
+      ]),
     ).rejects.toThrow(InvalidInputError);
   });
 });

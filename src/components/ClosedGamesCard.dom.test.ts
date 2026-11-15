@@ -118,8 +118,16 @@ describe("ClosedGamesCard", () => {
 
   it("filters by month and offers a CSV link only for a chosen month", () => {
     state.games = [
-      game({ id: "aug", name: "Cầu tháng 8", closedAt: "2026-08-10T03:00:00.000Z" }),
-      game({ id: "sep", name: "Cầu tháng 9", closedAt: "2026-09-10T03:00:00.000Z" }),
+      game({
+        id: "aug",
+        name: "Cầu tháng 8",
+        closedAt: "2026-08-10T03:00:00.000Z",
+      }),
+      game({
+        id: "sep",
+        name: "Cầu tháng 9",
+        closedAt: "2026-09-10T03:00:00.000Z",
+      }),
     ];
     render();
     act(() => button("Xem").click());
@@ -127,7 +135,11 @@ describe("ClosedGamesCard", () => {
     expect(host.textContent).toContain("Cầu tháng 9");
     expect(host.querySelector("a[download]")).toBeNull();
 
-    act(() => host.querySelector<HTMLButtonElement>("[aria-label='Lọc theo tháng']")?.click());
+    act(() =>
+      host
+        .querySelector<HTMLButtonElement>("[aria-label='Lọc theo tháng']")
+        ?.click(),
+    );
     act(() => button("08/2026").click());
     expect(host.textContent).toContain("Cầu tháng 8");
     expect(host.textContent).not.toContain("Cầu tháng 9");

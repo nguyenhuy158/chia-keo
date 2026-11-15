@@ -9,10 +9,18 @@ export function PageShell({ children }: { children: ReactNode }) {
   );
 }
 
-export function EmptyState({ title, description }: { title: string; description: string }) {
+export function EmptyState({
+  title,
+  description,
+}: {
+  title: string;
+  description: string;
+}) {
   return (
     <div className="rounded-lg border border-dashed border-stone-300 bg-surface p-8 text-center dark:border-stone-700">
-      <h2 className="text-lg font-semibold text-stone-950 dark:text-stone-50">{title}</h2>
+      <h2 className="text-lg font-semibold text-stone-950 dark:text-stone-50">
+        {title}
+      </h2>
       <p className="mt-2 text-sm text-fg-muted">{description}</p>
     </div>
   );

@@ -2,7 +2,10 @@ import type { ApiParticipant } from "./api-types";
 import { PAYMENT_CODE_PATTERN } from "./payments";
 import { stripDiacritics } from "./text";
 
-export type PaymentInfo = Pick<ApiParticipant, "bankId" | "accountNo" | "accountName">;
+export type PaymentInfo = Pick<
+  ApiParticipant,
+  "bankId" | "accountNo" | "accountName"
+>;
 
 const QR_CONTENT_MAX_LENGTH = 50;
 const QR_PROXY_PATH = "/api/qr";
@@ -76,7 +79,10 @@ function normalizeText(value: string) {
 }
 
 function normalizeBankId(value: string) {
-  return value.trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
+  return value
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, "");
 }
 
 /**
@@ -98,7 +104,9 @@ export function getVietQrBankLabel(bankId: string) {
 }
 
 export function canBuildVietQr(payment: PaymentInfo | undefined) {
-  return Boolean(payment?.bankId && payment.accountNo && resolveVietQrBankId(payment.bankId));
+  return Boolean(
+    payment?.bankId && payment.accountNo && resolveVietQrBankId(payment.bankId),
+  );
 }
 
 export function getVietQrPaymentIssue(payment: PaymentInfo | undefined) {
@@ -119,10 +127,16 @@ export function getVietQrPaymentIssue(payment: PaymentInfo | undefined) {
  * nhau.
  */
 function buildTransferContent(reference: string) {
-  return PAYMENT_CODE_PATTERN.test(reference) ? `${reference} CHIA KEO` : `CHIA KEO ${reference}`;
+  return PAYMENT_CODE_PATTERN.test(reference)
+    ? `${reference} CHIA KEO`
+    : `CHIA KEO ${reference}`;
 }
 
-export function buildVietQrUrl(payment: PaymentInfo, amount: number, gameCode: string) {
+export function buildVietQrUrl(
+  payment: PaymentInfo,
+  amount: number,
+  gameCode: string,
+) {
   const content = normalizeText(buildTransferContent(gameCode));
   const bankId = encodeURIComponent(resolveVietQrBankId(payment.bankId));
   const accountNo = encodeURIComponent(payment.accountNo.trim());
@@ -139,7 +153,11 @@ export function buildVietQrUrl(payment: PaymentInfo, amount: number, gameCode: s
  * thieu CORS (anh bi "taint" va `toBlob` se loi), nen khi ve QR vao anh tom ket
  * phai lay qua origin cua minh thay vi goi thang img.vietqr.io.
  */
-export function buildVietQrProxyPath(payment: PaymentInfo, amount: number, gameCode: string) {
+export function buildVietQrProxyPath(
+  payment: PaymentInfo,
+  amount: number,
+  gameCode: string,
+) {
   const params = new URLSearchParams({
     bank: resolveVietQrBankId(payment.bankId),
     account: payment.accountNo.trim(),

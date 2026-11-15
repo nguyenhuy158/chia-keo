@@ -1,3 +1,4 @@
+import type { LucideIcon } from "lucide-react";
 import {
   ArrowLeftRight,
   CheckCircle2,
@@ -11,18 +12,20 @@ import {
   UserMinus,
   UserPlus,
 } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
-import { usePersistentOpen } from "./use-persistent-open";
+import { toast } from "sonner";
 import {
   type ApiGameEvent,
   canUndoEvent,
   describeGameEvent,
   type GameEventKind,
 } from "../../shared/game-events";
-import { useGameEvents, useUndoGameEvent } from "../adapters/react-query/queries";
-import { toast } from "sonner";
+import {
+  useGameEvents,
+  useUndoGameEvent,
+} from "../adapters/react-query/queries";
 import { formatDateTime, formatTime } from "./format-datetime";
 import { EmptyState, SkeletonListRow } from "./ui";
+import { usePersistentOpen } from "./use-persistent-open";
 
 const ICONS: Record<GameEventKind, LucideIcon> = {
   game_created: History,
@@ -49,7 +52,9 @@ function formatWhen(iso: string, now: Date) {
   if (Number.isNaN(at.getTime())) return "";
 
   const sameDay = at.toDateString() === now.toDateString();
-  return sameDay ? formatTime(iso) : formatDateTime(iso, { includeYear: false });
+  return sameDay
+    ? formatTime(iso)
+    : formatDateTime(iso, { includeYear: false });
 }
 
 function EventRow({
@@ -71,7 +76,9 @@ function EventRow({
     <li className="flex items-start gap-3 py-2.5">
       <span
         className={`mt-0.5 shrink-0 ${
-          destructive ? "text-rose-500 dark:text-rose-400" : "text-stone-400 dark:text-stone-500"
+          destructive
+            ? "text-rose-500 dark:text-rose-400"
+            : "text-stone-400 dark:text-stone-500"
         }`}
       >
         <Icon size={16} />
@@ -82,9 +89,7 @@ function EventRow({
           <p className="mt-0.5 break-words text-xs text-fg-muted">{detail}</p>
         )}
         {event.undoneAt && (
-          <p className="mt-0.5 text-xs font-medium text-success">
-            đã hoàn tác
-          </p>
+          <p className="mt-0.5 text-xs font-medium text-success">đã hoàn tác</p>
         )}
       </div>
       <div className="flex shrink-0 flex-col items-end gap-1">
@@ -116,7 +121,10 @@ type HistoryPanelProps = {
   collapsible?: boolean;
 };
 
-export function HistoryPanel({ gameId, collapsible = false }: HistoryPanelProps) {
+export function HistoryPanel({
+  gameId,
+  collapsible = false,
+}: HistoryPanelProps) {
   // Chi nho trang thai khi co the gap (desktop); mobile luon mo, khong co gi de nho.
   const [persistedOpen, setPersistedOpen] = usePersistentOpen("history", false);
   const open = collapsible ? persistedOpen : true;
@@ -131,7 +139,9 @@ export function HistoryPanel({ gameId, collapsible = false }: HistoryPanelProps)
       toast.success("Đã dựng lại khoản chi");
     } catch {
       // Hay gap nhat: nguoi tra hoac nguoi chia da bi xoa khoi cuoc chia.
-      toast.error("Không hoàn tác được — người liên quan không còn trong cuộc chia");
+      toast.error(
+        "Không hoàn tác được — người liên quan không còn trong cuộc chia",
+      );
     }
   }
 
@@ -142,7 +152,9 @@ export function HistoryPanel({ gameId, collapsible = false }: HistoryPanelProps)
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <History size={18} className="text-violet-600 dark:text-violet-400" />
-          <h3 className="text-lg font-semibold text-stone-950 dark:text-stone-50">Lịch sử</h3>
+          <h3 className="text-lg font-semibold text-stone-950 dark:text-stone-50">
+            Lịch sử
+          </h3>
         </div>
         {collapsible && (
           <button

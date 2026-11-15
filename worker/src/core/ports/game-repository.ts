@@ -1,7 +1,10 @@
 // Port cho tang luu tru. Adapter (D1/drizzle hoac DB khac) chi can implement
 // interface nay; core khong biet gi ve SQL hay driver ben duoi.
 
-import type { ContactBookRow, ContactSourceRow } from "../../../../shared/contacts";
+import type {
+  ContactBookRow,
+  ContactSourceRow,
+} from "../../../../shared/contacts";
 import type { SettlementMode } from "../../../../shared/schemas";
 
 export type GameRow = {
@@ -206,11 +209,19 @@ export type GameRepository = {
     countExpenses(gameIds: string[]): Promise<Map<string, number>>;
     insert(row: GameRow): Promise<void>;
     getById(gameId: string): Promise<GameRow | null>;
-    update(gameId: string, changes: GameChanges, updatedAt: string): Promise<void>;
+    update(
+      gameId: string,
+      changes: GameChanges,
+      updatedAt: string,
+    ): Promise<void>;
     /** Xoa mem: dua vao/lay ra khoi thung rac. */
     setDeletedAt(gameId: string, deletedAt: string | null): Promise<void>;
     /** Dong / mo lai cuoc choi. `closedAt = null` la mo lai (closeMode = ""). */
-    setClosed(gameId: string, closedAt: string | null, closeMode: string): Promise<void>;
+    setClosed(
+      gameId: string,
+      closedAt: string | null,
+      closeMode: string,
+    ): Promise<void>;
     /** Xoa that, keo theo cascade moi thu thuoc cuoc chia. Khong lay lai duoc. */
     delete(gameId: string): Promise<void>;
   };
@@ -224,7 +235,11 @@ export type GameRepository = {
       row: Omit<ParticipantRow, "sequence">,
       payment: Omit<PaymentProfileRow, "participantId">,
     ): Promise<void>;
-    rename(participantId: string, name: string, updatedAt: string): Promise<void>;
+    rename(
+      participantId: string,
+      name: string,
+      updatedAt: string,
+    ): Promise<void>;
     /**
      * Ghi lai thu tu nguoi dung tu sap. `orderedIds` la danh sach id theo thu
      * tu hien thi mong muon (tu tren xuong); id dau tien nhan sequence nho
@@ -247,15 +262,21 @@ export type GameRepository = {
      * truy van. Dung de doi payerParticipantId sang ten khi gop nhieu cuoc —
      * rieng vi khac cot voi ContactSourceRow (co id, khong co tai khoan).
      */
-    listIdNamesByOwner(userId: string): Promise<{ id: string; name: string; gameId: string }[]>;
+    listIdNamesByOwner(
+      userId: string,
+    ): Promise<{ id: string; name: string; gameId: string }[]>;
   };
   paymentProfiles: {
-    listByParticipantIds(participantIds: string[]): Promise<PaymentProfileRow[]>;
+    listByParticipantIds(
+      participantIds: string[],
+    ): Promise<PaymentProfileRow[]>;
   };
   expenses: {
     listByGame(gameId: string): Promise<ExpenseRow[]>;
     getById(expenseId: string): Promise<ExpenseRow | null>;
-    getWithGame(expenseId: string): Promise<{ expense: ExpenseRow; game: GameRow } | null>;
+    getWithGame(
+      expenseId: string,
+    ): Promise<{ expense: ExpenseRow; game: GameRow } | null>;
     insert(row: Omit<ExpenseRow, "sequence">): Promise<void>;
     update(expenseId: string, fields: ExpenseUpdate): Promise<void>;
     delete(expenseId: string): Promise<void>;
@@ -289,7 +310,9 @@ export type GameRepository = {
     listByGame(gameId: string): Promise<PhotoRow[]>;
     countByGame(gameId: string): Promise<number>;
     getById(photoId: string): Promise<PhotoRow | null>;
-    getWithGame(photoId: string): Promise<{ photo: PhotoRow; game: GameRow } | null>;
+    getWithGame(
+      photoId: string,
+    ): Promise<{ photo: PhotoRow; game: GameRow } | null>;
     /** Anh kem du lieu goc, chi dung khi mo xem toan man hinh. */
     getDetail(photoId: string): Promise<PhotoDetailRow | null>;
     insert(row: PhotoDetailRow): Promise<void>;
@@ -307,14 +330,23 @@ export type GameRepository = {
     findByHash(tokenHash: string): Promise<McpTokenRow | null>;
     insert(row: McpTokenRow): Promise<void>;
     /** false khi token khong ton tai hoac khong thuoc user nay. */
-    revoke(tokenId: string, userId: string, revokedAt: string): Promise<boolean>;
+    revoke(
+      tokenId: string,
+      userId: string,
+      revokedAt: string,
+    ): Promise<boolean>;
     touchLastUsed(tokenId: string, lastUsedAt: string): Promise<void>;
   };
   userPreferences: {
     /** Toan bo tuy chon da luu cua user; key la du do tang tren hieu. */
     listByUser(userId: string): Promise<UserPreferenceRow[]>;
     /** Ghi de gia tri cu cua dung key do — moi user mot dong tren moi key. */
-    upsert(userId: string, key: string, value: string, updatedAt: string): Promise<void>;
+    upsert(
+      userId: string,
+      key: string,
+      value: string,
+      updatedAt: string,
+    ): Promise<void>;
   };
   shuttleEntries: {
     /** Toan bo thao tac cua user, cu nhat truoc — de cong don ra kho hien tai. */
@@ -327,10 +359,18 @@ export type GameRepository = {
     listByOwner(userId: string): Promise<ContactBookRow[]>;
     getOwned(contactId: string, userId: string): Promise<ContactBookRow | null>;
     /** Cung nameKey thi ghi de dong cu: danh ba khong duoc co hai "Hồng". */
-    upsert(row: ContactBookRow & { ownerUserId: string; nameKey: string; createdAt: string }): Promise<void>;
+    upsert(
+      row: ContactBookRow & {
+        ownerUserId: string;
+        nameKey: string;
+        createdAt: string;
+      },
+    ): Promise<void>;
     update(
       contactId: string,
-      fields: Partial<Pick<ContactBookRow, "name" | "bankId" | "accountNo" | "accountName">> & {
+      fields: Partial<
+        Pick<ContactBookRow, "name" | "bankId" | "accountNo" | "accountName">
+      > & {
         nameKey?: string;
       },
       updatedAt: string,
@@ -340,7 +380,10 @@ export type GameRepository = {
   paymentRequests: {
     insert(row: PaymentRequestRow): Promise<void>;
     findByCode(code: string): Promise<PaymentRequestRow | null>;
-    listPendingByGame(gameId: string, createdAfter: string): Promise<PaymentRequestRow[]>;
+    listPendingByGame(
+      gameId: string,
+      createdAfter: string,
+    ): Promise<PaymentRequestRow[]>;
     markChecked(ids: string[], checkedAt: string): Promise<void>;
     /** Ghi giao dich ngan hang cho request; false = giao dich da duoc ghi truoc do. */
     claimTransaction(row: PaymentTransactionRow): Promise<boolean>;
@@ -352,7 +395,9 @@ export type GameRepository = {
   gameEvents: {
     /** Lich su cua mot cuoc chia, moi nhat truoc. */
     listByGame(gameId: string, limit: number): Promise<GameEventRow[]>;
-    getWithGame(eventId: string): Promise<{ event: GameEventRow; game: GameRow } | null>;
+    getWithGame(
+      eventId: string,
+    ): Promise<{ event: GameEventRow; game: GameRow } | null>;
     insert(row: GameEventRow): Promise<void>;
     markUndone(eventId: string, undoneAt: string): Promise<void>;
   };
@@ -361,7 +406,9 @@ export type GameRepository = {
     /** Xoa link cu (neu co) va ghi link moi cho game. */
     replace(gameId: string, row: ShareLinkRow & { id: string }): Promise<void>;
     setEnabled(gameId: string, enabled: boolean): Promise<void>;
-    findByToken(token: string): Promise<{ link: ShareLinkRow; game: GameRow } | null>;
+    findByToken(
+      token: string,
+    ): Promise<{ link: ShareLinkRow; game: GameRow } | null>;
   };
   sharePreviews: {
     put(gameId: string, data: string, updatedAt: string): Promise<void>;
@@ -370,7 +417,9 @@ export type GameRepository = {
   };
   users: {
     /** Doi chieu khong phan biet hoa thuong; null neu email chua co tai khoan. */
-    findIdByEmail(email: string): Promise<{ id: string; name: string; email: string } | null>;
+    findIdByEmail(
+      email: string,
+    ): Promise<{ id: string; name: string; email: string } | null>;
     /** Toan bo user da dang nhap he thong, tru chinh nguoi goi — de chon nhanh khi chia se. */
     listAllExceptOwner(
       ownerUserId: string,
@@ -393,7 +442,10 @@ export type GameRepository = {
       createdAt: string;
     }): Promise<boolean>;
     /** Xoa theo userId (da resolve) hoac invitedEmail (con dang cho). */
-    remove(gameId: string, target: { userId?: string; invitedEmail?: string }): Promise<void>;
+    remove(
+      gameId: string,
+      target: { userId?: string; invitedEmail?: string },
+    ): Promise<void>;
     /**
      * Dien userId vao moi invite "cho" trung email nay (khong phan biet hoa
      * thuong) — goi ngay luc resolveSsoUserId tao/tim thay user, de nguoi vua

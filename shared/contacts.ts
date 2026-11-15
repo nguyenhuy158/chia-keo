@@ -62,7 +62,9 @@ export function normalizeContactName(name: string): string {
 
 /** Ten mac dinh luc tao nhanh ("Người 1") chua phai ten ai, khong vao danh ba. */
 function isPlaceholderName(name: string): boolean {
-  return new RegExp(`^${QUICK_PARTICIPANT_PREFIX} \\d+$`, "i").test(name.trim());
+  return new RegExp(`^${QUICK_PARTICIPANT_PREFIX} \\d+$`, "i").test(
+    name.trim(),
+  );
 }
 
 function hasAccount(row: { accountNo: string }): boolean {
@@ -77,10 +79,15 @@ function hasAccount(row: { accountNo: string }): boolean {
  * khoan da biet.
  */
 export function buildContacts(rows: ContactSourceRow[]): Contact[] {
-  const byKey = new Map<string, { contact: Contact; gameIds: Set<string>; accountAt: string }>();
+  const byKey = new Map<
+    string,
+    { contact: Contact; gameIds: Set<string>; accountAt: string }
+  >();
 
   // Xu ly theo thu tu thoi gian de "lan sau ghi de lan truoc" dung cho moi field.
-  const ordered = [...rows].sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+  const ordered = [...rows].sort((a, b) =>
+    a.createdAt.localeCompare(b.createdAt),
+  );
 
   for (const row of ordered) {
     // Ten cu trong DB co the viet thuong (nhap truoc khi app tu hoa chu dau);
@@ -145,7 +152,10 @@ function sortContacts(contacts: Contact[]): Contact[] {
  * `gameCount` van lay tu lich su, vi bang `contacts` khong biet gi ve so lan
  * di cung.
  */
-export function mergeContacts(book: ContactBookRow[], derived: Contact[]): Contact[] {
+export function mergeContacts(
+  book: ContactBookRow[],
+  derived: Contact[],
+): Contact[] {
   const byKey = new Map(derived.map((contact) => [contact.key, contact]));
 
   for (const row of book) {

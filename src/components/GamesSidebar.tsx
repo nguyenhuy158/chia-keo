@@ -5,11 +5,15 @@ import type { MouseEvent } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { MAX_QUICK_PARTICIPANTS } from "../../shared/schemas";
-import { useCreateGame, useDuplicateGame, useGames } from "../adapters/react-query/queries";
+import {
+  useCreateGame,
+  useDuplicateGame,
+  useGames,
+} from "../adapters/react-query/queries";
 import { ClosedGamesCard } from "./ClosedGamesCard";
 import { ContactBookCard } from "./ContactBookCard";
-import { SkeletonCard } from "./ui";
 import { TrashCard } from "./TrashCard";
+import { SkeletonCard } from "./ui";
 
 const gameFormSchema = z.object({
   name: z.string().trim().min(1, "Nhập tên cuộc chơi"),
@@ -58,7 +62,10 @@ export function GamesSidebar({ onNavigate }: { onNavigate?: () => void }) {
         onSubmit={handleCreate}
         className="rounded-lg border border-border bg-surface p-4 shadow-sm"
       >
-        <label className="text-sm font-medium text-stone-700 dark:text-stone-300" htmlFor="game-name">
+        <label
+          className="text-sm font-medium text-stone-700 dark:text-stone-300"
+          htmlFor="game-name"
+        >
           Tạo cuộc chơi
         </label>
         <div className="mt-2 flex gap-2">
@@ -165,7 +172,9 @@ export function GamesSidebar({ onNavigate }: { onNavigate?: () => void }) {
             ))}
           </div>
         ) : (
-          <p className="px-1 py-4 text-sm text-fg-muted">Chưa có cuộc chơi nào.</p>
+          <p className="px-1 py-4 text-sm text-fg-muted">
+            Chưa có cuộc chơi nào.
+          </p>
         )}
       </section>
       <ClosedGamesCard onNavigate={onNavigate} />

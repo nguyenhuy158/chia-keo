@@ -178,7 +178,8 @@ export function GameDashboard({
                     <BalancePill value={row.balance} />
                   </div>
                   <p className="mt-0.5 text-xs text-fg-muted">
-                    Đã trả {formatMoney(row.paid)} · Phải chịu {formatMoney(row.owed)}
+                    Đã trả {formatMoney(row.paid)} · Phải chịu{" "}
+                    {formatMoney(row.owed)}
                   </p>
                 </div>
               );

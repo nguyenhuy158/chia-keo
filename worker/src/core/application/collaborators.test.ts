@@ -7,8 +7,17 @@ import {
   unshareGameByEmail,
 } from "./collaborators";
 import { BadRequestError, NotFoundError } from "./errors";
-import { createFakeRepo, FAKE_GAME_ID, FAKE_OWNER, gameRow } from "./fake-game-repository";
-import { getShareViewByToken, rotateShareLink, setShareLinkEnabled } from "./share-links";
+import {
+  createFakeRepo,
+  FAKE_GAME_ID,
+  FAKE_OWNER,
+  gameRow,
+} from "./fake-game-repository";
+import {
+  getShareViewByToken,
+  rotateShareLink,
+  setShareLinkEnabled,
+} from "./share-links";
 
 const OWNER_EMAIL = "chu@example.com";
 const FRIEND = { id: "user_ban", name: "Bạn", email: "ban@example.com" };
@@ -23,7 +32,12 @@ describe("shareGame", () => {
   it("chia se cho user da co tai khoan", async () => {
     const fake = withUsers();
 
-    const detail = await shareGame(fake.repo, FAKE_OWNER, FAKE_GAME_ID, FRIEND.email);
+    const detail = await shareGame(
+      fake.repo,
+      FAKE_OWNER,
+      FAKE_GAME_ID,
+      FRIEND.email,
+    );
 
     expect(detail.collaborators).toEqual([
       { userId: FRIEND.id, name: FRIEND.name, email: FRIEND.email },
@@ -33,9 +47,17 @@ describe("shareGame", () => {
   it("email chua co tai khoan luu thanh invite cho", async () => {
     const fake = withUsers();
 
-    const detail = await shareGame(fake.repo, FAKE_OWNER, FAKE_GAME_ID, "moi@example.com");
+    const detail = await shareGame(
+      fake.repo,
+      FAKE_OWNER,
+      FAKE_GAME_ID,
+      "moi@example.com",
+    );
 
-    expect(detail.collaborators[0]).toMatchObject({ userId: null, email: "moi@example.com" });
+    expect(detail.collaborators[0]).toMatchObject({
+      userId: null,
+      email: "moi@example.com",
+    });
   });
 
   it("chuan hoa email ve chu thuong", async () => {
@@ -80,11 +102,15 @@ describe("listShareCandidates", () => {
   it("bo chu va nguoi da duoc chia se ra khoi goi y", async () => {
     const fake = withUsers();
 
-    expect(await listShareCandidates(fake.repo, FAKE_OWNER, FAKE_GAME_ID)).toEqual([FRIEND]);
+    expect(
+      await listShareCandidates(fake.repo, FAKE_OWNER, FAKE_GAME_ID),
+    ).toEqual([FRIEND]);
 
     await shareGame(fake.repo, FAKE_OWNER, FAKE_GAME_ID, FRIEND.email);
 
-    expect(await listShareCandidates(fake.repo, FAKE_OWNER, FAKE_GAME_ID)).toEqual([]);
+    expect(
+      await listShareCandidates(fake.repo, FAKE_OWNER, FAKE_GAME_ID),
+    ).toEqual([]);
   });
 });
 
@@ -93,7 +119,12 @@ describe("unshareGame", () => {
     const fake = withUsers();
     await shareGame(fake.repo, FAKE_OWNER, FAKE_GAME_ID, FRIEND.email);
 
-    const detail = await unshareGame(fake.repo, FAKE_OWNER, FAKE_GAME_ID, FRIEND.id);
+    const detail = await unshareGame(
+      fake.repo,
+      FAKE_OWNER,
+      FAKE_GAME_ID,
+      FRIEND.id,
+    );
 
     expect(detail.collaborators).toEqual([]);
   });
@@ -131,7 +162,9 @@ describe("share link", () => {
     const second = await rotateShareLink(fake.repo, FAKE_OWNER, FAKE_GAME_ID);
 
     expect(second.shareLink?.token).not.toBe(oldToken);
-    await expect(getShareViewByToken(fake.repo, oldToken)).rejects.toThrow(NotFoundError);
+    await expect(getShareViewByToken(fake.repo, oldToken)).rejects.toThrow(
+      NotFoundError,
+    );
   });
 
   it("tat link thi khong xem duoc nua", async () => {
@@ -145,7 +178,9 @@ describe("share link", () => {
 
     await setShareLinkEnabled(fake.repo, FAKE_OWNER, FAKE_GAME_ID, false);
 
-    await expect(getShareViewByToken(fake.repo, token)).rejects.toThrow(NotFoundError);
+    await expect(getShareViewByToken(fake.repo, token)).rejects.toThrow(
+      NotFoundError,
+    );
   });
 
   it("link het han thi tu choi", async () => {
@@ -161,7 +196,9 @@ describe("share link", () => {
       ],
     });
 
-    await expect(getShareViewByToken(fake.repo, "abcd")).rejects.toThrow(NotFoundError);
+    await expect(getShareViewByToken(fake.repo, "abcd")).rejects.toThrow(
+      NotFoundError,
+    );
   });
 
   it("cuoc chia trong thung rac thi link tat theo", async () => {
@@ -178,7 +215,9 @@ describe("share link", () => {
       ],
     });
 
-    await expect(getShareViewByToken(fake.repo, "abcd")).rejects.toThrow(NotFoundError);
+    await expect(getShareViewByToken(fake.repo, "abcd")).rejects.toThrow(
+      NotFoundError,
+    );
   });
 
   it("nguoi la khong quay duoc link", async () => {

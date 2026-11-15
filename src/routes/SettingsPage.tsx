@@ -16,7 +16,9 @@ export function SettingsPage() {
           <ArrowLeft size={14} />
           Trang chính
         </Link>
-        <h1 className="text-sm font-semibold text-stone-950 dark:text-stone-50">Cài đặt</h1>
+        <h1 className="text-sm font-semibold text-stone-950 dark:text-stone-50">
+          Cài đặt
+        </h1>
       </div>
 
       <ProfileNamePanel />

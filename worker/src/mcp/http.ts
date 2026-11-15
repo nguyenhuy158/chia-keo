@@ -1,6 +1,10 @@
 import { authenticateMcpToken } from "../core/application/mcp-tokens";
 import type { GameRepository } from "../core/ports/game-repository";
-import { handleMcpMessage, JSON_RPC_ERROR, type McpServerInfo } from "./protocol";
+import {
+  handleMcpMessage,
+  JSON_RPC_ERROR,
+  type McpServerInfo,
+} from "./protocol";
 import { mcpTools } from "./tools";
 
 export const MCP_SERVER_INFO: McpServerInfo = {
@@ -19,7 +23,11 @@ function readBearerToken(header: string | null) {
   return scheme?.toLowerCase() === "bearer" ? rest.join(" ").trim() : "";
 }
 
-function json(body: unknown, status: number, headers: Record<string, string> = {}) {
+function json(
+  body: unknown,
+  status: number,
+  headers: Record<string, string> = {},
+) {
   return new Response(JSON.stringify(body), {
     status,
     headers: { "Content-Type": "application/json", ...headers },
@@ -73,7 +81,9 @@ export async function handleMcpHttpRequest(options: {
   // sang waitUntil de khong cong luot ghi D1 vao do tre cua request.
   const touch = repo.mcpTokens
     .touchLastUsed(identity.tokenId, new Date().toISOString())
-    .catch((error) => console.error("Không ghi được lastUsedAt cho token MCP:", error));
+    .catch((error) =>
+      console.error("Không ghi được lastUsedAt cho token MCP:", error),
+    );
   if (waitUntil) waitUntil(touch);
   else await touch;
 
@@ -95,10 +105,14 @@ export async function handleMcpHttpRequest(options: {
       body.map((message) => handleMcpMessage(message, messageOptions)),
     );
     const answered = responses.filter((response) => response !== null);
-    return answered.length === 0 ? new Response(null, { status: 202 }) : json(answered, 200);
+    return answered.length === 0
+      ? new Response(null, { status: 202 })
+      : json(answered, 200);
   }
 
   const response = await handleMcpMessage(body, messageOptions);
   // Notification khong co phan hoi: 202 la dung theo spec.
-  return response === null ? new Response(null, { status: 202 }) : json(response, 200);
+  return response === null
+    ? new Response(null, { status: 202 })
+    : json(response, 200);
 }

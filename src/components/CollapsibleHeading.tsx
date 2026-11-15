@@ -4,9 +4,15 @@ type CollapsibleHeadingProps = {
   onToggle?: () => void;
 };
 
-export function CollapsibleHeading({ title, open, onToggle }: CollapsibleHeadingProps) {
+export function CollapsibleHeading({
+  title,
+  open,
+  onToggle,
+}: CollapsibleHeadingProps) {
   const heading = (
-    <h3 className="text-lg font-semibold text-stone-950 dark:text-stone-50">{title}</h3>
+    <h3 className="text-lg font-semibold text-stone-950 dark:text-stone-50">
+      {title}
+    </h3>
   );
   if (!onToggle) return heading;
 

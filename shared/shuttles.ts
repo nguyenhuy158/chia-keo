@@ -36,7 +36,11 @@ export function computeShuttleStock(entries: ShuttleEntryLike[]) {
  * Doi mot thao tac thanh delta. "set" la hieu so voi kho hien tai — nho vay ca
  * ba loai cung mot duong ghi, va lich su van doc duoc ("chot lai 8 trai").
  */
-export function shuttleDelta(kind: ShuttleEntryKind, quantity: number, currentStock: number) {
+export function shuttleDelta(
+  kind: ShuttleEntryKind,
+  quantity: number,
+  currentStock: number,
+) {
   if (kind === "add") return quantity;
   if (kind === "use") return -quantity;
   return quantity - currentStock;
@@ -46,7 +50,9 @@ export function shuttleDelta(kind: ShuttleEntryKind, quantity: number, currentSt
  * Kho khong duoc am (khong the "con -2 trai") va khong duoc vuot tran. Tra ve
  * ly do de tang tren bien thanh loi HTTP hoac cau canh bao tren man hinh.
  */
-export function shuttleStockError(nextStock: number): "shuttle_stock_negative" | "shuttle_stock_too_large" | null {
+export function shuttleStockError(
+  nextStock: number,
+): "shuttle_stock_negative" | "shuttle_stock_too_large" | null {
   if (nextStock < 0) return "shuttle_stock_negative";
   if (nextStock > MAX_SHUTTLE_STOCK) return "shuttle_stock_too_large";
   return null;

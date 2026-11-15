@@ -1,5 +1,5 @@
-import { createAvatar } from "@dicebear/core";
 import { funEmoji } from "@dicebear/collection";
+import { createAvatar } from "@dicebear/core";
 import type { ApiParticipant } from "../../../shared/api-types";
 import { normalizeContactName } from "../../../shared/contacts";
 import {
@@ -9,7 +9,11 @@ import {
   type SummaryTextInput,
   type SummaryVariant,
 } from "../../../shared/summary-text";
-import { buildVietQrProxyPath, canBuildVietQr, getVietQrBankLabel } from "../../../shared/vietqr";
+import {
+  buildVietQrProxyPath,
+  canBuildVietQr,
+  getVietQrBankLabel,
+} from "../../../shared/vietqr";
 import { API_BASE } from "./http-game-api";
 import {
   getSummaryImageBackground,
@@ -66,7 +70,12 @@ type TextStyle = {
  */
 function buildStyles(palette: SummaryImagePalette) {
   return {
-    title: { font: `700 27px ${FONT_STACK}`, color: palette.title, lineHeight: 34, gapBefore: 0 },
+    title: {
+      font: `700 27px ${FONT_STACK}`,
+      color: palette.title,
+      lineHeight: 34,
+      gapBefore: 0,
+    },
     subtitle: {
       font: `600 14px ${FONT_STACK}`,
       color: palette.subtitle,
@@ -79,22 +88,42 @@ function buildStyles(palette: SummaryImagePalette) {
       lineHeight: 24,
       gapBefore: 22,
     },
-    body: { font: `400 15px ${FONT_STACK}`, color: palette.body, lineHeight: 23, gapBefore: 0 },
-    qrTitle: { font: `700 18px ${FONT_STACK}`, color: palette.title, lineHeight: 26, gapBefore: 0 },
+    body: {
+      font: `400 15px ${FONT_STACK}`,
+      color: palette.body,
+      lineHeight: 23,
+      gapBefore: 0,
+    },
+    qrTitle: {
+      font: `700 18px ${FONT_STACK}`,
+      color: palette.title,
+      lineHeight: 26,
+      gapBefore: 0,
+    },
     qrAmount: {
       font: `700 22px ${FONT_STACK}`,
       color: palette.accent,
       lineHeight: 32,
       gapBefore: 0,
     },
-    qrNote: { font: `600 15px ${FONT_STACK}`, color: palette.accent, lineHeight: 24, gapBefore: 0 },
+    qrNote: {
+      font: `600 15px ${FONT_STACK}`,
+      color: palette.accent,
+      lineHeight: 24,
+      gapBefore: 0,
+    },
     qrDetail: {
       font: `400 14px ${FONT_STACK}`,
       color: palette.muted,
       lineHeight: 21,
       gapBefore: 0,
     },
-    footer: { font: `400 13px ${FONT_STACK}`, color: palette.muted, lineHeight: 20, gapBefore: 24 },
+    footer: {
+      font: `400 13px ${FONT_STACK}`,
+      color: palette.muted,
+      lineHeight: 20,
+      gapBefore: 24,
+    },
     /** Dong nhom trong phan chuyen tien cua ban chi tiet, vi du "Chuyen vao X". */
     groupLabel: {
       font: `600 14px ${FONT_STACK}`,
@@ -145,7 +174,11 @@ function loadImage(src: string): Promise<HTMLImageElement | null> {
   });
 }
 
-async function loadQrImage(payee: ApiParticipant, amount: number, code: string) {
+async function loadQrImage(
+  payee: ApiParticipant,
+  amount: number,
+  code: string,
+) {
   if (!canBuildVietQr(payee)) return null;
   return loadImage(`${API_BASE}${buildVietQrProxyPath(payee, amount, code)}`);
 }
@@ -156,7 +189,10 @@ async function loadQrImage(payee: ApiParticipant, amount: number, code: string) 
  */
 async function loadAvatarImage(name: string) {
   const seed = normalizeContactName(name) || "?";
-  const dataUri = createAvatar(funEmoji, { seed, size: AVATAR_SIZE * PIXEL_SCALE }).toDataUri();
+  const dataUri = createAvatar(funEmoji, {
+    seed,
+    size: AVATAR_SIZE * PIXEL_SCALE,
+  }).toDataUri();
   return loadImage(dataUri);
 }
 
@@ -167,13 +203,28 @@ async function loadAvatarsByParticipantId(participants: ApiParticipant[]) {
       return image ? ([participant.id, image] as const) : null;
     }),
   );
-  return new Map(loaded.filter((entry): entry is [string, HTMLImageElement] => entry !== null));
+  return new Map(
+    loaded.filter(
+      (entry): entry is [string, HTMLImageElement] => entry !== null,
+    ),
+  );
 }
 
-function drawAvatar(context: CanvasRenderingContext2D, image: HTMLImageElement, x: number, y: number) {
+function drawAvatar(
+  context: CanvasRenderingContext2D,
+  image: HTMLImageElement,
+  x: number,
+  y: number,
+) {
   context.save();
   context.beginPath();
-  context.arc(x + AVATAR_SIZE / 2, y + AVATAR_SIZE / 2, AVATAR_SIZE / 2, 0, Math.PI * 2);
+  context.arc(
+    x + AVATAR_SIZE / 2,
+    y + AVATAR_SIZE / 2,
+    AVATAR_SIZE / 2,
+    0,
+    Math.PI * 2,
+  );
   context.closePath();
   context.clip();
   context.drawImage(image, x, y, AVATAR_SIZE, AVATAR_SIZE);
@@ -181,7 +232,9 @@ function drawAvatar(context: CanvasRenderingContext2D, image: HTMLImageElement, 
 }
 
 function buildAccountLines(payee: ApiParticipant, styles: Styles): QrLine[] {
-  const detail = [getVietQrBankLabel(payee.bankId), payee.accountNo].filter(Boolean).join(" · ");
+  const detail = [getVietQrBankLabel(payee.bankId), payee.accountNo]
+    .filter(Boolean)
+    .join(" · ");
   return [
     [detail, styles.qrDetail],
     [payee.accountName || payee.name, styles.qrDetail],
@@ -203,7 +256,9 @@ async function loadQrCards(
 
   if (doc.hostParticipantId) {
     const host = participantById.get(doc.hostParticipantId);
-    const image = host ? await loadQrImage(host, QR_AMOUNT_FREE, input.code) : null;
+    const image = host
+      ? await loadQrImage(host, QR_AMOUNT_FREE, input.code)
+      : null;
 
     return {
       byLineIndex: new Map(),
@@ -244,7 +299,10 @@ async function loadQrCards(
     }),
   );
 
-  return { byLineIndex: new Map(loaded.filter((entry) => entry !== null)), host: null };
+  return {
+    byLineIndex: new Map(loaded.filter((entry) => entry !== null)),
+    host: null,
+  };
 }
 
 function wrapText(
@@ -307,10 +365,20 @@ function buildTextBlocks(
       draw(target, y) {
         if (options.divider && index === 0 && gapBefore > 0) {
           target.fillStyle = options.divider;
-          target.fillRect(PADDING, y - gapBefore / 2, CARD_WIDTH - PADDING * 2, 1);
+          target.fillRect(
+            PADDING,
+            y - gapBefore / 2,
+            CARD_WIDTH - PADDING * 2,
+            1,
+          );
         }
         if (options.avatar && index === 0) {
-          drawAvatar(target, options.avatar, PADDING, y + (style.lineHeight - AVATAR_SIZE) / 2);
+          drawAvatar(
+            target,
+            options.avatar,
+            PADDING,
+            y + (style.lineHeight - AVATAR_SIZE) / 2,
+          );
         }
         drawText(target, part, style, x, y);
       },
@@ -342,7 +410,10 @@ function buildRightAlignedTextBlocks(
 
 function buildQrBlock(card: QrCard, palette: SummaryImagePalette): Block {
   const textX = PADDING + QR_SIZE + QR_TEXT_GAP;
-  const textHeight = card.lines.reduce((total, [, style]) => total + style.lineHeight, 0);
+  const textHeight = card.lines.reduce(
+    (total, [, style]) => total + style.lineHeight,
+    0,
+  );
 
   return {
     height: QR_SIZE,
@@ -400,7 +471,10 @@ function buildBlocks(
     }
 
     section.lines.forEach((line, index) => {
-      const card = section.id === "settlements" ? qrCards.byLineIndex.get(index) : undefined;
+      const card =
+        section.id === "settlements"
+          ? qrCards.byLineIndex.get(index)
+          : undefined;
       if (card) {
         blocks.push(buildQrBlock(card, palette));
         return;
@@ -408,24 +482,35 @@ function buildBlocks(
 
       // Ban chi tiet chen dong nhom ("Chuyen vao X — tong ...:") giua cac dong
       // chuyen tien; khong danh dau thi no lan vao nhu mot luot chuyen nua.
-      const isGroupLabel = section.id === "settlements" && !line.startsWith("- ");
+      const isGroupLabel =
+        section.id === "settlements" && !line.startsWith("- ");
       // Dong "TỪNG NGƯỜI" xep dung thu tu participants (xem buildPersonLines),
       // nen zip theo index la lay dung nguoi cho dong do.
       const avatar =
         section.id === "people"
           ? avatarsByParticipantId.get(participants[index].id)
           : section.id === "settlements"
-            ? avatarsByParticipantId.get(section.lineParticipantIds?.[index] || "")
+            ? avatarsByParticipantId.get(
+                section.lineParticipantIds?.[index] || "",
+              )
             : undefined;
       blocks.push(
-        ...buildTextBlocks(context, line, isGroupLabel ? styles.groupLabel : styles.body, {
-          avatar,
-        }),
+        ...buildTextBlocks(
+          context,
+          line,
+          isGroupLabel ? styles.groupLabel : styles.body,
+          {
+            avatar,
+          },
+        ),
       );
     });
   }
 
-  if (doc.shareUrl) blocks.push(...buildRightAlignedTextBlocks(context, doc.shareUrl, styles.footer));
+  if (doc.shareUrl)
+    blocks.push(
+      ...buildRightAlignedTextBlocks(context, doc.shareUrl, styles.footer),
+    );
 
   return blocks;
 }
@@ -453,13 +538,17 @@ async function ensureImageFontsReady() {
   if (!fonts?.load) return;
 
   const requests = IMAGE_FONT_FAMILIES.flatMap((name) =>
-    FONT_WEIGHTS.map((weight) => fonts.load(`${weight} 16px "${name}"`, FONT_SAMPLE_TEXT)),
+    FONT_WEIGHTS.map((weight) =>
+      fonts.load(`${weight} 16px "${name}"`, FONT_SAMPLE_TEXT),
+    ),
   );
 
   try {
     await Promise.race([
       Promise.all(requests),
-      new Promise((resolve) => window.setTimeout(resolve, FONT_LOAD_TIMEOUT_MS)),
+      new Promise((resolve) =>
+        window.setTimeout(resolve, FONT_LOAD_TIMEOUT_MS),
+      ),
     ]);
   } catch {
     // Font tai loi thi van ve tiep, chi la anh dung font du phong.
@@ -506,7 +595,10 @@ export async function renderSummaryImage(
     avatarsByParticipantId,
   );
 
-  const contentHeight = blocks.reduce((total, block) => total + block.gapBefore + block.height, 0);
+  const contentHeight = blocks.reduce(
+    (total, block) => total + block.gapBefore + block.height,
+    0,
+  );
   const cardHeight = ACCENT_BAR_HEIGHT + PADDING * 2 + contentHeight;
 
   const { canvas, context } = createContext(CARD_WIDTH, cardHeight);

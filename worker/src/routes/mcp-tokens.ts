@@ -6,7 +6,7 @@ import {
   revokeMcpToken,
 } from "../core/application/mcp-tokens";
 import { invalidInput, readJson, respond } from "../lib/http";
-import { protectPaths, type AuthedEnv } from "../lib/require-user";
+import { type AuthedEnv, protectPaths } from "../lib/require-user";
 
 /** Quan ly token MCP cua chinh minh; luon can dang nhap bang session. */
 export const mcpTokensRouter = new Hono<AuthedEnv>();
@@ -22,9 +22,15 @@ mcpTokensRouter.post("/mcp-tokens", async (c) => {
   const input = await readJson(c, mcpTokenInputSchema);
   if (!input) return invalidInput(c);
 
-  return respond(c, () => createMcpToken(c.get("repo"), c.get("userId"), input), 201);
+  return respond(
+    c,
+    () => createMcpToken(c.get("repo"), c.get("userId"), input),
+    201,
+  );
 });
 
 mcpTokensRouter.delete("/mcp-tokens/:tokenId", (c) =>
-  respond(c, () => revokeMcpToken(c.get("repo"), c.get("userId"), c.req.param("tokenId"))),
+  respond(c, () =>
+    revokeMcpToken(c.get("repo"), c.get("userId"), c.req.param("tokenId")),
+  ),
 );

@@ -8,7 +8,11 @@ import {
 import { createId, nowIso } from "../../lib/ids";
 import type { GameEventRow, GameRepository } from "../ports/game-repository";
 import { InvalidInputError, NotFoundError } from "./errors";
-import { getAccessibleGame, hasGameAccess, loadGameDetail } from "./game-detail";
+import {
+  getAccessibleGame,
+  hasGameAccess,
+  loadGameDetail,
+} from "./game-detail";
 
 /** Doc toi day roi thoi: lich su cu hon the khong ai cuon tay den. */
 export const GAME_EVENT_PAGE_SIZE = 200;
@@ -60,7 +64,11 @@ export async function listGameEvents(
   if (!game) throw new NotFoundError();
 
   const rows = await repo.gameEvents.listByGame(game.id, GAME_EVENT_PAGE_SIZE);
-  return { events: rows.map(toApiEvent).filter((event): event is ApiGameEvent => event !== null) };
+  return {
+    events: rows
+      .map(toApiEvent)
+      .filter((event): event is ApiGameEvent => event !== null),
+  };
 }
 
 /**
@@ -76,7 +84,8 @@ export async function undoGameEvent(
   eventId: string,
 ): Promise<ApiGameDetail> {
   const row = await repo.gameEvents.getWithGame(eventId);
-  if (!row || !(await hasGameAccess(repo, row.game, userId))) throw new NotFoundError();
+  if (!row || !(await hasGameAccess(repo, row.game, userId)))
+    throw new NotFoundError();
 
   const event = toApiEvent(row.event);
   if (!event || !canUndoEvent(event)) throw new InvalidInputError();
@@ -84,7 +93,9 @@ export async function undoGameEvent(
 
   // Nguoi tra hoac nguoi chia co the da bi xoa sau do; dung lai se vi pham
   // khoa ngoai, nen tu choi ro rang thay vi de loi DB tro len.
-  const participantIds = new Set(await repo.participants.listIdsByGame(row.game.id));
+  const participantIds = new Set(
+    await repo.participants.listIdsByGame(row.game.id),
+  );
   const membersAlive =
     participantIds.has(restore.payerParticipantId) &&
     restore.splits.every((split) => participantIds.has(split.participantId));

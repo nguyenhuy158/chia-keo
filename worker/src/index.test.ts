@@ -106,16 +106,23 @@ describe("Worker entrypoint", () => {
     const statuses = [];
     for (let index = 0; index < 21; index++) {
       statuses.push(
-        (await app.request("/api/share/tok1/payments/CKAAAA2222", { headers }, env)).status,
+        (
+          await app.request(
+            "/api/share/tok1/payments/CKAAAA2222",
+            { headers },
+            env,
+          )
+        ).status,
       );
     }
     expect(statuses).not.toContain(429);
 
     let shareView = 0;
     for (let index = 0; index < 21; index++) {
-      shareView = (await app.request("/api/share/tok1/photos", { headers }, env)).status;
+      shareView = (
+        await app.request("/api/share/tok1/photos", { headers }, env)
+      ).status;
     }
     expect(shareView).toBe(429);
   });
 });
-

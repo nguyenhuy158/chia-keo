@@ -15,26 +15,10 @@ import {
   X,
 } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
+import { describeCloseMode, isClosed } from "../../shared/game-closing";
 import { API_BASE } from "../adapters/browser/http-game-api";
 import { renderSharePreviewImage } from "../adapters/browser/share-preview-image";
-import { CollaboratorsPanel } from "../components/CollaboratorsPanel";
-import { CopyMenu } from "../components/CopyMenu";
-import { ExpensePanel } from "../components/ExpensePanel";
-import { GameDashboard } from "../components/GameDashboard";
-import { HistoryPanel } from "../components/HistoryPanel";
-import { OnboardingBanner } from "../components/OnboardingBanner";
-import { PhotoPanel } from "../components/PhotoPanel";
-import { ExpenseFab, type GameSection, MobileGameNav } from "../components/MobileGameNav";
-import { useMobileShell } from "../components/mobile-shell";
-import { ParticipantPanel } from "../components/ParticipantPanel";
-import { SummaryImageCard } from "../components/SummaryImageCard";
-import { Menu, type MenuItem } from "../ui/Menu";
-import { Sheet } from "../ui/Sheet";
-import { useConfirm } from "../components/ConfirmDialog";
-import { toast } from "sonner";
-import { EmptyState, GamePageSkeleton } from "../components/ui";
-import { formatMoney } from "../core/domain/money";
-import { describeCloseMode, isClosed } from "../../shared/game-closing";
 import {
   findUndoableExpenseRemoval,
   useAddExpense,
@@ -46,21 +30,41 @@ import {
   useGame,
   usePhotos,
   useRemoveExpense,
-  useSetExpenseExcluded,
   useRemoveParticipant,
-  useReorderExpenses,
-  useReorderParticipants,
   useRenameGame,
   useReopenGame,
+  useReorderExpenses,
+  useReorderParticipants,
   useRotateShareLink,
+  useSaveSharePreview,
+  useSetExpenseExcluded,
   useSetSettlementHost,
   useSetSettlementMode,
-  useSaveSharePreview,
   useSetShareLinkEnabled,
   useUndoGameEvent,
   useUpdateExpense,
   useUpdateParticipant,
 } from "../adapters/react-query/queries";
+import { CollaboratorsPanel } from "../components/CollaboratorsPanel";
+import { useConfirm } from "../components/ConfirmDialog";
+import { CopyMenu } from "../components/CopyMenu";
+import { ExpensePanel } from "../components/ExpensePanel";
+import { GameDashboard } from "../components/GameDashboard";
+import { HistoryPanel } from "../components/HistoryPanel";
+import {
+  ExpenseFab,
+  type GameSection,
+  MobileGameNav,
+} from "../components/MobileGameNav";
+import { useMobileShell } from "../components/mobile-shell";
+import { OnboardingBanner } from "../components/OnboardingBanner";
+import { ParticipantPanel } from "../components/ParticipantPanel";
+import { PhotoPanel } from "../components/PhotoPanel";
+import { SummaryImageCard } from "../components/SummaryImageCard";
+import { EmptyState, GamePageSkeleton } from "../components/ui";
+import { formatMoney } from "../core/domain/money";
+import { Menu, type MenuItem } from "../ui/Menu";
+import { Sheet } from "../ui/Sheet";
 
 export function GamePage() {
   const { gameId } = useParams({ from: "/app/games/$gameId" });
@@ -135,7 +139,8 @@ export function GamePage() {
     // dung khong so bam nham la mat cuoc.
     const ok = await confirm({
       title: `Đóng "${game.name}"?`,
-      description: "Cuộc chơi rời khỏi danh sách đang chơi, mở lại được ở mục “Đã đóng”.",
+      description:
+        "Cuộc chơi rời khỏi danh sách đang chơi, mở lại được ở mục “Đã đóng”.",
       confirmLabel: "Đóng cuộc chơi",
     });
     if (!ok) return;
@@ -160,12 +165,15 @@ export function GamePage() {
   async function handleRotateShareLink() {
     const ok = await confirm({
       title: "Tạo link chia sẻ mới?",
-      description: "Link cũ sẽ hết hiệu lực ngay, ai đang xem sẽ mất quyền truy cập.",
+      description:
+        "Link cũ sẽ hết hiệu lực ngay, ai đang xem sẽ mất quyền truy cập.",
       confirmLabel: "Tạo link mới",
       destructive: true,
     });
     if (!ok) return;
-    rotateShareLink.mutate(undefined, { onSuccess: () => toast.success("Đã tạo link mới") });
+    rotateShareLink.mutate(undefined, {
+      onSuccess: () => toast.success("Đã tạo link mới"),
+    });
   }
 
   async function handleRemoveExpense(expenseId: string) {
@@ -175,7 +183,10 @@ export function GamePage() {
     const target = game.expenses.find((expense) => expense.id === expenseId);
     await removeExpense.mutateAsync(expenseId);
     const eventId = target
-      ? await findUndoableExpenseRemoval(game.id, { title: target.title, amount: target.amount })
+      ? await findUndoableExpenseRemoval(game.id, {
+          title: target.title,
+          amount: target.amount,
+        })
       : null;
 
     toast(target ? `Đã xóa "${target.title}"` : "Đã xóa khoản chi", {
@@ -211,7 +222,9 @@ export function GamePage() {
     <ParticipantPanel
       participants={game.participants}
       pending={
-        addParticipant.isPending || addParticipants.isPending || updateParticipant.isPending
+        addParticipant.isPending ||
+        addParticipants.isPending ||
+        updateParticipant.isPending
       }
       onAdd={(input) => addParticipant.mutateAsync(input)}
       onAddMany={(people) => addParticipants.mutateAsync({ people })}
@@ -233,7 +246,9 @@ export function GamePage() {
       photos={photos}
       pending={addExpense.isPending || updateExpense.isPending}
       onAdd={(input) => addExpense.mutateAsync(input)}
-      onUpdate={(expenseId, input) => updateExpense.mutateAsync({ expenseId, input })}
+      onUpdate={(expenseId, input) =>
+        updateExpense.mutateAsync({ expenseId, input })
+      }
       onRemove={handleRemoveExpense}
       onToggleExcluded={(expenseId, excluded) =>
         setExpenseExcluded.mutate({ expenseId, excluded })
@@ -261,12 +276,16 @@ export function GamePage() {
       code={game.code}
       name={game.name}
       participants={game.participants}
-      expenseCount={game.expenses.filter((expense) => expense.kind !== "transfer").length}
+      expenseCount={
+        game.expenses.filter((expense) => expense.kind !== "transfer").length
+      }
       summary={game.summary}
       settlementMode={game.settlementMode}
       settlementHostId={game.settlementHostId}
       onSettlementModeChange={(mode) =>
-        setSettlementMode.mutate(mode, { onSuccess: () => toast.success("Đã đổi cách chia tiền") })
+        setSettlementMode.mutate(mode, {
+          onSuccess: () => toast.success("Đã đổi cách chia tiền"),
+        })
       }
       onSettlementHostChange={(participantId) =>
         setSettlementHost.mutate(participantId, {
@@ -275,8 +294,10 @@ export function GamePage() {
       }
       expenses={game.expenses}
       onSettle={async (settlement) => {
-        const fromName = participantNameById.get(settlement.fromParticipantId) || "Không rõ";
-        const toName = participantNameById.get(settlement.toParticipantId) || "Không rõ";
+        const fromName =
+          participantNameById.get(settlement.fromParticipantId) || "Không rõ";
+        const toName =
+          participantNameById.get(settlement.toParticipantId) || "Không rõ";
         const ok = await confirm({
           title: `Ghi nhận ${fromName} đã trả ${toName}?`,
           description: `Số tiền ${formatMoney(settlement.amount)}.`,
@@ -317,16 +338,23 @@ export function GamePage() {
   }
 
   const summaryImageCard = (
-    <SummaryImageCard input={summaryInput} onShare={publishSharePreview} collapsible />
+    <SummaryImageCard
+      input={summaryInput}
+      onShare={publishSharePreview}
+      collapsible
+    />
   );
 
   async function handleEmailSummary() {
     setEmailPending(true);
     try {
-      const response = await fetch(`${API_BASE}/api/games/${game.id}/email-summary`, {
-        method: "POST",
-        credentials: "include",
-      });
+      const response = await fetch(
+        `${API_BASE}/api/games/${game.id}/email-summary`,
+        {
+          method: "POST",
+          credentials: "include",
+        },
+      );
       if (!response.ok) throw new Error();
       toast.success("Đã gửi email tóm tắt về hộp thư của bạn");
     } catch {
@@ -343,7 +371,9 @@ export function GamePage() {
   }
 
   function handleCreateShareLink() {
-    rotateShareLink.mutate(undefined, { onSuccess: () => toast.success("Đã tạo link chia sẻ") });
+    rotateShareLink.mutate(undefined, {
+      onSuccess: () => toast.success("Đã tạo link chia sẻ"),
+    });
   }
 
   const emailAction = (
@@ -358,7 +388,9 @@ export function GamePage() {
     </button>
   );
 
-  const copyAction = <CopyMenu input={summaryInput} onShare={publishSharePreview} />;
+  const copyAction = (
+    <CopyMenu input={summaryInput} onShare={publishSharePreview} />
+  );
 
   const shareActions = shareLink ? (
     <>
@@ -497,7 +529,9 @@ export function GamePage() {
     <>
       <div className="mb-5 flex items-center justify-between gap-3 rounded-lg border border-border bg-surface p-4 shadow-sm">
         <div className="min-w-0">
-          <p className="text-sm font-medium text-violet-600 dark:text-violet-400">{game.code}</p>
+          <p className="text-sm font-medium text-violet-600 dark:text-violet-400">
+            {game.code}
+          </p>
           {nameDraft !== null ? (
             <div className="mt-1 flex items-center gap-2">
               <input
@@ -590,7 +624,9 @@ export function GamePage() {
 
       <OnboardingBanner
         participantCount={game.participants.length}
-        expenseCount={game.expenses.filter((expense) => expense.kind !== "transfer").length}
+        expenseCount={
+          game.expenses.filter((expense) => expense.kind !== "transfer").length
+        }
       />
 
       {/* Desktop layout: giu nguyen bo cuc luoi. */}
@@ -655,9 +691,10 @@ export function GamePage() {
       </div>
 
       {/* Tab anh (trong Khac) co nut them anh rieng nen khong hien FAB khoan chi. */}
-      {activeSection !== "expenses" && !(activeSection === "more" && moreTab === "photos") && (
-        <ExpenseFab onClick={() => setActiveSection("expenses")} />
-      )}
+      {activeSection !== "expenses" &&
+        !(activeSection === "more" && moreTab === "photos") && (
+          <ExpenseFab onClick={() => setActiveSection("expenses")} />
+        )}
       <MobileGameNav active={activeSection} onChange={setActiveSection} />
 
       <Sheet

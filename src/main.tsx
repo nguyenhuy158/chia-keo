@@ -1,8 +1,8 @@
+import { registerSW } from "virtual:pwa-register";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { RouterProvider } from "@tanstack/react-router";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import { registerSW } from "virtual:pwa-register";
 import { Toaster } from "sonner";
 import { createHttpGameApi } from "./adapters/browser/http-game-api";
 import { vietQrProvider } from "./adapters/browser/vietqr";

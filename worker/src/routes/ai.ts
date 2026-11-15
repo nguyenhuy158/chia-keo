@@ -6,7 +6,7 @@ import {
   suggestExpenseFromText,
 } from "../core/application/ai-suggestions";
 import { invalidInput, readJson, respond } from "../lib/http";
-import { protectPaths, type AuthedEnv } from "../lib/require-user";
+import { type AuthedEnv, protectPaths } from "../lib/require-user";
 
 const AI_TEXT_MAX_LENGTH = 500;
 // Base64 cua anh ~6MB; du cho anh hoa don chup dien thoai da resize.
@@ -34,7 +34,9 @@ aiRouter.post("/ai/expense", async (c) => {
   if (!input) return invalidInput(c);
 
   const deps = { repo: c.get("repo"), ai: createGeminiAiProvider(c.env) };
-  return respond(c, () => suggestExpenseFromText(deps, c.get("userId"), input.gameId, input.text));
+  return respond(c, () =>
+    suggestExpenseFromText(deps, c.get("userId"), input.gameId, input.text),
+  );
 });
 
 aiRouter.post("/ai/receipt", async (c) => {

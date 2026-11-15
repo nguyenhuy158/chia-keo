@@ -1,15 +1,24 @@
 import { describe, expect, it } from "vitest";
-import { defaultTitleForKind, gameInputSchema, gameUpdateSchema, transferInputSchema } from "./schemas";
+import {
+  defaultTitleForKind,
+  gameInputSchema,
+  gameUpdateSchema,
+  transferInputSchema,
+} from "./schemas";
 
 describe("gameUpdateSchema", () => {
   it("khong tu bồi thêm field nao ngoai field duoc gui", () => {
     // Bug that: khi schema sua duoc dung tu `gameInputSchema.partial()`, mot
     // PATCH chi doi ten hoac chi doi dau moi van keo theo settlementMode mac
     // dinh va am tham dua che do chuyen tien ve "host".
-    expect(gameUpdateSchema.parse({ settlementHostId: "participant_1" })).toEqual({
+    expect(
+      gameUpdateSchema.parse({ settlementHostId: "participant_1" }),
+    ).toEqual({
       settlementHostId: "participant_1",
     });
-    expect(gameUpdateSchema.parse({ name: "Ăn chơi" })).toEqual({ name: "Ăn chơi" });
+    expect(gameUpdateSchema.parse({ name: "Ăn chơi" })).toEqual({
+      name: "Ăn chơi",
+    });
     expect(gameUpdateSchema.parse({})).toEqual({});
   });
 
@@ -17,7 +26,9 @@ describe("gameUpdateSchema", () => {
     expect(gameUpdateSchema.parse({ settlementMode: "pick" })).toEqual({
       settlementMode: "pick",
     });
-    expect(gameUpdateSchema.safeParse({ settlementMode: "khong-co" }).success).toBe(false);
+    expect(
+      gameUpdateSchema.safeParse({ settlementMode: "khong-co" }).success,
+    ).toBe(false);
     expect(gameUpdateSchema.safeParse({ name: "  " }).success).toBe(false);
   });
 });
@@ -42,11 +53,16 @@ describe("defaultTitleForKind", () => {
 
 describe("transferInputSchema", () => {
   it("chặn chuyển tiền cho chính người trả", () => {
-    const transfer = { fromParticipantId: "p1", toParticipantId: "p1", amount: 10_000 };
+    const transfer = {
+      fromParticipantId: "p1",
+      toParticipantId: "p1",
+      amount: 10_000,
+    };
 
     expect(transferInputSchema.safeParse(transfer).success).toBe(false);
-    expect(transferInputSchema.safeParse({ ...transfer, toParticipantId: "p2" }).success).toBe(
-      true,
-    );
+    expect(
+      transferInputSchema.safeParse({ ...transfer, toParticipantId: "p2" })
+        .success,
+    ).toBe(true);
   });
 });

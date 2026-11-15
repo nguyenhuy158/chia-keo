@@ -13,7 +13,9 @@ import {
 const listeners = new Set<(id: string) => void>();
 
 export function useSummaryImageBackground(): [string, (id: string) => void] {
-  const [backgroundId, setBackgroundId] = useState(getStoredSummaryImageBackgroundId);
+  const [backgroundId, setBackgroundId] = useState(
+    getStoredSummaryImageBackgroundId,
+  );
 
   useEffect(() => {
     listeners.add(setBackgroundId);

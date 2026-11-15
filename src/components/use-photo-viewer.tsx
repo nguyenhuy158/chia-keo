@@ -1,10 +1,14 @@
-import { useState, type ReactNode } from "react";
+import { type ReactNode, useState } from "react";
 import { toast } from "sonner";
 import type { ApiPhoto } from "../../shared/api-types";
 import { indexAfterRemove, stepPhotoIndex } from "../../shared/photos";
-import { usePhoto, useRemovePhoto, useUpdatePhoto } from "../adapters/react-query/queries";
-import { PhotoViewer } from "./PhotoViewer";
+import {
+  usePhoto,
+  useRemovePhoto,
+  useUpdatePhoto,
+} from "../adapters/react-query/queries";
 import { useConfirm } from "./ConfirmDialog";
+import { PhotoViewer } from "./PhotoViewer";
 
 type PhotoViewerHost = {
   /** Mo anh tai vi tri `index` trong danh sach da truyen vao. */
@@ -46,7 +50,9 @@ export function usePhotoViewer(
         detail={detail.data}
         index={index}
         total={photos.length}
-        expenseTitle={photo.expenseId ? expenseTitleById?.get(photo.expenseId) : undefined}
+        expenseTitle={
+          photo.expenseId ? expenseTitleById?.get(photo.expenseId) : undefined
+        }
         onPrev={() => setIndex(stepPhotoIndex(index, -1, photos.length))}
         onNext={() => setIndex(stepPhotoIndex(index, 1, photos.length))}
         onClose={() => setIndex(-1)}

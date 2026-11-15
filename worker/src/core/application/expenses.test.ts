@@ -664,31 +664,55 @@ describe("chia lai sau khi xoa nguoi", () => {
 describe("setExpenseExcluded", () => {
   it("loai khoan chi khoi tong va so du nhung van giu, bat lai tinh lai", async () => {
     const fake = threePeople();
-    const added = await addExpense(fake.repo, FAKE_OWNER, FAKE_GAME_ID, expenseInput());
+    const added = await addExpense(
+      fake.repo,
+      FAKE_OWNER,
+      FAKE_GAME_ID,
+      expenseInput(),
+    );
     const expenseId = added.expenses[0].id;
     expect(added.summary.totalExpense).toBe(90_000);
     expect(added.summary.settlements).not.toHaveLength(0);
 
-    const hidden = await setExpenseExcluded(fake.repo, FAKE_OWNER, expenseId, true);
+    const hidden = await setExpenseExcluded(
+      fake.repo,
+      FAKE_OWNER,
+      expenseId,
+      true,
+    );
     expect(hidden.summary.totalExpense).toBe(0);
-    expect(hidden.summary.balances.every((row) => row.balance === 0)).toBe(true);
+    expect(hidden.summary.balances.every((row) => row.balance === 0)).toBe(
+      true,
+    );
     expect(hidden.summary.settlements).toEqual([]);
     expect(hidden.expenses).toHaveLength(1);
     expect(hidden.expenses[0].excluded).toBe(true);
     expect(splitsOf(fake.state, expenseId)).toHaveLength(3);
 
-    const shown = await setExpenseExcluded(fake.repo, FAKE_OWNER, expenseId, false);
+    const shown = await setExpenseExcluded(
+      fake.repo,
+      FAKE_OWNER,
+      expenseId,
+      false,
+    );
     expect(shown.summary).toEqual(added.summary);
     expect(shown.expenses[0].excluded).toBe(false);
   });
 
   it("giu trang thai loai khi sua khoan chi", async () => {
     const fake = threePeople();
-    const added = await addExpense(fake.repo, FAKE_OWNER, FAKE_GAME_ID, expenseInput());
+    const added = await addExpense(
+      fake.repo,
+      FAKE_OWNER,
+      FAKE_GAME_ID,
+      expenseInput(),
+    );
     const expenseId = added.expenses[0].id;
     await setExpenseExcluded(fake.repo, FAKE_OWNER, expenseId, true);
 
-    const edited = await updateExpense(fake.repo, FAKE_OWNER, expenseId, { amount: 120_000 });
+    const edited = await updateExpense(fake.repo, FAKE_OWNER, expenseId, {
+      amount: 120_000,
+    });
 
     expect(edited.expenses[0].excluded).toBe(true);
     expect(edited.summary.totalExpense).toBe(0);
@@ -710,7 +734,12 @@ describe("setExpenseExcluded", () => {
       note: "",
     });
     await expect(
-      setExpenseExcluded(fake.repo, FAKE_OWNER, fake.state.expenses[0].id, true),
+      setExpenseExcluded(
+        fake.repo,
+        FAKE_OWNER,
+        fake.state.expenses[0].id,
+        true,
+      ),
     ).rejects.toBeInstanceOf(InvalidInputError);
   });
 });

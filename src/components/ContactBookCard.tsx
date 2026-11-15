@@ -2,13 +2,13 @@ import { BookUser, Check, Pencil, Plus, Trash2, X } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import type { Contact } from "../../shared/contacts";
+import { getVietQrBankLabel } from "../adapters/browser/vietqr";
 import {
   useContacts,
   useCreateContact,
   useDeleteContact,
   useUpdateContact,
 } from "../adapters/react-query/queries";
-import { getVietQrBankLabel } from "../adapters/browser/vietqr";
 import { SwipeAction } from "../ui/SwipeAction";
 import { Avatar } from "./Avatar";
 import { BankSelect } from "./BankSelect";
@@ -16,7 +16,12 @@ import { useConfirm } from "./ConfirmDialog";
 import { SkeletonListRow } from "./ui";
 import { usePersistentOpen } from "./use-persistent-open";
 
-type Draft = { name: string; bankId: string; accountNo: string; accountName: string };
+type Draft = {
+  name: string;
+  bankId: string;
+  accountNo: string;
+  accountName: string;
+};
 
 const EMPTY: Draft = { name: "", bankId: "", accountNo: "", accountName: "" };
 
@@ -60,14 +65,18 @@ function DraftForm({
       />
       <input
         value={draft.accountNo}
-        onChange={(event) => onChange({ ...draft, accountNo: event.target.value })}
+        onChange={(event) =>
+          onChange({ ...draft, accountNo: event.target.value })
+        }
         className="field"
         placeholder="Số tài khoản"
         aria-label="Số tài khoản"
       />
       <input
         value={draft.accountName}
-        onChange={(event) => onChange({ ...draft, accountName: event.target.value })}
+        onChange={(event) =>
+          onChange({ ...draft, accountName: event.target.value })
+        }
         className="field"
         placeholder="Tên chủ tài khoản (NGUYEN VAN A)"
         aria-label="Tên chủ tài khoản"
@@ -121,7 +130,9 @@ function ContactRow({
                 ra "?" nen dong nao thieu bankId cung hien "? · 0123..." — trong
                 nhu du lieu hong chu khong phai thieu mot truong. */}
             {contact.accountNo
-              ? [getVietQrBankLabel(contact.bankId), contact.accountNo].filter(Boolean).join(" · ")
+              ? [getVietQrBankLabel(contact.bankId), contact.accountNo]
+                  .filter(Boolean)
+                  .join(" · ")
               : "chưa có số tài khoản"}
             {contact.gameCount > 0 && ` · ${contact.gameCount} cuộc`}
           </p>
@@ -172,7 +183,10 @@ export function ContactBookCard() {
   const [editingKey, setEditingKey] = useState<string | null>(null);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
-  const pending = createContact.isPending || updateContact.isPending || deleteContact.isPending;
+  const pending =
+    createContact.isPending ||
+    updateContact.isPending ||
+    deleteContact.isPending;
   const contacts = contactsQuery.data || [];
   const visibleContacts = contacts.slice(0, visibleCount);
   const remainingCount = contacts.length - visibleContacts.length;
@@ -199,7 +213,10 @@ export function ContactBookCard() {
       // Nguoi suy ra tu lich su chua co dong trong danh ba: luu la tao moi.
       // POST tu ghi de theo ten nen khong so tao trung.
       if (contact?.id) {
-        await updateContact.mutateAsync({ contactId: contact.id, input: draft });
+        await updateContact.mutateAsync({
+          contactId: contact.id,
+          input: draft,
+        });
       } else {
         await createContact.mutateAsync(draft);
       }
@@ -213,7 +230,13 @@ export function ContactBookCard() {
 
   async function handleDelete(contact: Contact) {
     if (!contact.id) return;
-    if (!(await confirm({ title: `Xóa ${contact.name} khỏi danh bạ?`, destructive: true }))) return;
+    if (
+      !(await confirm({
+        title: `Xóa ${contact.name} khỏi danh bạ?`,
+        destructive: true,
+      }))
+    )
+      return;
 
     try {
       await deleteContact.mutateAsync(contact.id);
@@ -259,7 +282,6 @@ export function ContactBookCard() {
 
       {open && (
         <div className="mt-2">
-
           {adding && (
             <div className="mb-2 rounded-md border border-border p-2">
               <DraftForm
@@ -301,7 +323,12 @@ export function ContactBookCard() {
                   // Chi nguoi thuoc danh ba (co id) moi xoa duoc, nen chi nguoi
                   // do moi vuot xoa duoc — vuot nguoi chi suy ra tu lich su se
                   // lo mot nut khong lam gi ca.
-                  <SwipeAction key={contact.key} label="Xóa" icon={<Trash2 size={15} />} onAction={handleDelete.bind(null, contact)}>
+                  <SwipeAction
+                    key={contact.key}
+                    label="Xóa"
+                    icon={<Trash2 size={15} />}
+                    onAction={handleDelete.bind(null, contact)}
+                  >
                     <ContactRow
                       contact={contact}
                       pending={pending}

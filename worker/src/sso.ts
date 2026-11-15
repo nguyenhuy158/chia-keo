@@ -41,13 +41,17 @@ async function publicKey() {
 
 function decodeBase64Url(part: string) {
   const padded = part.replace(/-/g, "+").replace(/_/g, "/");
-  return Uint8Array.from(atob(padded.padEnd(Math.ceil(padded.length / 4) * 4, "=")), (char) =>
-    char.charCodeAt(0),
+  return Uint8Array.from(
+    atob(padded.padEnd(Math.ceil(padded.length / 4) * 4, "=")),
+    (char) => char.charCodeAt(0),
   );
 }
 
 export function readSsoCookie(headers: Headers) {
-  return headers.get("Cookie")?.match(new RegExp(`${COOKIE_NAME}=([^;]+)`))?.[1] || null;
+  return (
+    headers.get("Cookie")?.match(new RegExp(`${COOKIE_NAME}=([^;]+)`))?.[1] ||
+    null
+  );
 }
 
 export function readSsoToken(headers: Headers) {
@@ -79,7 +83,9 @@ export async function verifySsoToken(token: string): Promise<SsoClaims | null> {
     );
     if (!valid) return null;
 
-    const claims = JSON.parse(new TextDecoder().decode(decodeBase64Url(payload))) as SsoClaims;
+    const claims = JSON.parse(
+      new TextDecoder().decode(decodeBase64Url(payload)),
+    ) as SsoClaims;
     if (claims.iss !== ISSUER) return null;
     if (!claims.exp || claims.exp <= Date.now() / 1000) return null;
     if (!claims.sub || !claims.email) return null;

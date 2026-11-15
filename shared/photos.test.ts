@@ -7,7 +7,11 @@ import {
   stepPhotoIndex,
   toDataUrl,
 } from "./photos";
-import { PHOTO_CAPTION_MAX_LENGTH, photoInputSchema, photoUpdateSchema } from "./schemas";
+import {
+  PHOTO_CAPTION_MAX_LENGTH,
+  photoInputSchema,
+  photoUpdateSchema,
+} from "./schemas";
 
 function photo(id: string, expenseId: string | null): ApiPhoto {
   return {
@@ -40,7 +44,10 @@ describe("countPhotosByExpenseId", () => {
 describe("filterPhotosByExpenseId", () => {
   it("chi lay anh cua dung khoan chi", () => {
     const photos = [photo("p1", "e1"), photo("p2", null), photo("p3", "e1")];
-    expect(filterPhotosByExpenseId(photos, "e1").map((row) => row.id)).toEqual(["p1", "p3"]);
+    expect(filterPhotosByExpenseId(photos, "e1").map((row) => row.id)).toEqual([
+      "p1",
+      "p3",
+    ]);
   });
 });
 
@@ -86,18 +93,23 @@ describe("photoInputSchema", () => {
   });
 
   it("tu choi mime type la khac anh", () => {
-    expect(photoInputSchema.safeParse({ ...base, mimeType: "application/pdf" }).success).toBe(
-      false,
-    );
+    expect(
+      photoInputSchema.safeParse({ ...base, mimeType: "application/pdf" })
+        .success,
+    ).toBe(false);
   });
 
   it("tu choi caption qua dai", () => {
     const caption = "a".repeat(PHOTO_CAPTION_MAX_LENGTH + 1);
-    expect(photoInputSchema.safeParse({ ...base, caption }).success).toBe(false);
+    expect(photoInputSchema.safeParse({ ...base, caption }).success).toBe(
+      false,
+    );
   });
 
   it("tu choi kich thuoc anh khong hop le", () => {
-    expect(photoInputSchema.safeParse({ ...base, width: 0 }).success).toBe(false);
+    expect(photoInputSchema.safeParse({ ...base, width: 0 }).success).toBe(
+      false,
+    );
   });
 });
 
@@ -107,6 +119,8 @@ describe("photoUpdateSchema", () => {
   });
 
   it("cho phep chi doi caption", () => {
-    expect(photoUpdateSchema.parse({ caption: " Hoa don " }).caption).toBe("Hoa don");
+    expect(photoUpdateSchema.parse({ caption: " Hoa don " }).caption).toBe(
+      "Hoa don",
+    );
   });
 });

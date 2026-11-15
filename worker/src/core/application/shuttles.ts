@@ -1,11 +1,14 @@
-import type { ApiShuttleEntry, ApiShuttleStock } from "../../../../shared/api-types";
+import type {
+  ApiShuttleEntry,
+  ApiShuttleStock,
+} from "../../../../shared/api-types";
 import type { ShuttleEntryInput } from "../../../../shared/schemas";
 import {
-  SHUTTLE_ENTRY_LIST_LIMIT,
   computeShuttleStock,
+  SHUTTLE_ENTRY_LIST_LIMIT,
+  type ShuttleEntryKind,
   shuttleDelta,
   shuttleStockError,
-  type ShuttleEntryKind,
 } from "../../../../shared/shuttles";
 import { createId, nowIso } from "../../lib/ids";
 import type { GameRepository, ShuttleEntryRow } from "../ports/game-repository";
@@ -36,7 +39,10 @@ function toView(rows: ShuttleEntryRow[]): ApiShuttleStock {
     });
   }
 
-  return { stock: running, entries: entries.reverse().slice(0, SHUTTLE_ENTRY_LIST_LIMIT) };
+  return {
+    stock: running,
+    entries: entries.reverse().slice(0, SHUTTLE_ENTRY_LIST_LIMIT),
+  };
 }
 
 export async function getShuttleStock(

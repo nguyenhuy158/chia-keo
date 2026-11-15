@@ -1,5 +1,5 @@
-import { LayoutGrid, Plus, QrCode, Users, Wallet } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { LayoutGrid, Plus, QrCode, Users, Wallet } from "lucide-react";
 
 export type GameSection = "people" | "expenses" | "more" | "summary";
 
@@ -36,7 +36,9 @@ export function MobileGameNav({ active, onChange }: MobileGameNavProps) {
               }`}
             >
               <Icon size={20} />
-              <span className="whitespace-nowrap text-[11px] font-medium">{section.label}</span>
+              <span className="whitespace-nowrap text-[11px] font-medium">
+                {section.label}
+              </span>
             </button>
           );
         })}

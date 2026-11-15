@@ -56,9 +56,14 @@ function drawToCanvas(image: DrawableImage, size: Size) {
 }
 
 /** Base64 nho nhat trong cac muc chat luong ma van duoi `maxLength`. */
-function encodeWithinLimit(canvas: HTMLCanvasElement, qualities: number[], maxLength: number) {
+function encodeWithinLimit(
+  canvas: HTMLCanvasElement,
+  qualities: number[],
+  maxLength: number,
+) {
   for (const quality of qualities) {
-    const base64 = canvas.toDataURL(OUTPUT_MIME_TYPE, quality).split(",")[1] || "";
+    const base64 =
+      canvas.toDataURL(OUTPUT_MIME_TYPE, quality).split(",")[1] || "";
     if (base64.length > 0 && base64.length <= maxLength) return base64;
   }
   return null;
@@ -79,7 +84,12 @@ function loadImageElement(file: File): Promise<DrawableImage> {
     const image = new Image();
     image.onload = () => {
       URL.revokeObjectURL(url);
-      resolve(Object.assign(image, { width: image.naturalWidth, height: image.naturalHeight }));
+      resolve(
+        Object.assign(image, {
+          width: image.naturalWidth,
+          height: image.naturalHeight,
+        }),
+      );
     };
     image.onerror = () => {
       URL.revokeObjectURL(url);
@@ -95,7 +105,10 @@ function loadImageElement(file: File): Promise<DrawableImage> {
  */
 export async function preparePhoto(file: File): Promise<PreparedPhoto> {
   const image = await loadImage(file);
-  const fullSize = scaleToFit({ width: image.width, height: image.height }, PHOTO_MAX_EDGE);
+  const fullSize = scaleToFit(
+    { width: image.width, height: image.height },
+    PHOTO_MAX_EDGE,
+  );
   const thumbSize = scaleToFit(fullSize, PHOTO_THUMB_MAX_EDGE);
 
   const data = encodeWithinLimit(

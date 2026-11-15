@@ -8,7 +8,7 @@ import {
   updatePhoto,
 } from "../core/application/photos";
 import { invalidInput, readJson, respond } from "../lib/http";
-import { protectPaths, type AuthedEnv } from "../lib/require-user";
+import { type AuthedEnv, protectPaths } from "../lib/require-user";
 
 // Driving adapter: chi parse HTTP, goi use case va map ket qua/loi ve JSON.
 export const photosRouter = new Hono<AuthedEnv>();
@@ -16,7 +16,9 @@ export const photosRouter = new Hono<AuthedEnv>();
 protectPaths(photosRouter, "/games/:gameId/photos", "/photos/*");
 
 photosRouter.get("/games/:gameId/photos", (c) =>
-  respond(c, () => listGamePhotos(c.get("repo"), c.get("userId"), c.req.param("gameId"))),
+  respond(c, () =>
+    listGamePhotos(c.get("repo"), c.get("userId"), c.req.param("gameId")),
+  ),
 );
 
 photosRouter.post("/games/:gameId/photos", async (c) => {
@@ -25,13 +27,21 @@ photosRouter.post("/games/:gameId/photos", async (c) => {
 
   return respond(
     c,
-    () => addGamePhoto(c.get("repo"), c.get("userId"), c.req.param("gameId"), input),
+    () =>
+      addGamePhoto(
+        c.get("repo"),
+        c.get("userId"),
+        c.req.param("gameId"),
+        input,
+      ),
     201,
   );
 });
 
 photosRouter.get("/photos/:photoId", (c) =>
-  respond(c, () => getPhotoForOwner(c.get("repo"), c.get("userId"), c.req.param("photoId"))),
+  respond(c, () =>
+    getPhotoForOwner(c.get("repo"), c.get("userId"), c.req.param("photoId")),
+  ),
 );
 
 photosRouter.patch("/photos/:photoId", async (c) => {
@@ -44,5 +54,7 @@ photosRouter.patch("/photos/:photoId", async (c) => {
 });
 
 photosRouter.delete("/photos/:photoId", (c) =>
-  respond(c, () => removePhoto(c.get("repo"), c.get("userId"), c.req.param("photoId"))),
+  respond(c, () =>
+    removePhoto(c.get("repo"), c.get("userId"), c.req.param("photoId")),
+  ),
 );

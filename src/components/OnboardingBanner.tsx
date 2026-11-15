@@ -1,4 +1,4 @@
-import { Check, Users, Wallet, QrCode } from "lucide-react";
+import { Check, QrCode, Users, Wallet } from "lucide-react";
 
 type Step = { label: string; done: boolean };
 
@@ -12,7 +12,10 @@ type OnboardingBannerProps = {
  * co it nhat 1 nguoi + 1 khoan chi — luc do cac panel da co du lieu that de
  * tu no giai thich, khong can huong dan nua.
  */
-export function OnboardingBanner({ participantCount, expenseCount }: OnboardingBannerProps) {
+export function OnboardingBanner({
+  participantCount,
+  expenseCount,
+}: OnboardingBannerProps) {
   const hasParticipant = participantCount > 0;
   const hasExpense = expenseCount > 0;
 

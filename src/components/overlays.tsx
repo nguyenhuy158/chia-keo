@@ -1,5 +1,5 @@
 import { Download, X } from "lucide-react";
-import { useEffect, useRef, type ReactNode } from "react";
+import { type ReactNode, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 
 function useBodyScrollLock(open: boolean) {
@@ -56,7 +56,13 @@ type ImageLightboxProps = {
  * cao hon man hinh nen o day cuon doc duoc, khong co chuyen thu nho de vua khung
  * roi khong doc noi so tien.
  */
-export function ImageLightbox({ open, src, alt, onClose, onDownload }: ImageLightboxProps) {
+export function ImageLightbox({
+  open,
+  src,
+  alt,
+  onClose,
+  onDownload,
+}: ImageLightboxProps) {
   useBodyScrollLock(open);
   useEscToClose(open, onClose);
   useRestoreFocus(open);
@@ -95,7 +101,11 @@ export function ImageLightbox({ open, src, alt, onClose, onDownload }: ImageLigh
       </div>
 
       <div className="relative h-full overflow-auto overscroll-contain p-3 pt-14">
-        <img className="mx-auto block w-full max-w-2xl rounded-md" src={src} alt={alt} />
+        <img
+          className="mx-auto block w-full max-w-2xl rounded-md"
+          src={src}
+          alt={alt}
+        />
       </div>
     </div>,
     document.body,

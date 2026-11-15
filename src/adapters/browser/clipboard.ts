@@ -46,7 +46,9 @@ export async function copyImage(blob: Promise<Blob>): Promise<boolean> {
   }
 
   try {
-    await navigator.clipboard.write([new ClipboardItem({ [IMAGE_MIME]: blob })]);
+    await navigator.clipboard.write([
+      new ClipboardItem({ [IMAGE_MIME]: blob }),
+    ]);
     return true;
   } catch {
     return false;

@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
+import { TRASH_RETENTION_DAYS } from "../../../../shared/schemas";
 import type { GameRepository, GameRow } from "../ports/game-repository";
 import { NotFoundError } from "./errors";
 import { getOwnedGame } from "./game-detail";
 import { deleteGame, listDeletedGames, purgeGame, restoreGame } from "./games";
 import { getSharedGame } from "./share-links";
-import { TRASH_RETENTION_DAYS } from "../../../../shared/schemas";
 
 const OWNER = "user_1";
 
@@ -36,7 +36,8 @@ function stubRepo(rows: GameRow[]) {
 
   const repo = {
     games: {
-      getById: async (gameId: string) => rows.find((row) => row.id === gameId) || null,
+      getById: async (gameId: string) =>
+        rows.find((row) => row.id === gameId) || null,
       listDeletedByOwner: async (userId: string) =>
         rows.filter((row) => row.ownerUserId === userId && row.deletedAt),
       countParticipants: async () => new Map<string, number>(),
@@ -54,7 +55,10 @@ function stubRepo(rows: GameRow[]) {
     paymentProfiles: { listByParticipantIds: async () => [] },
     photos: { countByGame: async () => 0 },
     shareLinks: { getLatestByGame: async () => null },
-    gameCollaborators: { listByGame: async () => [], isCollaborator: async () => false },
+    gameCollaborators: {
+      listByGame: async () => [],
+      isCollaborator: async () => false,
+    },
   } as unknown as GameRepository;
 
   return { repo, softDeleted, hardDeleted };
@@ -76,7 +80,9 @@ describe("cho vao thung rac", () => {
   it("khong xoa duoc cuoc chia cua nguoi khac", async () => {
     const stub = stubRepo([gameRow({ ownerUserId: "user_khac" })]);
 
-    await expect(deleteGame(stub.repo, OWNER, "game_1")).rejects.toThrow(NotFoundError);
+    await expect(deleteGame(stub.repo, OWNER, "game_1")).rejects.toThrow(
+      NotFoundError,
+    );
     expect(stub.softDeleted).toEqual([]);
   });
 });
@@ -116,11 +122,15 @@ describe("link share cua cuoc trong thung rac", () => {
 
   it("tat theo khi cuoc chia bi xoa", async () => {
     // Khong the vua "da xoa" voi chu vua con xem duoc voi ca nhom.
-    await expect(getSharedGame(shareRepo(daysAgo(1)), "tok")).rejects.toThrow(NotFoundError);
+    await expect(getSharedGame(shareRepo(daysAgo(1)), "tok")).rejects.toThrow(
+      NotFoundError,
+    );
   });
 
   it("van xem duoc khi cuoc chia con dung", async () => {
-    await expect(getSharedGame(shareRepo(null), "tok")).resolves.toMatchObject({ id: "game_1" });
+    await expect(getSharedGame(shareRepo(null), "tok")).resolves.toMatchObject({
+      id: "game_1",
+    });
   });
 });
 
@@ -137,7 +147,9 @@ describe("phuc hoi va xoa han", () => {
     // Chan mot request lam mat cuoc chia dang dung.
     const stub = stubRepo([gameRow()]);
 
-    await expect(purgeGame(stub.repo, OWNER, "game_1")).rejects.toThrow(NotFoundError);
+    await expect(purgeGame(stub.repo, OWNER, "game_1")).rejects.toThrow(
+      NotFoundError,
+    );
     expect(stub.hardDeleted).toEqual([]);
   });
 
@@ -150,9 +162,13 @@ describe("phuc hoi va xoa han", () => {
   });
 
   it("khong xoa han duoc cuoc cua nguoi khac", async () => {
-    const stub = stubRepo([gameRow({ ownerUserId: "user_khac", deletedAt: daysAgo(2) })]);
+    const stub = stubRepo([
+      gameRow({ ownerUserId: "user_khac", deletedAt: daysAgo(2) }),
+    ]);
 
-    await expect(purgeGame(stub.repo, OWNER, "game_1")).rejects.toThrow(NotFoundError);
+    await expect(purgeGame(stub.repo, OWNER, "game_1")).rejects.toThrow(
+      NotFoundError,
+    );
     expect(stub.hardDeleted).toEqual([]);
   });
 });
@@ -171,14 +187,18 @@ describe("listDeletedGames", () => {
   });
 
   it("cuoc vua qua nguong mot chut van con trong thung rac", async () => {
-    const stub = stubRepo([gameRow({ deletedAt: daysAgo(TRASH_RETENTION_DAYS - 1) })]);
+    const stub = stubRepo([
+      gameRow({ deletedAt: daysAgo(TRASH_RETENTION_DAYS - 1) }),
+    ]);
 
     expect(await listDeletedGames(stub.repo, OWNER)).toHaveLength(1);
     expect(stub.hardDeleted).toEqual([]);
   });
 
   it("khong tra ve cuoc trong thung rac cua nguoi khac", async () => {
-    const stub = stubRepo([gameRow({ ownerUserId: "user_khac", deletedAt: daysAgo(1) })]);
+    const stub = stubRepo([
+      gameRow({ ownerUserId: "user_khac", deletedAt: daysAgo(1) }),
+    ]);
 
     expect(await listDeletedGames(stub.repo, OWNER)).toEqual([]);
   });

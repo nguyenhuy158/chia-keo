@@ -114,7 +114,11 @@ export function ShuttlesPage() {
 
   async function handleSetExact() {
     const parsed = Number(countDraft);
-    if (!Number.isInteger(parsed) || parsed < 0 || parsed > MAX_SHUTTLE_QUANTITY) {
+    if (
+      !Number.isInteger(parsed) ||
+      parsed < 0 ||
+      parsed > MAX_SHUTTLE_QUANTITY
+    ) {
       toast.error(`Nhập số cầu từ 0 đến ${MAX_SHUTTLE_QUANTITY}.`);
       return;
     }
@@ -138,7 +142,12 @@ export function ShuttlesPage() {
   }
 
   if (stockQuery.isError) {
-    return <EmptyState title="Không tải được kho cầu" description="Thử tải lại trang." />;
+    return (
+      <EmptyState
+        title="Không tải được kho cầu"
+        description="Thử tải lại trang."
+      />
+    );
   }
 
   return (
@@ -152,7 +161,9 @@ export function ShuttlesPage() {
           <ArrowLeft size={14} />
           Trang chính
         </Link>
-        <h1 className="text-sm font-semibold text-stone-950 dark:text-stone-50">Kho cầu</h1>
+        <h1 className="text-sm font-semibold text-stone-950 dark:text-stone-50">
+          Kho cầu
+        </h1>
       </div>
 
       <section className="rounded-lg border border-border bg-surface p-4 shadow-sm">
@@ -160,9 +171,7 @@ export function ShuttlesPage() {
           <LoadingState label="Đang đếm cầu..." />
         ) : (
           <>
-            <p className="text-center text-sm text-fg-muted">
-              Trong ống còn
-            </p>
+            <p className="text-center text-sm text-fg-muted">Trong ống còn</p>
             <p
               aria-live="polite"
               className="text-center text-6xl font-extrabold tabular-nums text-stone-950 dark:text-stone-50"
@@ -223,7 +232,9 @@ export function ShuttlesPage() {
             >
               <input
                 value={countDraft}
-                onChange={(event) => setCountDraft(event.target.value.replace(/\D/g, ""))}
+                onChange={(event) =>
+                  setCountDraft(event.target.value.replace(/\D/g, ""))
+                }
                 inputMode="numeric"
                 placeholder="Đếm lại · vd 8"
                 aria-label="Chốt lại số cầu đang có"
@@ -252,7 +263,9 @@ export function ShuttlesPage() {
       </section>
 
       <section className="rounded-lg border border-border bg-surface p-4 shadow-sm">
-        <h2 className="text-sm font-semibold text-stone-950 dark:text-stone-50">Lịch sử</h2>
+        <h2 className="text-sm font-semibold text-stone-950 dark:text-stone-50">
+          Lịch sử
+        </h2>
         {stockQuery.isPending ? (
           <div className="divide-y divide-stone-100 dark:divide-stone-800">
             <SkeletonListRow />

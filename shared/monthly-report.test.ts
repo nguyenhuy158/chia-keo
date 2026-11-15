@@ -98,10 +98,7 @@ describe("buildMonthlyCsv", () => {
 
   it("ignores excluded expenses", () => {
     const lines = buildMonthlyCsv(
-      [
-        { ...expenses[0] },
-        { ...expenses[1], excluded: true },
-      ],
+      [{ ...expenses[0] }, { ...expenses[1], excluded: true }],
       splits,
       participants,
     )

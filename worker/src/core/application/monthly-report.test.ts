@@ -72,7 +72,9 @@ describe("getClosedMonthCsv", () => {
 
   it("leaves out excluded expenses", async () => {
     const { repo } = createFakeRepo({
-      games: [gameRow({ id: "aug", closedAt: AUGUST_CLOSED, closeMode: "auto" })],
+      games: [
+        gameRow({ id: "aug", closedAt: AUGUST_CLOSED, closeMode: "auto" }),
+      ],
       expenses: [
         expenseRow("e1", "aug", 90_000),
         { ...expenseRow("e2", "aug", 500_000), excluded: true },

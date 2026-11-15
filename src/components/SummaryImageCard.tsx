@@ -6,11 +6,21 @@ import {
   type SummaryTextInput,
   type SummaryVariant,
 } from "../../shared/summary-text";
-import { copyImage, copyText, downloadBlob } from "../adapters/browser/clipboard";
-import { usePreferences, useUpdatePreferences } from "../adapters/react-query/queries";
-import { buildSummaryImageFileName, renderSummaryImage } from "../adapters/browser/summary-image";
-import { ImageLightbox } from "./overlays";
+import {
+  copyImage,
+  copyText,
+  downloadBlob,
+} from "../adapters/browser/clipboard";
+import {
+  buildSummaryImageFileName,
+  renderSummaryImage,
+} from "../adapters/browser/summary-image";
+import {
+  usePreferences,
+  useUpdatePreferences,
+} from "../adapters/react-query/queries";
 import { CollapsibleHeading } from "./CollapsibleHeading";
+import { ImageLightbox } from "./overlays";
 import { SummaryBackgroundPicker } from "./SummaryBackgroundPicker";
 import { Switch } from "./ui";
 import { usePersistentOpen } from "./use-persistent-open";
@@ -18,7 +28,11 @@ import { useSummaryImageBackground } from "./use-summary-image-background";
 
 const VARIANTS: { value: SummaryVariant; label: string; hint: string }[] = [
   { value: "compact", label: "Gọn", hint: "Bản ngắn, dán nhanh" },
-  { value: "detailed", label: "Chi tiết", hint: "Ghi rõ ai đã ứng, ai nhận lại" },
+  {
+    value: "detailed",
+    label: "Chi tiết",
+    hint: "Ghi rõ ai đã ứng, ai nhận lại",
+  },
 ];
 
 type ViewMode = "image" | "text";
@@ -78,7 +92,8 @@ export function SummaryImageCard({
   const [variant, setVariant] = useState<SummaryVariant>("compact");
   // Nho lua chon o server: bat/tat QR la thoi quen cua tung nhom, va giu
   // nguyen khi doi may hay xoa cache trinh duyet.
-  const { summaryShowQr: showQr, summaryShowAvatar: showAvatar } = usePreferences();
+  const { summaryShowQr: showQr, summaryShowAvatar: showAvatar } =
+    usePreferences();
   const updatePreferences = useUpdatePreferences();
   const [viewMode, setViewMode] = useState<ViewMode>("image");
   const [zoomed, setZoomed] = useState(false);
@@ -109,7 +124,13 @@ export function SummaryImageCard({
     setPending(true);
     setFailed(false);
 
-    renderSummaryImage(inputRef.current, variant, backgroundId, showQr, showAvatar).then(
+    renderSummaryImage(
+      inputRef.current,
+      variant,
+      backgroundId,
+      showQr,
+      showAvatar,
+    ).then(
       (rendered) => {
         if (cancelled) return;
 
@@ -184,7 +205,9 @@ export function SummaryImageCard({
       <CollapsibleHeading
         title="Xem trước"
         open={expanded}
-        onToggle={collapsible ? () => setOpen((current) => !current) : undefined}
+        onToggle={
+          collapsible ? () => setOpen((current) => !current) : undefined
+        }
       />
       {expanded && (
         <>
@@ -195,21 +218,36 @@ export function SummaryImageCard({
           </p>
 
           <div className="mt-3 space-y-2">
-            <Segmented options={VIEW_MODES} value={viewMode} onChange={setViewMode} />
-            <Segmented options={VARIANTS} value={variant} onChange={setVariant} />
+            <Segmented
+              options={VIEW_MODES}
+              value={viewMode}
+              onChange={setViewMode}
+            />
+            <Segmented
+              options={VARIANTS}
+              value={variant}
+              onChange={setVariant}
+            />
           </div>
 
           {viewMode === "image" && (
             <div className="mt-3 space-y-2">
-              <SummaryBackgroundPicker value={backgroundId} onChange={chooseBackground} />
+              <SummaryBackgroundPicker
+                value={backgroundId}
+                onChange={chooseBackground}
+              />
               <Switch
                 checked={showQr}
-                onChange={(next) => updatePreferences.mutate({ summaryShowQr: next })}
+                onChange={(next) =>
+                  updatePreferences.mutate({ summaryShowQr: next })
+                }
                 label="Hiện QR chuyển khoản trên ảnh"
               />
               <Switch
                 checked={showAvatar}
-                onChange={(next) => updatePreferences.mutate({ summaryShowAvatar: next })}
+                onChange={(next) =>
+                  updatePreferences.mutate({ summaryShowAvatar: next })
+                }
                 label="Hiện avatar trước tên trên ảnh"
               />
             </div>
@@ -219,7 +257,8 @@ export function SummaryImageCard({
             <div className="mt-3 overflow-hidden rounded-md border border-stone-200 dark:border-stone-700">
               {failed ? (
                 <p className="p-4 text-sm text-fg-muted">
-                  Không vẽ được ảnh trên trình duyệt này. Chuyển sang bản Chữ vẫn dùng được.
+                  Không vẽ được ảnh trên trình duyệt này. Chuyển sang bản Chữ
+                  vẫn dùng được.
                 </p>
               ) : previewUrl ? (
                 <button
@@ -251,17 +290,31 @@ export function SummaryImageCard({
           <div className="mt-3 flex gap-2">
             {viewMode === "image" ? (
               <>
-                <button type="button" onClick={copyPreview} disabled={!blob} className={ACTION_CLASS}>
+                <button
+                  type="button"
+                  onClick={copyPreview}
+                  disabled={!blob}
+                  className={ACTION_CLASS}
+                >
                   <Copy size={16} />
                   Copy ảnh
                 </button>
-                <button type="button" onClick={savePreview} disabled={!blob} className={ACTION_CLASS}>
+                <button
+                  type="button"
+                  onClick={savePreview}
+                  disabled={!blob}
+                  className={ACTION_CLASS}
+                >
                   <Download size={16} />
                   Lưu về máy
                 </button>
               </>
             ) : (
-              <button type="button" onClick={copySummaryText} className={ACTION_CLASS}>
+              <button
+                type="button"
+                onClick={copySummaryText}
+                className={ACTION_CLASS}
+              >
                 <Copy size={16} />
                 Copy chữ
               </button>

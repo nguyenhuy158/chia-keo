@@ -42,18 +42,27 @@ export function isClosed(state: ClosingState): boolean {
  * lech so du. Cuoc chua co khoan chi nao khong tinh la da tra xong — no chi
  * la cuoc vua tao, dong nham thi nguoi dung mat luon cuoc do khoi danh sach.
  */
-export function isFullySettled(balances: BalanceRow[], expenseCount: number): boolean {
+export function isFullySettled(
+  balances: BalanceRow[],
+  expenseCount: number,
+): boolean {
   if (expenseCount === 0) return false;
   return balances.every((row) => row.balance === 0);
 }
 
 /** Cuoc dang choi va vua tra xong het: den luc tu dong dong. */
-export function shouldAutoClose(state: ClosingState, settled: boolean): boolean {
+export function shouldAutoClose(
+  state: ClosingState,
+  settled: boolean,
+): boolean {
   return settled && !isClosed(state);
 }
 
 /** Cuoc tu dong dong nhung so du lech tro lai: mo ra cho nguoi dung chia tiep. */
-export function shouldAutoReopen(state: ClosingState, settled: boolean): boolean {
+export function shouldAutoReopen(
+  state: ClosingState,
+  settled: boolean,
+): boolean {
   return !settled && isClosed(state) && state.closeMode === "auto";
 }
 

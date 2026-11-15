@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import type { GameRepository, UserPreferenceRow } from "../ports/game-repository";
+import type {
+  GameRepository,
+  UserPreferenceRow,
+} from "../ports/game-repository";
 import { getUserPreferences, updateUserPreferences } from "./user-preferences";
 
 function createRepo(rows: UserPreferenceRow[]) {
@@ -7,7 +10,8 @@ function createRepo(rows: UserPreferenceRow[]) {
 
   const repo = {
     userPreferences: {
-      listByUser: async () => [...stored].map(([key, value]) => ({ key, value })),
+      listByUser: async () =>
+        [...stored].map(([key, value]) => ({ key, value })),
       upsert: async (_userId: string, key: string, value: string) => {
         stored.set(key, value);
       },
@@ -20,33 +24,47 @@ function createRepo(rows: UserPreferenceRow[]) {
 describe("user preferences", () => {
   it("tra ve mac dinh khi user chua luu gi", async () => {
     const { repo } = createRepo([]);
-    expect(await getUserPreferences(repo, "u1")).toEqual({ preferences: { summaryShowQr: true, summaryShowAvatar: true } });
+    expect(await getUserPreferences(repo, "u1")).toEqual({
+      preferences: { summaryShowQr: true, summaryShowAvatar: true },
+    });
   });
 
   it("doc lai gia tri da luu", async () => {
     const { repo } = createRepo([{ key: "summaryShowQr", value: "false" }]);
-    expect(await getUserPreferences(repo, "u1")).toEqual({ preferences: { summaryShowQr: false, summaryShowAvatar: true } });
+    expect(await getUserPreferences(repo, "u1")).toEqual({
+      preferences: { summaryShowQr: false, summaryShowAvatar: true },
+    });
   });
 
   it("bo qua dong hong hoac key la, khong lam vo phan con lai", async () => {
     const { repo } = createRepo([
       { key: "summaryShowQr", value: "{khong-phai-json" },
-      { key: "tuyChonDaBo", value: "\"x\"" },
+      { key: "tuyChonDaBo", value: '"x"' },
     ]);
-    expect(await getUserPreferences(repo, "u1")).toEqual({ preferences: { summaryShowQr: true, summaryShowAvatar: true } });
+    expect(await getUserPreferences(repo, "u1")).toEqual({
+      preferences: { summaryShowQr: true, summaryShowAvatar: true },
+    });
   });
 
   it("ghi roi tra ve toan bo tuy chon", async () => {
     const { repo, stored } = createRepo([]);
-    const result = await updateUserPreferences(repo, "u1", { summaryShowQr: false });
+    const result = await updateUserPreferences(repo, "u1", {
+      summaryShowQr: false,
+    });
 
-    expect(result).toEqual({ preferences: { summaryShowQr: false, summaryShowAvatar: true } });
+    expect(result).toEqual({
+      preferences: { summaryShowQr: false, summaryShowAvatar: true },
+    });
     expect(stored.get("summaryShowQr")).toBe("false");
   });
 
   it("ignores invalid stored types and undefined patch values", async () => {
-    const { repo, stored } = createRepo([{ key: "summaryShowQr", value: '"invalid"' }]);
-    expect((await getUserPreferences(repo, "u1")).preferences.summaryShowQr).toBe(true);
+    const { repo, stored } = createRepo([
+      { key: "summaryShowQr", value: '"invalid"' },
+    ]);
+    expect(
+      (await getUserPreferences(repo, "u1")).preferences.summaryShowQr,
+    ).toBe(true);
     await updateUserPreferences(repo, "u1", { summaryShowQr: undefined });
     expect(stored.get("summaryShowQr")).toBe('"invalid"');
   });

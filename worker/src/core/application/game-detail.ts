@@ -7,15 +7,18 @@ import type {
   ApiShareView,
   ApiSummary,
 } from "../../../../shared/api-types";
+import { normalizeCategory } from "../../../../shared/expense-categories";
+import { toCloseMode } from "../../../../shared/game-closing";
 import {
   capitalizeName,
   DEFAULT_SETTLEMENT_MODE,
   settlementModeSchema,
 } from "../../../../shared/schemas";
-import { normalizeCategory } from "../../../../shared/expense-categories";
 import type { ExpenseInput, ExpenseKind } from "../../../../shared/split";
-import { toCloseMode } from "../../../../shared/game-closing";
-import { calculateBalances, calculateSettlements } from "../../../../shared/split";
+import {
+  calculateBalances,
+  calculateSettlements,
+} from "../../../../shared/split";
 import type {
   ExpenseRow,
   ExpenseSplitRow,
@@ -52,7 +55,11 @@ export function sumTotalExpense(expenseRows: ExpenseRow[]) {
 
 /** Ep kind tu cot TEXT tu do ve mot gia tri hop le. */
 function toExpenseKind(value: string): ExpenseKind {
-  return value === "income" ? "income" : value === "transfer" ? "transfer" : "expense";
+  return value === "income"
+    ? "income"
+    : value === "transfer"
+      ? "transfer"
+      : "expense";
 }
 
 /**
@@ -87,15 +94,23 @@ export function groupSplitsByExpenseId(splitRows: ExpenseSplitRow[]) {
   return splitsByExpenseId;
 }
 
-async function loadGameData(repo: GameRepository, gameId: string): Promise<GameData> {
+async function loadGameData(
+  repo: GameRepository,
+  gameId: string,
+): Promise<GameData> {
   const participantRows = await repo.participants.listByGame(gameId);
   const participantIds = participantRows.map((row) => row.id);
 
-  const paymentRows = await repo.paymentProfiles.listByParticipantIds(participantIds);
-  const paymentByParticipantId = new Map(paymentRows.map((row) => [row.participantId, row]));
+  const paymentRows =
+    await repo.paymentProfiles.listByParticipantIds(participantIds);
+  const paymentByParticipantId = new Map(
+    paymentRows.map((row) => [row.participantId, row]),
+  );
 
   const expenseRows = await repo.expenses.listByGame(gameId);
-  const splitRows = await repo.splits.listByExpenseIds(expenseRows.map((row) => row.id));
+  const splitRows = await repo.splits.listByExpenseIds(
+    expenseRows.map((row) => row.id),
+  );
 
   const splitsByExpenseId = groupSplitsByExpenseId(splitRows);
 
@@ -123,7 +138,9 @@ async function loadGameData(repo: GameRepository, gameId: string): Promise<GameD
       note: row.note,
       payerParticipantId: row.payerParticipantId,
       splitMode:
-        row.splitMode === "shares" || row.splitMode === "amount" ? row.splitMode : "equal",
+        row.splitMode === "shares" || row.splitMode === "amount"
+          ? row.splitMode
+          : "equal",
       splitParticipantIds: splits.map((split) => split.participantId),
       splits: splits.map((split) => ({
         participantId: split.participantId,
@@ -177,7 +194,12 @@ export async function loadGameDetail(
 
   // Moi thao tac lam doi so du deu di qua day, nen day la cho duy nhat can
   // biet luat tu dong dong — khong phai nho goi o tung use case.
-  const closing = await syncAutoClose(repo, game, data.summary.balances, data.realExpenseCount);
+  const closing = await syncAutoClose(
+    repo,
+    game,
+    data.summary.balances,
+    data.realExpenseCount,
+  );
   const closedAt = closing ? closing.closedAt : game.closedAt;
   const closeMode = closing ? closing.closeMode : game.closeMode;
 
@@ -205,7 +227,10 @@ export async function loadGameDetail(
   };
 }
 
-export async function loadShareView(repo: GameRepository, game: GameRow): Promise<ApiShareView> {
+export async function loadShareView(
+  repo: GameRepository,
+  game: GameRow,
+): Promise<ApiShareView> {
   const { participants, expenses, summary } = await loadGameData(repo, game.id);
 
   return {
@@ -227,7 +252,11 @@ export async function loadShareView(repo: GameRepository, game: GameRow): Promis
  * chan o mot cho la chan het, khong phai nho o tung use case. Rieng xoa/phuc
  * hoi/xoa han dung `getOwnedGame` (chi chu) — collaborator khong duoc dong.
  */
-export async function getAccessibleGame(repo: GameRepository, gameId: string, userId: string) {
+export async function getAccessibleGame(
+  repo: GameRepository,
+  gameId: string,
+  userId: string,
+) {
   const game = await repo.games.getById(gameId);
   if (!game || game.deletedAt) return null;
   if (game.ownerUserId === userId) return game;
@@ -236,7 +265,11 @@ export async function getAccessibleGame(repo: GameRepository, gameId: string, us
 }
 
 /** Policy so huu: chi chu cuoc choi duoc thao tac (xoa/phuc hoi/xoa han). */
-export async function getOwnedGame(repo: GameRepository, gameId: string, userId: string) {
+export async function getOwnedGame(
+  repo: GameRepository,
+  gameId: string,
+  userId: string,
+) {
   const game = await repo.games.getById(gameId);
   if (!game || game.ownerUserId !== userId || game.deletedAt) return null;
   return game;

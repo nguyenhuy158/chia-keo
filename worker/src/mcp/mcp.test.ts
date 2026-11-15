@@ -8,7 +8,7 @@ import {
   JSON_RPC_ERROR,
   MCP_PROTOCOL_VERSION,
 } from "./protocol";
-import { mcpTools, type McpContext } from "./tools";
+import { type McpContext, mcpTools } from "./tools";
 
 function makeContext(overrides: Partial<McpContext> = {}): McpContext {
   return {

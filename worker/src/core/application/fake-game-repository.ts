@@ -99,15 +99,20 @@ function emptyState(): FakeState {
 export function createFakeRepo(initial: Partial<FakeState> = {}) {
   const state: FakeState = { ...emptyState(), ...initial };
 
-  const findGame = (gameId: string) => state.games.find((row) => row.id === gameId) || null;
+  const findGame = (gameId: string) =>
+    state.games.find((row) => row.id === gameId) || null;
 
   const repo: GameRepository = {
     games: {
       listByOwner: async (userId) =>
-        state.games.filter((row) => row.ownerUserId === userId && !row.deletedAt),
+        state.games.filter(
+          (row) => row.ownerUserId === userId && !row.deletedAt,
+        ),
       listSharedWithUser: async () => [],
       listDeletedByOwner: async (userId) =>
-        state.games.filter((row) => row.ownerUserId === userId && row.deletedAt),
+        state.games.filter(
+          (row) => row.ownerUserId === userId && row.deletedAt,
+        ),
       countParticipants: async () => new Map(),
       countExpenses: async () => new Map(),
       insert: async (row) => {
@@ -138,19 +143,27 @@ export function createFakeRepo(initial: Partial<FakeState> = {}) {
           .filter((row) => row.gameId === gameId)
           .sort((left, right) => left.sequence - right.sequence),
       listIdsByGame: async (gameId) =>
-        state.participants.filter((row) => row.gameId === gameId).map((row) => row.id),
+        state.participants
+          .filter((row) => row.gameId === gameId)
+          .map((row) => row.id),
       getWithGame: async (participantId) => {
-        const participant = state.participants.find((row) => row.id === participantId);
+        const participant = state.participants.find(
+          (row) => row.id === participantId,
+        );
         const game = participant ? findGame(participant.gameId) : null;
         return participant && game ? { participant, game } : null;
       },
       insert: async (row, payment) => {
-        const sequence = state.participants.filter((item) => item.gameId === row.gameId).length;
+        const sequence = state.participants.filter(
+          (item) => item.gameId === row.gameId,
+        ).length;
         state.participants.push({ ...row, sequence });
         state.payments.push({ participantId: row.id, ...payment });
       },
       rename: async (participantId, name, updatedAt) => {
-        const participant = state.participants.find((row) => row.id === participantId);
+        const participant = state.participants.find(
+          (row) => row.id === participantId,
+        );
         if (participant) Object.assign(participant, { name, updatedAt });
       },
       reorder: async (gameId, orderedIds) => {
@@ -162,7 +175,9 @@ export function createFakeRepo(initial: Partial<FakeState> = {}) {
         }
       },
       upsertPaymentProfile: async (participantId, fields) => {
-        const existing = state.payments.find((row) => row.participantId === participantId);
+        const existing = state.payments.find(
+          (row) => row.participantId === participantId,
+        );
         if (existing) Object.assign(existing, fields);
         else
           state.payments.push({
@@ -174,31 +189,42 @@ export function createFakeRepo(initial: Partial<FakeState> = {}) {
           });
       },
       delete: async (participantId) => {
-        state.participants = state.participants.filter((row) => row.id !== participantId);
-        state.payments = state.payments.filter((row) => row.participantId !== participantId);
+        state.participants = state.participants.filter(
+          (row) => row.id !== participantId,
+        );
+        state.payments = state.payments.filter(
+          (row) => row.participantId !== participantId,
+        );
         // Cascade nhu FK trong D1: split cua nguoi da xoa bien mat.
-        state.splits = state.splits.filter((row) => row.participantId !== participantId);
+        state.splits = state.splits.filter(
+          (row) => row.participantId !== participantId,
+        );
       },
       listByOwner: async () => [],
       listIdNamesByOwner: async () => [],
     },
     paymentProfiles: {
       listByParticipantIds: async (participantIds) =>
-        state.payments.filter((row) => participantIds.includes(row.participantId)),
+        state.payments.filter((row) =>
+          participantIds.includes(row.participantId),
+        ),
     },
     expenses: {
       listByGame: async (gameId) =>
         state.expenses
           .filter((row) => row.gameId === gameId)
           .sort((left, right) => right.sequence - left.sequence),
-      getById: async (expenseId) => state.expenses.find((row) => row.id === expenseId) || null,
+      getById: async (expenseId) =>
+        state.expenses.find((row) => row.id === expenseId) || null,
       getWithGame: async (expenseId) => {
         const expense = state.expenses.find((row) => row.id === expenseId);
         const game = expense ? findGame(expense.gameId) : null;
         return expense && game ? { expense, game } : null;
       },
       insert: async (row) => {
-        const sequence = state.expenses.filter((item) => item.gameId === row.gameId).length;
+        const sequence = state.expenses.filter(
+          (item) => item.gameId === row.gameId,
+        ).length;
         state.expenses.push({ ...row, sequence });
       },
       update: async (expenseId: string, fields: ExpenseUpdate) => {
@@ -207,7 +233,9 @@ export function createFakeRepo(initial: Partial<FakeState> = {}) {
       },
       delete: async (expenseId) => {
         state.expenses = state.expenses.filter((row) => row.id !== expenseId);
-        state.splits = state.splits.filter((row) => row.expenseId !== expenseId);
+        state.splits = state.splits.filter(
+          (row) => row.expenseId !== expenseId,
+        );
       },
       listIdsSplitWith: async (participantId) => [
         ...new Set(
@@ -221,7 +249,9 @@ export function createFakeRepo(initial: Partial<FakeState> = {}) {
       reorder: async (gameId, orderedIds) => {
         const top = orderedIds.length;
         for (const [index, id] of orderedIds.entries()) {
-          const expense = state.expenses.find((row) => row.id === id && row.gameId === gameId);
+          const expense = state.expenses.find(
+            (row) => row.id === id && row.gameId === gameId,
+          );
           if (expense) expense.sequence = top - index;
         }
       },
@@ -234,11 +264,14 @@ export function createFakeRepo(initial: Partial<FakeState> = {}) {
       listLiveByExpense: async (expenseId) => {
         const liveIds = new Set(state.participants.map((row) => row.id));
         return state.splits.filter(
-          (row) => row.expenseId === expenseId && liveIds.has(row.participantId),
+          (row) =>
+            row.expenseId === expenseId && liveIds.has(row.participantId),
         );
       },
       replace: async (expenseId: string, rows: NewSplitRow[]) => {
-        state.splits = state.splits.filter((row) => row.expenseId !== expenseId);
+        state.splits = state.splits.filter(
+          (row) => row.expenseId !== expenseId,
+        );
         for (const row of rows) {
           state.splits.push({
             expenseId: row.expenseId,
@@ -284,7 +317,9 @@ export function createFakeRepo(initial: Partial<FakeState> = {}) {
         state.shuttleEntries.push(row);
       },
       delete: async (entryId) => {
-        state.shuttleEntries = state.shuttleEntries.filter((row) => row.id !== entryId);
+        state.shuttleEntries = state.shuttleEntries.filter(
+          (row) => row.id !== entryId,
+        );
       },
     },
     contacts: {
@@ -303,19 +338,30 @@ export function createFakeRepo(initial: Partial<FakeState> = {}) {
       },
       async listPendingByGame(gameId, createdAfter) {
         return state.paymentRequests.filter(
-          (row) => row.gameId === gameId && row.status === "pending" && row.createdAt > createdAfter,
+          (row) =>
+            row.gameId === gameId &&
+            row.status === "pending" &&
+            row.createdAt > createdAfter,
         );
       },
       async markChecked(ids, checkedAt) {
-        for (const row of state.paymentRequests) if (ids.includes(row.id)) row.checkedAt = checkedAt;
+        for (const row of state.paymentRequests)
+          if (ids.includes(row.id)) row.checkedAt = checkedAt;
       },
       async claimTransaction(row) {
-        if (state.paymentTransactions.some((item) => item.bankTxnId === row.bankTxnId)) return false;
+        if (
+          state.paymentTransactions.some(
+            (item) => item.bankTxnId === row.bankTxnId,
+          )
+        )
+          return false;
         state.paymentTransactions.push({ ...row });
         return true;
       },
       async addPaidAmount(id, amount) {
-        const row = state.paymentRequests.find((item) => item.id === id) as PaymentRequestRow;
+        const row = state.paymentRequests.find(
+          (item) => item.id === id,
+        ) as PaymentRequestRow;
         row.paidAmount += amount;
         return row.paidAmount;
       },
@@ -347,7 +393,9 @@ export function createFakeRepo(initial: Partial<FakeState> = {}) {
       getLatestByGame: async (gameId) =>
         state.shareLinks.find((row) => row.gameId === gameId) || null,
       replace: async (gameId, row) => {
-        state.shareLinks = state.shareLinks.filter((item) => item.gameId !== gameId);
+        state.shareLinks = state.shareLinks.filter(
+          (item) => item.gameId !== gameId,
+        );
         state.shareLinks.push({
           gameId: row.gameId,
           token: row.token,
@@ -368,17 +416,22 @@ export function createFakeRepo(initial: Partial<FakeState> = {}) {
     },
     sharePreviews: {
       put: async (gameId, data, updatedAt) => {
-        state.sharePreviews = state.sharePreviews.filter((row) => row.gameId !== gameId);
+        state.sharePreviews = state.sharePreviews.filter(
+          (row) => row.gameId !== gameId,
+        );
         state.sharePreviews.push({ gameId, data, updatedAt });
       },
       getUpdatedAt: async (gameId) =>
-        state.sharePreviews.find((row) => row.gameId === gameId)?.updatedAt ?? null,
+        state.sharePreviews.find((row) => row.gameId === gameId)?.updatedAt ??
+        null,
       getData: async (gameId) =>
         state.sharePreviews.find((row) => row.gameId === gameId)?.data ?? null,
     },
     users: {
       findIdByEmail: async (email) =>
-        state.users.find((row) => row.email.toLowerCase() === email.toLowerCase()) || null,
+        state.users.find(
+          (row) => row.email.toLowerCase() === email.toLowerCase(),
+        ) || null,
       listAllExceptOwner: async (ownerUserId) =>
         state.users.filter((row) => row.id !== ownerUserId),
       updateName: async (userId, name) => {
@@ -387,9 +440,12 @@ export function createFakeRepo(initial: Partial<FakeState> = {}) {
       },
     },
     gameCollaborators: {
-      listByGame: async (gameId) => state.collaborators.filter((row) => row.gameId === gameId),
+      listByGame: async (gameId) =>
+        state.collaborators.filter((row) => row.gameId === gameId),
       isCollaborator: async (gameId, userId) =>
-        state.collaborators.some((row) => row.gameId === gameId && row.userId === userId),
+        state.collaborators.some(
+          (row) => row.gameId === gameId && row.userId === userId,
+        ),
       add: async (row) => {
         const duplicated = state.collaborators.some(
           (item) =>
@@ -398,7 +454,9 @@ export function createFakeRepo(initial: Partial<FakeState> = {}) {
         );
         if (duplicated) return false;
 
-        const user = row.userId ? state.users.find((item) => item.id === row.userId) : null;
+        const user = row.userId
+          ? state.users.find((item) => item.id === row.userId)
+          : null;
         state.collaborators.push({
           ...row,
           name: user?.name || "",
@@ -411,13 +469,19 @@ export function createFakeRepo(initial: Partial<FakeState> = {}) {
           if (row.gameId !== gameId) return true;
           if (target.userId) return row.userId !== target.userId;
           if (target.invitedEmail)
-            return row.invitedEmail.toLowerCase() !== target.invitedEmail.toLowerCase();
+            return (
+              row.invitedEmail.toLowerCase() !==
+              target.invitedEmail.toLowerCase()
+            );
           return true;
         });
       },
       resolvePendingByEmail: async (email, userId) => {
         for (const row of state.collaborators) {
-          if (!row.userId && row.invitedEmail.toLowerCase() === email.toLowerCase()) {
+          if (
+            !row.userId &&
+            row.invitedEmail.toLowerCase() === email.toLowerCase()
+          ) {
             row.userId = userId;
           }
         }
@@ -432,6 +496,8 @@ export function createFakeRepo(initial: Partial<FakeState> = {}) {
 export function splitsOf(state: FakeState, expenseId: string) {
   return state.splits
     .filter((row) => row.expenseId === expenseId)
-    .sort((left, right) => left.participantId.localeCompare(right.participantId))
+    .sort((left, right) =>
+      left.participantId.localeCompare(right.participantId),
+    )
     .map((row) => [row.participantId, row.amount] as const);
 }

@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { buildFunStats, type FunStatsExpenseInput, type FunStatsGameInput } from "./fun-stats";
+import {
+  buildFunStats,
+  type FunStatsExpenseInput,
+  type FunStatsGameInput,
+} from "./fun-stats";
 
 const names = [
   { id: "p1", name: "Huy" },
@@ -24,7 +28,10 @@ const gameById = new Map([
   [gameB.code, gameB],
 ]);
 
-function expenseOf(gameId: string, overrides: Partial<FunStatsExpenseInput>): FunStatsExpenseInput {
+function expenseOf(
+  gameId: string,
+  overrides: Partial<FunStatsExpenseInput>,
+): FunStatsExpenseInput {
   return {
     gameId,
     kind: "expense",
@@ -71,7 +78,11 @@ describe("buildFunStats — nguoi ung tien nhieu nhat", () => {
       expenseOf(gameA.code, { payerParticipantId: "p1", amount: 200_000 }),
       expenseOf(gameA.code, { payerParticipantId: "p1", amount: 100_000 }),
       expenseOf(gameA.code, { payerParticipantId: "p2", amount: 150_000 }),
-      expenseOf(gameA.code, { payerParticipantId: "p2", kind: "transfer", amount: 999_999 }),
+      expenseOf(gameA.code, {
+        payerParticipantId: "p2",
+        kind: "transfer",
+        amount: 999_999,
+      }),
     ];
 
     const stats = buildFunStats([gameA], expenses, gameById, names, 0);
@@ -87,14 +98,27 @@ describe("buildFunStats — nguoi ung tien nhieu nhat", () => {
     ];
     const namesWithDup = [...names, { id: "q1", name: "huy" }];
 
-    const stats = buildFunStats([gameA, gameB], expenses, gameById, namesWithDup, 0);
+    const stats = buildFunStats(
+      [gameA, gameB],
+      expenses,
+      gameById,
+      namesWithDup,
+      0,
+    );
 
-    expect(stats.topPayer).toMatchObject({ name: "Huy", totalPaid: 300_000, gameCount: 2 });
+    expect(stats.topPayer).toMatchObject({
+      name: "Huy",
+      totalPaid: 300_000,
+      gameCount: 2,
+    });
   });
 
   it("nguoi tra khong con trong danh sach ten thi bi bo qua, khong lam sai nguoi khac", () => {
     const expenses = [
-      expenseOf(gameA.code, { payerParticipantId: "p_da_bi_xoa", amount: 500_000 }),
+      expenseOf(gameA.code, {
+        payerParticipantId: "p_da_bi_xoa",
+        amount: 500_000,
+      }),
       expenseOf(gameA.code, { payerParticipantId: "p1", amount: 50_000 }),
     ];
 
@@ -152,7 +176,10 @@ describe("buildFunStats — cuoc chia dong nguoi nhat va thu quen", () => {
   it("chon cuoc co participantCount cao nhat", () => {
     const stats = buildFunStats([gameA, gameB], [], gameById, names, 0);
 
-    expect(stats.biggestGame).toMatchObject({ name: gameB.name, participantCount: 5 });
+    expect(stats.biggestGame).toMatchObject({
+      name: gameB.name,
+      participantCount: 5,
+    });
   });
 
   it("ca hai cuoc cung tao vao Thu Ba nen do la thu hay choi nhat", () => {
@@ -171,8 +198,18 @@ describe("buildFunStats — cuoc chia dong nguoi nhat va thu quen", () => {
   });
 
   it("chon thu co nhieu cuoc hon khi du lieu co nhieu thu", () => {
-    const wednesdayGame = { ...gameA, code: "CCC333", createdAt: "2026-07-15T10:00:00.000Z" };
-    const stats = buildFunStats([gameA, gameB, wednesdayGame], [], gameById, names, 0);
+    const wednesdayGame = {
+      ...gameA,
+      code: "CCC333",
+      createdAt: "2026-07-15T10:00:00.000Z",
+    };
+    const stats = buildFunStats(
+      [gameA, gameB, wednesdayGame],
+      [],
+      gameById,
+      names,
+      0,
+    );
 
     expect(stats.favoriteWeekday).toBe(2);
   });

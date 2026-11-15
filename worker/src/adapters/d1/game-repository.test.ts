@@ -310,10 +310,20 @@ describe("D1 game repository", () => {
 
     expect(await repo.sharePreviews.getUpdatedAt(game.id)).toBeNull();
     expect(await repo.sharePreviews.getData(game.id)).toBeNull();
-    await repo.sharePreviews.put(game.id, "preview-v1", "2026-08-01T00:00:00.000Z");
-    await repo.sharePreviews.put(game.id, "preview-v2", "2026-08-02T00:00:00.000Z");
+    await repo.sharePreviews.put(
+      game.id,
+      "preview-v1",
+      "2026-08-01T00:00:00.000Z",
+    );
+    await repo.sharePreviews.put(
+      game.id,
+      "preview-v2",
+      "2026-08-02T00:00:00.000Z",
+    );
     expect(await repo.sharePreviews.getData(game.id)).toBe("preview-v2");
-    expect(await repo.sharePreviews.getUpdatedAt(game.id)).toBe("2026-08-02T00:00:00.000Z");
+    expect(await repo.sharePreviews.getUpdatedAt(game.id)).toBe(
+      "2026-08-02T00:00:00.000Z",
+    );
 
     const event = (await repo.gameEvents.listByGame(game.id, 1))[0];
     expect(event?.kind).toBe("game_created");
@@ -642,7 +652,10 @@ describe("D1 game repository", () => {
 describe("D1 payment requests", () => {
   it("luu, tim, doi soat va chi settle request con pending", async () => {
     const repo = createD1GameRepository(database);
-    const game = await createGame(repo, "owner", { name: "Kèo SePay", participantCount: 2 });
+    const game = await createGame(repo, "owner", {
+      name: "Kèo SePay",
+      participantCount: 2,
+    });
     const row = {
       id: "payreq-d1",
       gameId: game.id,
@@ -662,16 +675,25 @@ describe("D1 payment requests", () => {
     expect((await repo.paymentRequests.findByCode(row.code))?.id).toBe(row.id);
     expect(await repo.paymentRequests.findByCode("missing")).toBeNull();
     expect(
-      (await repo.paymentRequests.listPendingByGame(game.id, "2026-11-11T00:00:00.000Z")).map(
-        (item) => item.id,
-      ),
+      (
+        await repo.paymentRequests.listPendingByGame(
+          game.id,
+          "2026-11-11T00:00:00.000Z",
+        )
+      ).map((item) => item.id),
     ).toEqual([row.id]);
-    expect(await repo.paymentRequests.listPendingByGame(game.id, "2026-11-12T00:00:00.000Z")).toEqual(
-      [],
-    );
+    expect(
+      await repo.paymentRequests.listPendingByGame(
+        game.id,
+        "2026-11-12T00:00:00.000Z",
+      ),
+    ).toEqual([]);
 
     await repo.paymentRequests.markChecked([], "ignored");
-    await repo.paymentRequests.markChecked([row.id], "2026-11-11T10:01:00.000Z");
+    await repo.paymentRequests.markChecked(
+      [row.id],
+      "2026-11-11T10:01:00.000Z",
+    );
     expect((await repo.paymentRequests.findByCode(row.code))?.checkedAt).toBe(
       "2026-11-11T10:01:00.000Z",
     );
@@ -683,11 +705,23 @@ describe("D1 payment requests", () => {
       createdAt: "2026-11-11T10:02:00.000Z",
     };
     expect(await repo.paymentRequests.claimTransaction(transaction)).toBe(true);
-    expect(await repo.paymentRequests.claimTransaction(transaction)).toBe(false);
-    expect(await repo.paymentRequests.addPaidAmount(row.id, 60_000)).toBe(60_000);
-    expect(await repo.paymentRequests.addPaidAmount(row.id, 40_000)).toBe(100_000);
-    expect(await repo.paymentRequests.markPaid(row.id, "2026-11-11T10:03:00.000Z")).toBe(true);
-    expect(await repo.paymentRequests.markPaid(row.id, "2026-11-11T10:03:00.000Z")).toBe(false);
-    expect((await repo.paymentRequests.findByCode(row.code))?.status).toBe("paid");
+    expect(await repo.paymentRequests.claimTransaction(transaction)).toBe(
+      false,
+    );
+    expect(await repo.paymentRequests.addPaidAmount(row.id, 60_000)).toBe(
+      60_000,
+    );
+    expect(await repo.paymentRequests.addPaidAmount(row.id, 40_000)).toBe(
+      100_000,
+    );
+    expect(
+      await repo.paymentRequests.markPaid(row.id, "2026-11-11T10:03:00.000Z"),
+    ).toBe(true);
+    expect(
+      await repo.paymentRequests.markPaid(row.id, "2026-11-11T10:03:00.000Z"),
+    ).toBe(false);
+    expect((await repo.paymentRequests.findByCode(row.code))?.status).toBe(
+      "paid",
+    );
   });
 });
