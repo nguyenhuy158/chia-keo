@@ -277,7 +277,9 @@ export function GamePage() {
       name={game.name}
       participants={game.participants}
       expenseCount={
-        game.expenses.filter((expense) => expense.kind !== "transfer").length
+        game.expenses.filter(
+          (expense) => expense.kind !== "transfer" && !expense.excluded,
+        ).length
       }
       summary={game.summary}
       settlementMode={game.settlementMode}
