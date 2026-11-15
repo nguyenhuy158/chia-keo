@@ -39,6 +39,7 @@
     "@vitejs/plugin-react": "^5.0.0",
     "better-auth": "^1.6.23",
     "drizzle-orm": "^0.45.2",
+    "exceljs": "^4.4.0",
     "hono": "^4.12.27",
     "lucide-react": "^0.468.0",
     "react": "^19.0.0",
