@@ -337,6 +337,9 @@ describe("GamePage", () => {
     expect(host.textContent).toContain("Ảnh");
     await click("Lịch sử");
     expect(host.textContent?.match(/HistoryPanel/g)).toHaveLength(2);
+    await click("Chia sẻ");
+    expect(host.textContent?.match(/SummaryImageCard/g)).toHaveLength(2);
+    expect(host.textContent?.match(/CollaboratorsPanel/g)).toHaveLength(2);
     await click("Ảnh");
     expect(host.textContent?.match(/PhotoPanel/g)).toHaveLength(2);
     await click("Lịch sử");

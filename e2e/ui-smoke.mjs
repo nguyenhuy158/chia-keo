@@ -794,6 +794,27 @@ try {
     gameId,
     WAIT,
   );
+  await page
+    .getByRole("button", { name: "Tổng kết", exact: true })
+    .evaluate((button) => button.click());
+  await page.getByRole("button", { name: "Chuyển khoản", exact: true }).click();
+  const settleRow = page.getByRole("button", { name: /^Chi tiết / }).first();
+  await settleRow.waitFor({ state: "visible", ...WAIT });
+  assert.equal(
+    await scrolls(),
+    false,
+    "tab Tổng kết cuon duoc tren dien thoai",
+  );
+  await settleRow.click();
+  const paidButton = page.getByRole("button", { name: "Đã trả", exact: true });
+  await paidButton.waitFor({ state: "visible", ...WAIT });
+  await page.keyboard.press("Escape");
+  await paidButton.waitFor({ state: "hidden", ...WAIT });
+  await page.getByRole("button", { name: "Số dư", exact: true }).click();
+  assert.equal(await scrolls(), false, "so du cuon duoc tren dien thoai");
+  ok(
+    "phone: Tổng kết tab fits one screen with balances, transfers and a Sheet",
+  );
   await page.setViewportSize({ width: 1280, height: 720 });
   ok("phone: Chi tab fits one screen, pages the list and adds from a Sheet");
 

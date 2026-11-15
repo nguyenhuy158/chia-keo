@@ -97,7 +97,9 @@ export function GamePage() {
 
   const [nameDraft, setNameDraft] = useState<string | null>(null);
   const [activeSection, setActiveSection] = useState<GameSection>("expenses");
-  const [moreTab, setMoreTab] = useState<"photos" | "history">("photos");
+  const [moreTab, setMoreTab] = useState<"photos" | "history" | "share">(
+    "photos",
+  );
   const shell = useMobileShell();
   const [actionsOpen, setActionsOpen] = useState(false);
   const [emailPending, setEmailPending] = useState(false);
@@ -273,8 +275,9 @@ export function GamePage() {
     game.participants.map((participant) => [participant.id, participant.name]),
   );
 
-  const dashboard = (
+  const renderDashboard = (compact: boolean) => (
     <GameDashboard
+      compact={compact}
       code={game.code}
       name={game.name}
       participants={game.participants}
@@ -320,6 +323,8 @@ export function GamePage() {
       settlePending={addTransfer.isPending}
     />
   );
+  const dashboard = renderDashboard(false);
+  const compactDashboard = renderDashboard(true);
 
   const summaryInput = {
     code: game.code,
@@ -658,16 +663,14 @@ export function GamePage() {
       <div className="flex min-h-0 flex-1 flex-col lg:hidden">
         <div
           className={`min-h-0 flex-1 space-y-3 ${
-            activeSection === "expenses"
+            activeSection === "expenses" || activeSection === "summary"
               ? "overflow-hidden"
               : "overflow-y-auto pb-20"
           }`}
         >
           {activeSection === "people" && participantPanel}
           {activeSection === "expenses" && compactExpensePanel}
-          {activeSection === "summary" && dashboard}
-          {activeSection === "summary" && summaryImageCard}
-          {activeSection === "summary" && collaboratorsPanel}
+          {activeSection === "summary" && compactDashboard}
           {activeSection === "more" && (
             <div className="space-y-4">
               <div className="flex gap-2">
@@ -694,21 +697,33 @@ export function GamePage() {
                 >
                   Lịch sử
                 </button>
+                <button
+                  type="button"
+                  onClick={() => setMoreTab("share")}
+                  className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition ${
+                    moreTab === "share"
+                      ? "bg-primary text-white"
+                      : "border border-stone-300 text-stone-600 dark:border-stone-700 dark:text-stone-300"
+                  }`}
+                >
+                  Chia sẻ
+                </button>
               </div>
+              {moreTab === "share" && (
+                <>
+                  {summaryImageCard}
+                  {collaboratorsPanel}
+                </>
+              )}
               {moreTab === "photos" && photoPanel}
               {moreTab === "history" && <HistoryPanel gameId={game.id} />}
-            </div>
-          )}
-          {activeSection === "summary" && (
-            <div className="flex flex-col gap-2 rounded-lg border border-border bg-surface p-3 shadow-sm [&>button]:w-full">
-              {copyAction}
-              {emailAction}
             </div>
           )}
         </div>
 
         {/* Tab anh (trong Khac) co nut them anh rieng nen khong hien FAB khoan chi. */}
         {activeSection !== "expenses" &&
+          activeSection !== "summary" &&
           !(activeSection === "more" && moreTab === "photos") && (
             <ExpenseFab onClick={() => setActiveSection("expenses")} />
           )}
