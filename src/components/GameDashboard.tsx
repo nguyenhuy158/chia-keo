@@ -163,27 +163,23 @@ export function GameDashboard({
         <h3 className="text-lg font-semibold text-stone-950 dark:text-stone-50">
           Cân bằng
         </h3>
-        <div className="mt-4 space-y-3">
+        <div className="mt-2 divide-y divide-border">
           {summary.balances.length > 0 ? (
             summary.balances.map((row) => {
               const participant = participantById.get(row.participantId);
               if (!participant) return null;
 
               return (
-                <div
-                  key={row.participantId}
-                  className="rounded-md border border-border p-3"
-                >
+                <div key={row.participantId} className="py-2.5">
                   <div className="flex items-center justify-between gap-3">
                     <p className="min-w-0 truncate text-sm font-semibold text-stone-950 dark:text-stone-50">
                       {participant.name}
                     </p>
                     <BalancePill value={row.balance} />
                   </div>
-                  <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-fg-muted">
-                    <span>Đã trả: {formatMoney(row.paid)}</span>
-                    <span>Phải chịu: {formatMoney(row.owed)}</span>
-                  </div>
+                  <p className="mt-0.5 text-xs text-fg-muted">
+                    Đã trả {formatMoney(row.paid)} · Phải chịu {formatMoney(row.owed)}
+                  </p>
                 </div>
               );
             })

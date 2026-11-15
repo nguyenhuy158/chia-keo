@@ -14,6 +14,7 @@ import { Avatar } from "./Avatar";
 import { BankSelect } from "./BankSelect";
 import { useConfirm } from "./ConfirmDialog";
 import { SkeletonListRow } from "./ui";
+import { usePersistentOpen } from "./use-persistent-open";
 
 type Draft = { name: string; bankId: string; accountNo: string; accountName: string };
 
@@ -165,6 +166,7 @@ export function ContactBookCard() {
   const updateContact = useUpdateContact();
   const deleteContact = useDeleteContact();
 
+  const [open, setOpen] = usePersistentOpen("contact-book", false);
   const [adding, setAdding] = useState(false);
   const [draft, setDraft] = useState<Draft>(EMPTY);
   const [editingKey, setEditingKey] = useState<string | null>(null);
@@ -223,96 +225,113 @@ export function ContactBookCard() {
 
   return (
     <section className="rounded-lg border border-border bg-surface p-3 shadow-sm">
-      <div className="mb-2 flex items-center justify-between gap-2 px-1">
+      <div className="flex items-center justify-between gap-2 px-1">
         <div className="flex items-center gap-2 text-sm font-semibold text-stone-800 dark:text-stone-200">
           <BookUser size={17} />
           Danh bạ
         </div>
-        <button
-          type="button"
-          onClick={() => {
-            setAdding((current) => !current);
-            setEditingKey(null);
-            setDraft(EMPTY);
-          }}
-          aria-label="Thêm vào danh bạ"
-          title="Thêm người"
-          className="inline-flex h-11 w-11 items-center justify-center rounded-md bg-primary text-white transition hover:bg-primary-hover active:scale-95"
-        >
-          {adding ? <X size={15} /> : <Plus size={15} />}
-        </button>
+        <div className="flex items-center gap-1">
+          {open && (
+            <button
+              type="button"
+              onClick={() => {
+                setAdding((current) => !current);
+                setEditingKey(null);
+                setDraft(EMPTY);
+              }}
+              aria-label="Thêm vào danh bạ"
+              title="Thêm người"
+              className="inline-flex h-11 w-11 items-center justify-center rounded-md bg-primary text-white transition hover:bg-primary-hover active:scale-95"
+            >
+              {adding ? <X size={15} /> : <Plus size={15} />}
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => setOpen((current) => !current)}
+            aria-expanded={open}
+            className="rounded-md px-2 py-1 text-xs font-semibold text-violet-700 transition hover:bg-primary-soft dark:text-violet-300"
+          >
+            {open ? "Ẩn" : "Xem"}
+          </button>
+        </div>
       </div>
 
-      {adding && (
-        <div className="mb-2 rounded-md border border-border p-2">
-          <DraftForm
-            draft={draft}
-            onChange={setDraft}
-            onSubmit={() => handleSave(null)}
-            onCancel={reset}
-            pending={pending}
-            submitLabel="Thêm"
-          />
-        </div>
-      )}
+      {open && (
+        <div className="mt-2">
 
-      {contactsQuery.isPending ? (
-        <div className="divide-y divide-stone-100 dark:divide-stone-800">
-          <SkeletonListRow />
-          <SkeletonListRow />
-          <SkeletonListRow />
-        </div>
-      ) : contacts.length === 0 ? (
-        <p className="px-1 py-3 text-sm text-fg-muted">
-          Chưa có ai. Thêm sẵn người hay đi cùng để mỗi cuộc chơi chỉ cần tick chọn.
-        </p>
-      ) : (
-        <div className="divide-y divide-stone-100 dark:divide-stone-800">
-          {visibleContacts.map((contact) =>
-            editingKey === contact.key ? (
-              <div key={contact.key} className="py-2">
-                <DraftForm
-                  draft={draft}
-                  onChange={setDraft}
-                  onSubmit={() => handleSave(contact)}
-                  onCancel={reset}
-                  pending={pending}
-                  submitLabel="Lưu"
-                />
-              </div>
-            ) : contact.source === "book" ? (
-              // Chi nguoi thuoc danh ba (co id) moi xoa duoc, nen chi nguoi
-              // do moi vuot xoa duoc — vuot nguoi chi suy ra tu lich su se
-              // lo mot nut khong lam gi ca.
-              <SwipeAction key={contact.key} label="Xóa" icon={<Trash2 size={15} />} onAction={handleDelete.bind(null, contact)}>
-                <ContactRow
-                  contact={contact}
-                  pending={pending}
-                  onEdit={() => startEdit(contact)}
-                  onDelete={handleDelete.bind(null, contact)}
-                />
-              </SwipeAction>
-            ) : (
-              <ContactRow
-                key={contact.key}
-                contact={contact}
+          {adding && (
+            <div className="mb-2 rounded-md border border-border p-2">
+              <DraftForm
+                draft={draft}
+                onChange={setDraft}
+                onSubmit={() => handleSave(null)}
+                onCancel={reset}
                 pending={pending}
-                onEdit={() => startEdit(contact)}
-                onDelete={handleDelete.bind(null, contact)}
+                submitLabel="Thêm"
               />
-            ),
+            </div>
+          )}
+
+          {contactsQuery.isPending ? (
+            <div className="divide-y divide-stone-100 dark:divide-stone-800">
+              <SkeletonListRow />
+              <SkeletonListRow />
+              <SkeletonListRow />
+            </div>
+          ) : contacts.length === 0 ? (
+            <p className="px-1 py-3 text-sm text-fg-muted">
+              Chưa có ai. Thêm người hay đi cùng để tick chọn nhanh.
+            </p>
+          ) : (
+            <div className="divide-y divide-stone-100 dark:divide-stone-800">
+              {visibleContacts.map((contact) =>
+                editingKey === contact.key ? (
+                  <div key={contact.key} className="py-2">
+                    <DraftForm
+                      draft={draft}
+                      onChange={setDraft}
+                      onSubmit={() => handleSave(contact)}
+                      onCancel={reset}
+                      pending={pending}
+                      submitLabel="Lưu"
+                    />
+                  </div>
+                ) : contact.source === "book" ? (
+                  // Chi nguoi thuoc danh ba (co id) moi xoa duoc, nen chi nguoi
+                  // do moi vuot xoa duoc — vuot nguoi chi suy ra tu lich su se
+                  // lo mot nut khong lam gi ca.
+                  <SwipeAction key={contact.key} label="Xóa" icon={<Trash2 size={15} />} onAction={handleDelete.bind(null, contact)}>
+                    <ContactRow
+                      contact={contact}
+                      pending={pending}
+                      onEdit={() => startEdit(contact)}
+                      onDelete={handleDelete.bind(null, contact)}
+                    />
+                  </SwipeAction>
+                ) : (
+                  <ContactRow
+                    key={contact.key}
+                    contact={contact}
+                    pending={pending}
+                    onEdit={() => startEdit(contact)}
+                    onDelete={handleDelete.bind(null, contact)}
+                  />
+                ),
+              )}
+            </div>
+          )}
+
+          {remainingCount > 0 && (
+            <button
+              type="button"
+              onClick={() => setVisibleCount((current) => current + PAGE_SIZE)}
+              className="mt-2 w-full rounded-md py-2 text-center text-sm font-medium text-violet-600 transition hover:bg-primary-soft dark:text-violet-400"
+            >
+              Xem thêm ({remainingCount})
+            </button>
           )}
         </div>
-      )}
-
-      {remainingCount > 0 && (
-        <button
-          type="button"
-          onClick={() => setVisibleCount((current) => current + PAGE_SIZE)}
-          className="mt-2 w-full rounded-md py-2 text-center text-sm font-medium text-violet-600 transition hover:bg-primary-soft dark:text-violet-400"
-        >
-          Xem thêm ({remainingCount})
-        </button>
       )}
     </section>
   );

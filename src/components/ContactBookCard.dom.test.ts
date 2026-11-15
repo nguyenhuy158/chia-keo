@@ -53,6 +53,8 @@ function contact(
   };
 }
 
+const OPEN_KEY = "chia-keo-open:contact-book";
+
 function render() {
   act(() => root.render(createElement(ContactBookCard)));
 }
@@ -100,6 +102,7 @@ beforeEach(() => {
   remove.mockReset().mockResolvedValue(undefined);
   success.mockReset();
   error.mockReset();
+  window.localStorage.setItem(OPEN_KEY, "1");
   host = document.createElement("div");
   document.body.append(host);
   root = createRoot(host);
@@ -108,9 +111,28 @@ beforeEach(() => {
 afterEach(() => {
   act(() => root.unmount());
   host.remove();
+  window.localStorage.clear();
 });
 
 describe("ContactBookCard", () => {
+  it("is collapsed by default, remembers the choice and only offers + when open", () => {
+    window.localStorage.clear();
+    state.contacts = [
+      { key: "a", id: "a", name: "An", bankId: "", accountNo: "", accountName: "", source: "book" },
+    ] as Contact[];
+    render();
+    expect(host.textContent).toContain("Danh bạ");
+    expect(host.textContent).not.toContain("An");
+    expect(button("Thêm vào danh bạ")).toBeUndefined();
+    act(() => button("Xem")?.click());
+    expect(host.textContent).toContain("An");
+    expect(button("Thêm vào danh bạ")).toBeDefined();
+    expect(window.localStorage.getItem(OPEN_KEY)).toBe("1");
+    act(() => button("Ẩn")?.click());
+    expect(host.textContent).not.toContain("An");
+    expect(window.localStorage.getItem(OPEN_KEY)).toBe("0");
+  });
+
   it("shows loading, empty state, contact details, and pagination", () => {
     state.loading = true;
     render();
