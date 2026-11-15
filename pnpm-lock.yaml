@@ -70,11 +70,11 @@ importers:
         specifier: ^5.20260703.1
         version: 5.20260703.1
       '@huyab/config':
-        specifier: github:nguyenhuy158/kit#v0.1.0&path:packages/config
-        version: https://codeload.github.com/nguyenhuy158/kit/tar.gz/dc6d7122964975a8283a12876dafa9ad8cff2c51#path:packages/config
+        specifier: github:nguyenhuy158/kit#v0.2.0&path:packages/config
+        version: https://codeload.github.com/nguyenhuy158/kit/tar.gz/1470af6bdda0ca1db5525dcf3b212edef7dc7c4a#path:packages/config
       '@huyab/e2e':
-        specifier: github:nguyenhuy158/kit#v0.1.0&path:packages/e2e
-        version: https://codeload.github.com/nguyenhuy158/kit/tar.gz/dc6d7122964975a8283a12876dafa9ad8cff2c51#path:packages/e2e
+        specifier: github:nguyenhuy158/kit#v0.2.0&path:packages/e2e
+        version: https://codeload.github.com/nguyenhuy158/kit/tar.gz/1470af6bdda0ca1db5525dcf3b212edef7dc7c4a#path:packages/e2e
       '@types/react':
         specifier: ^19.0.0
         version: 19.2.17
@@ -1546,12 +1546,12 @@ packages:
     peerDependencies:
       react-hook-form: ^7.55.0
 
-  '@huyab/config@https://codeload.github.com/nguyenhuy158/kit/tar.gz/dc6d7122964975a8283a12876dafa9ad8cff2c51#path:packages/config':
-    resolution: {gitHosted: true, path: packages/config, tarball: https://codeload.github.com/nguyenhuy158/kit/tar.gz/dc6d7122964975a8283a12876dafa9ad8cff2c51}
+  '@huyab/config@https://codeload.github.com/nguyenhuy158/kit/tar.gz/1470af6bdda0ca1db5525dcf3b212edef7dc7c4a#path:packages/config':
+    resolution: {gitHosted: true, integrity: sha512-WqOvi2mfcB25roBma1epn7KAdWNLkA1O9pC2XDesQeqkjdzZxltmlkB82xqdAXh8ExQYL8tsMNwSaAunVNMgnw==, path: packages/config, tarball: https://codeload.github.com/nguyenhuy158/kit/tar.gz/1470af6bdda0ca1db5525dcf3b212edef7dc7c4a}
     version: 0.1.0
 
-  '@huyab/e2e@https://codeload.github.com/nguyenhuy158/kit/tar.gz/dc6d7122964975a8283a12876dafa9ad8cff2c51#path:packages/e2e':
-    resolution: {gitHosted: true, path: packages/e2e, tarball: https://codeload.github.com/nguyenhuy158/kit/tar.gz/dc6d7122964975a8283a12876dafa9ad8cff2c51}
+  '@huyab/e2e@https://codeload.github.com/nguyenhuy158/kit/tar.gz/1470af6bdda0ca1db5525dcf3b212edef7dc7c4a#path:packages/e2e':
+    resolution: {gitHosted: true, integrity: sha512-WqOvi2mfcB25roBma1epn7KAdWNLkA1O9pC2XDesQeqkjdzZxltmlkB82xqdAXh8ExQYL8tsMNwSaAunVNMgnw==, path: packages/e2e, tarball: https://codeload.github.com/nguyenhuy158/kit/tar.gz/1470af6bdda0ca1db5525dcf3b212edef7dc7c4a}
     version: 0.1.0
     engines: {node: '>=22'}
 
@@ -5018,9 +5018,9 @@ snapshots:
       '@standard-schema/utils': 0.3.0
       react-hook-form: 7.80.0(react@19.2.7)
 
-  '@huyab/config@https://codeload.github.com/nguyenhuy158/kit/tar.gz/dc6d7122964975a8283a12876dafa9ad8cff2c51#path:packages/config': {}
+  '@huyab/config@https://codeload.github.com/nguyenhuy158/kit/tar.gz/1470af6bdda0ca1db5525dcf3b212edef7dc7c4a#path:packages/config': {}
 
-  '@huyab/e2e@https://codeload.github.com/nguyenhuy158/kit/tar.gz/dc6d7122964975a8283a12876dafa9ad8cff2c51#path:packages/e2e': {}
+  '@huyab/e2e@https://codeload.github.com/nguyenhuy158/kit/tar.gz/1470af6bdda0ca1db5525dcf3b212edef7dc7c4a#path:packages/e2e': {}
 
   '@img/colour@1.1.0': {}
 
