@@ -98,7 +98,9 @@ export function SwipeAction({
         onPointerCancel={endDrag}
         style={{
           transform: `translateX(${dragX}px)`,
-          transition: drag ? "none" : "transform 180ms ease",
+          transition: drag
+            ? "none"
+            : "transform var(--ui-dur) var(--ui-ease-out)",
           touchAction: "pan-y",
         }}
         className="relative bg-surface"

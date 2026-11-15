@@ -7,6 +7,7 @@ import {
   useState,
 } from "react";
 import { cn } from "./cn";
+import { motion, usePresence } from "./use-presence";
 
 export type ComboboxOption = {
   value: string;
@@ -56,6 +57,7 @@ export function Combobox({
   className,
 }: ComboboxProps) {
   const [open, setOpen] = useState(false);
+  const { mounted, closing } = usePresence(open);
   const [query, setQuery] = useState("");
   const [highlight, setHighlight] = useState(0);
   const ref = useRef<HTMLDivElement>(null);
@@ -164,13 +166,22 @@ export function Combobox({
         <path d="M6 8l4 4 4-4" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
 
-      {open && (
+      {mounted && (
         <ul
           id={listId}
           // biome-ignore lint/a11y/noNoninteractiveElementToInteractiveRole: standard listbox pattern
           role="listbox"
-          style={{ animation: "ui-slide-down 120ms ease-out" }}
-          className="absolute z-50 mt-1 max-h-64 w-full overflow-y-auto rounded-ui border border-border bg-surface py-1 shadow-lg"
+          style={{
+            animation: motion(
+              closing,
+              "ui-slide-down var(--ui-dur-fast) var(--ui-ease-out)",
+              "ui-slide-down-out var(--ui-dur-fast) var(--ui-ease-in)",
+            ),
+          }}
+          className={cn(
+            "absolute z-50 mt-1 max-h-64 w-full overflow-y-auto rounded-ui border border-border bg-surface py-1 shadow-lg",
+            closing && "pointer-events-none",
+          )}
         >
           {filtered.length === 0 && (
             <li className="px-3 py-3 text-sm text-fg-muted">{emptyLabel}</li>

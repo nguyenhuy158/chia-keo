@@ -62,7 +62,7 @@ export function SpeedDial({
                 setOpen(false);
               }}
               style={{
-                animation: `ui-zoom-in 150ms ease-out ${index * 30}ms both`,
+                animation: `ui-zoom-in var(--ui-dur-fast) var(--ui-ease-out) ${index * 30}ms both`,
               }}
               className="inline-flex size-11 items-center justify-center rounded-full border border-border bg-surface text-fg shadow-md outline-none transition hover:bg-surface-muted focus-visible:ring-2 focus-visible:ring-ring"
             >

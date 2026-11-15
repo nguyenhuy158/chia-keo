@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { Button } from "./Button";
 import { cn } from "./cn";
 import { useOverlay } from "./use-overlay";
+import { motion, usePresence } from "./use-presence";
 
 export type ModalProps = {
   open: boolean;
@@ -29,13 +30,23 @@ export function Modal({
   const ref = useOverlay(open, onClose);
   const titleId = useId();
   const descId = useId();
+  const { mounted, closing } = usePresence(open);
 
-  if (!open) return null;
+  if (!mounted) return null;
 
   return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4"
-      style={{ animation: "ui-fade-in 150ms ease-out" }}
+      className={cn(
+        "fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4",
+        closing && "pointer-events-none",
+      )}
+      style={{
+        animation: motion(
+          closing,
+          "ui-fade-in var(--ui-dur-fast) var(--ui-ease-out)",
+          "ui-fade-out var(--ui-dur-fast) var(--ui-ease-in)",
+        ),
+      }}
     >
       {/* Lop mo phia sau. aria-hidden vi noi dung cua no la trang thai, khong phai chu. */}
       <div
@@ -51,7 +62,13 @@ export function Modal({
         aria-labelledby={titleId}
         aria-describedby={description ? descId : undefined}
         tabIndex={-1}
-        style={{ animation: "ui-zoom-in 180ms ease-out" }}
+        style={{
+          animation: motion(
+            closing,
+            "ui-zoom-in var(--ui-dur) var(--ui-ease-out)",
+            "ui-zoom-out var(--ui-dur-fast) var(--ui-ease-in)",
+          ),
+        }}
         className={cn(
           "relative flex max-h-[90dvh] w-full flex-col rounded-t-2xl bg-surface shadow-xl outline-none sm:rounded-ui",
           SIZE[size],

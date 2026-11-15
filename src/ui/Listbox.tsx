@@ -1,6 +1,7 @@
 import { type ReactNode, useEffect, useId, useRef, useState } from "react";
 import { cn } from "./cn";
 import { useDismiss } from "./use-dismiss";
+import { motion, usePresence } from "./use-presence";
 
 export type ListboxOption = {
   value: string;
@@ -44,6 +45,7 @@ export function Listbox({
   const [open, setOpen] = useState(false);
   const [highlight, setHighlight] = useState(0);
   const ref = useDismiss(open, () => setOpen(false));
+  const { mounted, closing } = usePresence(open);
   const listId = useId();
   const triggerId = id ?? `${listId}-trigger`;
   const enabled = options
@@ -212,13 +214,22 @@ export function Listbox({
           Vui lòng chọn một mục.
         </p>
       )}
-      {open && !disabled && (
+      {mounted && !disabled && (
         <div
           id={listId}
           role="listbox"
           aria-labelledby={triggerId}
-          style={{ animation: "ui-slide-down 120ms ease-out" }}
-          className="absolute z-50 mt-1 max-h-64 w-full overflow-y-auto rounded-ui border border-border bg-surface p-1 shadow-lg"
+          style={{
+            animation: motion(
+              closing,
+              "ui-slide-down var(--ui-dur-fast) var(--ui-ease-out)",
+              "ui-slide-down-out var(--ui-dur-fast) var(--ui-ease-in)",
+            ),
+          }}
+          className={cn(
+            "absolute z-50 mt-1 max-h-64 w-full overflow-y-auto rounded-ui border border-border bg-surface p-1 shadow-lg",
+            closing && "pointer-events-none",
+          )}
         >
           {options.map((option, index) => {
             const isSelected = option.value === value;

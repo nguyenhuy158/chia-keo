@@ -2,6 +2,7 @@ import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { cn } from "./cn";
 import { useOverlay } from "./use-overlay";
+import { motion, usePresence } from "./use-presence";
 
 export type Command = {
   id: string;
@@ -67,6 +68,7 @@ export function CommandPalette({
   emptyLabel = "Không có lệnh nào khớp",
 }: CommandPaletteProps) {
   const overlayRef = useOverlay(open, onClose);
+  const { mounted, closing } = usePresence(open);
   const inputRef = useRef<HTMLInputElement>(null);
   const [query, setQuery] = useState("");
   const [highlight, setHighlight] = useState(0);
@@ -94,7 +96,7 @@ export function CommandPalette({
     setHighlight(0);
   }, [query]);
 
-  if (!open) return null;
+  if (!mounted) return null;
 
   const run = (command: Command) => {
     onClose();
@@ -130,8 +132,17 @@ export function CommandPalette({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center p-4 pt-[10vh]"
-      style={{ animation: "ui-fade-in 150ms ease-out" }}
+      className={cn(
+        "fixed inset-0 z-50 flex items-start justify-center p-4 pt-[10vh]",
+        closing && "pointer-events-none",
+      )}
+      style={{
+        animation: motion(
+          closing,
+          "ui-fade-in var(--ui-dur-fast) var(--ui-ease-out)",
+          "ui-fade-out var(--ui-dur-fast) var(--ui-ease-in)",
+        ),
+      }}
     >
       <div
         aria-hidden="true"
@@ -145,7 +156,13 @@ export function CommandPalette({
         aria-modal="true"
         aria-label="Bảng lệnh"
         tabIndex={-1}
-        style={{ animation: "ui-zoom-in 160ms ease-out" }}
+        style={{
+          animation: motion(
+            closing,
+            "ui-zoom-in var(--ui-dur) var(--ui-ease-out)",
+            "ui-zoom-out var(--ui-dur-fast) var(--ui-ease-in)",
+          ),
+        }}
         className="relative flex max-h-[70dvh] w-full max-w-lg flex-col overflow-hidden rounded-ui bg-surface shadow-xl outline-none"
       >
         <div className="flex items-center gap-2 border-b border-border px-4">

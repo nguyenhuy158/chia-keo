@@ -1,5 +1,36 @@
 import { type ReactNode, useState } from "react";
 import { cn } from "./cn";
+import { motion, usePresence } from "./use-presence";
+
+const ACCORDION_MS = 200;
+
+function AccordionPanel({
+  open,
+  children,
+}: {
+  open: boolean;
+  children: ReactNode;
+}) {
+  const { mounted, closing } = usePresence(open, ACCORDION_MS);
+  if (!mounted) return null;
+
+  return (
+    <div
+      className="grid"
+      style={{
+        animation: motion(
+          closing,
+          "ui-expand var(--ui-dur) var(--ui-ease-out)",
+          "ui-collapse var(--ui-dur) var(--ui-ease-in)",
+        ),
+      }}
+    >
+      <div className="min-h-0 overflow-hidden">
+        <div className="px-4 pb-4 text-sm text-fg-muted">{children}</div>
+      </div>
+    </div>
+  );
+}
 
 export type AccordionItem = {
   id: string;
@@ -74,11 +105,7 @@ export function Accordion({
 
             {/* Thao han khoi DOM khi dong, khong chi an di: tranh Tab lac vao
                 phan dang an va tranh render thua noi dung nang. */}
-            {isOpen && (
-              <div className="px-4 pb-4 text-sm text-fg-muted">
-                {item.content}
-              </div>
-            )}
+            <AccordionPanel open={isOpen}>{item.content}</AccordionPanel>
           </div>
         );
       })}

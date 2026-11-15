@@ -53,6 +53,20 @@
 
   --ui-ring: #ede9fe;
   --ui-radius: 0.5rem;
+
+  /* Chuyen dong kieu Fluent: vao thi giam toc (ease-out), ra thi tang toc
+     (ease-in). Thoi luong ngan de cam giac phan hoi ngay. */
+  --ui-ease-out: cubic-bezier(0.1, 0.9, 0.2, 1);
+  --ui-ease-in: cubic-bezier(0.9, 0.1, 1, 0.2);
+  --ui-dur-fast: 150ms;
+  --ui-dur: 200ms;
+  --ui-dur-gentle: 250ms;
+
+  /* Do bong 2 lop (bong moi truong + bong do) nhu Fluent. */
+  --ui-shadow-sm: 0 0 2px rgb(0 0 0 / 12%), 0 2px 4px rgb(0 0 0 / 14%);
+  --ui-shadow-md: 0 0 2px rgb(0 0 0 / 12%), 0 4px 8px rgb(0 0 0 / 14%);
+  --ui-shadow-lg: 0 0 2px rgb(0 0 0 / 12%), 0 8px 16px rgb(0 0 0 / 14%);
+  --ui-shadow-xl: 0 0 8px rgb(0 0 0 / 12%), 0 14px 28px rgb(0 0 0 / 14%);
 }
 
 .dark {
@@ -78,6 +92,11 @@
   --ui-danger-soft: oklch(64.5% 0.246 16.439 / 10%);
 
   --ui-ring: rgba(124, 58, 237, 0.35);
+
+  --ui-shadow-sm: 0 0 2px rgb(0 0 0 / 24%), 0 2px 4px rgb(0 0 0 / 28%);
+  --ui-shadow-md: 0 0 2px rgb(0 0 0 / 24%), 0 4px 8px rgb(0 0 0 / 28%);
+  --ui-shadow-lg: 0 0 2px rgb(0 0 0 / 24%), 0 8px 16px rgb(0 0 0 / 28%);
+  --ui-shadow-xl: 0 0 8px rgb(0 0 0 / 24%), 0 14px 28px rgb(0 0 0 / 28%);
 }
 
 /* ---------------------------------------------------------------------------
@@ -108,6 +127,14 @@
 
   --color-ring: var(--ui-ring);
   --radius-ui: var(--ui-radius);
+
+  --shadow-sm: var(--ui-shadow-sm);
+  --shadow-md: var(--ui-shadow-md);
+  --shadow-lg: var(--ui-shadow-lg);
+  --shadow-xl: var(--ui-shadow-xl);
+
+  --default-transition-duration: var(--ui-dur-fast);
+  --default-transition-timing-function: var(--ui-ease-out);
 }
 
 /* ---------------------------------------------------------------------------
@@ -150,6 +177,28 @@ textarea {
   a,
   [role="button"] {
     touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+/* Vat lieu Fluent. Acrylic: nen mo + bao hoa cho thanh/flyout noi tren noi
+   dung. Mica: nen trang hoi nhuom mau thuong hieu. Khong dat cung phan tu
+   voi bg-* cua Tailwind (class nay khong nam trong @layer nen se thang). */
+.ui-acrylic {
+  background-color: color-mix(in oklab, var(--ui-surface) 72%, transparent);
+  -webkit-backdrop-filter: blur(24px) saturate(1.25);
+  backdrop-filter: blur(24px) saturate(1.25);
+}
+
+.ui-mica {
+  background-color: color-mix(in oklab, var(--ui-bg) 94%, var(--ui-primary));
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .ui-acrylic {
+    background-color: var(--ui-surface);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
   }
 }
 
@@ -196,6 +245,71 @@ textarea {
   }
 }
 
+@keyframes ui-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes ui-zoom-out {
+  to {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}
+
+@keyframes ui-slide-down-out {
+  to {
+    opacity: 0;
+    transform: translateY(-0.5rem);
+  }
+}
+
+@keyframes ui-slide-up-out {
+  to {
+    opacity: 0;
+    transform: translateY(0.5rem);
+  }
+}
+
+@keyframes ui-sheet-out-bottom {
+  to {
+    transform: translateY(100%);
+  }
+}
+
+@keyframes ui-sheet-out-left {
+  to {
+    transform: translateX(-100%);
+  }
+}
+
+@keyframes ui-sheet-out-right {
+  to {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes ui-expand {
+  from {
+    grid-template-rows: 0fr;
+    opacity: 0;
+  }
+  to {
+    grid-template-rows: 1fr;
+  }
+}
+
+@keyframes ui-collapse {
+  from {
+    grid-template-rows: 1fr;
+  }
+  to {
+    grid-template-rows: 0fr;
+    opacity: 0;
+  }
+}
+
 @keyframes ui-spin {
   to {
     transform: rotate(360deg);
@@ -228,9 +342,9 @@ textarea {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
+  *:not([data-keep-motion]),
+  *:not([data-keep-motion])::before,
+  *:not([data-keep-motion])::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;

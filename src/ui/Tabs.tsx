@@ -1,3 +1,4 @@
+import { useLayoutEffect, useRef, useState } from "react";
 import { cn } from "./cn";
 
 export type TabItem<TId extends string = string> = {
@@ -22,17 +23,44 @@ export function Tabs<TId extends string = string>({
   variant = "line",
   className,
 }: TabsProps<TId>) {
+  const listRef = useRef<HTMLDivElement>(null);
+  const [bar, setBar] = useState<{ left: number; width: number } | null>(null);
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: do lai vi tri khi tab dang chon, nhan hoac kieu thay doi
+  useLayoutEffect(() => {
+    const node = listRef.current?.querySelector<HTMLElement>(
+      '[aria-selected="true"]',
+    );
+    if (node) setBar({ left: node.offsetLeft, width: node.offsetWidth });
+  }, [active, items, variant]);
+
   return (
     <div
+      ref={listRef}
       role="tablist"
       className={cn(
         // overflow-x-auto: nhieu tab thi cuon ngang thay vi xuong dong roi vo layout.
-        "flex gap-1 overflow-x-auto",
+        "relative flex gap-1 overflow-x-auto",
         variant === "line" && "border-b border-border",
         variant === "pill" && "rounded-ui bg-surface-muted p-1",
         className,
       )}
     >
+      {bar && (
+        <span
+          aria-hidden="true"
+          style={{
+            width: bar.width,
+            transform: `translateX(${bar.left}px)`,
+          }}
+          className={cn(
+            "pointer-events-none absolute left-0 transition-[transform,width] duration-200",
+            variant === "line" && "bottom-0 h-0.5 bg-primary",
+            variant === "pill" &&
+              "inset-y-1 rounded-[calc(var(--ui-radius)-0.25rem)] bg-surface shadow-sm",
+          )}
+        />
+      )}
       {items.map((item) => {
         const isActive = item.id === active;
 
@@ -44,21 +72,14 @@ export function Tabs<TId extends string = string>({
             aria-selected={isActive}
             onClick={() => onChange(item.id)}
             className={cn(
-              "shrink-0 whitespace-nowrap px-3 py-2 text-sm font-medium outline-none transition",
+              "relative z-10 shrink-0 whitespace-nowrap px-3 py-2 text-sm font-medium outline-none transition",
               "focus-visible:ring-2 focus-visible:ring-ring",
               variant === "line" &&
-                cn(
-                  "-mb-px border-b-2",
-                  isActive
-                    ? "border-primary text-primary"
-                    : "border-transparent text-fg-muted hover:text-fg",
-                ),
+                (isActive ? "text-primary" : "text-fg-muted hover:text-fg"),
               variant === "pill" &&
                 cn(
                   "rounded-[calc(var(--ui-radius)-0.25rem)]",
-                  isActive
-                    ? "bg-surface text-fg shadow-sm"
-                    : "text-fg-muted hover:text-fg",
+                  isActive ? "text-fg" : "text-fg-muted hover:text-fg",
                 ),
             )}
           >
