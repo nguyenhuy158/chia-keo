@@ -16,7 +16,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import type { ReactNode } from "react";
+import type { MouseEvent, ReactNode } from "react";
 
 const DRAG_ACTIVATION_DISTANCE_PX = 4;
 const DRAG_MODIFIERS = [restrictToVerticalAxis, restrictToParentElement];
@@ -64,6 +64,24 @@ type SortableHandle = Pick<
   "setActivatorNodeRef" | "attributes" | "listeners"
 >;
 
+/**
+ * Nhan giu tay cam tren dien thoai mo menu ngu canh cua he dieu hanh (popup
+ * "nhan giu") va co the chon chu; chan o day de keo khong bi cat ngang.
+ */
+export const DRAG_HANDLE_CLASS = "select-none [-webkit-touch-callout:none]";
+
+/**
+ * Phai la style noi tuyen: tokens.css co `button { touch-action: manipulation }`
+ * khong boc @layer, nen thang moi class tien ich cua Tailwind (nam trong layer),
+ * ke ca `touch-none`. Khong co `touch-action: none` thi trinh duyet gianh cu
+ * chi de cuon trang va keo bi cat ngang.
+ */
+export const DRAG_HANDLE_STYLE = { touchAction: "none" } as const;
+
+function blockContextMenu(event: MouseEvent) {
+  event.preventDefault();
+}
+
 type SortableItemProps = {
   id: string;
   className?: string;
@@ -80,9 +98,13 @@ export function SortableItem({ id, className = "", children }: SortableItemProps
       ref={setNodeRef}
       style={{ transform: CSS.Translate.toString(transform), transition }}
       data-dragging={isDragging}
-      className={`relative data-[dragging=true]:z-10 data-[dragging=true]:opacity-90 data-[dragging=true]:shadow-lg ${className}`}
+      className={`relative data-[dragging=true]:z-10 data-[dragging=true]:select-none data-[dragging=true]:opacity-90 data-[dragging=true]:shadow-lg ${className}`}
     >
-      {children({ setActivatorNodeRef, attributes, listeners })}
+      {children({
+        setActivatorNodeRef,
+        attributes,
+        listeners: { ...listeners, onContextMenu: blockContextMenu },
+      })}
     </div>
   );
 }
