@@ -21,6 +21,8 @@ import { SharePhotoGallery } from "../components/SharePhotoGallery";
 import { ThemeToggle } from "../components/theme";
 import { EmptyState, GamePageSkeleton } from "../components/ui";
 import { formatMoney } from "../core/domain/money";
+import { PagedList } from "../ui/PagedList";
+import { Sheet } from "../ui/Sheet";
 
 type ShareTab = "summary" | "matrix" | "photos";
 
@@ -56,6 +58,71 @@ function formatPlainMoney(value: number) {
   );
 }
 
+function ExpenseCard({
+  expense,
+  participants,
+}: {
+  expense: ApiExpense;
+  participants: ApiParticipant[];
+}) {
+  const { shareAmount, splitCount, shareByParticipantId } =
+    getExpenseShare(expense);
+
+  return (
+    <article className="rounded-md border border-border bg-surface p-3">
+      <div className="flex items-start justify-between gap-3">
+        <h3 className="min-w-0 text-sm font-semibold text-stone-950 dark:text-stone-50">
+          {expense.title}
+        </h3>
+        <span className="shrink-0 text-sm font-semibold text-stone-950 tabular dark:text-stone-50">
+          {formatPlainMoney(expense.amount)}
+        </span>
+      </div>
+
+      <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
+        <div className="rounded-md bg-stone-50 px-2 py-2 dark:bg-stone-950">
+          <p className="font-medium text-fg-muted">Người</p>
+          <p className="mt-1 font-semibold tabular text-stone-950 dark:text-stone-50">
+            {splitCount}
+          </p>
+        </div>
+        <div className="rounded-md bg-stone-50 px-2 py-2 dark:bg-stone-950">
+          <p className="font-medium text-fg-muted">/người</p>
+          <p className="mt-1 font-semibold tabular text-stone-950 dark:text-stone-50">
+            {shareAmount === null ? "Tùy chỉnh" : formatPlainMoney(shareAmount)}
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-3 grid grid-cols-2 gap-2">
+        {participants.map((participant) => {
+          const share = shareByParticipantId.get(participant.id);
+          const isIncluded = share !== undefined;
+
+          return (
+            <span
+              key={participant.id}
+              className={`inline-flex min-w-0 items-center gap-1.5 rounded-md px-2 py-1.5 text-xs font-semibold ${
+                isIncluded
+                  ? "bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300"
+                  : "bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300"
+              }`}
+            >
+              {isIncluded ? <Check size={14} /> : <Square size={14} />}
+              <span className="truncate">{participant.name}</span>
+              {isIncluded && (
+                <span className="ml-auto shrink-0 tabular">
+                  {formatPlainMoney(share)}
+                </span>
+              )}
+            </span>
+          );
+        })}
+      </div>
+    </article>
+  );
+}
+
 function ExpenseMatrix({
   participants,
   expenses,
@@ -69,7 +136,7 @@ function ExpenseMatrix({
   );
 
   return (
-    <section className="min-h-0 overflow-hidden rounded-lg border border-border bg-surface shadow-sm">
+    <section className="hidden min-h-0 overflow-hidden rounded-lg border border-border bg-surface shadow-sm md:block">
       <div className="flex items-center justify-between gap-3 border-b border-border px-3 py-3">
         <div>
           <h2 className="text-sm font-semibold text-stone-950 dark:text-stone-50">
@@ -82,72 +149,6 @@ function ExpenseMatrix({
         <span className="shrink-0 text-xs font-semibold text-fg-muted tabular">
           {visibleExpenses.length} khoản
         </span>
-      </div>
-
-      <div className="max-h-[calc(100vh-13rem)] space-y-3 overflow-auto p-3 md:hidden">
-        {visibleExpenses.map((expense) => {
-          const { shareAmount, splitCount, shareByParticipantId } =
-            getExpenseShare(expense);
-
-          return (
-            <article
-              key={expense.id}
-              className="rounded-md border border-border bg-surface p-3"
-            >
-              <div className="flex items-start justify-between gap-3">
-                <h3 className="min-w-0 text-sm font-semibold text-stone-950 dark:text-stone-50">
-                  {expense.title}
-                </h3>
-                <span className="shrink-0 text-sm font-semibold text-stone-950 tabular dark:text-stone-50">
-                  {formatPlainMoney(expense.amount)}
-                </span>
-              </div>
-
-              <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
-                <div className="rounded-md bg-stone-50 px-2 py-2 dark:bg-stone-950">
-                  <p className="font-medium text-fg-muted">Người</p>
-                  <p className="mt-1 font-semibold tabular text-stone-950 dark:text-stone-50">
-                    {splitCount}
-                  </p>
-                </div>
-                <div className="rounded-md bg-stone-50 px-2 py-2 dark:bg-stone-950">
-                  <p className="font-medium text-fg-muted">/người</p>
-                  <p className="mt-1 font-semibold tabular text-stone-950 dark:text-stone-50">
-                    {shareAmount === null
-                      ? "Tùy chỉnh"
-                      : formatPlainMoney(shareAmount)}
-                  </p>
-                </div>
-              </div>
-
-              <div className="mt-3 grid grid-cols-2 gap-2">
-                {participants.map((participant) => {
-                  const share = shareByParticipantId.get(participant.id);
-                  const isIncluded = share !== undefined;
-
-                  return (
-                    <span
-                      key={participant.id}
-                      className={`inline-flex min-w-0 items-center gap-1.5 rounded-md px-2 py-1.5 text-xs font-semibold ${
-                        isIncluded
-                          ? "bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300"
-                          : "bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300"
-                      }`}
-                    >
-                      {isIncluded ? <Check size={14} /> : <Square size={14} />}
-                      <span className="truncate">{participant.name}</span>
-                      {isIncluded && (
-                        <span className="ml-auto shrink-0 tabular">
-                          {formatPlainMoney(share)}
-                        </span>
-                      )}
-                    </span>
-                  );
-                })}
-              </div>
-            </article>
-          );
-        })}
       </div>
 
       <div className="hidden max-h-[calc(100vh-13rem)] overflow-auto md:block">
@@ -304,6 +305,77 @@ function ExpenseMatrix({
   );
 }
 
+const COMPACT_ROW_HEIGHT_PX = 64;
+
+function ExpenseMatrixCompact({
+  participants,
+  expenses,
+}: {
+  participants: ApiParticipant[];
+  expenses: ApiExpense[];
+}) {
+  const [active, setActive] = useState<ApiExpense | null>(null);
+  const [open, setOpen] = useState(false);
+  const participantById = new Map(
+    participants.map((participant) => [participant.id, participant]),
+  );
+  const visibleExpenses = expenses.filter(
+    (expense) => expense.kind !== "transfer" && !expense.excluded,
+  );
+
+  return (
+    <div className="flex h-full min-h-0 flex-col md:hidden">
+      <p className="shrink-0 pb-2 text-xs text-fg-muted tabular">
+        Bảng chia · {visibleExpenses.length} khoản
+      </p>
+      <div className="min-h-0 flex-1">
+        <PagedList
+          items={visibleExpenses}
+          getKey={(expense) => expense.id}
+          rowHeight={COMPACT_ROW_HEIGHT_PX}
+          empty={
+            <p className="py-6 text-center text-sm text-fg-muted">
+              Chưa có khoản chi nào.
+            </p>
+          }
+          renderItem={(expense) => (
+            <button
+              type="button"
+              onClick={() => {
+                setActive(expense);
+                setOpen(true);
+              }}
+              aria-label={`Chi tiết ${expense.title}`}
+              className="flex h-full w-full items-center gap-2 rounded-md border border-border px-3 text-left transition active:bg-surface-muted"
+            >
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-sm font-semibold text-stone-950 dark:text-stone-50">
+                  {expense.title}
+                </span>
+                <span className="block truncate text-xs text-fg-muted">
+                  {participantById.get(expense.payerParticipantId)?.name ||
+                    "Không rõ"}{" "}
+                  trả, chia {expense.splitParticipantIds.length} người
+                </span>
+              </span>
+              <span className="shrink-0 text-sm font-semibold text-stone-950 tabular dark:text-stone-50">
+                {formatPlainMoney(expense.amount)}
+              </span>
+            </button>
+          )}
+        />
+      </div>
+      <Sheet
+        open={open}
+        onClose={() => setOpen(false)}
+        title={active?.title ?? ""}
+      >
+        {active && <ExpenseCard expense={active} participants={participants} />}
+      </Sheet>
+    </div>
+  );
+}
+
 export function SharePage() {
   const { token } = useParams({ from: "/share/$token" });
   const shareQuery = useShareView(token);
@@ -340,7 +412,7 @@ export function SharePage() {
     ];
 
   return (
-    <div className="mx-auto flex h-screen w-full max-w-6xl flex-col gap-4 overflow-hidden px-4 py-4 sm:px-5">
+    <div className="mx-auto flex h-dvh w-full max-w-6xl flex-col gap-2 overflow-hidden px-4 py-3 sm:gap-4 sm:px-5 sm:py-4">
       <div className="flex shrink-0 items-center justify-between gap-3">
         <div className="min-w-0">
           <p className="text-sm font-medium text-violet-600 dark:text-violet-400">
@@ -398,80 +470,125 @@ export function SharePage() {
         })}
       </div>
 
-      <div className="min-h-0 flex-1 overflow-auto">
+      <div className="min-h-0 flex-1 overflow-hidden md:overflow-auto">
         {activeTab === "photos" ? (
-          <div className="mx-auto max-w-2xl pb-4">
-            <SharePhotoGallery token={token} expenses={view.expenses} />
-          </div>
+          <>
+            <div className="h-full md:hidden">
+              <SharePhotoGallery
+                token={token}
+                expenses={view.expenses}
+                compact
+              />
+            </div>
+            <div className="mx-auto hidden max-w-2xl pb-4 md:block">
+              <SharePhotoGallery token={token} expenses={view.expenses} />
+            </div>
+          </>
         ) : activeTab === "summary" ? (
-          <div className="mx-auto max-w-2xl space-y-5 pb-4">
-            <SharePaymentPanel token={token} participants={view.participants} />
-            <GameDashboard
-              code={view.code}
-              name={view.name}
-              participants={view.participants}
-              expenseCount={
-                view.expenses.filter(
-                  (expense) => expense.kind !== "transfer" && !expense.excluded,
-                ).length
-              }
-              summary={view.summary}
-              settlementMode={view.settlementMode}
-              settlementHostId={view.settlementHostId}
-              expenses={view.expenses}
-            />
-
-            <section className="rounded-lg border border-border bg-surface p-4 shadow-sm">
-              <h3 className="text-lg font-semibold text-stone-950 dark:text-stone-50">
-                Các khoản chi
-              </h3>
-              <div className="mt-4 space-y-2">
-                {view.expenses.length > 0 ? (
-                  view.expenses
-                    .filter(
+          <>
+            <div className="flex h-full min-h-0 flex-col gap-2 md:hidden">
+              <SharePaymentPanel
+                token={token}
+                participants={view.participants}
+              />
+              <div className="min-h-0 flex-1">
+                <GameDashboard
+                  compact
+                  code={view.code}
+                  name={view.name}
+                  participants={view.participants}
+                  expenseCount={
+                    view.expenses.filter(
                       (expense) =>
                         expense.kind !== "transfer" && !expense.excluded,
-                    )
-                    .map((expense) => {
-                      const payer = participantById.get(
-                        expense.payerParticipantId,
-                      );
-                      return (
-                        <div
-                          key={expense.id}
-                          className="rounded-md border border-border p-3"
-                        >
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="min-w-0">
-                              <p className="truncate text-sm font-semibold text-stone-950 dark:text-stone-50">
-                                {expense.title}
-                              </p>
-                              <p className="mt-1 text-xs text-fg-muted">
-                                {payer?.name || "Không rõ"} trả, chia{" "}
-                                {expense.splitParticipantIds.length} người
-                              </p>
-                            </div>
-                            <span className="shrink-0 text-sm font-semibold text-stone-950 tabular dark:text-stone-50">
-                              {formatMoney(expense.amount)}
-                            </span>
-                          </div>
-                        </div>
-                      );
-                    })
-                ) : (
-                  <p className="text-sm text-fg-muted">
-                    Chưa có khoản chi nào.
-                  </p>
-                )}
+                    ).length
+                  }
+                  summary={view.summary}
+                  settlementMode={view.settlementMode}
+                  settlementHostId={view.settlementHostId}
+                  expenses={view.expenses}
+                />
               </div>
-            </section>
-          </div>
+            </div>
+            <div className="mx-auto hidden max-w-2xl space-y-5 pb-4 md:block">
+              <SharePaymentPanel
+                token={token}
+                participants={view.participants}
+              />
+              <GameDashboard
+                code={view.code}
+                name={view.name}
+                participants={view.participants}
+                expenseCount={
+                  view.expenses.filter(
+                    (expense) =>
+                      expense.kind !== "transfer" && !expense.excluded,
+                  ).length
+                }
+                summary={view.summary}
+                settlementMode={view.settlementMode}
+                settlementHostId={view.settlementHostId}
+                expenses={view.expenses}
+              />
+
+              <section className="rounded-lg border border-border bg-surface p-4 shadow-sm">
+                <h3 className="text-lg font-semibold text-stone-950 dark:text-stone-50">
+                  Các khoản chi
+                </h3>
+                <div className="mt-4 space-y-2">
+                  {view.expenses.length > 0 ? (
+                    view.expenses
+                      .filter(
+                        (expense) =>
+                          expense.kind !== "transfer" && !expense.excluded,
+                      )
+                      .map((expense) => {
+                        const payer = participantById.get(
+                          expense.payerParticipantId,
+                        );
+                        return (
+                          <div
+                            key={expense.id}
+                            className="rounded-md border border-border p-3"
+                          >
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="min-w-0">
+                                <p className="truncate text-sm font-semibold text-stone-950 dark:text-stone-50">
+                                  {expense.title}
+                                </p>
+                                <p className="mt-1 text-xs text-fg-muted">
+                                  {payer?.name || "Không rõ"} trả, chia{" "}
+                                  {expense.splitParticipantIds.length} người
+                                </p>
+                              </div>
+                              <span className="shrink-0 text-sm font-semibold text-stone-950 tabular dark:text-stone-50">
+                                {formatMoney(expense.amount)}
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })
+                  ) : (
+                    <p className="text-sm text-fg-muted">
+                      Chưa có khoản chi nào.
+                    </p>
+                  )}
+                </div>
+              </section>
+            </div>
+          </>
         ) : (
-          <ExpenseMatrix
-            participants={view.participants}
-            expenses={view.expenses}
-            summary={view.summary}
-          />
+          <>
+            <ExpenseMatrixCompact
+              participants={view.participants}
+              expenses={view.expenses}
+            />
+            <ExpenseMatrix
+              participants={view.participants}
+              expenses={view.expenses}
+              summary={view.summary}
+            />
+          </>
         )}
       </div>
     </div>
