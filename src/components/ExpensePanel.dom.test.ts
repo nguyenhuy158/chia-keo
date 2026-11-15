@@ -13,11 +13,26 @@ import type { GameApiPort } from "../core/ports/game-api";
 import { ConfirmProvider } from "./ConfirmDialog";
 import { ExpensePanel } from "./ExpensePanel";
 
-const { uploadMock, photoViewerOpen, uploadState } = vi.hoisted(() => ({
+type DragEndEvent = { active: { id: string }; over: { id: string } | null };
+
+const { uploadMock, photoViewerOpen, uploadState, dnd } = vi.hoisted(() => ({
   uploadMock: vi.fn().mockResolvedValue([]),
   photoViewerOpen: vi.fn(),
   uploadState: { pending: false, done: 0, total: 0, error: "" },
+  dnd: { onDragEnd: undefined as ((event: DragEndEvent) => void) | undefined },
 }));
+
+vi.mock("@dnd-kit/core", async () => {
+  const actual =
+    await vi.importActual<typeof import("@dnd-kit/core")>("@dnd-kit/core");
+  return {
+    ...actual,
+    DndContext: (props: ComponentProps<typeof actual.DndContext>) => {
+      dnd.onDragEnd = props.onDragEnd as typeof dnd.onDragEnd;
+      return createElement(actual.DndContext, props);
+    },
+  };
+});
 
 vi.mock("../adapters/react-query/photo-upload", () => ({
   usePhotoUploader: () => ({
@@ -1002,7 +1017,7 @@ describe("ExpensePanel", () => {
     );
   });
 
-  it("kéo khoản chi để đổi thứ tự", () => {
+  it("đổi thứ tự khi thả, bỏ qua khi thả tại chỗ hoặc ra ngoài danh sách", () => {
     const onReorder = vi.fn<PanelHandlers["onReorder"]>();
     panel({
       expenses: [expense(), expense({ id: "expense-b", title: "Ăn tối" })],
@@ -1010,27 +1025,20 @@ describe("ExpensePanel", () => {
     });
     const handle = host.querySelector(
       "button[aria-label='Kéo để đổi thứ tự Tiền sân']",
-    ) as HTMLButtonElement;
-    handle.setPointerCapture = vi.fn();
-    const rows = [
-      ...host.querySelectorAll("button[aria-label^='Kéo để đổi thứ tự']"),
-    ].map(
-      (button) => button.parentElement?.parentElement as HTMLElement,
     );
-    rows[0].getBoundingClientRect = () => ({ top: 0, height: 50 }) as DOMRect;
-    rows[1].getBoundingClientRect = () => ({ top: 100, height: 50 }) as DOMRect;
-    const pointer = (kind: string, clientY: number) => {
-      const event = new MouseEvent(kind, {
-        bubbles: true,
-        clientY,
-        cancelable: true,
-      });
-      Object.defineProperty(event, "pointerId", { value: 1 });
-      act(() => handle.dispatchEvent(event));
-    };
-    pointer("pointerdown", 10);
-    pointer("pointermove", 120);
-    pointer("pointerup", 120);
+    expect(handle?.getAttribute("aria-roledescription")).toBe("sortable");
+    const drop = (active: string, over: string | null) =>
+      act(() =>
+        dnd.onDragEnd?.({
+          active: { id: active },
+          over: over ? { id: over } : null,
+        }),
+      );
+    drop("expense-a", "expense-a");
+    drop("expense-a", null);
+    expect(onReorder).not.toHaveBeenCalled();
+    drop("expense-a", "expense-b");
+    expect(onReorder).toHaveBeenCalledTimes(1);
     expect(onReorder).toHaveBeenCalledWith(["expense-b", "expense-a"]);
   });
 

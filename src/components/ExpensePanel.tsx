@@ -38,9 +38,9 @@ import { formatMoney, parseMoney } from "../core/domain/money";
 import { usePhotoUploader } from "../adapters/react-query/photo-upload";
 import { useAiScanReceipt, useAiSuggestExpense } from "../adapters/react-query/queries";
 import { Dropdown } from "./Dropdown";
-import { useDragReorder } from "./use-drag-reorder";
 import { MoneyInput } from "./MoneyInput";
 import { Menu } from "../ui/Menu";
+import { SortableItem, SortableList } from "./sortable";
 import { PhotoPickerButton } from "./PhotoPanel";
 import {
   categoryMeta,
@@ -314,19 +314,6 @@ export function ExpensePanel({
   const participantById = new Map(participants.map((participant) => [participant.id, participant]));
 
   const visibleExpenses = expenses.filter((expense) => expense.kind !== "transfer");
-  const {
-    orderedItems: orderedExpenses,
-    draggingId,
-    dragTranslateY,
-    registerRow,
-    handleDragPointerDown,
-    handleDragPointerMove,
-    handleDragPointerUp,
-  } = useDragReorder<ApiExpense>(
-    visibleExpenses,
-    (expense) => expense.id,
-    onReorder,
-  );
 
   const form = useForm<ExpenseFormValues>({
     resolver: zodResolver(expenseFormSchema),
@@ -1100,155 +1087,153 @@ function handleSplitModeChange(mode: SplitMode) {
         </div>
       </form>
 
-      <div className="mt-5 space-y-2">
-        {orderedExpenses.map((expense) => {
+      <SortableList
+        ids={visibleExpenses.map((expense) => expense.id)}
+        onReorder={onReorder}
+        className="mt-5 space-y-2"
+      >
+        {visibleExpenses.map((expense) => {
           const payer = participantById.get(expense.payerParticipantId);
           const isEditing = expense.id === editingExpenseId;
           const attachedPhotos = filterPhotosByExpenseId(photos, expense.id);
           const hiddenPhotoCount =
             (photoCountByExpenseId.get(expense.id) || 0) - EXPENSE_THUMB_LIMIT;
           return (
-            <div
+            <SortableItem
               key={expense.id}
-              ref={registerRow(expense.id)}
-              style={
-                draggingId === expense.id
-                  ? { transform: `translateY(${dragTranslateY}px)`, position: "relative", zIndex: 10 }
-                  : undefined
-              }
+              id={expense.id}
               className={`rounded-md border p-3 ${
-                draggingId === expense.id
-                  ? "opacity-90 shadow-lg"
-                  : "transition-shadow"
-              } ${
                 isEditing
                   ? "border-violet-500 bg-primary-soft dark:border-violet-500"
                   : "border-border"
               } ${expense.excluded ? "opacity-60" : ""}`}
             >
-              <div className="flex items-start gap-1">
-                <button
-                  type="button"
-                  onPointerDown={(event) => handleDragPointerDown(expense.id, event)}
-                  onPointerMove={handleDragPointerMove}
-                  onPointerUp={handleDragPointerUp}
-                  onPointerCancel={handleDragPointerUp}
-                  className="flex h-11 w-6 shrink-0 items-center justify-center text-stone-400 [touch-action:none] dark:text-stone-600"
-                  aria-label={`Kéo để đổi thứ tự ${expense.title}`}
-                >
-                  <GripVertical size={16} />
-                </button>
-                <div className="min-w-0 flex-1 pt-2.5">
-                  <div className="flex items-start justify-between gap-2">
-                    <p className="min-w-0 break-words text-sm font-semibold text-stone-950 dark:text-stone-50">
-                      {expense.title}
-                      {expense.excluded && (
-                        <span className="ml-1.5 rounded bg-surface-muted px-1.5 py-0.5 text-[10px] font-semibold text-fg-muted">
-                          Không tính
-                        </span>
-                      )}
-                      {expense.kind === "income" && (
-                        <span className="ml-1.5 rounded bg-emerald-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400">
-                          Thu
-                        </span>
-                      )}
-                    </p>
-                    <span
-                      className={`shrink-0 text-sm font-bold tabular ${
-                        expense.kind === "income"
-                          ? "text-emerald-700 dark:text-emerald-400"
-                          : "text-violet-700 dark:text-violet-400"
-                      } ${expense.excluded ? "line-through" : ""}`}
+              {(handle) => (
+                <>
+                  <div className="flex items-start gap-1">
+                    <button
+                      type="button"
+                      ref={handle.setActivatorNodeRef}
+                      {...handle.attributes}
+                      {...handle.listeners}
+                      className="flex h-11 w-6 shrink-0 items-center justify-center text-stone-400 [touch-action:none] dark:text-stone-600"
+                      aria-label={`Kéo để đổi thứ tự ${expense.title}`}
                     >
-                      {expense.kind === "income" ? "+" : ""}
-                      {formatMoney(expense.amount)}
-                    </span>
+                      <GripVertical size={16} />
+                    </button>
+                    <div className="min-w-0 flex-1 pt-2.5">
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="min-w-0 break-words text-sm font-semibold text-stone-950 dark:text-stone-50">
+                          {expense.title}
+                          {expense.excluded && (
+                            <span className="ml-1.5 rounded bg-surface-muted px-1.5 py-0.5 text-[10px] font-semibold text-fg-muted">
+                              Không tính
+                            </span>
+                          )}
+                          {expense.kind === "income" && (
+                            <span className="ml-1.5 rounded bg-emerald-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400">
+                              Thu
+                            </span>
+                          )}
+                        </p>
+                        <span
+                          className={`shrink-0 text-sm font-bold tabular ${
+                            expense.kind === "income"
+                              ? "text-emerald-700 dark:text-emerald-400"
+                              : "text-violet-700 dark:text-violet-400"
+                          } ${expense.excluded ? "line-through" : ""}`}
+                        >
+                          {expense.kind === "income" ? "+" : ""}
+                          {formatMoney(expense.amount)}
+                        </span>
+                      </div>
+                      <p className="mt-0.5 text-xs text-fg-muted">
+                        {payer?.name || "Không rõ"} {expense.kind === "income" ? "nhận" : "trả"} ·{" "}
+                        {expense.splitParticipantIds.length} người
+                        {SPLIT_MODE_BADGES[expense.splitMode] &&
+                          ` · ${SPLIT_MODE_BADGES[expense.splitMode]}`}
+                        {expense.kind !== "income" &&
+                          categoryMeta(expense.category) &&
+                          ` · ${categoryMeta(expense.category)?.emoji} ${categoryMeta(expense.category)?.label}`}
+                      </p>
+                    </div>
+                    <Menu
+                      trigger={(props) => (
+                        <button
+                          type="button"
+                          {...props}
+                          aria-haspopup="menu"
+                          aria-label={`Tùy chọn ${expense.title}`}
+                          className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md text-fg-muted transition hover:bg-surface-muted"
+                        >
+                          <MoreHorizontal size={18} />
+                        </button>
+                      )}
+                      items={[
+                        {
+                          label: isEditing ? "Hủy sửa" : "Sửa",
+                          icon: <Pencil size={15} />,
+                          onSelect: () => (isEditing ? cancelEditExpense() : startEditExpense(expense)),
+                        },
+                        {
+                          label: expense.excluded ? "Tính lại" : "Bỏ tính",
+                          icon: expense.excluded ? <Eye size={15} /> : <EyeOff size={15} />,
+                          onSelect: () => onToggleExcluded(expense.id, !expense.excluded),
+                        },
+                        {
+                          label: "Xóa",
+                          icon: <Trash2 size={15} />,
+                          destructive: true,
+                          onSelect: () => onRemove(expense.id),
+                        },
+                      ]}
+                    />
                   </div>
-                  <p className="mt-0.5 text-xs text-fg-muted">
-                    {payer?.name || "Không rõ"} {expense.kind === "income" ? "nhận" : "trả"} ·{" "}
-                    {expense.splitParticipantIds.length} người
-                    {SPLIT_MODE_BADGES[expense.splitMode] &&
-                      ` · ${SPLIT_MODE_BADGES[expense.splitMode]}`}
-                    {expense.kind !== "income" &&
-                      categoryMeta(expense.category) &&
-                      ` · ${categoryMeta(expense.category)?.emoji} ${categoryMeta(expense.category)?.label}`}
-                  </p>
-                </div>
-                <Menu
-                  trigger={(props) => (
-                    <button
-                      type="button"
-                      {...props}
-                      aria-haspopup="menu"
-                      aria-label={`Tùy chọn ${expense.title}`}
-                      className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md text-fg-muted transition hover:bg-surface-muted"
-                    >
-                      <MoreHorizontal size={18} />
-                    </button>
-                  )}
-                  items={[
-                    {
-                      label: isEditing ? "Hủy sửa" : "Sửa",
-                      icon: <Pencil size={15} />,
-                      onSelect: () => (isEditing ? cancelEditExpense() : startEditExpense(expense)),
-                    },
-                    {
-                      label: expense.excluded ? "Tính lại" : "Bỏ tính",
-                      icon: expense.excluded ? <Eye size={15} /> : <EyeOff size={15} />,
-                      onSelect: () => onToggleExcluded(expense.id, !expense.excluded),
-                    },
-                    {
-                      label: "Xóa",
-                      icon: <Trash2 size={15} />,
-                      destructive: true,
-                      onSelect: () => onRemove(expense.id),
-                    },
-                  ]}
-                />
-              </div>
 
-              {attachedPhotos.length > 0 && (
-                <div className="ml-7 mt-2 flex flex-wrap items-center gap-2">
-                  {attachedPhotos.slice(0, EXPENSE_THUMB_LIMIT).map((photo, index) => (
-                    <button
-                      key={photo.id}
-                      type="button"
-                      onClick={() => openExpensePhotos(expense.id, index)}
-                      className="h-12 w-12 overflow-hidden rounded-md border border-stone-200 transition active:scale-95 dark:border-stone-700"
-                      aria-label={`Xem ảnh của ${expense.title}`}
-                    >
-                      <img
-                        src={toDataUrl(photo.mimeType, photo.thumbData)}
-                        alt=""
-                        loading="lazy"
-                        className="h-full w-full object-cover"
-                      />
-                    </button>
-                  ))}
-                  {hiddenPhotoCount > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => openExpensePhotos(expense.id, EXPENSE_THUMB_LIMIT)}
-                      className="h-12 w-12 rounded-md border border-stone-200 text-xs font-semibold text-stone-600 transition active:scale-95 dark:border-stone-700 dark:text-stone-300"
-                    >
-                      +{hiddenPhotoCount}
-                    </button>
+                  {attachedPhotos.length > 0 && (
+                    <div className="ml-7 mt-2 flex flex-wrap items-center gap-2">
+                      {attachedPhotos.slice(0, EXPENSE_THUMB_LIMIT).map((photo, index) => (
+                        <button
+                          key={photo.id}
+                          type="button"
+                          onClick={() => openExpensePhotos(expense.id, index)}
+                          className="h-12 w-12 overflow-hidden rounded-md border border-stone-200 transition active:scale-95 dark:border-stone-700"
+                          aria-label={`Xem ảnh của ${expense.title}`}
+                        >
+                          <img
+                            src={toDataUrl(photo.mimeType, photo.thumbData)}
+                            alt=""
+                            loading="lazy"
+                            className="h-full w-full object-cover"
+                          />
+                        </button>
+                      ))}
+                      {hiddenPhotoCount > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => openExpensePhotos(expense.id, EXPENSE_THUMB_LIMIT)}
+                          className="h-12 w-12 rounded-md border border-stone-200 text-xs font-semibold text-stone-600 transition active:scale-95 dark:border-stone-700 dark:text-stone-300"
+                        >
+                          +{hiddenPhotoCount}
+                        </button>
+                      )}
+                      <PhotoPickerButton
+                        label=""
+                        ariaLabel={`Thêm ảnh cho ${expense.title}`}
+                        disabled={uploader.pending}
+                        onPick={(files) => uploader.upload(files, { expenseId: expense.id })}
+                        className="h-12 border border-dashed border-stone-300 text-xs text-stone-500 hover:bg-stone-50 dark:border-stone-700 dark:text-stone-400 dark:hover:bg-stone-800"
+                      >
+                        <Paperclip size={14} />
+                      </PhotoPickerButton>
+                    </div>
                   )}
-                  <PhotoPickerButton
-                    label=""
-                    ariaLabel={`Thêm ảnh cho ${expense.title}`}
-                    disabled={uploader.pending}
-                    onPick={(files) => uploader.upload(files, { expenseId: expense.id })}
-                    className="h-12 border border-dashed border-stone-300 text-xs text-stone-500 hover:bg-stone-50 dark:border-stone-700 dark:text-stone-400 dark:hover:bg-stone-800"
-                  >
-                    <Paperclip size={14} />
-                  </PhotoPickerButton>
-                </div>
+                </>
               )}
-            </div>
+            </SortableItem>
           );
         })}
-      </div>
+      </SortableList>
 
       {photoViewer.viewer}
     </section>
