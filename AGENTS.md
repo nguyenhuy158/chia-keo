@@ -112,8 +112,9 @@ How this repo fits with the other `*.huyab.cfd` apps:
   `/api` to `wrangler dev` on `127.0.0.1:8787`).
 - `pnpm dev:api`: run the Worker locally with `wrangler dev`.
 - `pnpm check`: TypeScript project check (`tsc -b`) for app, node and worker.
-- `pnpm lint`: Biome lint + format check (`biome check .`). The codebase
-  predates Biome, so existing findings are not yet a CI gate.
+- `pnpm lint`: Biome lint + format check (`biome check .`). It exits 0 now and
+  must stay that way. CI does not run it yet (needs `run-lint` in kit's
+  `check.yml`, tracked in kit#18).
 - `pnpm format`: apply Biome formatting (`biome format --write .`).
 - `pnpm build`: run TypeScript project build checks, then create the Vite
   production build.
