@@ -919,6 +919,23 @@ try {
   await page.getByRole("button", { name: "Cần tất toán", exact: true }).click();
   assert.equal(await scrolls(), false, "trang chu cuon duoc o view khac");
   ok("phone: home page fits one screen");
+
+  await page.goto(`${BASE}/shuttles`);
+  await page
+    .getByRole("button", { name: "Dùng 1 trái" })
+    .waitFor({ state: "visible", ...WAIT });
+  assert.equal(await scrolls(), false, "kho cau cuon duoc tren dien thoai");
+  await page.goto(`${BASE}/fun`);
+  await page
+    .getByRole("heading", { name: "Thống kê vui" })
+    .first()
+    .waitFor({ state: "visible", ...WAIT });
+  assert.equal(
+    await scrolls(),
+    false,
+    "thong ke vui cuon duoc tren dien thoai",
+  );
+  ok("phone: shuttles and fun stats fit one screen");
   await page.setViewportSize({ width: 1280, height: 720 });
   ok("phone: Chi tab fits one screen, pages the list and adds from a Sheet");
 
