@@ -321,3 +321,185 @@ describe("GameDashboard", () => {
     expect(button("Xóa khoản trả nợ")).toBeUndefined();
   });
 });
+
+describe("GameDashboard compact", () => {
+  function sheetButton(label: string) {
+    return [...document.body.querySelectorAll("button")].find(
+      (item) =>
+        !host.contains(item) &&
+        (item.textContent?.trim() === label ||
+          item.getAttribute("aria-label") === label),
+    ) as HTMLButtonElement | undefined;
+  }
+
+  function show(label: string) {
+    act(() => button(label)?.click());
+  }
+
+  it("hiện tổng chi, số dư và bỏ qua người không còn trong cuộc", () => {
+    render({
+      compact: true,
+      summary: {
+        ...summary,
+        balances: [
+          ...balances,
+          { participantId: "ghost", paid: 0, owed: 0, balance: 0 },
+        ],
+      },
+    });
+    expect(host.textContent).toContain("300.000");
+    expect(host.textContent).toContain("3 người · 2 khoản");
+    expect(host.textContent).toContain("Đã trả 150.000");
+    expect(host.textContent).not.toContain("ghost");
+    render({ compact: true, summary: { ...summary, balances: [] } });
+    expect(host.textContent).toContain("Chưa có người tham gia.");
+  });
+
+  it("chia sẻ chuyển khoản nhiều chiều qua Sheet có QR, nhắc và đã trả", () => {
+    render({ compact: true });
+    show("Chuyển khoản");
+    expect(host.textContent).toContain("Bình → An");
+    act(() => onModeChange.mockClear());
+    show("Tắt");
+    expect(onModeChange).toHaveBeenCalledWith("off");
+    show("Chi tiết Bình trả An");
+    expect(buildUrl).toHaveBeenCalledWith(participants[0], 50000, "CK01");
+    expect(document.body.querySelector("img")?.getAttribute("alt")).toBe(
+      "QR nhận tiền của An",
+    );
+    act(() => sheetButton("Copy lời nhắc cho Bình")?.click());
+    expect(copyText).toHaveBeenCalled();
+    act(() => sheetButton("Đã trả")?.click());
+    expect(onSettle).toHaveBeenCalledWith(summary.settlements[0]);
+  });
+
+  it("đóng Sheet bằng Escape và ẩn QR khi không dựng được", async () => {
+    canBuild.mockReturnValue(false);
+    render({ compact: true });
+    show("Chuyển khoản");
+    show("Chi tiết Bình trả An");
+    expect(document.body.querySelector("img")).toBeNull();
+    act(() => {
+      document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+    });
+    await vi.waitFor(() =>
+      expect(sheetButton("Copy lời nhắc cho Bình")).toBeUndefined(),
+    );
+  });
+
+  it("gom về một người ở cả hai chiều, chọn người nhận và bỏ qua người lạ", () => {
+    render({
+      compact: true,
+      settlementMode: "pick",
+      settlementHostId: "an",
+      summary: {
+        ...summary,
+        balances: [
+          ...balances,
+          { participantId: "ghost", paid: 0, owed: 40000, balance: -40000 },
+        ],
+      },
+    });
+    show("Chuyển khoản");
+    expect(host.textContent).toContain("Bình → An");
+    expect(host.textContent).not.toContain("ghost");
+    act(() => {
+      const select = host.querySelector("select") as HTMLSelectElement;
+      select.value = "binh";
+      select.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+    expect(onHostChange).toHaveBeenCalledWith("binh");
+    show("Chi tiết Bình trả An");
+    expect(buildUrl).toHaveBeenCalledWith(participants[0], 0, "CK01");
+    expect(document.body.textContent).toContain("Quét rồi tự nhập");
+  });
+
+  it("gom về người nhận tiền ở chiều ngược lại thì không có QR", () => {
+    render({
+      compact: true,
+      settlementMode: "pick",
+      settlementHostId: "binh",
+    });
+    show("Chuyển khoản");
+    show("Chi tiết Bình trả An");
+    expect(document.body.querySelector("img")).toBeNull();
+    act(() => sheetButton("Đã trả")?.click());
+    expect(onSettle).toHaveBeenCalledWith({
+      fromParticipantId: "binh",
+      toParticipantId: "an",
+      amount: 50000,
+    });
+  });
+
+  it("bỏ qua cặp chuyển khoản có người đã bị xóa", () => {
+    render({
+      compact: true,
+      summary: {
+        ...summary,
+        settlements: [
+          { fromParticipantId: "ghost", toParticipantId: "an", amount: 1000 },
+        ],
+      },
+    });
+    show("Chuyển khoản");
+    expect(host.textContent).toContain("Thêm khoản chi để tính tiền.");
+    expect(host.textContent).not.toContain("→");
+  });
+
+  it("hiện trạng thái trống của từng chế độ", () => {
+    render({
+      compact: true,
+      settlementMode: "host",
+      summary: { ...summary, balances: [] },
+    });
+    show("Chuyển khoản");
+    expect(host.textContent).toContain("Thêm khoản chi để tính tiền.");
+    const none = { ...summary, settlements: [] };
+    render({ compact: true, summary: none });
+    show("Chuyển khoản");
+    expect(host.textContent).toContain("Thêm khoản chi để tính tiền.");
+    render({ compact: true, summary: none, expenses: [transfer()] });
+    expect(host.textContent).toContain("Mọi người đã cân bằng");
+    render({ compact: true, summary: none, settlementMode: "off" });
+    expect(host.textContent).toContain("Đang tắt.");
+  });
+
+  it("chế độ chỉ xem không có điều khiển và không có nút ghi nhận", () => {
+    render({
+      compact: true,
+      onSettlementModeChange: undefined,
+      onSettlementHostChange: undefined,
+      onSettle: undefined,
+      onRemoveTransfer: undefined,
+      expenses: [transfer()],
+    });
+    show("Chuyển khoản");
+    expect(button("Tắt")).toBeUndefined();
+    show("Chi tiết Bình trả An");
+    expect(sheetButton("Đã trả")).toBeUndefined();
+    show("Đã trả (1)");
+    expect(button("Xóa khoản trả nợ")).toBeUndefined();
+  });
+
+  it("liệt kê lịch sử trả nợ và xóa một khoản", () => {
+    render({ compact: true });
+    show("Đã trả");
+    expect(host.textContent).toContain("Chưa ghi nhận khoản trả nợ nào.");
+    render({
+      compact: true,
+      expenses: [
+        transfer(),
+        transfer({
+          id: "transfer-2",
+          payerParticipantId: "missing",
+          splits: [],
+        }),
+      ],
+    });
+    show("Đã trả (2)");
+    expect(host.textContent).toContain("Bình đã trả An");
+    expect(host.textContent).toContain("Không rõ đã trả Không rõ");
+    act(() => button("Xóa khoản trả nợ")?.click());
+    expect(onRemoveTransfer).toHaveBeenCalledWith("transfer-1");
+  });
+});

@@ -1,4 +1,5 @@
-import { Copy, HandCoins, Trash2 } from "lucide-react";
+import { ChevronRight, Copy, HandCoins, Trash2 } from "lucide-react";
+import { useState } from "react";
 import { toast } from "sonner";
 import type {
   ApiExpense,
@@ -15,14 +16,16 @@ import {
 import { copyText } from "../adapters/browser/clipboard";
 import { getQrProvider } from "../core/container";
 import { formatMoney } from "../core/domain/money";
+import { PagedList } from "../ui/PagedList";
+import { Sheet } from "../ui/Sheet";
 import { Avatar } from "./Avatar";
 import { CategoryBreakdownCard } from "./CategoryBreakdownCard";
 import { BalancePill, Metric } from "./ui";
 
 /** QR chung cua host khong gan san so tien vi moi nguoi chuyen mot muc khac. */
-const QR_AMOUNT_FREE = 0;
+export const QR_AMOUNT_FREE = 0;
 
-function ReminderButton({
+export function ReminderButton({
   gameName,
   fromName,
   toName,
@@ -59,7 +62,7 @@ function ReminderButton({
   );
 }
 
-const MODE_OPTIONS: Array<{
+export const MODE_OPTIONS: Array<{
   value: SettlementMode;
   label: string;
   hint: string;
@@ -82,7 +85,7 @@ const MODE_OPTIONS: Array<{
   { value: "off", label: "Tắt", hint: "Không hiện phần chuyển khoản" },
 ];
 
-type GameDashboardProps = {
+export type GameDashboardProps = {
   code: string;
   name: string;
   participants: ApiParticipant[];
@@ -102,9 +105,10 @@ type GameDashboardProps = {
   onSettle?: (settlement: SettlementRow) => void;
   onRemoveTransfer?: (expenseId: string) => void;
   settlePending?: boolean;
+  compact?: boolean;
 };
 
-export function GameDashboard({
+function GameDashboardFull({
   code,
   name,
   participants,
@@ -455,5 +459,341 @@ export function GameDashboard({
         </section>
       )}
     </aside>
+  );
+}
+
+export function GameDashboard(props: GameDashboardProps) {
+  return props.compact ? (
+    <GameDashboardCompact {...props} />
+  ) : (
+    <GameDashboardFull {...props} />
+  );
+}
+
+type DashboardView = "balances" | "transfers" | "paid";
+
+type TransferRow = {
+  key: string;
+  fromName: string;
+  toName: string;
+  amount: number;
+  settlement: SettlementRow;
+  qr?: { target: ApiParticipant; amount: number; hint: string };
+};
+
+const COMPACT_ROW_HEIGHT_PX = 56;
+const VIEW_BUTTON =
+  "inline-flex h-11 flex-1 items-center justify-center whitespace-nowrap rounded-md px-1 text-[13px] font-semibold transition";
+
+function GameDashboardCompact({
+  name,
+  code,
+  participants,
+  expenseCount,
+  summary,
+  settlementMode,
+  settlementHostId = "",
+  expenses = [],
+  onSettlementModeChange,
+  onSettlementHostChange,
+  onSettle,
+  onRemoveTransfer,
+  settlePending = false,
+}: GameDashboardProps) {
+  const [view, setView] = useState<DashboardView>("balances");
+  const [activeRow, setActiveRow] = useState<TransferRow | null>(null);
+  const [rowOpen, setRowOpen] = useState(false);
+  const qr = getQrProvider();
+  const participantById = new Map(
+    participants.map((participant) => [participant.id, participant]),
+  );
+  const transfers = expenses.filter((expense) => expense.kind === "transfer");
+  const isHostMode = settlementMode === "host" || settlementMode === "pick";
+  const hostId = resolveHostParticipantId(
+    summary.balances,
+    settlementMode,
+    settlementHostId,
+  );
+  const host = hostId ? participantById.get(hostId) : undefined;
+
+  const transferRows: TransferRow[] = [];
+  if (isHostMode && host) {
+    for (const transfer of calculateHostTransfers(summary.balances, hostId)) {
+      const participant = participantById.get(transfer.participantId);
+      if (!participant) continue;
+      const from = transfer.toHost ? participant : host;
+      const to = transfer.toHost ? host : participant;
+      transferRows.push({
+        key: `${from.id}-${to.id}`,
+        fromName: from.name,
+        toName: to.name,
+        amount: transfer.amount,
+        settlement: {
+          fromParticipantId: from.id,
+          toParticipantId: to.id,
+          amount: transfer.amount,
+        },
+        qr: transfer.toHost
+          ? {
+              target: host,
+              amount: QR_AMOUNT_FREE,
+              hint: "Quét rồi tự nhập số tiền của mình",
+            }
+          : undefined,
+      });
+    }
+  } else if (!isHostMode) {
+    for (const settlement of summary.settlements) {
+      const from = participantById.get(settlement.fromParticipantId);
+      const to = participantById.get(settlement.toParticipantId);
+      if (!from || !to) continue;
+      transferRows.push({
+        key: `${from.id}-${to.id}-${settlement.amount}`,
+        fromName: from.name,
+        toName: to.name,
+        amount: settlement.amount,
+        settlement,
+        qr: { target: to, amount: settlement.amount, hint: "" },
+      });
+    }
+  }
+
+  const transferEmpty =
+    settlementMode === "off"
+      ? "Đang tắt. Bảng tổng kết và ảnh cũng sẽ không có phần chuyển khoản."
+      : transfers.length > 0
+        ? "Mọi người đã cân bằng, không còn ai nợ ai."
+        : "Thêm khoản chi để tính tiền.";
+
+  function openRow(row: TransferRow) {
+    setActiveRow(row);
+    setRowOpen(true);
+  }
+
+  const views: Array<{ id: DashboardView; label: string }> = [
+    { id: "balances", label: "Số dư" },
+    { id: "transfers", label: "Chuyển khoản" },
+    {
+      id: "paid",
+      label: transfers.length > 0 ? `Đã trả (${transfers.length})` : "Đã trả",
+    },
+  ];
+
+  return (
+    <div className="flex h-full min-h-0 flex-col gap-2">
+      <p className="shrink-0 text-xs text-fg-muted tabular">
+        Tổng chi{" "}
+        <b className="text-sm text-stone-950 dark:text-stone-50">
+          {formatMoney(summary.totalExpense)}
+        </b>{" "}
+        · {participants.length} người · {expenseCount} khoản
+      </p>
+      <div className="flex shrink-0 gap-1 rounded-lg bg-surface-muted p-1">
+        {views.map((item) => (
+          <button
+            key={item.id}
+            type="button"
+            aria-pressed={view === item.id}
+            onClick={() => setView(item.id)}
+            className={`${VIEW_BUTTON} ${
+              view === item.id
+                ? "bg-surface text-violet-700 shadow-sm dark:text-violet-300"
+                : "text-fg-muted"
+            }`}
+          >
+            {item.label}
+          </button>
+        ))}
+      </div>
+
+      {view === "transfers" && onSettlementModeChange && (
+        <div className="grid shrink-0 grid-cols-[1.25fr_1.25fr_1.25fr_0.6fr] gap-1 rounded-lg bg-surface-muted p-1">
+          {MODE_OPTIONS.map((option) => (
+            <button
+              key={option.value}
+              type="button"
+              title={option.hint}
+              aria-pressed={settlementMode === option.value}
+              onClick={() => onSettlementModeChange(option.value)}
+              className={`h-9 whitespace-nowrap rounded-md px-0.5 text-xs font-semibold transition ${
+                settlementMode === option.value
+                  ? "bg-surface text-violet-700 shadow-sm dark:text-violet-300"
+                  : "text-fg-muted"
+              }`}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+      )}
+      {view === "transfers" &&
+        settlementMode === "pick" &&
+        onSettlementHostChange && (
+          <select
+            aria-label="Người nhận tiền"
+            value={settlementHostId}
+            onChange={(event) => onSettlementHostChange(event.target.value)}
+            className="h-11 w-full shrink-0 rounded-md border border-stone-300 bg-surface px-2 text-sm text-stone-950 dark:border-stone-700 dark:text-stone-50"
+          >
+            <option value="">Tự chọn (người ứng nhiều nhất)</option>
+            {participants.map((participant) => (
+              <option key={participant.id} value={participant.id}>
+                {participant.name}
+              </option>
+            ))}
+          </select>
+        )}
+
+      <div className="min-h-0 flex-1">
+        {view === "balances" && (
+          <PagedList
+            items={summary.balances.filter((row) =>
+              participantById.has(row.participantId),
+            )}
+            getKey={(row) => row.participantId}
+            rowHeight={COMPACT_ROW_HEIGHT_PX}
+            empty={
+              <p className="py-6 text-center text-sm text-fg-muted">
+                Chưa có người tham gia.
+              </p>
+            }
+            renderItem={(row) => (
+              <div className="flex h-full flex-col justify-center rounded-md border border-border px-3">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="min-w-0 truncate text-sm font-semibold text-stone-950 dark:text-stone-50">
+                    {participantById.get(row.participantId)?.name}
+                  </p>
+                  <BalancePill value={row.balance} />
+                </div>
+                <p className="truncate text-xs text-fg-muted">
+                  Đã trả {formatMoney(row.paid)} · Phải chịu{" "}
+                  {formatMoney(row.owed)}
+                </p>
+              </div>
+            )}
+          />
+        )}
+        {view === "transfers" && (
+          <PagedList
+            items={transferRows}
+            getKey={(row) => row.key}
+            rowHeight={COMPACT_ROW_HEIGHT_PX}
+            empty={
+              <p className="py-6 text-center text-sm text-fg-muted">
+                {transferEmpty}
+              </p>
+            }
+            renderItem={(row) => (
+              <button
+                type="button"
+                onClick={() => openRow(row)}
+                aria-label={`Chi tiết ${row.fromName} trả ${row.toName}`}
+                className="flex h-full w-full items-center gap-2 rounded-md border border-border px-3 text-left transition active:bg-surface-muted"
+              >
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm font-semibold text-stone-950 dark:text-stone-50">
+                    {row.fromName} → {row.toName}
+                  </span>
+                  <span className="block text-sm font-bold text-violet-700 tabular dark:text-violet-400">
+                    {formatMoney(row.amount)}
+                  </span>
+                </span>
+                <ChevronRight size={16} className="shrink-0 text-fg-muted" />
+              </button>
+            )}
+          />
+        )}
+        {view === "paid" && (
+          <PagedList
+            items={transfers}
+            getKey={(transfer) => transfer.id}
+            rowHeight={COMPACT_ROW_HEIGHT_PX}
+            empty={
+              <p className="py-6 text-center text-sm text-fg-muted">
+                Chưa ghi nhận khoản trả nợ nào.
+              </p>
+            }
+            renderItem={(transfer) => (
+              <div className="flex h-full items-center gap-2 rounded-md border border-border pl-3 pr-1">
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium text-stone-950 dark:text-stone-50">
+                    {participantById.get(transfer.payerParticipantId)?.name ||
+                      "Không rõ"}{" "}
+                    đã trả{" "}
+                    {participantById.get(
+                      transfer.splits[0]?.participantId || "",
+                    )?.name || "Không rõ"}
+                  </p>
+                  <p className="text-sm font-semibold text-emerald-700 tabular dark:text-emerald-400">
+                    {formatMoney(transfer.amount)}
+                  </p>
+                </div>
+                {onRemoveTransfer && (
+                  <button
+                    type="button"
+                    onClick={() => onRemoveTransfer(transfer.id)}
+                    aria-label="Xóa khoản trả nợ"
+                    className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md text-danger transition hover:bg-danger-soft"
+                  >
+                    <Trash2 size={15} />
+                  </button>
+                )}
+              </div>
+            )}
+          />
+        )}
+      </div>
+
+      <Sheet
+        open={rowOpen}
+        onClose={() => setRowOpen(false)}
+        title={activeRow ? `${activeRow.fromName} → ${activeRow.toName}` : ""}
+      >
+        {activeRow && (
+          <div className="flex flex-col gap-3 pb-2">
+            <p className="text-lg font-bold text-violet-700 tabular dark:text-violet-400">
+              {formatMoney(activeRow.amount)}
+            </p>
+            {activeRow.qr?.hint && (
+              <p className="text-xs text-fg-muted">{activeRow.qr.hint}</p>
+            )}
+            {activeRow.qr && qr.canBuild(activeRow.qr.target) && (
+              <img
+                className="mx-auto w-full max-w-64 rounded-md border border-stone-200 bg-white dark:border-stone-700"
+                src={qr.buildUrl(
+                  activeRow.qr.target,
+                  activeRow.qr.amount,
+                  code,
+                )}
+                alt={`QR nhận tiền của ${activeRow.qr.target.name}`}
+              />
+            )}
+            {onSettle && (
+              <div className="flex flex-wrap items-center gap-2">
+                <ReminderButton
+                  gameName={name}
+                  fromName={activeRow.fromName}
+                  toName={activeRow.toName}
+                  amount={activeRow.amount}
+                  disabled={settlePending}
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    setRowOpen(false);
+                    onSettle(activeRow.settlement);
+                  }}
+                  disabled={settlePending}
+                  className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-md border border-emerald-300 bg-emerald-50 px-2.5 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 dark:border-emerald-500/40 dark:bg-emerald-500/10 dark:text-emerald-300"
+                >
+                  <HandCoins size={14} />
+                  Đã trả
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+      </Sheet>
+    </div>
   );
 }
