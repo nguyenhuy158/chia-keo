@@ -153,8 +153,6 @@ vi.mock("../components/MobileGameNav", async () => {
           ),
         ),
       ),
-    ExpenseFab: (props: { onClick: () => void }) =>
-      element("button", { type: "button", onClick: props.onClick }, "fab"),
   };
 });
 vi.mock("../ui/Sheet", async () => {
@@ -338,12 +336,18 @@ describe("GamePage", () => {
     await click("Lịch sử");
     expect(host.textContent?.match(/HistoryPanel/g)).toHaveLength(2);
     await click("Chia sẻ");
+    expect(host.textContent?.match(/SummaryImageCard/g)).toHaveLength(1);
+    await click("Ảnh tổng kết");
     expect(host.textContent?.match(/SummaryImageCard/g)).toHaveLength(2);
+    await click("close sheet");
+    expect(host.textContent?.match(/SummaryImageCard/g)).toHaveLength(1);
+    await click("Chia sẻ cuộc chơi với người khác");
     expect(host.textContent?.match(/CollaboratorsPanel/g)).toHaveLength(2);
+    await click("close sheet");
+    expect(host.textContent?.match(/CollaboratorsPanel/g)).toHaveLength(1);
     await click("Ảnh");
     expect(host.textContent?.match(/PhotoPanel/g)).toHaveLength(2);
-    await click("Lịch sử");
-    await click("fab");
+    await click("expenses");
     expect(host.textContent?.match(/ExpensePanel/g)).toHaveLength(2);
   });
 

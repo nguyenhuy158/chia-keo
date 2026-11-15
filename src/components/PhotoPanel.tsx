@@ -2,8 +2,10 @@ import { Images, ImageUp } from "lucide-react";
 import type { ReactNode } from "react";
 import { toast } from "sonner";
 import type { ApiExpense, ApiPhoto } from "../../shared/api-types";
+import { toDataUrl } from "../../shared/photos";
 import { MAX_PHOTOS_PER_GAME } from "../../shared/schemas";
 import { usePhotoUploader } from "../adapters/react-query/photo-upload";
+import { PagedList } from "../ui/PagedList";
 import { PhotoGrid } from "./PhotoGrid";
 import { SkeletonPhotoGrid } from "./ui";
 import { usePhotoViewer } from "./use-photo-viewer";
@@ -55,11 +57,31 @@ export function PhotoPickerButton({
   );
 }
 
+const COMPACT_PHOTOS_PER_ROW = 3;
+const COMPACT_ROW_HEIGHT_PX = 104;
+
+type PhotoRow = {
+  id: string;
+  photos: Array<{ photo: ApiPhoto; index: number }>;
+};
+
+function toPhotoRows(photos: ApiPhoto[]) {
+  const rows: PhotoRow[] = [];
+  photos.forEach((photo, index) => {
+    if (index % COMPACT_PHOTOS_PER_ROW === 0) {
+      rows.push({ id: photo.id, photos: [] });
+    }
+    rows[rows.length - 1].photos.push({ photo, index });
+  });
+  return rows;
+}
+
 type PhotoPanelProps = {
   gameId: string;
   photos: ApiPhoto[];
   expenses: ApiExpense[];
   loading?: boolean;
+  compact?: boolean;
 };
 
 /** Album anh cua mot cuoc chia: them, xem toan man hinh, sua chu thich, xoa. */
@@ -68,6 +90,7 @@ export function PhotoPanel({
   photos,
   expenses,
   loading = false,
+  compact = false,
 }: PhotoPanelProps) {
   const uploader = usePhotoUploader(gameId);
   const expenseTitleById = new Map(
@@ -96,6 +119,79 @@ export function PhotoPanel({
       <ImageUp size={17} />
     </PhotoPickerButton>
   );
+
+  if (compact) {
+    return (
+      <section className="flex h-full min-h-0 flex-col">
+        <div className="flex shrink-0 items-center gap-2 pb-2">
+          <Images size={18} className="text-sky-500" />
+          <h3 className="text-base font-semibold text-stone-950 dark:text-stone-50">
+            Ảnh
+          </h3>
+          <span className="text-xs text-fg-muted tabular">
+            {photos.length}/{MAX_PHOTOS_PER_GAME}
+          </span>
+          <div className="ml-auto">{photos.length > 0 && addButton}</div>
+        </div>
+        {uploader.error && (
+          <p className="shrink-0 pb-2 text-xs text-danger">{uploader.error}</p>
+        )}
+        {isFull && (
+          <p className="shrink-0 pb-2 text-xs text-warning">
+            Đã đủ {MAX_PHOTOS_PER_GAME} ảnh, xóa bớt ảnh cũ để thêm ảnh mới.
+          </p>
+        )}
+        <div className="min-h-0 flex-1">
+          {loading ? (
+            <SkeletonPhotoGrid />
+          ) : (
+            <PagedList
+              items={toPhotoRows(photos)}
+              getKey={(row) => row.id}
+              rowHeight={COMPACT_ROW_HEIGHT_PX}
+              empty={
+                <div className="flex flex-col items-center gap-3 rounded-md border border-dashed border-stone-300 p-6 text-center dark:border-stone-700">
+                  <Images size={28} className="text-stone-400" />
+                  <p className="text-sm text-fg-muted">
+                    Lưu ảnh hóa đơn, ảnh kỷ niệm của cả nhóm ở đây.
+                  </p>
+                  {addButton}
+                </div>
+              }
+              renderItem={(row) => (
+                <div className="grid h-full grid-cols-3 gap-2">
+                  {row.photos.map(({ photo, index }) => {
+                    const expenseTitle = photo.expenseId
+                      ? expenseTitleById.get(photo.expenseId)
+                      : undefined;
+                    const label =
+                      photo.caption || expenseTitle || `Ảnh ${index + 1}`;
+                    return (
+                      <button
+                        key={photo.id}
+                        type="button"
+                        onClick={() => photoViewer.open(index)}
+                        aria-label={label}
+                        className="overflow-hidden rounded-md border border-border bg-stone-100 transition active:scale-[0.98] dark:bg-stone-800"
+                      >
+                        <img
+                          src={toDataUrl(photo.mimeType, photo.thumbData)}
+                          alt=""
+                          loading="lazy"
+                          className="h-full w-full object-cover"
+                        />
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            />
+          )}
+        </div>
+        {photoViewer.viewer}
+      </section>
+    );
+  }
 
   return (
     <section className="rounded-lg border border-border bg-surface p-4 shadow-sm">

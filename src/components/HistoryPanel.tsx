@@ -23,6 +23,7 @@ import {
   useGameEvents,
   useUndoGameEvent,
 } from "../adapters/react-query/queries";
+import { PagedList } from "../ui/PagedList";
 import { formatDateTime, formatTime } from "./format-datetime";
 import { EmptyState, SkeletonListRow } from "./ui";
 import { usePersistentOpen } from "./use-persistent-open";
@@ -57,23 +58,35 @@ function formatWhen(iso: string, now: Date) {
     : formatDateTime(iso, { includeYear: false });
 }
 
+const COMPACT_ROW_HEIGHT_PX = 64;
+
 function EventRow({
   event,
   onUndo,
   pending,
   now,
+  compact = false,
 }: {
   event: ApiGameEvent;
   onUndo: (eventId: string) => void;
   pending: boolean;
   now: Date;
+  compact?: boolean;
 }) {
   const { title, detail } = describeGameEvent(event.payload);
   const Icon = ICONS[event.payload.kind];
   const destructive = DESTRUCTIVE.includes(event.payload.kind);
 
+  const Row = compact ? "div" : "li";
+
   return (
-    <li className="flex items-start gap-3 py-2.5">
+    <Row
+      className={
+        compact
+          ? "flex h-full items-center gap-3 rounded-md border border-border px-3"
+          : "flex items-start gap-3 py-2.5"
+      }
+    >
       <span
         className={`mt-0.5 shrink-0 ${
           destructive
@@ -84,9 +97,17 @@ function EventRow({
         <Icon size={16} />
       </span>
       <div className="min-w-0 flex-1">
-        <p className="text-sm text-stone-900 dark:text-stone-100">{title}</p>
+        <p
+          className={`text-sm text-stone-900 dark:text-stone-100 ${compact ? "truncate" : ""}`}
+        >
+          {title}
+        </p>
         {detail && (
-          <p className="mt-0.5 break-words text-xs text-fg-muted">{detail}</p>
+          <p
+            className={`mt-0.5 text-xs text-fg-muted ${compact ? "truncate" : "break-words"}`}
+          >
+            {detail}
+          </p>
         )}
         {event.undoneAt && (
           <p className="mt-0.5 text-xs font-medium text-success">đã hoàn tác</p>
@@ -108,7 +129,7 @@ function EventRow({
           </button>
         )}
       </div>
-    </li>
+    </Row>
   );
 }
 
@@ -119,11 +140,13 @@ type HistoryPanelProps = {
    * khong goi API, do la mot request cho mot thong tin khong ai doi hoi.
    */
   collapsible?: boolean;
+  compact?: boolean;
 };
 
 export function HistoryPanel({
   gameId,
   collapsible = false,
+  compact = false,
 }: HistoryPanelProps) {
   // Chi nho trang thai khi co the gap (desktop); mobile luon mo, khong co gi de nho.
   const [persistedOpen, setPersistedOpen] = usePersistentOpen("history", false);
@@ -146,6 +169,52 @@ export function HistoryPanel({
   }
 
   const events = eventsQuery.data || [];
+
+  if (compact) {
+    return (
+      <section className="flex h-full min-h-0 flex-col">
+        <div className="flex shrink-0 items-center gap-2 pb-2">
+          <History size={18} className="text-violet-600 dark:text-violet-400" />
+          <h3 className="text-base font-semibold text-stone-950 dark:text-stone-50">
+            Lịch sử
+          </h3>
+          <span className="text-xs text-fg-muted tabular">
+            {events.length} việc
+          </span>
+        </div>
+        <div className="min-h-0 flex-1">
+          {eventsQuery.isPending ? (
+            <div className="divide-y divide-stone-100 dark:divide-stone-800">
+              <SkeletonListRow icon />
+              <SkeletonListRow icon />
+              <SkeletonListRow icon />
+            </div>
+          ) : (
+            <PagedList
+              items={events}
+              getKey={(event) => event.id}
+              rowHeight={COMPACT_ROW_HEIGHT_PX}
+              empty={
+                <EmptyState
+                  title="Chưa có gì trong lịch sử"
+                  description="Các thao tác từ giờ trở đi sẽ được ghi lại ở đây."
+                />
+              }
+              renderItem={(event) => (
+                <EventRow
+                  event={event}
+                  now={now}
+                  onUndo={handleUndo}
+                  pending={undoEvent.isPending}
+                  compact
+                />
+              )}
+            />
+          )}
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="rounded-lg border border-border bg-surface p-4 shadow-sm">

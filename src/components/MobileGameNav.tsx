@@ -1,5 +1,5 @@
 import type { LucideIcon } from "lucide-react";
-import { LayoutGrid, Plus, QrCode, Users, Wallet } from "lucide-react";
+import { LayoutGrid, QrCode, Users, Wallet } from "lucide-react";
 
 export type GameSection = "people" | "expenses" | "more" | "summary";
 
@@ -44,24 +44,5 @@ export function MobileGameNav({ active, onChange }: MobileGameNavProps) {
         })}
       </div>
     </nav>
-  );
-}
-
-type ExpenseFabProps = {
-  onClick: () => void;
-};
-
-/** Nut hanh dong chinh: chuyen toi phan them khoan chi, noi phia tren bottom nav. */
-export function ExpenseFab({ onClick }: ExpenseFabProps) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-label="Thêm khoản chi"
-      style={{ bottom: "calc(4.75rem + env(safe-area-inset-bottom))" }}
-      className="fixed right-4 z-40 inline-flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-violet-600 to-fuchsia-600 text-white shadow-lg transition hover:from-violet-700 hover:to-fuchsia-700 active:scale-95 lg:hidden"
-    >
-      <Plus size={26} />
-    </button>
   );
 }

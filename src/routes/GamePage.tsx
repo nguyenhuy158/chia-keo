@@ -1,6 +1,7 @@
 import { useNavigate, useParams } from "@tanstack/react-router";
 import {
   Check,
+  ChevronRight,
   CircleCheckBig,
   Images,
   Link as LinkIcon,
@@ -51,11 +52,7 @@ import { CopyMenu } from "../components/CopyMenu";
 import { ExpensePanel } from "../components/ExpensePanel";
 import { GameDashboard } from "../components/GameDashboard";
 import { HistoryPanel } from "../components/HistoryPanel";
-import {
-  ExpenseFab,
-  type GameSection,
-  MobileGameNav,
-} from "../components/MobileGameNav";
+import { type GameSection, MobileGameNav } from "../components/MobileGameNav";
 import { useMobileShell } from "../components/mobile-shell";
 import { OnboardingBanner } from "../components/OnboardingBanner";
 import { ParticipantPanel } from "../components/ParticipantPanel";
@@ -102,6 +99,9 @@ export function GamePage() {
   );
   const shell = useMobileShell();
   const [actionsOpen, setActionsOpen] = useState(false);
+  const [shareSheet, setShareSheet] = useState<
+    "image" | "collaborators" | null
+  >(null);
   const [emailPending, setEmailPending] = useState(false);
 
   if (gameQuery.isPending) {
@@ -220,8 +220,9 @@ export function GamePage() {
     setNameDraft(null);
   }
 
-  const participantPanel = (
+  const renderParticipantPanel = (compact: boolean) => (
     <ParticipantPanel
+      compact={compact}
       participants={game.participants}
       pending={
         addParticipant.isPending ||
@@ -237,6 +238,8 @@ export function GamePage() {
       onReorder={(participantIds) => reorderParticipants.mutate(participantIds)}
     />
   );
+  const participantPanel = renderParticipantPanel(false);
+  const compactParticipantPanel = renderParticipantPanel(true);
 
   const photos = photosQuery.data || [];
 
@@ -262,14 +265,17 @@ export function GamePage() {
   const expensePanel = <ExpensePanel {...expensePanelProps} />;
   const compactExpensePanel = <ExpensePanel {...expensePanelProps} compact />;
 
-  const photoPanel = (
+  const renderPhotoPanel = (compact: boolean) => (
     <PhotoPanel
       gameId={game.id}
       photos={photos}
       expenses={game.expenses}
       loading={photosQuery.isPending}
+      compact={compact}
     />
   );
+  const photoPanel = renderPhotoPanel(false);
+  const compactPhotoPanel = renderPhotoPanel(true);
 
   const participantNameById = new Map(
     game.participants.map((participant) => [participant.id, participant.name]),
@@ -661,19 +667,13 @@ export function GamePage() {
           Tab da gon (Chi) tu chia trang, khong cuon; cac tab con lai tam thoi
           cuon trong khung cho toi khi doi xong (chiakeo#76). */}
       <div className="flex min-h-0 flex-1 flex-col lg:hidden">
-        <div
-          className={`min-h-0 flex-1 space-y-3 ${
-            activeSection === "expenses" || activeSection === "summary"
-              ? "overflow-hidden"
-              : "overflow-y-auto pb-20"
-          }`}
-        >
-          {activeSection === "people" && participantPanel}
+        <div className="min-h-0 flex-1 space-y-3 overflow-hidden">
+          {activeSection === "people" && compactParticipantPanel}
           {activeSection === "expenses" && compactExpensePanel}
           {activeSection === "summary" && compactDashboard}
           {activeSection === "more" && (
-            <div className="space-y-4">
-              <div className="flex gap-2">
+            <div className="flex h-full min-h-0 flex-col gap-2">
+              <div className="flex shrink-0 gap-2">
                 <button
                   type="button"
                   onClick={() => setMoreTab("photos")}
@@ -709,26 +709,49 @@ export function GamePage() {
                   Chia sẻ
                 </button>
               </div>
-              {moreTab === "share" && (
-                <>
-                  {summaryImageCard}
-                  {collaboratorsPanel}
-                </>
-              )}
-              {moreTab === "photos" && photoPanel}
-              {moreTab === "history" && <HistoryPanel gameId={game.id} />}
+              <div className="min-h-0 flex-1">
+                {moreTab === "share" && (
+                  <div className="flex flex-col gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setShareSheet("image")}
+                      className="flex h-14 items-center justify-between rounded-md border border-border px-3 text-sm font-semibold text-stone-950 dark:text-stone-50"
+                    >
+                      Ảnh tổng kết
+                      <ChevronRight size={16} className="text-fg-muted" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShareSheet("collaborators")}
+                      className="flex h-14 items-center justify-between rounded-md border border-border px-3 text-sm font-semibold text-stone-950 dark:text-stone-50"
+                    >
+                      Chia sẻ cuộc chơi với người khác
+                      <ChevronRight size={16} className="text-fg-muted" />
+                    </button>
+                  </div>
+                )}
+                {moreTab === "photos" && compactPhotoPanel}
+                {moreTab === "history" && (
+                  <HistoryPanel gameId={game.id} compact />
+                )}
+              </div>
             </div>
           )}
         </div>
 
         {/* Tab anh (trong Khac) co nut them anh rieng nen khong hien FAB khoan chi. */}
-        {activeSection !== "expenses" &&
-          activeSection !== "summary" &&
-          !(activeSection === "more" && moreTab === "photos") && (
-            <ExpenseFab onClick={() => setActiveSection("expenses")} />
-          )}
+
         <MobileGameNav active={activeSection} onChange={setActiveSection} />
       </div>
+
+      <Sheet
+        open={shareSheet !== null}
+        onClose={() => setShareSheet(null)}
+        title={shareSheet === "image" ? "Ảnh tổng kết" : "Chia sẻ cuộc chơi"}
+      >
+        {shareSheet === "image" && summaryImageCard}
+        {shareSheet === "collaborators" && collaboratorsPanel}
+      </Sheet>
 
       <Sheet
         open={actionsOpen}

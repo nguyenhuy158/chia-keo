@@ -815,6 +815,63 @@ try {
   ok(
     "phone: Tổng kết tab fits one screen with balances, transfers and a Sheet",
   );
+
+  const openTab = (name) =>
+    page
+      .getByRole("button", { name, exact: true })
+      .evaluate((button) => button.click());
+  await openTab("Người");
+  await page
+    .getByRole("button", { name: "Mở form thêm người" })
+    .waitFor({ state: "visible", ...WAIT });
+  assert.equal(await scrolls(), false, "tab Nguoi cuon duoc tren dien thoai");
+  await page.getByRole("button", { name: "Mở form thêm người" }).click();
+  await page.fill("input[placeholder='Huy']:visible", "Phone Guest");
+  await page.click("button[type='submit']:visible");
+  await page.waitForFunction(
+    (id) =>
+      fetch(`/api/games/${id}`, { credentials: "include" })
+        .then((response) => response.json())
+        .then((game) =>
+          game.participants.some((item) => item.name === "Phone Guest"),
+        ),
+    gameId,
+    WAIT,
+  );
+  await page.keyboard.press("Escape");
+  await page
+    .locator("input[placeholder='Huy']:visible")
+    .waitFor({ state: "hidden", ...WAIT });
+  await page
+    .getByRole("button", { name: /^Tùy chọn (?!cuộc chơi)/ })
+    .first()
+    .click();
+  const personUp = page.getByRole("button", { name: "Đưa lên", exact: true });
+  await personUp.waitFor({ state: "visible", ...WAIT });
+  await page.keyboard.press("Escape");
+  await personUp.waitFor({ state: "hidden", ...WAIT });
+  ok("phone: Người tab fits one screen and adds from a Sheet");
+
+  await openTab("Khác");
+  await page.getByRole("button", { name: "Lịch sử", exact: true }).click();
+  await page
+    .locator("main div[style*='height: 64px']")
+    .first()
+    .waitFor({ state: "visible", ...WAIT });
+  assert.equal(await scrolls(), false, "Lich su cuon duoc tren dien thoai");
+  await page.getByRole("button", { name: "Ảnh", exact: true }).click();
+  assert.equal(await scrolls(), false, "Anh cuon duoc tren dien thoai");
+  await page.getByRole("button", { name: "Chia sẻ", exact: true }).click();
+  await page.getByRole("button", { name: "Ảnh tổng kết" }).click();
+  await page
+    .getByRole("dialog", { name: "Ảnh tổng kết" })
+    .waitFor({ state: "visible", ...WAIT });
+  await page.keyboard.press("Escape");
+  await page
+    .getByRole("dialog", { name: "Ảnh tổng kết" })
+    .waitFor({ state: "hidden", ...WAIT });
+  assert.equal(await scrolls(), false, "Chia se cuon duoc tren dien thoai");
+  ok("phone: Khác tab fits one screen with photos, history and share Sheets");
   await page.setViewportSize({ width: 1280, height: 720 });
   ok("phone: Chi tab fits one screen, pages the list and adds from a Sheet");
 
