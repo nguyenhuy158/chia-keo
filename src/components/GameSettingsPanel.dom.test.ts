@@ -7,6 +7,7 @@ const { preferences, mutate } = vi.hoisted(() => ({
     summaryShowQr: true,
     summaryShowAvatar: true,
     roundDownRefunds: false,
+    hideSettledGames: false,
   },
   mutate: vi.fn(),
 }));
@@ -49,6 +50,8 @@ describe("GameSettingsPanel", () => {
     expect(toggle("Hiện QR").getAttribute("aria-checked")).toBe("true");
     act(() => toggle("Không hoàn tiền lẻ").click());
     expect(mutate).toHaveBeenCalledWith({ roundDownRefunds: true });
+    act(() => toggle("Ẩn cuộc chơi đã thu tiền xong").click());
+    expect(mutate).toHaveBeenCalledWith({ hideSettledGames: true });
     act(() => toggle("Hiện QR").click());
     expect(mutate).toHaveBeenCalledWith({ summaryShowQr: false });
     act(() => toggle("Hiện avatar").click());

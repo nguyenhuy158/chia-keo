@@ -9,8 +9,12 @@ import { Switch } from "./ui";
  * chinh cho tien thay vi rai rac o tung the.
  */
 export function GameSettingsPanel() {
-  const { summaryShowQr, summaryShowAvatar, roundDownRefunds } =
-    usePreferences();
+  const {
+    summaryShowQr,
+    summaryShowAvatar,
+    roundDownRefunds,
+    hideSettledGames,
+  } = usePreferences();
   const updatePreferences = useUpdatePreferences();
 
   return (
@@ -21,6 +25,13 @@ export function GameSettingsPanel() {
           updatePreferences.mutate({ roundDownRefunds: next })
         }
         label="Không hoàn tiền lẻ (làm tròn xuống 1.000đ)"
+      />
+      <Switch
+        checked={hideSettledGames}
+        onChange={(next) =>
+          updatePreferences.mutate({ hideSettledGames: next })
+        }
+        label="Ẩn cuộc chơi đã thu tiền xong khỏi danh sách"
       />
       <Switch
         checked={summaryShowQr}

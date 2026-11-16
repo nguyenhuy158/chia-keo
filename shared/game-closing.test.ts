@@ -3,6 +3,7 @@ import {
   CLOSE_MODE_NONE,
   describeCloseMode,
   isClosed,
+  isCollectionDone,
   isFullySettled,
   shouldAutoClose,
   shouldAutoReopen,
@@ -85,5 +86,20 @@ describe("isClosed / describeCloseMode", () => {
     expect(describeCloseMode(CLOSE_MODE_NONE)).toBe("");
     expect(describeCloseMode("auto")).toBe("tự đóng");
     expect(describeCloseMode("manual")).toBe("đóng tay");
+  });
+});
+
+describe("isCollectionDone", () => {
+  it("is true only when every debtor has paid", () => {
+    expect(isCollectionDone({ paidProgress: { paid: 3, total: 3 } })).toBe(
+      true,
+    );
+    expect(isCollectionDone({ paidProgress: { paid: 2, total: 3 } })).toBe(
+      false,
+    );
+  });
+
+  it("is false for games without any debt", () => {
+    expect(isCollectionDone({})).toBe(false);
   });
 });

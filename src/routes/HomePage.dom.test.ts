@@ -9,6 +9,7 @@ const { state, openGames, useCrossBalances } = vi.hoisted(() => ({
     people: undefined as Array<{ name: string; net: number }> | undefined,
     stats: undefined as Record<string, unknown> | undefined,
     shell: true,
+    hideSettled: false,
   },
   openGames: vi.fn(),
   useCrossBalances: vi.fn(),
@@ -16,6 +17,7 @@ const { state, openGames, useCrossBalances } = vi.hoisted(() => ({
 
 vi.mock("../adapters/react-query/queries", () => ({
   useGames: () => ({ data: state.games, isPending: state.loading }),
+  usePreferences: () => ({ hideSettledGames: state.hideSettled }),
 }));
 vi.mock("../adapters/react-query/cross-balances-query", () => ({
   useCrossBalances: (enabled: boolean) => {
@@ -66,6 +68,7 @@ function openButton() {
 
 beforeEach(() => {
   Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
+  state.hideSettled = false;
   state.loading = false;
   state.games = undefined;
   state.people = undefined;
@@ -114,6 +117,19 @@ describe("HomePage", () => {
     expect(host.textContent).not.toContain("Vài con số");
     act(() => openButton().click());
     expect(openGames).toHaveBeenCalledOnce();
+  });
+
+  it("hides games whose collection is done when the preference is on", () => {
+    state.games = [
+      { ...game("1"), paidProgress: { paid: 2, total: 2 } },
+      game("2"),
+    ];
+    state.hideSettled = true;
+    render();
+    expect(host.textContent).toContain("1 cuộc chơi");
+    expect(host.textContent).toContain("Đang ẩn 1 cuộc đã thu xong.");
+    expect(host.textContent).not.toContain("Cầu 1");
+    expect(host.textContent).toContain("Cầu 2");
   });
 
   it.each([

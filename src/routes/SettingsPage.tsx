@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
+import { GameSettingsPanel } from "../components/GameSettingsPanel";
 import { McpTokenPanel } from "../components/McpTokenPanel";
 import { ProfileNamePanel } from "../components/ProfileNamePanel";
 
@@ -22,6 +23,14 @@ export function SettingsPage() {
       </div>
 
       <ProfileNamePanel />
+      <section className="rounded-lg border border-border bg-surface p-4 shadow-sm">
+        <h2 className="text-lg font-semibold text-stone-950 dark:text-stone-50">
+          Tùy chọn hiển thị
+        </h2>
+        <div className="mt-3">
+          <GameSettingsPanel />
+        </div>
+      </section>
       <McpTokenPanel />
     </div>
   );
