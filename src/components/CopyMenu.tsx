@@ -8,6 +8,7 @@ import {
   Images,
   Link as LinkIcon,
   QrCode,
+  Rows3,
   ListChecks,
   type LucideIcon,
   Table2,
@@ -18,6 +19,7 @@ import { toast } from "sonner";
 import {
   buildExpenseSheetFileName,
   buildExpenseSheetTsv,
+  buildTransactionRowsTsv,
 } from "../../shared/expense-sheet";
 import {
   buildSummaryText,
@@ -239,6 +241,18 @@ export function CopyMenu({
     else toast.error("Không sao chép được bảng tính");
   }
 
+  async function copyTransactionRows() {
+    const tsv = buildTransactionRowsTsv(input);
+    if (!tsv) {
+      toast.error("Chưa có dòng chi thu nào để sao chép");
+      return;
+    }
+    const ok = await copyText(tsv);
+    if (ok)
+      toast.success("Đã sao chép các dòng chi thu, dán vào Google Sheets");
+    else toast.error("Không sao chép được các dòng chi thu");
+  }
+
   async function saveExcel() {
     try {
       downloadBlob(
@@ -302,6 +316,13 @@ export function CopyMenu({
       hint: "Dán thẳng vào Google Sheets/Excel",
       icon: Table2,
       run: copySheet,
+    },
+    {
+      id: "sheet-rows",
+      label: "Copy dòng chi thu",
+      hint: "Chỉ các dòng giao dịch, không có tiêu đề và tổng",
+      icon: Rows3,
+      run: copyTransactionRows,
     },
     {
       id: "excel",
