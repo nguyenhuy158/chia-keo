@@ -170,8 +170,8 @@ export function CopyMenu({ input, className, onShare }: CopyMenuProps) {
 
   async function copySheet() {
     const ok = await copyText(buildExpenseSheetTsv(input));
-    if (ok) toast.success("Đã copy bảng tính, dán vào Google Sheets");
-    else toast.error("Không copy được, thử lại hoặc tải Excel");
+    if (ok) toast.success("Đã sao chép bảng tính, dán vào Google Sheets");
+    else toast.error("Không sao chép được bảng tính");
   }
 
   async function saveExcel() {
