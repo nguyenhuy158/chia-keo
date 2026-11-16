@@ -13,7 +13,7 @@ import {
 import { getQrProvider } from "../core/container";
 import { formatMoney } from "../core/domain/money";
 import { Celebrate } from "../ui/Celebrate";
-import { Sheet } from "../ui/Sheet";
+import { AdaptiveSheet } from "./AdaptiveSheet";
 
 type SharePaymentPanelProps = {
   token: string;
@@ -147,7 +147,7 @@ export function SharePaymentPanel({
         Thanh toán
       </button>
 
-      <Sheet open={open} onClose={close} title="Thanh toán">
+      <AdaptiveSheet open={open} onClose={close} title="Thanh toán">
         {code ? (
           <div className="pb-4">
             <PaymentTracker token={token} code={code} />
@@ -192,7 +192,7 @@ export function SharePaymentPanel({
             </button>
           </div>
         )}
-      </Sheet>
+      </AdaptiveSheet>
     </section>
   );
 }

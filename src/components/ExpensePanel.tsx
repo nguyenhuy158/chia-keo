@@ -57,7 +57,8 @@ import {
 import { formatMoney, parseMoney } from "../core/domain/money";
 import { Menu } from "../ui/Menu";
 import { PagedList } from "../ui/PagedList";
-import { Sheet } from "../ui/Sheet";
+import { AdaptiveSheet } from "./AdaptiveSheet";
+
 import { Dropdown } from "./Dropdown";
 import { MoneyInput } from "./MoneyInput";
 import { PhotoPickerButton } from "./PhotoPanel";
@@ -1347,14 +1348,14 @@ export function ExpensePanel({
             }}
           />
         </div>
-        <Sheet
+        <AdaptiveSheet
           open={formOpen}
           onClose={closeForm}
           title={editingExpenseId ? "Sửa khoản chi" : "Thêm khoản chi"}
         >
           {formBlock}
-        </Sheet>
-        <Sheet
+        </AdaptiveSheet>
+        <AdaptiveSheet
           open={actionsOpen}
           onClose={() => setActionsOpen(false)}
           title={actionExpense?.title ?? ""}
@@ -1380,7 +1381,7 @@ export function ExpensePanel({
                 </button>
               ))}
           </div>
-        </Sheet>
+        </AdaptiveSheet>
         {photoViewer.viewer}
       </section>
     );
