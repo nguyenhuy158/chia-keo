@@ -4,6 +4,7 @@ import {
   Copy,
   Download,
   FileSpreadsheet,
+  Table2,
   Image as ImageIcon,
   Images,
   Link as LinkIcon,
@@ -13,7 +14,10 @@ import {
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { toast } from "sonner";
-import { buildExpenseSheetFileName } from "../../shared/expense-sheet";
+import {
+  buildExpenseSheetFileName,
+  buildExpenseSheetTsv,
+} from "../../shared/expense-sheet";
 import {
   buildSummaryText,
   type SummaryTextInput,
@@ -164,6 +168,12 @@ export function CopyMenu({ input, className, onShare }: CopyMenuProps) {
     }
   }
 
+  async function copySheet() {
+    const ok = await copyText(buildExpenseSheetTsv(input));
+    if (ok) toast.success("Đã sao chép bảng tính, dán vào Google Sheets");
+    else toast.error("Không sao chép được bảng tính");
+  }
+
   async function saveExcel() {
     try {
       downloadBlob(
@@ -211,6 +221,13 @@ export function CopyMenu({ input, className, onShare }: CopyMenuProps) {
       hint: "Tải file PNG",
       icon: Download,
       run: saveSummaryImage,
+    },
+    {
+      id: "sheet",
+      label: "Copy bảng tính",
+      hint: "Dán thẳng vào Google Sheets/Excel",
+      icon: Table2,
+      run: copySheet,
     },
     {
       id: "excel",

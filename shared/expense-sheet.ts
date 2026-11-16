@@ -73,3 +73,54 @@ export function buildExpenseSheetFileName(gameName: string, code: string) {
     .toLowerCase();
   return `${safe || code}.xlsx`;
 }
+
+const TSV_CELL_SEPARATOR = "\t";
+const TSV_ROW_SEPARATOR = "\n";
+const TSV_UNSAFE_CHARACTERS = /[\t\r\n]+/g;
+const SHEET_EMPTY_CELL = "";
+const SHEET_SHARE_HEADER = "";
+
+type SheetCell = string | number | boolean;
+
+function leadingBlanks(count: number): SheetCell[] {
+  return Array.from({ length: count }, () => SHEET_EMPTY_CELL);
+}
+
+export function buildExpenseSheetGrid(input: ExpenseSheetInput): SheetCell[][] {
+  const model = buildExpenseSheetModel(input);
+  const gap = SHEET_FIRST_PERSON_COLUMN - 1;
+
+  const paidRow = [SHEET_PAID_LABEL, ...leadingBlanks(gap - 1), ...model.paid];
+  const headerRow = [
+    SHEET_EMPTY_CELL,
+    SHEET_AMOUNT_HEADER,
+    SHEET_COUNT_HEADER,
+    SHEET_SHARE_HEADER,
+    ...model.names,
+  ];
+  const totalRow = [
+    SHEET_TOTAL_LABEL,
+    ...leadingBlanks(gap - 1),
+    ...model.owed,
+  ];
+  const expenseRows = model.rows.map((row) => [
+    row.title,
+    row.amount,
+    row.count,
+    Math.round(row.perPerson),
+    ...row.included,
+  ]);
+
+  return [paidRow, headerRow, totalRow, ...expenseRows];
+}
+
+function formatSheetCell(cell: SheetCell): string {
+  if (typeof cell === "boolean") return cell ? "TRUE" : "FALSE";
+  return String(cell).replace(TSV_UNSAFE_CHARACTERS, " ");
+}
+
+export function buildExpenseSheetTsv(input: ExpenseSheetInput): string {
+  return buildExpenseSheetGrid(input)
+    .map((row) => row.map(formatSheetCell).join(TSV_CELL_SEPARATOR))
+    .join(TSV_ROW_SEPARATOR);
+}

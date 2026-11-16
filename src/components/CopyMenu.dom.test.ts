@@ -58,6 +58,10 @@ vi.mock("./SummaryBackgroundPicker", async () => {
       ),
   };
 });
+vi.mock("../../shared/expense-sheet", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../../shared/expense-sheet")>()),
+  buildExpenseSheetTsv: () => "sheet tsv",
+}));
 vi.mock("sonner", () => ({
   toast: Object.assign(message, { success, error }),
 }));
@@ -244,6 +248,20 @@ describe("CopyMenu", () => {
     open();
     await act(async () => item("Lưu ảnh về máy").click());
     expect(error).toHaveBeenCalledTimes(2);
+  });
+
+  it("copies the spreadsheet and reports clipboard refusal", async () => {
+    render();
+    open();
+    await act(async () => item("Copy bảng tính").click());
+    expect(copyText).toHaveBeenCalledWith("sheet tsv");
+    expect(success).toHaveBeenCalledWith(
+      "Đã sao chép bảng tính, dán vào Google Sheets",
+    );
+    copyText.mockResolvedValue(false);
+    open();
+    await act(async () => item("Copy bảng tính").click());
+    expect(error).toHaveBeenCalledWith("Không sao chép được bảng tính");
   });
 
   it("downloads the Excel file and reports a failure", async () => {

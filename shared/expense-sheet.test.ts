@@ -3,6 +3,7 @@ import type { ApiExpense, ApiParticipant, ApiSummary } from "./api-types";
 import {
   buildExpenseSheetFileName,
   buildExpenseSheetModel,
+  buildExpenseSheetTsv,
 } from "./expense-sheet";
 
 const people: ApiParticipant[] = ["a", "b", "c"].map((id) => ({
@@ -100,5 +101,30 @@ describe("buildExpenseSheetFileName", () => {
       "phu-yen-di-choi.xlsx",
     );
     expect(buildExpenseSheetFileName("!!!", "AB12")).toBe("AB12.xlsx");
+  });
+});
+
+describe("buildExpenseSheetTsv", () => {
+  it("lays out rows like the Excel file, tab separated", () => {
+    const tsv = buildExpenseSheetTsv({
+      participants: people,
+      summary,
+      expenses: [expense("1", 100, ["a", "b", "c"], { title: "Tiền\tsân\n1" })],
+    });
+    expect(tsv.split("\n")).toEqual([
+      "Đã chi\t\t\t\t300\t0\t0",
+      "\tSố tiền \tNgười\t\tA\tB\tC",
+      "Tổng\t\t\t\t200\t100\t0",
+      "Tiền sân 1\t100\t3\t33\tTRUE\tTRUE\tTRUE",
+    ]);
+  });
+
+  it("marks people outside the split as FALSE", () => {
+    const tsv = buildExpenseSheetTsv({
+      participants: people,
+      summary,
+      expenses: [expense("1", 90, ["b"])],
+    });
+    expect(tsv.split("\n")[3]).toBe("e1\t90\t1\t90\tFALSE\tTRUE\tFALSE");
   });
 });
