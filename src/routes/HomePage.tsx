@@ -232,7 +232,7 @@ export function HomePage() {
       <button
         type="button"
         onClick={() => shell?.openGames()}
-        className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-semibold text-white transition hover:bg-primary-hover active:scale-[0.99]"
+        className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-semibold text-white transition hover:bg-primary-hover active:scale-[0.99] lg:hidden"
       >
         <ListChecks size={18} />
         Mở danh sách cuộc chơi
