@@ -142,6 +142,20 @@ describe("GamesSidebar", () => {
     );
   });
 
+  it("shows a paid progress bar only for games that have debtors", () => {
+    state.games = [
+      { ...game(), paidProgress: { paid: 2, total: 4 } },
+      { ...game(), id: "game-2", name: "Không nợ" },
+    ];
+    render();
+    const bars = host.querySelectorAll("[role='progressbar']");
+    expect(bars).toHaveLength(1);
+    expect(bars[0].getAttribute("aria-valuenow")).toBe("2");
+    expect(bars[0].getAttribute("aria-valuemax")).toBe("4");
+    expect((bars[0].firstElementChild as HTMLElement).style.width).toBe("50%");
+    expect(host.textContent).toContain("2/4");
+  });
+
   it("opens and duplicates listed games", async () => {
     const onNavigate = vi.fn();
     state.games = [game()];

@@ -20,6 +20,12 @@ export type ApiUser = {
   name: string;
 };
 
+/** Tien do thu tien: `paid` tren `total` nguoi no da tra du. */
+export type ApiPaidProgress = {
+  paid: number;
+  total: number;
+};
+
 export type ApiGame = {
   id: string;
   code: string;
@@ -33,6 +39,8 @@ export type ApiGame = {
   closeMode: CloseModeValue;
   /** false la duoc chia se vao, khong phai cuoc tu tao — an nut xoa o danh sach. */
   isOwner: boolean;
+  /** Chi co o danh sach dang choi, va chi khi co nguoi no. */
+  paidProgress?: ApiPaidProgress;
 };
 
 export type ApiParticipant = {
