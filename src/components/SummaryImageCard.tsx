@@ -78,7 +78,7 @@ const ACTION_CLASS =
   "inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-md border border-stone-300 bg-white px-3 text-sm font-medium text-stone-700 transition hover:bg-stone-50 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-200 dark:hover:bg-stone-800";
 
 export function SummaryImageCard({
-  input,
+  input: baseInput,
   onShare,
   collapsible = false,
 }: {
@@ -92,8 +92,15 @@ export function SummaryImageCard({
   const [variant, setVariant] = useState<SummaryVariant>("compact");
   // Nho lua chon o server: bat/tat QR la thoi quen cua tung nhom, va giu
   // nguyen khi doi may hay xoa cache trinh duyet.
-  const { summaryShowQr: showQr, summaryShowAvatar: showAvatar } =
-    usePreferences();
+  const {
+    summaryShowQr: showQr,
+    summaryShowAvatar: showAvatar,
+    roundDownRefunds,
+  } = usePreferences();
+  const input = useMemo(
+    () => ({ ...baseInput, roundDownRefunds }),
+    [baseInput, roundDownRefunds],
+  );
   const updatePreferences = useUpdatePreferences();
   const [viewMode, setViewMode] = useState<ViewMode>("image");
   const [zoomed, setZoomed] = useState(false);

@@ -107,7 +107,11 @@ describe("account level HTTP routes", () => {
       saved.set(key, value);
     };
     expect(await (await request("GET", "/preferences")).json()).toEqual({
-      preferences: { summaryShowQr: true, summaryShowAvatar: true },
+      preferences: {
+        summaryShowQr: true,
+        summaryShowAvatar: true,
+        roundDownRefunds: false,
+      },
     });
     expect(
       (await request("PATCH", "/preferences", { summaryShowQr: "no" })).status,
@@ -117,7 +121,11 @@ describe("account level HTTP routes", () => {
     });
     expect(updated.status).toBe(200);
     expect(await updated.json()).toEqual({
-      preferences: { summaryShowQr: false, summaryShowAvatar: true },
+      preferences: {
+        summaryShowQr: false,
+        summaryShowAvatar: true,
+        roundDownRefunds: false,
+      },
     });
     expect(saved.get("summaryShowQr")).toBe("false");
   });

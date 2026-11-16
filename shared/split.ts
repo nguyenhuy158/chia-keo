@@ -67,6 +67,13 @@ export const MAX_SPLIT_WEIGHT = 1000;
 /** Nguoi phai tra duoc lam tron len boi so nay de de thu va de chuyen khoan. */
 export const SETTLEMENT_ROUNDING_UNIT = 1000;
 
+export function roundDownToUnit(
+  amount: number,
+  unit: number = SETTLEMENT_ROUNDING_UNIT,
+) {
+  return Math.floor(amount / unit) * unit;
+}
+
 export function roundUpToUnit(
   amount: number,
   unit: number = SETTLEMENT_ROUNDING_UNIT,
@@ -279,6 +286,7 @@ export function resolveHostParticipantId(
 export function calculateHostTransfers(
   balances: BalanceRow[],
   hostParticipantId: string,
+  roundDownRefunds = false,
 ): HostTransferRow[] {
   return balances
     .filter(
@@ -287,13 +295,15 @@ export function calculateHostTransfers(
     .map((row) => {
       const toHost = row.balance < 0;
       const amount = Math.abs(row.balance);
+      const refund = roundDownRefunds ? roundDownToUnit(amount) : amount;
 
       return {
         participantId: row.participantId,
-        amount: toHost ? roundUpToUnit(amount) : amount,
+        amount: toHost ? roundUpToUnit(amount) : refund,
         toHost,
       };
-    });
+    })
+    .filter((row) => row.amount > 0);
 }
 
 /**

@@ -62,6 +62,9 @@ vi.mock("../../shared/expense-sheet", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../../shared/expense-sheet")>()),
   buildExpenseSheetTsv: () => "sheet tsv",
 }));
+vi.mock("../adapters/react-query/queries", () => ({
+  usePreferences: () => ({ roundDownRefunds: false }),
+}));
 vi.mock("sonner", () => ({
   toast: Object.assign(message, { success, error }),
 }));

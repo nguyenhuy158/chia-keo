@@ -4,14 +4,14 @@ import {
   Copy,
   Download,
   FileSpreadsheet,
-  Table2,
   Image as ImageIcon,
   Images,
   Link as LinkIcon,
   ListChecks,
   type LucideIcon,
+  Table2,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { toast } from "sonner";
 import {
@@ -33,6 +33,7 @@ import {
   buildSummaryImageFileName,
   renderSummaryImage,
 } from "../adapters/browser/summary-image";
+import { usePreferences } from "../adapters/react-query/queries";
 import { SummaryBackgroundPicker } from "./SummaryBackgroundPicker";
 import { useSummaryImageBackground } from "./use-summary-image-background";
 
@@ -79,7 +80,16 @@ function computePosition(trigger: HTMLElement): MenuPosition {
     : { left, top: rect.bottom + MENU_GAP };
 }
 
-export function CopyMenu({ input, className, onShare }: CopyMenuProps) {
+export function CopyMenu({
+  input: baseInput,
+  className,
+  onShare,
+}: CopyMenuProps) {
+  const { roundDownRefunds } = usePreferences();
+  const input = useMemo(
+    () => ({ ...baseInput, roundDownRefunds }),
+    [baseInput, roundDownRefunds],
+  );
   const triggerRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState<MenuPosition | null>(null);

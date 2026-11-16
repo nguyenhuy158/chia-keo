@@ -25,14 +25,22 @@ describe("user preferences", () => {
   it("tra ve mac dinh khi user chua luu gi", async () => {
     const { repo } = createRepo([]);
     expect(await getUserPreferences(repo, "u1")).toEqual({
-      preferences: { summaryShowQr: true, summaryShowAvatar: true },
+      preferences: {
+        summaryShowQr: true,
+        summaryShowAvatar: true,
+        roundDownRefunds: false,
+      },
     });
   });
 
   it("doc lai gia tri da luu", async () => {
     const { repo } = createRepo([{ key: "summaryShowQr", value: "false" }]);
     expect(await getUserPreferences(repo, "u1")).toEqual({
-      preferences: { summaryShowQr: false, summaryShowAvatar: true },
+      preferences: {
+        summaryShowQr: false,
+        summaryShowAvatar: true,
+        roundDownRefunds: false,
+      },
     });
   });
 
@@ -42,7 +50,11 @@ describe("user preferences", () => {
       { key: "tuyChonDaBo", value: '"x"' },
     ]);
     expect(await getUserPreferences(repo, "u1")).toEqual({
-      preferences: { summaryShowQr: true, summaryShowAvatar: true },
+      preferences: {
+        summaryShowQr: true,
+        summaryShowAvatar: true,
+        roundDownRefunds: false,
+      },
     });
   });
 
@@ -53,7 +65,11 @@ describe("user preferences", () => {
     });
 
     expect(result).toEqual({
-      preferences: { summaryShowQr: false, summaryShowAvatar: true },
+      preferences: {
+        summaryShowQr: false,
+        summaryShowAvatar: true,
+        roundDownRefunds: false,
+      },
     });
     expect(stored.get("summaryShowQr")).toBe("false");
   });

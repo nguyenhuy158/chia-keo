@@ -5,6 +5,7 @@ import { buildSummaryText } from "../../../shared/summary-text";
 import * as schema from "../adapters/d1/schema";
 import { NotFoundError } from "../core/application/errors";
 import { getGameDetailForOwner } from "../core/application/games";
+import { getUserPreferences } from "../core/application/user-preferences";
 import { notFound } from "../lib/http";
 import { type AuthedEnv, protectPaths } from "../lib/require-user";
 
@@ -43,6 +44,8 @@ emailSummaryRouter.post("/games/:gameId/email-summary", async (c) => {
     ? `${new URL(c.req.url).origin}/share/${detail.shareLink.token}`
     : undefined;
 
+  const { preferences } = await getUserPreferences(c.get("repo"), userId);
+
   const text = buildSummaryText(
     {
       code: detail.code,
@@ -53,6 +56,7 @@ emailSummaryRouter.post("/games/:gameId/email-summary", async (c) => {
       shareUrl,
       settlementMode: detail.settlementMode,
       settlementHostId: detail.settlementHostId,
+      roundDownRefunds: preferences.roundDownRefunds,
     },
     "detailed",
   );
