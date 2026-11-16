@@ -225,6 +225,7 @@ describe("GameDashboard", () => {
       summary: refundSummary,
     });
     expect(amounts().some((text) => text?.includes("7.999"))).toBe(true);
+    expect(host.textContent).toContain("Nhận 7.999");
 
     preferences.roundDownRefunds = true;
     render({
@@ -234,6 +235,8 @@ describe("GameDashboard", () => {
     });
     expect(amounts().some((text) => text?.includes("7.999"))).toBe(false);
     expect(amounts().some((text) => text?.includes("7.000"))).toBe(true);
+    expect(host.textContent).toContain("Nhận 7.000");
+    expect(host.textContent).not.toContain("Nhận 7.999");
   });
 
   it("shows host transfers in both directions and the shared QR", () => {

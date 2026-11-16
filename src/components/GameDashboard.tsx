@@ -10,6 +10,7 @@ import { buildPaymentReminder } from "../../shared/payment-reminder";
 import type { SettlementMode } from "../../shared/schemas";
 import {
   calculateHostTransfers,
+  displayBalance,
   resolveHostParticipantId,
   type SettlementRow,
 } from "../../shared/split";
@@ -191,7 +192,9 @@ function GameDashboardFull({
                     <p className="min-w-0 truncate text-sm font-semibold text-stone-950 dark:text-stone-50">
                       {participant.name}
                     </p>
-                    <BalancePill value={row.balance} />
+                    <BalancePill
+                      value={displayBalance(row, hostId, roundDownRefunds)}
+                    />
                   </div>
                   <p className="mt-0.5 text-xs text-fg-muted">
                     Đã trả {formatMoney(row.paid)} · Phải chịu{" "}
@@ -680,7 +683,9 @@ function GameDashboardCompact({
                   <p className="min-w-0 truncate text-sm font-semibold text-stone-950 dark:text-stone-50">
                     {participantById.get(row.participantId)?.name}
                   </p>
-                  <BalancePill value={row.balance} />
+                  <BalancePill
+                    value={displayBalance(row, hostId, roundDownRefunds)}
+                  />
                 </div>
                 <p className="truncate text-xs text-fg-muted">
                   Đã trả {formatMoney(row.paid)} · Phải chịu{" "}
