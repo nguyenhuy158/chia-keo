@@ -295,10 +295,6 @@ describe("SummaryImageCard", () => {
     );
     act(() => button("Background").click());
     expect(chooseBackground).toHaveBeenCalledWith("new-bg");
-    act(() => button("Hiện QR").click());
-    expect(mutate).toHaveBeenCalledWith({ summaryShowQr: false });
-    act(() => button("Hiện avatar").click());
-    expect(mutate).toHaveBeenCalledWith({ summaryShowAvatar: false });
   });
 
   it("keeps the previous preview visible while a new variant renders", async () => {

@@ -15,14 +15,10 @@ import {
   buildSummaryImageFileName,
   renderSummaryImage,
 } from "../adapters/browser/summary-image";
-import {
-  usePreferences,
-  useUpdatePreferences,
-} from "../adapters/react-query/queries";
+import { usePreferences } from "../adapters/react-query/queries";
 import { CollapsibleHeading } from "./CollapsibleHeading";
 import { ImageLightbox } from "./overlays";
 import { SummaryBackgroundPicker } from "./SummaryBackgroundPicker";
-import { Switch } from "./ui";
 import { usePersistentOpen } from "./use-persistent-open";
 import { useSummaryImageBackground } from "./use-summary-image-background";
 
@@ -101,7 +97,6 @@ export function SummaryImageCard({
     () => ({ ...baseInput, roundDownRefunds }),
     [baseInput, roundDownRefunds],
   );
-  const updatePreferences = useUpdatePreferences();
   const [viewMode, setViewMode] = useState<ViewMode>("image");
   const [zoomed, setZoomed] = useState(false);
   const [blob, setBlob] = useState<Blob | null>(null);
@@ -242,20 +237,6 @@ export function SummaryImageCard({
               <SummaryBackgroundPicker
                 value={backgroundId}
                 onChange={chooseBackground}
-              />
-              <Switch
-                checked={showQr}
-                onChange={(next) =>
-                  updatePreferences.mutate({ summaryShowQr: next })
-                }
-                label="Hiện QR chuyển khoản trên ảnh"
-              />
-              <Switch
-                checked={showAvatar}
-                onChange={(next) =>
-                  updatePreferences.mutate({ summaryShowAvatar: next })
-                }
-                label="Hiện avatar trước tên trên ảnh"
               />
             </div>
           )}

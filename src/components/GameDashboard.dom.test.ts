@@ -209,7 +209,7 @@ describe("GameDashboard", () => {
     expect(host.textContent).toContain("Mọi người đã cân bằng");
   });
 
-  it("toggles refund rounding in host mode and floors the refund", () => {
+  it("floors the host refund when the option is on", () => {
     const refundSummary = {
       ...summary,
       balances: [
@@ -225,9 +225,6 @@ describe("GameDashboard", () => {
       summary: refundSummary,
     });
     expect(amounts().some((text) => text?.includes("7.999"))).toBe(true);
-    const toggle = host.querySelector("[role='switch']") as HTMLButtonElement;
-    act(() => toggle.click());
-    expect(updatePreferences).toHaveBeenCalledWith({ roundDownRefunds: true });
 
     preferences.roundDownRefunds = true;
     render({
@@ -237,9 +234,6 @@ describe("GameDashboard", () => {
     });
     expect(amounts().some((text) => text?.includes("7.999"))).toBe(false);
     expect(amounts().some((text) => text?.includes("7.000"))).toBe(true);
-
-    render({ settlementMode: "p2p", summary: refundSummary });
-    expect(host.querySelector("[role='switch']")).toBeNull();
   });
 
   it("shows host transfers in both directions and the shared QR", () => {
