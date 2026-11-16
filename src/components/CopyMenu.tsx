@@ -46,6 +46,9 @@ const MENU_GAP = 6;
 const VIEWPORT_MARGIN = 8;
 /** Uoc luong de biet nen mo len hay xuong; khong can chinh xac tuyet doi. */
 const MENU_HEIGHT_ESTIMATE = 440;
+/** Duoi be rong nay (Tailwind `sm`) menu hien giua man hinh nhu hop thoai. */
+const CENTERED_MENU_BREAKPOINT = 640;
+const CENTERED_TRANSFORM = "translate(-50%, -50%)";
 
 const TRIGGER_CLASS =
   "inline-flex h-11 items-center justify-center gap-2 rounded-md border border-stone-300 bg-white px-3 text-sm font-medium text-stone-700 transition hover:bg-stone-50 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-200 dark:hover:bg-stone-800";
@@ -59,10 +62,12 @@ type MenuAction = {
 };
 
 type MenuPosition = {
-  left: number;
-  top?: number;
+  left: number | string;
+  top?: number | string;
   bottom?: number;
   maxHeight: number;
+  transform?: string;
+  centered: boolean;
 };
 
 type CopyMenuProps = {
@@ -72,6 +77,16 @@ type CopyMenuProps = {
 };
 
 function computePosition(trigger: HTMLElement): MenuPosition {
+  if (window.innerWidth < CENTERED_MENU_BREAKPOINT) {
+    return {
+      left: "50%",
+      top: "50%",
+      transform: CENTERED_TRANSFORM,
+      maxHeight: window.innerHeight - VIEWPORT_MARGIN * 2,
+      centered: true,
+    };
+  }
+
   const rect = trigger.getBoundingClientRect();
   const maxLeft = window.innerWidth - MENU_WIDTH - VIEWPORT_MARGIN;
   const left = Math.max(
@@ -88,8 +103,14 @@ function computePosition(trigger: HTMLElement): MenuPosition {
         left,
         bottom: window.innerHeight - rect.top + MENU_GAP,
         maxHeight: spaceAbove,
+        centered: false,
       }
-    : { left, top: rect.bottom + MENU_GAP, maxHeight: spaceBelow };
+    : {
+        left,
+        top: rect.bottom + MENU_GAP,
+        maxHeight: spaceBelow,
+        centered: false,
+      };
 }
 
 export function CopyMenu({
@@ -132,17 +153,22 @@ export function CopyMenu({
     function close() {
       setPosition(null);
     }
+    function closeOnOutsideScroll(event: Event) {
+      const target = event.target;
+      if (target instanceof Node && menuRef.current?.contains(target)) return;
+      setPosition(null);
+    }
 
     window.addEventListener("pointerdown", handlePointerDown);
     window.addEventListener("keydown", handleKeyDown);
     window.addEventListener("resize", close);
-    window.addEventListener("scroll", close, true);
+    window.addEventListener("scroll", closeOnOutsideScroll, true);
 
     return () => {
       window.removeEventListener("pointerdown", handlePointerDown);
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("resize", close);
-      window.removeEventListener("scroll", close, true);
+      window.removeEventListener("scroll", closeOnOutsideScroll, true);
     };
   }, [open]);
 
@@ -328,45 +354,62 @@ export function CopyMenu({
 
       {position &&
         createPortal(
-          <div
-            ref={menuRef}
-            role="menu"
-            style={{ position: "fixed", width: MENU_WIDTH, ...position }}
-            className="z-[70] overflow-y-auto overscroll-contain rounded-xl border border-stone-200 bg-surface p-1 shadow-xl animate-[overlay-in_120ms_ease] dark:border-stone-700"
-          >
-            <div className="border-b border-stone-200 px-3 pb-2.5 pt-2 dark:border-stone-700">
-              <SummaryBackgroundPicker
-                value={backgroundId}
-                onChange={chooseBackground}
+          <>
+            {position.centered && (
+              <div
+                aria-hidden="true"
+                data-testid="copy-menu-backdrop"
+                className="fixed inset-0 z-[69] bg-stone-950/40"
               />
-            </div>
+            )}
+            <div
+              ref={menuRef}
+              role="menu"
+              style={{
+                position: "fixed",
+                width: MENU_WIDTH,
+                left: position.left,
+                top: position.top,
+                bottom: position.bottom,
+                maxHeight: position.maxHeight,
+                transform: position.transform,
+              }}
+              className="z-[70] overflow-y-auto overscroll-contain rounded-xl border border-stone-200 bg-surface p-1 shadow-xl animate-[overlay-in_120ms_ease] dark:border-stone-700"
+            >
+              <div className="border-b border-stone-200 px-3 pb-2.5 pt-2 dark:border-stone-700">
+                <SummaryBackgroundPicker
+                  value={backgroundId}
+                  onChange={chooseBackground}
+                />
+              </div>
 
-            {actions.map((action) => {
-              const Icon = action.icon;
-              return (
-                <button
-                  key={action.id}
-                  type="button"
-                  role="menuitem"
-                  onClick={() => handleSelect(action)}
-                  className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition hover:bg-stone-100 active:bg-stone-200 dark:hover:bg-stone-800 dark:active:bg-stone-700"
-                >
-                  <Icon
-                    size={18}
-                    className="shrink-0 text-violet-600 dark:text-violet-400"
-                  />
-                  <span className="min-w-0">
-                    <span className="block text-sm font-medium text-stone-950 dark:text-stone-50">
-                      {action.label}
+              {actions.map((action) => {
+                const Icon = action.icon;
+                return (
+                  <button
+                    key={action.id}
+                    type="button"
+                    role="menuitem"
+                    onClick={() => handleSelect(action)}
+                    className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition hover:bg-stone-100 active:bg-stone-200 dark:hover:bg-stone-800 dark:active:bg-stone-700"
+                  >
+                    <Icon
+                      size={18}
+                      className="shrink-0 text-violet-600 dark:text-violet-400"
+                    />
+                    <span className="min-w-0">
+                      <span className="block text-sm font-medium text-stone-950 dark:text-stone-50">
+                        {action.label}
+                      </span>
+                      <span className="block text-xs text-fg-muted">
+                        {action.hint}
+                      </span>
                     </span>
-                    <span className="block text-xs text-fg-muted">
-                      {action.hint}
-                    </span>
-                  </span>
-                </button>
-              );
-            })}
-          </div>,
+                  </button>
+                );
+              })}
+            </div>
+          </>,
           document.body,
         )}
     </>
