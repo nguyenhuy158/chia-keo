@@ -48,6 +48,14 @@ async function createJpegFixture() {
   return path;
 }
 
+/** Khung tao cuoc choi mac dinh dong: mo ra neu chua mo roi cho o ten hien. */
+async function openCreateGameForm(page) {
+  const toggle = page.getByRole("button", { name: "Thêm cuộc chơi mới" });
+  await toggle.waitFor(WAIT);
+  if ((await page.locator("#game-name").count()) === 0) await toggle.click();
+  await page.waitForSelector("#game-name", WAIT);
+}
+
 /**
  * Tao tai khoan moi qua Better Auth va giu cookie session trong tab hien tai.
  * Chay trong trang de cookie thuoc dung origin cua app.
@@ -135,7 +143,7 @@ try {
   // username/mat khau cua Better Auth - van bat trong worker/src/auth.ts.
   await signUp(page, username);
   await page.goto(BASE + "/");
-  await page.waitForSelector("#game-name", WAIT);
+  await openCreateGameForm(page);
   ok("sign up + land on home");
 
   // 3. Tao cuoc choi
@@ -644,6 +652,7 @@ try {
   ok("revoke MCP token from UI kills it");
 
   await page.goto(`${BASE}/`);
+  await openCreateGameForm(page);
   await page.fill("#game-name", "E2E Weighted Split");
   await page.click('button[aria-label="Tạo cuộc chơi"]');
   await page.waitForURL("**/games/**", WAIT);
