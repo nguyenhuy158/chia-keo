@@ -4,12 +4,12 @@ import {
   Copy,
   Download,
   FileSpreadsheet,
-  Table2,
   Image as ImageIcon,
   Images,
   Link as LinkIcon,
   ListChecks,
   type LucideIcon,
+  Table2,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
@@ -28,12 +28,12 @@ import {
   copyText,
   downloadBlob,
 } from "../adapters/browser/clipboard";
-import { usePreferences } from "../adapters/react-query/queries";
 import { renderExpenseXlsx } from "../adapters/browser/expense-xlsx";
 import {
   buildSummaryImageFileName,
   renderSummaryImage,
 } from "../adapters/browser/summary-image";
+import { usePreferences } from "../adapters/react-query/queries";
 import { SummaryBackgroundPicker } from "./SummaryBackgroundPicker";
 import { useSummaryImageBackground } from "./use-summary-image-background";
 
