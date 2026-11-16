@@ -1,8 +1,24 @@
+export type HelpImage = {
+  /** Duong dan trong `public/help/`. */
+  src: string;
+  alt: string;
+};
+
+/** Cho thuc te dung tinh nang: ten hien thi cung duong dan tuong ung. */
+export type HelpLink = {
+  label: string;
+  to: "/" | "/shuttles" | "/fun" | "/settings";
+};
+
 export type HelpTopic = {
   id: string;
   title: string;
   steps: string[];
+  image?: HelpImage;
+  links?: HelpLink[];
 };
+
+const OPEN_HOME_LINK: HelpLink = { label: "Mở trang chủ", to: "/" };
 
 export type HelpGroup = {
   id: string;
@@ -19,30 +35,46 @@ export const HELP_GROUPS: HelpGroup[] = [
         id: "create-game",
         title: "Tạo cuộc chơi và thêm người",
         steps: [
-          'Ở thanh bên trái, gõ tên vào ô "Tạo cuộc chơi" rồi bấm +. Trên điện thoại, bấm nút ☰ ở góc trái header để mở danh sách cuộc chơi.',
+          'Ở thanh bên trái, bấm "Thêm cuộc chơi mới", gõ tên rồi bấm +. Trên điện thoại, bấm nút ☰ ở góc trái header để mở danh sách cuộc chơi.',
           '"Tạo sẵn số người" tạo nhanh Người 1, Người 2... để vào việc ngay. Đổi tên sau.',
-          'Trong "Người tham gia", nhập tên. Muốn có QR nhận tiền thì nhập thêm ngân hàng, số tài khoản và tên chủ tài khoản.',
+          'Mở tab "Người" của cuộc chơi, bấm nút thêm rồi nhập tên. Muốn có QR nhận tiền thì nhập thêm ngân hàng, số tài khoản và tên chủ tài khoản.',
           "Danh bạ lưu những người hay đi cùng. Lần sau chỉ cần tick chọn.",
         ],
+        image: {
+          src: "/help/create-game.png",
+          alt: "Khung Thêm cuộc chơi mới mở ra ở thanh bên trái",
+        },
+        links: [OPEN_HOME_LINK],
       },
       {
         id: "add-expense",
         title: "Thêm khoản chi và chia tiền",
         steps: [
-          'Ở mục "Khoản chi", nhập nội dung, số tiền, chọn người trả rồi chọn chia cho ai.',
+          'Mở tab "Chi", bấm "Thêm", nhập nội dung, số tiền, chọn người trả rồi chọn chia cho ai.',
           "Chia đều: mỗi người một phần bằng nhau. Theo phần: mỗi người một số phần, ví dụ 1:2:3. Số tiền: nhập số cụ thể cho từng người, tổng phải khớp.",
           'Chọn "Danh mục" (không bắt buộc) để xem chi tiêu theo nhóm.',
-          "Muốn đổi thứ tự các khoản chi, kéo biểu tượng ⠿ bên trái mỗi dòng.",
+          'Muốn đổi thứ tự các khoản chi, bấm ⋯ ở dòng đó rồi chọn "Đưa lên" hoặc "Đưa xuống".',
         ],
+        image: {
+          src: "/help/add-expense.png",
+          alt: "Form thêm khoản chi với nội dung và số tiền",
+        },
+        links: [OPEN_HOME_LINK],
       },
       {
         id: "read-balance",
         title: "Đọc bảng cân bằng và ai chuyển cho ai",
         steps: [
-          '"Cân bằng" cho từng người: Nhận là người được trả lại, Trả là người còn nợ, Đủ là không nợ.',
+          'Mở tab "Tổng kết". Tab "Số dư" cho từng người: Nhận là người được trả lại, Trả là người còn nợ, Đủ là không nợ.',
           '"Đã trả" là số tiền người đó ứng trước. "Phải chịu" là phần của họ.',
-          "Phần chuyển khoản có 4 kiểu: Nhiều chiều (chuyển thẳng từng cặp, ít lượt nhất), Gom 1 người (ai cũng chuyển về người ứng nhiều nhất, chỉ một QR), Chọn người (gom về người bạn chọn), Tắt (không hiện chuyển khoản).",
+          'Tab "Chuyển khoản" có 4 kiểu: Nhiều chiều (chuyển thẳng từng cặp, ít lượt nhất), Gom 1 người (ai cũng chuyển về người ứng nhiều nhất, chỉ một QR), Chọn người (gom về người bạn chọn), Tắt (không hiện chuyển khoản).',
+          'Tab "Thống kê" gom Bảng tổng hợp (phải chịu, đã trả, chuyển cho người nhận), "Ai đã trả" và "Chi theo danh mục".',
         ],
+        image: {
+          src: "/help/summary-balances.png",
+          alt: "Tab Tổng kết với số dư của từng người",
+        },
+        links: [OPEN_HOME_LINK],
       },
     ],
   },
@@ -58,15 +90,23 @@ export const HELP_GROUPS: HelpGroup[] = [
           "Gửi link cho nhóm. Ai mở cũng xem được tổng kết, bảng chia, ảnh và QR mà không cần đăng nhập. Người xem chỉ đọc, không sửa được.",
           '"Tắt link" để ngừng chia sẻ tạm thời. "Đổi link" tạo link mới và link cũ hết hiệu lực.',
         ],
+        image: {
+          src: "/help/share-page.png",
+          alt: "Trang chia sẻ chỉ đọc mà người trong nhóm nhìn thấy",
+        },
       },
       {
         id: "qr-paid",
         title: "Chuyển khoản bằng QR và ghi nhận đã trả",
         steps: [
-          "Mỗi khoản cần chuyển có QR nếu người nhận đã nhập tài khoản ngân hàng.",
+          'Ở tab "Tổng kết", bấm "Chuyển khoản" rồi bấm một dòng để mở chi tiết. Có QR nếu người nhận đã nhập tài khoản ngân hàng.',
           '"Nhắc" copy tin nhắc nợ để gửi cho người còn nợ.',
           '"Đã trả" ghi nhận khoản trả nợ, số dư của hai người được cân lại.',
         ],
+        image: {
+          src: "/help/transfer-sheet.png",
+          alt: "Chi tiết một khoản chuyển khoản có QR, nút Nhắc và Đã trả",
+        },
       },
       {
         id: "sepay",
@@ -81,10 +121,14 @@ export const HELP_GROUPS: HelpGroup[] = [
         id: "copy-email",
         title: "Copy, email và ảnh tổng kết",
         steps: [
-          'Nút "Copy" lấy tổng kết dạng ảnh hoặc chữ để dán vào Zalo, nhóm chat.',
+          'Nút "Copy" có nhiều lựa chọn: "Copy tổng kết" và "Copy ảnh" để dán vào Zalo, nhóm chat; "Copy bảng tính", "Copy dòng chi thu" và "Copy bảng tổng hợp" để dán thẳng vào Google Sheets hoặc Excel.',
+          'Trong menu Copy có "Ẩn QR trên ảnh" nếu không muốn lộ tài khoản khi gửi ảnh. "Lưu ảnh về máy" tải file PNG.',
           'Trong menu ⋯ có "Email cho tôi" để gửi tóm tắt về hộp thư.',
-          'Mục "Xem trước" (bấm Xem): chọn nền, bật hoặc tắt QR và avatar, rồi "Copy ảnh" hoặc "Lưu về máy".',
         ],
+        image: {
+          src: "/help/copy-menu.png",
+          alt: "Menu Copy với các kiểu sao chép tổng kết",
+        },
       },
       {
         id: "collaborators",
@@ -104,7 +148,7 @@ export const HELP_GROUPS: HelpGroup[] = [
         id: "ai-input",
         title: "Nhập nhanh bằng AI",
         steps: [
-          'Mở "Nhập nhanh bằng AI" ở mục Khoản chi và mô tả khoản chi bằng lời.',
+          'Mở "Nhập nhanh bằng AI" trong form thêm khoản chi và mô tả khoản chi bằng lời.',
           "Kiểm tra lại gợi ý trước khi lưu. Tính năng này chỉ dùng được khi máy chủ đã bật AI.",
         ],
       },
@@ -130,7 +174,7 @@ export const HELP_GROUPS: HelpGroup[] = [
         title: "Ảnh hóa đơn",
         steps: [
           'Khi thêm hoặc sửa khoản chi, mở "Ảnh hóa đơn" để đính kèm ảnh.',
-          'Mục "Ảnh" của cuộc chơi chứa tất cả ảnh, tối đa 60 ảnh mỗi cuộc. Bấm vào ảnh để xem to và sửa chú thích.',
+          'Tab "Khác", mục "Ảnh" chứa tất cả ảnh, tối đa 60 ảnh mỗi cuộc. Bấm vào ảnh để xem to và sửa chú thích.',
         ],
       },
       {
@@ -155,6 +199,21 @@ export const HELP_GROUPS: HelpGroup[] = [
           'Bấm "Đóng" để đóng tay. Đóng tay thì giữ nguyên dù còn nợ.',
           'Cuộc đã đóng nằm ở thẻ "Đã đóng" ở thanh bên. Bấm Xem rồi "Mở lại" để chơi tiếp.',
         ],
+        links: [OPEN_HOME_LINK],
+      },
+      {
+        id: "archive",
+        title: "Lưu trữ cuộc chơi",
+        steps: [
+          'Bấm ⋯ trên header của cuộc chơi rồi chọn "Lưu trữ" (chỉ chủ cuộc). Cuộc chơi ẩn khỏi danh sách đang chơi, "Đã đóng", thống kê và báo cáo tháng, nhưng không bị xóa.',
+          'Cuộc đã lưu trữ nằm ở thẻ "Đã lưu trữ" ở thanh bên. Bấm Xem rồi "Khôi phục" để đưa về danh sách đang chơi.',
+          "Hợp với những cuộc thử nghiệm hoặc đã xong hẳn mà chưa muốn xóa.",
+        ],
+        image: {
+          src: "/help/archived-card.png",
+          alt: "Thẻ Đã lưu trữ với nút Khôi phục",
+        },
+        links: [OPEN_HOME_LINK],
       },
       {
         id: "monthly",
@@ -169,7 +228,7 @@ export const HELP_GROUPS: HelpGroup[] = [
         id: "history-trash",
         title: "Lịch sử, thùng rác và nhân bản",
         steps: [
-          'Mục "Lịch sử" (bấm Xem) cho xem lại các thay đổi. Một số thao tác, như xóa khoản chi, hoàn tác được.',
+          'Tab "Khác", mục "Lịch sử" cho xem lại các thay đổi. Một số thao tác, như xóa khoản chi, hoàn tác được.',
           'Xóa cuộc chơi sẽ đưa vào "Thùng rác" và giữ 30 ngày. Bạn có thể khôi phục hoặc xóa hẳn.',
           'Biểu tượng "Nhân bản" ở thẻ cuộc chơi tạo cuộc mới với cùng người và tài khoản, không có khoản chi.',
         ],
@@ -181,9 +240,29 @@ export const HELP_GROUPS: HelpGroup[] = [
           "Logo: về trang chủ, xem các khoản cần tất toán gộp từ nhiều cuộc.",
           "Kho cầu: ghi số cầu nhập vào hoặc đã dùng, có lịch sử, không cho kho âm hoặc vượt trần.",
           "Thống kê vui: tổng chi, người trả nhiều nhất, khoản chi lớn nhất và ngày hay chơi nhất, gộp các cuộc đang chơi.",
-          "Cài đặt: đổi tên hiển thị và tạo token MCP để dùng với Claude.",
+          "Cài đặt: đổi tên hiển thị, các tùy chọn hiển thị và tạo token MCP để dùng với Claude.",
           "Nút ☀: đổi giao diện sáng hoặc tối. Nút Thoát: đăng xuất.",
         ],
+        links: [
+          { label: "Mở Kho cầu", to: "/shuttles" },
+          { label: "Mở Thống kê vui", to: "/fun" },
+          { label: "Mở Cài đặt", to: "/settings" },
+        ],
+      },
+      {
+        id: "settings",
+        title: "Cài đặt và các tùy chọn hiển thị",
+        steps: [
+          'Bấm biểu tượng bánh răng ở header, hoặc chọn "Cài đặt" trong menu ⋯ của cuộc chơi.',
+          '"Không hoàn tiền lẻ": ở chế độ gom về một người, số người đó trả lại được làm tròn xuống 1.000đ, phần lẻ không hoàn.',
+          '"Ẩn cuộc chơi đã thu tiền xong": bỏ các cuộc mà mọi người nợ đã trả đủ khỏi danh sách đang chơi. Mặc định tắt.',
+          '"Hiện QR chuyển khoản" và "Hiện avatar" trên ảnh tổng kết. Các tùy chọn này lưu theo tài khoản, dùng chung mọi cuộc chơi.',
+        ],
+        image: {
+          src: "/help/settings.png",
+          alt: "Trang Cài đặt với các công tắc tùy chọn hiển thị",
+        },
+        links: [{ label: "Mở Cài đặt", to: "/settings" }],
       },
     ],
   },
