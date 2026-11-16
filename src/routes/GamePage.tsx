@@ -53,6 +53,7 @@ import {
   useUpdateExpense,
   useUpdateParticipant,
 } from "../adapters/react-query/queries";
+import { AdaptiveSheet } from "../components/AdaptiveSheet";
 import { CollaboratorsPanel } from "../components/CollaboratorsPanel";
 import { useConfirm } from "../components/ConfirmDialog";
 import { CopyMenu } from "../components/CopyMenu";
@@ -69,7 +70,6 @@ import { SummaryImageCard } from "../components/SummaryImageCard";
 import { EmptyState, GamePageSkeleton } from "../components/ui";
 import { formatMoney } from "../core/domain/money";
 import { Menu, type MenuItem } from "../ui/Menu";
-import { Sheet } from "../ui/Sheet";
 
 export function GamePage() {
   const { gameId } = useParams({ from: "/app/games/$gameId" });
@@ -778,16 +778,16 @@ export function GamePage() {
         <MobileGameNav active={activeSection} onChange={setActiveSection} />
       </div>
 
-      <Sheet
+      <AdaptiveSheet
         open={shareSheet !== null}
         onClose={() => setShareSheet(null)}
         title={shareSheet === "image" ? "Ảnh tổng kết" : "Chia sẻ cuộc chơi"}
       >
         {shareSheet === "image" && summaryImageCard}
         {shareSheet === "collaborators" && collaboratorsPanel}
-      </Sheet>
+      </AdaptiveSheet>
 
-      <Sheet
+      <AdaptiveSheet
         open={actionsOpen}
         onClose={() => setActionsOpen(false)}
         title="Tùy chọn cuộc chơi"
@@ -803,15 +803,15 @@ export function GamePage() {
         <div className="mt-3 border-t border-border pt-3">
           <GameSettingsPanel />
         </div>
-      </Sheet>
+      </AdaptiveSheet>
 
-      <Sheet
+      <AdaptiveSheet
         open={settingsOpen}
         onClose={() => setSettingsOpen(false)}
         title="Cài đặt"
       >
         <GameSettingsPanel />
-      </Sheet>
+      </AdaptiveSheet>
     </div>
   );
 }

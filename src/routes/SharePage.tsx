@@ -14,6 +14,7 @@ import type {
   ApiSummary,
 } from "../../shared/api-types";
 import { useShareView } from "../adapters/react-query/queries";
+import { AdaptiveSheet } from "../components/AdaptiveSheet";
 import { CopyMenu } from "../components/CopyMenu";
 import { GameDashboard } from "../components/GameDashboard";
 import { SharePaymentPanel } from "../components/SharePaymentPanel";
@@ -22,7 +23,6 @@ import { ThemeToggle } from "../components/theme";
 import { EmptyState, GamePageSkeleton } from "../components/ui";
 import { formatMoney } from "../core/domain/money";
 import { PagedList } from "../ui/PagedList";
-import { Sheet } from "../ui/Sheet";
 
 type ShareTab = "summary" | "matrix" | "photos";
 
@@ -365,13 +365,13 @@ function ExpenseMatrixCompact({
           )}
         />
       </div>
-      <Sheet
+      <AdaptiveSheet
         open={open}
         onClose={() => setOpen(false)}
         title={active?.title ?? ""}
       >
         {active && <ExpenseCard expense={active} participants={participants} />}
-      </Sheet>
+      </AdaptiveSheet>
     </div>
   );
 }

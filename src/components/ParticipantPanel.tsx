@@ -19,8 +19,8 @@ import type { ApiParticipant } from "../../shared/api-types";
 import type { ParticipantInput } from "../../shared/schemas";
 import { getVietQrBankLabel } from "../adapters/browser/vietqr";
 import { PagedList } from "../ui/PagedList";
-import { Sheet } from "../ui/Sheet";
 import { SwipeAction } from "../ui/SwipeAction";
+import { AdaptiveSheet } from "./AdaptiveSheet";
 import { Avatar } from "./Avatar";
 import { BankSelect } from "./BankSelect";
 import { useConfirm } from "./ConfirmDialog";
@@ -339,14 +339,14 @@ export function ParticipantPanel({
             )}
           />
         </div>
-        <Sheet
+        <AdaptiveSheet
           open={formOpen}
           onClose={cancelEdit}
           title={editingParticipantId ? "Sửa người" : "Thêm người"}
         >
           {formBlock}
-        </Sheet>
-        <Sheet
+        </AdaptiveSheet>
+        <AdaptiveSheet
           open={actionsOpen}
           onClose={() => setActionsOpen(false)}
           title={actionParticipant?.name ?? ""}
@@ -372,7 +372,7 @@ export function ParticipantPanel({
               </button>
             ))}
           </div>
-        </Sheet>
+        </AdaptiveSheet>
       </section>
     );
   }

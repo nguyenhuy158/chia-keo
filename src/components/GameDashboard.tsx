@@ -19,7 +19,8 @@ import { usePreferences } from "../adapters/react-query/queries";
 import { getQrProvider } from "../core/container";
 import { formatMoney } from "../core/domain/money";
 import { PagedList } from "../ui/PagedList";
-import { Sheet } from "../ui/Sheet";
+import { AdaptiveSheet } from "./AdaptiveSheet";
+
 import { Avatar } from "./Avatar";
 import { CategoryBreakdownCard } from "./CategoryBreakdownCard";
 import { PayerBreakdownCard } from "./PayerBreakdownCard";
@@ -783,7 +784,7 @@ function GameDashboardCompact({
         )}
       </div>
 
-      <Sheet
+      <AdaptiveSheet
         open={rowOpen}
         onClose={() => setRowOpen(false)}
         title={activeRow ? `${activeRow.fromName} → ${activeRow.toName}` : ""}
@@ -832,7 +833,7 @@ function GameDashboardCompact({
             )}
           </div>
         )}
-      </Sheet>
+      </AdaptiveSheet>
     </div>
   );
 }
