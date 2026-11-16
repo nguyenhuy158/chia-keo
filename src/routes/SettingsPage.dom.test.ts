@@ -8,6 +8,9 @@ vi.mock("@tanstack/react-router", () => ({
 vi.mock("../components/McpTokenPanel", () => ({
   McpTokenPanel: () => "MCP token panel",
 }));
+vi.mock("../components/GameSettingsPanel", () => ({
+  GameSettingsPanel: () => "Game settings panel",
+}));
 vi.mock("../components/ProfileNamePanel", () => ({
   ProfileNamePanel: () => "Profile name panel",
 }));
@@ -25,6 +28,7 @@ describe("SettingsPage", () => {
     expect(host.textContent).toContain("Cài đặt");
     expect(host.textContent).toContain("Profile name panel");
     expect(host.textContent).toContain("MCP token panel");
+    expect(host.textContent).toContain("Game settings panel");
     act(() => root.unmount());
     host.remove();
   });

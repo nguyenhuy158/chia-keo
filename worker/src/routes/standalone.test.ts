@@ -111,6 +111,7 @@ describe("account level HTTP routes", () => {
         summaryShowQr: true,
         summaryShowAvatar: true,
         roundDownRefunds: false,
+        hideSettledGames: false,
       },
     });
     expect(
@@ -125,6 +126,7 @@ describe("account level HTTP routes", () => {
         summaryShowQr: false,
         summaryShowAvatar: true,
         roundDownRefunds: false,
+        hideSettledGames: false,
       },
     });
     expect(saved.get("summaryShowQr")).toBe("false");

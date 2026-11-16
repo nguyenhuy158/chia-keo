@@ -4,11 +4,13 @@ import { ChevronDown, Copy, Minus, Plus, ReceiptText } from "lucide-react";
 import type { MouseEvent } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { isCollectionDone } from "../../shared/game-closing";
 import { MAX_QUICK_PARTICIPANTS } from "../../shared/schemas";
 import {
   useCreateGame,
   useDuplicateGame,
   useGames,
+  usePreferences,
 } from "../adapters/react-query/queries";
 import { ClosedGamesCard } from "./ClosedGamesCard";
 import { ContactBookCard } from "./ContactBookCard";
@@ -28,6 +30,12 @@ export function GamesSidebar({ onNavigate }: { onNavigate?: () => void }) {
   const gamesQuery = useGames();
   const createGame = useCreateGame();
   const duplicateGame = useDuplicateGame();
+  const { hideSettledGames } = usePreferences();
+  const allGames = gamesQuery.data ?? [];
+  const visibleGames = hideSettledGames
+    ? allGames.filter((game) => !isCollectionDone(game))
+    : allGames;
+  const hiddenCount = allGames.length - visibleGames.length;
 
   async function handleDuplicate(event: MouseEvent, gameId: string) {
     event.preventDefault();
@@ -156,9 +164,9 @@ export function GamesSidebar({ onNavigate }: { onNavigate?: () => void }) {
             <SkeletonCard />
             <SkeletonCard />
           </div>
-        ) : gamesQuery.data && gamesQuery.data.length > 0 ? (
+        ) : visibleGames.length > 0 ? (
           <div className="space-y-2">
-            {gamesQuery.data.map((game) => (
+            {visibleGames.map((game) => (
               <Link
                 key={game.id}
                 to="/games/$gameId"
@@ -213,7 +221,14 @@ export function GamesSidebar({ onNavigate }: { onNavigate?: () => void }) {
           </div>
         ) : (
           <p className="px-1 py-4 text-sm text-fg-muted">
-            Chưa có cuộc chơi nào.
+            {hiddenCount > 0
+              ? "Mọi cuộc chơi đã thu tiền xong."
+              : "Chưa có cuộc chơi nào."}
+          </p>
+        )}
+        {hiddenCount > 0 && (
+          <p className="mt-2 px-1 text-xs text-fg-muted">
+            Đang ẩn {hiddenCount} cuộc đã thu tiền xong (bật lại ở Cài đặt).
           </p>
         )}
       </section>

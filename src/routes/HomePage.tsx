@@ -2,9 +2,10 @@ import { Link } from "@tanstack/react-router";
 import { Crown, Flame, ListChecks, Receipt } from "lucide-react";
 import type { ReactNode } from "react";
 import { useState } from "react";
+import { isCollectionDone } from "../../shared/game-closing";
 import { useCrossBalances } from "../adapters/react-query/cross-balances-query";
 import { useFunStats } from "../adapters/react-query/fun-stats-query";
-import { useGames } from "../adapters/react-query/queries";
+import { useGames, usePreferences } from "../adapters/react-query/queries";
 import { Avatar } from "../components/Avatar";
 import { useMobileShell } from "../components/mobile-shell";
 import { EmptyState, SkeletonCard } from "../components/ui";
@@ -12,7 +13,6 @@ import { formatMoney } from "../core/domain/money";
 import { PagedList } from "../ui/PagedList";
 
 /** Bao nhieu cuoc gan nhat hien o phan "tiep tuc". Du de nhan ra, khong tran man hinh. */
-const RECENT_LIMIT = 4;
 /** Bao nhieu nguoi hien o phan cong no truoc khi cat bot. */
 const DEBT_LIMIT = 5;
 
@@ -68,12 +68,16 @@ export function HomePage() {
   const gamesQuery = useGames();
   const funStatsQuery = useFunStats();
 
-  const games = gamesQuery.data || [];
-  const hasGames = games.length > 0;
+  const { hideSettledGames } = usePreferences();
+  const allGames = gamesQuery.data || [];
+  const games = hideSettledGames
+    ? allGames.filter((game) => !isCollectionDone(game))
+    : allGames;
+  const hiddenCount = allGames.length - games.length;
+  const hasGames = allGames.length > 0;
   // Chua co cuoc nao thi khong goi API cong no: chac chan rong, goi chi ton mot round-trip.
   const balancesQuery = useCrossBalances(hasGames);
 
-  const _recent = games.slice(0, RECENT_LIMIT);
   const stats = funStatsQuery.data;
   const people = balancesQuery.data?.people || [];
   const owedToMe = people
@@ -129,6 +133,7 @@ export function HomePage() {
         </h1>
         <p className="text-xs text-fg-muted">
           {games.length} cuộc chơi · nhấn để tiếp tục chỗ đang dở.
+          {hiddenCount > 0 && ` Đang ẩn ${hiddenCount} cuộc đã thu xong.`}
         </p>
       </div>
       {views.length > 1 && (

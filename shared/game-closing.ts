@@ -33,6 +33,18 @@ export type ClosingState = {
   closeMode: CloseModeValue;
 };
 
+/**
+ * Da thu tien xong: cuoc con nguoi no va tat ca da tra du. Cuoc khong ai no
+ * (khong co tien do) thi khong tinh la "thu xong", de khong bi an nham.
+ */
+export function isCollectionDone(game: {
+  paidProgress?: { paid: number; total: number };
+}): boolean {
+  return game.paidProgress !== undefined
+    ? game.paidProgress.paid >= game.paidProgress.total
+    : false;
+}
+
 export function isClosed(state: ClosingState): boolean {
   return state.closedAt !== null;
 }

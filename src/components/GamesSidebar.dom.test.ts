@@ -5,6 +5,7 @@ import type { ApiGame } from "../../shared/api-types";
 
 const { state, navigate, createGame, duplicateGame } = vi.hoisted(() => ({
   state: {
+    hideSettled: false,
     games: undefined as ApiGame[] | undefined,
     loading: false,
     creating: false,
@@ -30,6 +31,7 @@ vi.mock("@tanstack/react-router", async () => {
 });
 vi.mock("../adapters/react-query/queries", () => ({
   useGames: () => ({ data: state.games, isPending: state.loading }),
+  usePreferences: () => ({ hideSettledGames: state.hideSettled }),
   useCreateGame: () => ({ mutateAsync: createGame, isPending: state.creating }),
   useDuplicateGame: () => ({
     mutateAsync: duplicateGame,
@@ -96,6 +98,7 @@ function game(): ApiGame {
 
 beforeEach(() => {
   Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
+  state.hideSettled = false;
   window.localStorage.clear();
   state.games = undefined;
   state.loading = false;
@@ -169,6 +172,29 @@ describe("GamesSidebar", () => {
     expect(bars[0].getAttribute("aria-valuemax")).toBe("4");
     expect((bars[0].firstElementChild as HTMLElement).style.width).toBe("50%");
     expect(host.textContent).toContain("2/4");
+  });
+
+  it("hides games whose collection is done when the preference is on", () => {
+    state.games = [
+      { ...game(), paidProgress: { paid: 4, total: 4 } },
+      {
+        ...game(),
+        id: "game-2",
+        name: "Còn nợ",
+        paidProgress: { paid: 1, total: 3 },
+      },
+      { ...game(), id: "game-3", name: "Không nợ" },
+    ];
+    render();
+    expect(host.textContent).toContain("Cầu tối");
+    expect(host.textContent).not.toContain("Đang ẩn");
+    state.hideSettled = true;
+    render();
+    expect(host.querySelectorAll("a[href='#game']")).toHaveLength(2);
+    expect(host.textContent).toContain("Đang ẩn 1 cuộc đã thu tiền xong");
+    state.games = [{ ...game(), paidProgress: { paid: 2, total: 2 } }];
+    render();
+    expect(host.textContent).toContain("Mọi cuộc chơi đã thu tiền xong.");
   });
 
   it("opens and duplicates listed games", async () => {

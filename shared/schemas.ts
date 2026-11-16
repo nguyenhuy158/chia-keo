@@ -273,12 +273,15 @@ export const userPreferencesSchema = z.object({
   summaryShowAvatar: z.boolean(),
   /** Host khong hoan phan le: so host tra lai duoc lam tron xuong 1.000d. */
   roundDownRefunds: z.boolean(),
+  /** An cuoc choi da thu tien xong khoi danh sach dang choi. */
+  hideSettledGames: z.boolean(),
 });
 
 export const DEFAULT_USER_PREFERENCES: UserPreferences = {
   summaryShowQr: true,
   summaryShowAvatar: true,
   roundDownRefunds: false,
+  hideSettledGames: false,
 };
 
 export const USER_PREFERENCE_KEYS = Object.keys(
