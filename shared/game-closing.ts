@@ -6,13 +6,22 @@
  *   ra tu so tien chu khong phai y muon cua nguoi dung.
  * - "manual": nguoi dung bam nut dong va xac nhan. Da la y muon thi giu nguyen:
  *   them khoan chi moi cung khong tu mo lai, phai bam "Mo lai".
+ * - "archived": nhu "manual" nhung nam o muc rieng "Da luu tru".
  *
  * Cuoc da dong chi bien khoi danh sach mac dinh, van sua duoc binh thuong.
  */
 
 import type { BalanceRow } from "./split";
 
-export const CLOSE_MODES = ["auto", "manual"] as const;
+/**
+ * Luu tru: cuoc da dong nhung ve rieng muc "Da luu tru", khong nam trong danh
+ * sach "Da dong", bao cao thang va thong ke. Khong can cot moi trong DB: dung
+ * closed_at co san cung close_mode ARCHIVED_CLOSE_MODE. Khong bao gio tu mo lai
+ * (chi "auto" moi tu mo lai), khoi phuc bang "Mo lai".
+ */
+export const ARCHIVED_CLOSE_MODE = "archived";
+
+export const CLOSE_MODES = ["auto", "manual", ARCHIVED_CLOSE_MODE] as const;
 
 export type CloseMode = (typeof CLOSE_MODES)[number];
 
@@ -23,7 +32,9 @@ export type CloseModeValue = CloseMode | typeof CLOSE_MODE_NONE;
 
 /** Cot TEXT tu do trong DB, ep ve mot gia tri hop le truoc khi dung. */
 export function toCloseMode(value: string): CloseModeValue {
-  return value === "auto" || value === "manual" ? value : CLOSE_MODE_NONE;
+  return value === "auto" || value === "manual" || value === ARCHIVED_CLOSE_MODE
+    ? value
+    : CLOSE_MODE_NONE;
 }
 
 /** Trang thai dong cua mot cuoc choi, du de quyet dinh moi thu ben duoi. */
@@ -69,6 +80,7 @@ export function shouldAutoReopen(
 const CLOSE_MODE_LABELS: Record<CloseMode, string> = {
   auto: "tự đóng",
   manual: "đóng tay",
+  [ARCHIVED_CLOSE_MODE]: "lưu trữ",
 };
 
 /** Nhan hien canh cuoc da dong; cuoc dang choi khong co nhan nao. */

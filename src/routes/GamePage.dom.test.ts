@@ -48,6 +48,7 @@ vi.mock("../adapters/react-query/queries", () => {
     "AddParticipant",
     "AddParticipants",
     "AddTransfer",
+    "ArchiveGame",
     "CloseGame",
     "DeleteGame",
     "RemoveExpense",
@@ -274,6 +275,7 @@ beforeEach(() => {
     "AddParticipant",
     "AddParticipants",
     "AddTransfer",
+    "ArchiveGame",
     "CloseGame",
     "DeleteGame",
     "RemoveExpense",
@@ -390,6 +392,37 @@ describe("GamePage", () => {
     expect(mocks.mutation.DeleteGame.mutateAsync).not.toHaveBeenCalled();
     await menuAction("Xóa cuộc chơi");
     expect(mocks.navigate).toHaveBeenCalledWith({ to: "/" });
+  });
+
+  it("archives from the menu and the mobile sheet, and offers no archive for archived games", async () => {
+    render();
+    mocks.confirm.mockResolvedValueOnce(false);
+    await menuAction("Lưu trữ");
+    expect(mocks.mutation.ArchiveGame.mutateAsync).not.toHaveBeenCalled();
+    mocks.navigate.mockClear();
+    await menuAction("Lưu trữ");
+    expect(mocks.mutation.ArchiveGame.mutateAsync).toHaveBeenCalledWith(
+      "game-1",
+    );
+    expect(mocks.toast.success).toHaveBeenCalledWith("Đã lưu trữ cuộc chơi");
+    expect(mocks.navigate).toHaveBeenCalledWith({ to: "/" });
+
+    mocks.mutation.ArchiveGame.mutateAsync.mockRejectedValueOnce(
+      new Error("fail"),
+    );
+    await click("Tùy chọn cuộc chơi");
+    await click("Lưu trữ");
+    expect(mocks.toast.error).toHaveBeenCalledWith("Không lưu trữ được");
+
+    mocks.game = game({
+      closedAt: "2026-01-02T00:00:00Z",
+      closeMode: "archived",
+    });
+    render();
+    await click("Thêm tùy chọn cuộc chơi");
+    expect(menuItems().map((item) => item.textContent)).not.toContain(
+      "Lưu trữ",
+    );
   });
 
   it("uploads the share preview from copy actions and logs failures", async () => {

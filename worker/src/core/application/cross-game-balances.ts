@@ -3,6 +3,7 @@ import type {
   ApiCrossGamePerson,
 } from "../../../../shared/api-types";
 import { normalizeContactName } from "../../../../shared/contacts";
+import { ARCHIVED_CLOSE_MODE } from "../../../../shared/game-closing";
 import { capitalizeName } from "../../../../shared/schemas";
 import type { BalanceRow } from "../../../../shared/split";
 import {
@@ -73,7 +74,9 @@ export async function getBalancesAcrossGames(
   userId: string,
   options: { gameIds?: string[] } = {},
 ): Promise<ApiCrossGameBalances> {
-  const allGames = await repo.games.listByOwner(userId);
+  const allGames = (await repo.games.listByOwner(userId)).filter(
+    (game) => game.closeMode !== ARCHIVED_CLOSE_MODE,
+  );
   // Truyen trung id thi cong doi so tien len — loai trung truoc khi tinh.
   const gameIds = [...new Set(options.gameIds ?? [])];
 

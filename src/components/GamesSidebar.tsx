@@ -10,6 +10,7 @@ import {
   useDuplicateGame,
   useGames,
 } from "../adapters/react-query/queries";
+import { ArchivedGamesCard } from "./ArchivedGamesCard";
 import { ClosedGamesCard } from "./ClosedGamesCard";
 import { ContactBookCard } from "./ContactBookCard";
 import { TrashCard } from "./TrashCard";
@@ -218,6 +219,7 @@ export function GamesSidebar({ onNavigate }: { onNavigate?: () => void }) {
         )}
       </section>
       <ClosedGamesCard onNavigate={onNavigate} />
+      <ArchivedGamesCard onNavigate={onNavigate} />
       <TrashCard />
     </aside>
   );

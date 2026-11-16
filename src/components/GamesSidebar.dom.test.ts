@@ -37,6 +37,7 @@ vi.mock("../adapters/react-query/queries", () => ({
   }),
 }));
 vi.mock("./ClosedGamesCard", () => ({ ClosedGamesCard: () => null }));
+vi.mock("./ArchivedGamesCard", () => ({ ArchivedGamesCard: () => null }));
 vi.mock("./ContactBookCard", () => ({ ContactBookCard: () => null }));
 vi.mock("./TrashCard", () => ({ TrashCard: () => null }));
 

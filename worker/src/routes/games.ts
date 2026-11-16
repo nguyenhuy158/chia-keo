@@ -38,11 +38,13 @@ import {
 } from "../core/application/expenses";
 import { listGameEvents, undoGameEvent } from "../core/application/game-events";
 import {
+  archiveGame,
   closeGame,
   createGame,
   deleteGame,
   duplicateGame,
   getGameDetailForOwner,
+  listArchivedGames,
   listClosedGames,
   listDeletedGames,
   listGames,
@@ -147,6 +149,10 @@ gamesRouter.post("/games", async (c) => {
   );
 });
 
+gamesRouter.get("/games/archived", (c) =>
+  respond(c, () => listArchivedGames(c.get("repo"), c.get("userId"))),
+);
+
 gamesRouter.get("/games/closed", (c) =>
   respond(c, () => listClosedGames(c.get("repo"), c.get("userId"))),
 );
@@ -172,6 +178,12 @@ gamesRouter.get("/games/trash", (c) =>
 gamesRouter.post("/games/:gameId/close", (c) =>
   respond(c, () =>
     closeGame(c.get("repo"), c.get("userId"), c.req.param("gameId")),
+  ),
+);
+
+gamesRouter.post("/games/:gameId/archive", (c) =>
+  respond(c, () =>
+    archiveGame(c.get("repo"), c.get("userId"), c.req.param("gameId")),
   ),
 );
 

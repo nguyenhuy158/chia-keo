@@ -50,6 +50,8 @@ export function createHttpGameApi(): GameApiPort {
       listClosed: () => request(`/api/games/closed`),
       close: (gameId) => post(`/api/games/${gameId}/close`),
       reopen: (gameId) => post(`/api/games/${gameId}/reopen`),
+      listArchived: () => request(`/api/games/archived`),
+      archive: (gameId) => post(`/api/games/${gameId}/archive`),
       trash: () => request(`/api/games/trash`),
       restore: (gameId) => post(`/api/games/${gameId}/restore`),
       purge: (gameId) => destroy(`/api/games/${gameId}/purge`),

@@ -22,6 +22,22 @@ describe("getFunStats", () => {
     expect(rows).not.toHaveBeenCalled();
   });
 
+  it("leaves archived games out of the stats", async () => {
+    const { repo } = createFakeRepo({
+      games: [
+        gameRow({ id: "play", name: "Kèo thường" }),
+        gameRow({
+          id: "old",
+          name: "Kèo test",
+          closedAt: "2026-08-02T00:00:00.000Z",
+          closeMode: "archived",
+        }),
+      ],
+    });
+    const result = await getFunStats(repo, FAKE_OWNER);
+    expect(result.gameCount).toBe(1);
+  });
+
   it("ignores excluded expenses", async () => {
     const game = gameRow({ id: "game-x", name: "Kèo x" });
     const { repo } = createFakeRepo({ games: [game] });
