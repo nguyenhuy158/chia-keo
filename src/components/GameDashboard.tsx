@@ -24,6 +24,7 @@ import { PagedList } from "../ui/PagedList";
 import { Sheet } from "../ui/Sheet";
 import { Avatar } from "./Avatar";
 import { CategoryBreakdownCard } from "./CategoryBreakdownCard";
+import { PayerBreakdownCard } from "./PayerBreakdownCard";
 import { BalancePill, Metric, Switch } from "./ui";
 
 /** QR chung cua host khong gan san so tien vi moi nguoi chuyen mot muc khac. */
@@ -168,6 +169,7 @@ function GameDashboardFull({
       </section>
 
       <CategoryBreakdownCard expenses={expenses} />
+      <PayerBreakdownCard expenses={expenses} participants={participants} />
 
       <section className="rounded-lg border border-border bg-surface p-4 shadow-sm">
         <h3 className="text-lg font-semibold text-stone-950 dark:text-stone-50">
