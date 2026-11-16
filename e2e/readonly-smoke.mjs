@@ -75,7 +75,12 @@ try {
   await page
     .getByRole("button", { name: "Tạo cuộc chơi và thêm người" })
     .waitFor(WAIT);
-  ok("GET /help renders the guide without login");
+  await page.waitForFunction(() => {
+    const image = document.querySelector('img[src="/help/create-game.png"]');
+    return image?.complete && image.naturalWidth > 0;
+  }, WAIT);
+  await page.getByRole("link", { name: "Mở trang chủ" }).first().waitFor(WAIT);
+  ok("GET /help renders the guide, a screenshot and a link without login");
 
   if (pageErrors.length > 0)
     throw new Error(`loi JS tren trang: ${pageErrors.join(" | ")}`);

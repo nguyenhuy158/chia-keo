@@ -3,11 +3,14 @@ import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@tanstack/react-router", () => ({
-  Link: ({ children }: { children: ReactNode }) => children,
+  Link: ({ children, to }: { children: ReactNode; to?: string }) =>
+    createElement("a", { href: to }, children),
 }));
 
 import { HelpPage } from "./HelpPage";
 import { HELP_GROUPS } from "./help-content";
+
+const helpImageFiles = Object.keys(import.meta.glob("../../public/help/*.png"));
 
 let host: HTMLDivElement;
 let root: Root;
@@ -72,6 +75,36 @@ describe("HelpPage", () => {
     for (const group of HELP_GROUPS) {
       for (const topic of group.topics)
         expect(topic.steps.length).toBeGreaterThan(0);
+    }
+  });
+
+  it("shows the screenshot and the real-place links of an opened topic", () => {
+    const create = HELP_GROUPS[0].topics[0];
+    const image = host.querySelector(`img[src="${create.image?.src}"]`);
+    expect(image?.getAttribute("alt")).toBe(create.image?.alt);
+    expect(
+      [...host.querySelectorAll("a")].some(
+        (link) =>
+          link.getAttribute("href") === "/" &&
+          link.textContent?.includes("Mở trang chủ"),
+      ),
+    ).toBe(true);
+  });
+
+  it("points every topic image at an existing file and every link at a known page", () => {
+    const topics = HELP_GROUPS.flatMap((group) => group.topics);
+    const withImages = topics.filter((topic) => topic.image);
+    expect(withImages.length).toBeGreaterThan(5);
+    for (const topic of withImages) {
+      expect(topic.image?.alt.length).toBeGreaterThan(0);
+      expect(helpImageFiles, topic.image?.src).toContain(
+        `../../public${topic.image?.src}`,
+      );
+    }
+    const pages = new Set(["/", "/shuttles", "/fun", "/settings"]);
+    for (const topic of topics) {
+      for (const link of topic.links ?? [])
+        expect(pages.has(link.to)).toBe(true);
     }
   });
 });
