@@ -241,7 +241,6 @@ export function GamePage() {
       onReorder={(participantIds) => reorderParticipants.mutate(participantIds)}
     />
   );
-  const participantPanel = renderParticipantPanel(false);
   const compactParticipantPanel = renderParticipantPanel(true);
 
   const photos = photosQuery.data || [];
@@ -265,7 +264,6 @@ export function GamePage() {
       addTransfer.mutateAsync(input),
     onReorder: (expenseIds: string[]) => reorderExpenses.mutate(expenseIds),
   };
-  const expensePanel = <ExpensePanel {...expensePanelProps} />;
   const compactExpensePanel = <ExpensePanel {...expensePanelProps} compact />;
 
   const renderPhotoPanel = (compact: boolean) => (
@@ -277,7 +275,6 @@ export function GamePage() {
       compact={compact}
     />
   );
-  const photoPanel = renderPhotoPanel(false);
   const compactPhotoPanel = renderPhotoPanel(true);
 
   const participantNameById = new Map(
@@ -332,7 +329,6 @@ export function GamePage() {
       settlePending={addTransfer.isPending}
     />
   );
-  const dashboard = renderDashboard(false);
   const compactDashboard = renderDashboard(true);
 
   const summaryInput = {
@@ -343,10 +339,9 @@ export function GamePage() {
     summary: game.summary,
     settlementMode: game.settlementMode,
     settlementHostId: game.settlementHostId,
-    shareUrl:
-      shareLink && shareLink.enabled
-        ? `${window.location.origin}/share/${shareLink.token}`
-        : undefined,
+    shareUrl: shareLink?.enabled
+      ? `${window.location.origin}/share/${shareLink.token}`
+      : undefined,
   };
 
   function publishSharePreview(backgroundId: string) {
@@ -549,11 +544,8 @@ export function GamePage() {
   );
 
   return (
-    <div
-      data-one-screen
-      className="flex h-full min-h-0 flex-col lg:block lg:h-auto"
-    >
-      <div className="mb-2 flex shrink-0 items-center justify-between gap-3 rounded-lg border border-border bg-surface p-2 shadow-sm lg:mb-5 lg:p-4">
+    <div data-one-screen className="flex h-full min-h-0 flex-col">
+      <div className="mb-2 flex shrink-0 items-center justify-between gap-3 rounded-lg border border-border bg-surface p-2 shadow-sm lg:mb-3 lg:p-3">
         <div className="min-w-0">
           <p className="text-sm font-medium text-violet-600 dark:text-violet-400">
             {game.code}
@@ -656,25 +648,10 @@ export function GamePage() {
         }
       />
 
-      {/* Desktop layout: giu nguyen bo cuc luoi. */}
-      <div className="hidden gap-5 lg:grid xl:grid-cols-[minmax(0,1fr)_360px]">
-        <div className="space-y-5">
-          {participantPanel}
-          {expensePanel}
-          {photoPanel}
-          <HistoryPanel gameId={game.id} collapsible />
-        </div>
-        <div className="space-y-5">
-          {dashboard}
-          {summaryImageCard}
-          {collaboratorsPanel}
-        </div>
-      </div>
-
       {/* Mobile layout: mot phan mot man hinh, dieu huong bang bottom nav.
           Tab da gon (Chi) tu chia trang, khong cuon; cac tab con lai tam thoi
           cuon trong khung cho toi khi doi xong (chiakeo#76). */}
-      <div className="flex min-h-0 flex-1 flex-col lg:hidden">
+      <div className="flex min-h-0 flex-1 flex-col">
         <div className="min-h-0 flex-1 space-y-3 overflow-hidden">
           {activeSection === "people" && compactParticipantPanel}
           {activeSection === "expenses" && compactExpensePanel}

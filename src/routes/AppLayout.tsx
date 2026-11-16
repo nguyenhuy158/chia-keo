@@ -22,13 +22,14 @@ import { Menu as DropdownMenu } from "../ui/Menu";
 import { Sheet } from "../ui/Sheet";
 
 /**
- * Mot man hinh, khong cuon: trang nao dat `data-one-screen` thi tren dien thoai
- * khung chiem dung chieu cao man hinh va ruot trang tu chia chieu cao.
+ * Mot man hinh, khong cuon: trang nao dat `data-one-screen` thi (ca dien thoai
+ * lan may tinh) khung chiem dung chieu cao man hinh va ruot trang tu chia chieu
+ * cao. Cot trai tren may tinh la mot khung cuon rieng.
  */
 const APP_FRAME_CLASS =
-  "flex min-h-dvh flex-col max-lg:has-[[data-one-screen]]:h-dvh max-lg:has-[[data-one-screen]]:overflow-hidden";
+  "flex min-h-dvh flex-col has-[[data-one-screen]]:h-dvh has-[[data-one-screen]]:overflow-hidden";
 const MAIN_CLASS =
-  "mx-auto grid min-h-0 w-full max-w-7xl flex-1 gap-5 px-4 py-4 sm:px-5 sm:py-5 lg:grid-cols-[320px_minmax(0,1fr)] max-lg:has-[[data-one-screen]]:grid-rows-[minmax(0,1fr)] max-lg:has-[[data-one-screen]]:py-2";
+  "mx-auto grid min-h-0 w-full max-w-7xl flex-1 gap-5 px-4 py-4 sm:px-5 sm:py-5 lg:grid-cols-[320px_minmax(0,1fr)] has-[[data-one-screen]]:grid-rows-[minmax(0,1fr)] has-[[data-one-screen]]:py-2";
 
 export function AppLayout() {
   const navigate = useNavigate();
@@ -201,7 +202,7 @@ export function AppLayout() {
         </header>
 
         <main className={MAIN_CLASS}>
-          <div className="hidden lg:block">
+          <div className="hidden min-h-0 overflow-y-auto overscroll-contain lg:block">
             <GamesSidebar />
           </div>
           {/* min-w-0: cot grid mac dinh no theo min-content, mot chuoi dai khong

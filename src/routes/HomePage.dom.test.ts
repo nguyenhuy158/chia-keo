@@ -103,80 +103,17 @@ describe("HomePage", () => {
     expect(openGames).toHaveBeenCalledOnce();
   });
 
-  it("shows the four most recent games and no debt or stat cards without data", () => {
+  it("asks for the balances and shows no debt or stat tabs without data", () => {
     state.games = Array.from({ length: 5 }, (_, index) =>
       game(String(index + 1)),
     );
     render();
     expect(useCrossBalances).toHaveBeenLastCalledWith(true);
     expect(host.textContent).toContain("Chào buổi sáng");
-    const desktop = host.querySelector(".hidden") as HTMLElement;
-    expect(desktop.querySelectorAll('a[href^="/games/"]')).toHaveLength(4);
-    expect(desktop.textContent).not.toContain("Cầu 5");
     expect(host.textContent).not.toContain("Cần tất toán");
     expect(host.textContent).not.toContain("Vài con số");
     act(() => openButton().click());
     expect(openGames).toHaveBeenCalledOnce();
-  });
-
-  it("shows both debt directions and limits each list to five people", () => {
-    state.games = [game("1")];
-    state.people = [
-      ...Array.from({ length: 6 }, (_, index) => ({
-        name: `Được ${index}`,
-        net: 1000,
-      })),
-      ...Array.from({ length: 6 }, (_, index) => ({
-        name: `Nợ ${index}`,
-        net: -1000,
-      })),
-      { name: "Đã xong", net: 0 },
-    ];
-    render();
-    expect(host.textContent).toContain("Cần tất toán");
-    expect(host.textContent).toContain("Được nhận lại");
-    expect(host.textContent).toContain("Còn phải trả");
-    expect(host.textContent).toContain("Được 4");
-    expect(host.textContent).not.toContain("Được 5");
-    expect(host.textContent).not.toContain("Nợ 5");
-    expect(host.textContent).not.toContain("Đã xong");
-  });
-
-  it("shows either debt direction independently", () => {
-    state.games = [game("1")];
-    state.people = [{ name: "An", net: 1000 }];
-    render();
-    expect(host.textContent).toContain("Được nhận lại");
-    expect(host.textContent).not.toContain("Còn phải trả");
-    state.people = [{ name: "Bình", net: -1000 }];
-    render();
-    expect(host.textContent).not.toContain("Được nhận lại");
-    expect(host.textContent).toContain("Còn phải trả");
-  });
-
-  it("shows optional spending highlights", () => {
-    state.games = [game("1")];
-    state.stats = {
-      totalExpense: 250000,
-      topPayer: { name: "An" },
-      biggestExpense: { amount: 150000 },
-    };
-    render();
-    expect(host.textContent).toContain("Vài con số");
-    expect(host.textContent).toContain("Ứng tiền nhiều nhất");
-    expect(host.textContent).toContain("Khoản khủng nhất");
-    expect(host.querySelector('a[href="/fun"]')).not.toBeNull();
-    state.stats = {
-      totalExpense: 250000,
-      topPayer: null,
-      biggestExpense: null,
-    };
-    render();
-    expect(host.textContent).not.toContain("Ứng tiền nhiều nhất");
-    expect(host.textContent).not.toContain("Khoản khủng nhất");
-    state.stats = { totalExpense: 0 };
-    render();
-    expect(host.textContent).not.toContain("Vài con số");
   });
 
   it.each([

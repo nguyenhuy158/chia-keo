@@ -948,6 +948,33 @@ try {
   await page.setViewportSize({ width: 1280, height: 720 });
   ok("phone: Chi tab fits one screen, pages the list and adds from a Sheet");
 
+  // 7c. May tinh: cac trang chinh cung vua mot man hinh, khong cuon ca trang
+  // (cot trai va danh sach ben trong tu cuon trong khung cua minh).
+  const pageScrolls = () =>
+    page.evaluate(
+      () =>
+        document.documentElement.scrollHeight >
+        document.documentElement.clientHeight + 1,
+    );
+  for (const path of ["/", "/shuttles", "/fun", `/games/${gameId}`]) {
+    await page.goto(`${BASE}${path}`);
+    await page.waitForLoadState("networkidle");
+    assert.equal(
+      await pageScrolls(),
+      false,
+      `${path} cuon ca trang tren may tinh`,
+    );
+  }
+  for (const tab of ["Người", "Tổng kết", "Khác", "Chi"]) {
+    await page.getByRole("button", { name: tab, exact: true }).click();
+    assert.equal(
+      await pageScrolls(),
+      false,
+      `tab ${tab} cuon ca trang tren may tinh`,
+    );
+  }
+  ok("desktop: home, shuttles, fun stats and every game tab fit one screen");
+
   // 8. Logout
   await page.click("text=Thoát");
   await page.waitForURL("**/login", WAIT);

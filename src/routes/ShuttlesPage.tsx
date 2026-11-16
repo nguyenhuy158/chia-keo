@@ -45,23 +45,15 @@ function EntryRow({
   entry,
   onDelete,
   deleting,
-  compact = false,
 }: {
   entry: ApiShuttleEntry;
   onDelete: () => void;
   deleting: boolean;
-  compact?: boolean;
 }) {
   const positive = entry.delta > 0;
 
   return (
-    <div
-      className={
-        compact
-          ? "flex h-full items-center gap-3 rounded-md border border-border px-3"
-          : "flex items-center gap-3 py-2.5"
-      }
-    >
+    <div className="flex h-full items-center gap-3 rounded-md border border-border px-3">
       <span
         className={`inline-flex h-8 w-12 shrink-0 items-center justify-center rounded-full text-sm font-bold ${
           positive
@@ -162,10 +154,7 @@ export function ShuttlesPage() {
   }
 
   return (
-    <div
-      data-one-screen
-      className="flex h-full min-h-0 flex-col gap-3 lg:block lg:h-auto lg:space-y-3"
-    >
+    <div data-one-screen className="flex h-full min-h-0 flex-col gap-3">
       <div className="flex shrink-0 items-center gap-2">
         <Link
           to="/"
@@ -180,7 +169,7 @@ export function ShuttlesPage() {
         </h1>
       </div>
 
-      <section className="shrink-0 rounded-lg border border-border bg-surface p-3 shadow-sm lg:p-4">
+      <section className="shrink-0 rounded-lg border border-border bg-surface p-3 shadow-sm">
         {stockQuery.isPending ? (
           <LoadingState label="Đang đếm cầu..." />
         ) : (
@@ -276,7 +265,7 @@ export function ShuttlesPage() {
         )}
       </section>
 
-      <section className="flex min-h-0 flex-1 flex-col rounded-lg border border-border bg-surface p-3 shadow-sm lg:block lg:flex-none lg:p-4">
+      <section className="flex min-h-0 flex-1 flex-col rounded-lg border border-border bg-surface p-3 shadow-sm">
         <h2 className="shrink-0 text-sm font-semibold text-stone-950 dark:text-stone-50">
           Lịch sử
         </h2>
@@ -291,33 +280,20 @@ export function ShuttlesPage() {
             Chưa ghi gì. Bấm "Chốt lại" để nhập số cầu đang có trong ống.
           </p>
         ) : (
-          <>
-            <div className="mt-2 min-h-0 flex-1 lg:hidden">
-              <PagedList
-                items={entries}
-                getKey={(entry) => entry.id}
-                rowHeight={COMPACT_ROW_HEIGHT_PX}
-                renderItem={(entry) => (
-                  <EntryRow
-                    entry={entry}
-                    deleting={deleteEntry.isPending}
-                    onDelete={() => handleDelete(entry)}
-                    compact
-                  />
-                )}
-              />
-            </div>
-            <div className="hidden max-h-64 divide-y divide-stone-100 overflow-y-auto dark:divide-stone-800 lg:block">
-              {entries.map((entry) => (
+          <div className="mt-2 min-h-0 flex-1">
+            <PagedList
+              items={entries}
+              getKey={(entry) => entry.id}
+              rowHeight={COMPACT_ROW_HEIGHT_PX}
+              renderItem={(entry) => (
                 <EntryRow
-                  key={entry.id}
                   entry={entry}
                   deleting={deleteEntry.isPending}
                   onDelete={() => handleDelete(entry)}
                 />
-              ))}
-            </div>
-          </>
+              )}
+            />
+          </div>
         )}
       </section>
     </div>
