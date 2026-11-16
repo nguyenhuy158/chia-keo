@@ -62,6 +62,7 @@ type MenuPosition = {
   left: number;
   top?: number;
   bottom?: number;
+  maxHeight: number;
 };
 
 type CopyMenuProps = {
@@ -77,11 +78,18 @@ function computePosition(trigger: HTMLElement): MenuPosition {
     VIEWPORT_MARGIN,
     Math.min(rect.right - MENU_WIDTH, maxLeft),
   );
-  const openUp = rect.bottom + MENU_HEIGHT_ESTIMATE > window.innerHeight;
+  const spaceBelow =
+    window.innerHeight - rect.bottom - MENU_GAP - VIEWPORT_MARGIN;
+  const spaceAbove = rect.top - MENU_GAP - VIEWPORT_MARGIN;
+  const openUp = spaceBelow < MENU_HEIGHT_ESTIMATE && spaceAbove > spaceBelow;
 
   return openUp
-    ? { left, bottom: window.innerHeight - rect.top + MENU_GAP }
-    : { left, top: rect.bottom + MENU_GAP };
+    ? {
+        left,
+        bottom: window.innerHeight - rect.top + MENU_GAP,
+        maxHeight: spaceAbove,
+      }
+    : { left, top: rect.bottom + MENU_GAP, maxHeight: spaceBelow };
 }
 
 export function CopyMenu({
@@ -324,7 +332,7 @@ export function CopyMenu({
             ref={menuRef}
             role="menu"
             style={{ position: "fixed", width: MENU_WIDTH, ...position }}
-            className="z-[70] overflow-hidden rounded-xl border border-stone-200 bg-surface p-1 shadow-xl animate-[overlay-in_120ms_ease] dark:border-stone-700"
+            className="z-[70] overflow-y-auto overscroll-contain rounded-xl border border-stone-200 bg-surface p-1 shadow-xl animate-[overlay-in_120ms_ease] dark:border-stone-700"
           >
             <div className="border-b border-stone-200 px-3 pb-2.5 pt-2 dark:border-stone-700">
               <SummaryBackgroundPicker
