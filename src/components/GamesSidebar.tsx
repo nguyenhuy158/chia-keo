@@ -158,6 +158,28 @@ export function GamesSidebar({ onNavigate }: { onNavigate?: () => void }) {
                 <span className="mt-1 block text-xs text-fg-muted">
                   {game.participantCount} người, {game.expenseCount} khoản
                 </span>
+                {game.paidProgress && (
+                  <span className="mt-2 flex items-center gap-2">
+                    <span
+                      role="progressbar"
+                      aria-label="Đã trả"
+                      aria-valuemin={0}
+                      aria-valuemax={game.paidProgress.total}
+                      aria-valuenow={game.paidProgress.paid}
+                      className="h-1 flex-1 overflow-hidden rounded-full bg-stone-200 dark:bg-stone-700"
+                    >
+                      <span
+                        className="block h-full rounded-full bg-success"
+                        style={{
+                          width: `${(game.paidProgress.paid / game.paidProgress.total) * 100}%`,
+                        }}
+                      />
+                    </span>
+                    <span className="text-xs tabular-nums text-fg-muted">
+                      {game.paidProgress.paid}/{game.paidProgress.total}
+                    </span>
+                  </span>
+                )}
                 <button
                   type="button"
                   onClick={(event) => handleDuplicate(event, game.id)}

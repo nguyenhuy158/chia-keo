@@ -1,6 +1,7 @@
 import type {
   ApiGame,
   ApiGameDetail,
+  ApiPaidProgress,
   ApiTrashGame,
 } from "../../../../shared/api-types";
 import {
@@ -28,6 +29,7 @@ import {
   loadGameDetail,
 } from "./game-detail";
 import { recordEvent } from "./game-events";
+import { loadPaidProgress } from "./game-paid-progress";
 
 /** Ma loi tra ve khi trang thai dong khong khop voi thao tac. */
 export const GAME_ALREADY_CLOSED = "game_already_closed";
@@ -42,6 +44,7 @@ async function listGamesWhere(
   repo: GameRepository,
   userId: string,
   keep: (row: GameRow) => boolean,
+  withPaidProgress = false,
 ): Promise<ApiGame[]> {
   const [ownedRows, sharedRows] = await Promise.all([
     repo.games.listByOwner(userId),
@@ -50,9 +53,12 @@ async function listGamesWhere(
   const gameRows = [...ownedRows, ...sharedRows].filter(keep);
   const gameIds = gameRows.map((row) => row.id);
 
-  const [participantCounts, expenseCounts] = await Promise.all([
+  const [participantCounts, expenseCounts, paidProgress] = await Promise.all([
     repo.games.countParticipants(gameIds),
     repo.games.countExpenses(gameIds),
+    withPaidProgress
+      ? loadPaidProgress(repo, gameIds)
+      : new Map<string, ApiPaidProgress>(),
   ]);
 
   return gameRows.map((row) => ({
@@ -65,6 +71,9 @@ async function listGamesWhere(
     closedAt: row.closedAt,
     closeMode: toCloseMode(row.closeMode),
     isOwner: row.ownerUserId === userId,
+    ...(paidProgress.has(row.id)
+      ? { paidProgress: paidProgress.get(row.id) }
+      : {}),
   }));
 }
 
@@ -77,7 +86,7 @@ export async function listGames(
   repo: GameRepository,
   userId: string,
 ): Promise<ApiGame[]> {
-  return listGamesWhere(repo, userId, (row) => row.closedAt === null);
+  return listGamesWhere(repo, userId, (row) => row.closedAt === null, true);
 }
 
 /** Cuoc choi da dong, moi dong truoc. */
