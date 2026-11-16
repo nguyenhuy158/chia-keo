@@ -200,6 +200,32 @@ describe("CopyMenu", () => {
     expect(chooseBackground).toHaveBeenCalledWith("new-bg");
   });
 
+  it("centers the menu with a backdrop on narrow screens and keeps scrolling inside open", () => {
+    const originalWidth = window.innerWidth;
+    window.innerWidth = 400;
+    try {
+      render();
+      open();
+      expect(menu().style.left).toBe("50%");
+      expect(menu().style.top).toBe("50%");
+      expect(menu().style.transform).toBe("translate(-50%, -50%)");
+      const backdrop = document.body.querySelector(
+        "[data-testid='copy-menu-backdrop']",
+      ) as HTMLDivElement;
+      expect(backdrop).not.toBeNull();
+      act(() => {
+        menu().dispatchEvent(new Event("scroll"));
+      });
+      expect(menu()).not.toBeNull();
+      act(() =>
+        backdrop.dispatchEvent(new Event("pointerdown", { bubbles: true })),
+      );
+      expect(menu()).toBeNull();
+    } finally {
+      window.innerWidth = originalWidth;
+    }
+  });
+
   it("caps the menu height to the space left so it scrolls on short screens", () => {
     const originalHeight = window.innerHeight;
     window.innerHeight = 500;
