@@ -242,16 +242,4 @@ describe("ShuttlesPage", () => {
     render();
     expect(button("Xóa lần ghi này")?.disabled).toBe(true);
   });
-
-  it("xóa được cả từ danh sách đầy đủ trên màn hình lớn", async () => {
-    state.stock = 8;
-    state.entries = [entry("add", "add", 6)];
-    render();
-    const buttons = [
-      ...host.querySelectorAll('button[aria-label="Xóa lần ghi này"]'),
-    ] as HTMLButtonElement[];
-    expect(buttons).toHaveLength(2);
-    await act(async () => buttons[1].click());
-    expect(remove).toHaveBeenCalledWith("add");
-  });
 });

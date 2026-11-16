@@ -8,8 +8,6 @@
 //   playwright-core tu tim (xem findChromium trong @huyab/e2e).
 
 import assert from "node:assert/strict";
-import { writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { findChromium } from "@huyab/e2e";
 import { chromium } from "playwright-core";
@@ -26,34 +24,79 @@ function ok(name) {
   console.log(`PASS ${name}`);
 }
 
-/**
- * Tao mot anh JPEG that bang canvas de kiem tra luong nen + upload anh.
- * Tra ve duong dan file tam.
- */
-async function createJpegFixture() {
-  const dataUrl = await page.evaluate(() => {
-    const canvas = document.createElement("canvas");
-    canvas.width = 1600;
-    canvas.height = 1000;
-    const context = canvas.getContext("2d");
-    context.fillStyle = "#7c3aed";
-    context.fillRect(0, 0, canvas.width, canvas.height);
-    context.fillStyle = "#ffffff";
-    context.font = "120px sans-serif";
-    context.fillText("HOA DON", 120, 520);
-    return canvas.toDataURL("image/jpeg", 0.9);
-  });
-  const path = join(tmpdir(), `chia-keo-e2e-${process.pid}.jpg`);
-  writeFileSync(path, Buffer.from(dataUrl.split(",")[1], "base64"));
-  return path;
-}
-
 /** Khung tao cuoc choi mac dinh dong: mo ra neu chua mo roi cho o ten hien. */
 async function openCreateGameForm(page) {
   const toggle = page.getByRole("button", { name: "Thêm cuộc chơi mới" });
   await toggle.waitFor(WAIT);
   if ((await page.locator("#game-name").count()) === 0) await toggle.click();
   await page.waitForSelector("#game-name", WAIT);
+}
+
+/** Mo mot tab cua trang cuoc choi (Chi, Người, Tổng kết, Khác). */
+const goTab = (target, name) =>
+  target.getByRole("button", { name, exact: true }).click();
+
+/** Them mot nguoi bang Sheet cua tab Nguoi (co the kem tai khoan ngan hang). */
+async function addPerson(target, gameId, name, bank) {
+  await goTab(target, "Người");
+  await target.getByRole("button", { name: "Mở form thêm người" }).click();
+  await target.fill("input[placeholder='Huy']:visible", name);
+  if (bank) {
+    await target.click('button:has-text("Tài khoản nhận tiền"):visible');
+    await target.click('button:has-text("Chọn ngân hàng"):visible');
+    await target.click('[role="option"]:has-text("Vietcombank (VCB)")');
+    await target.fill(
+      "input[placeholder='0123456789']:visible",
+      bank.accountNo,
+    );
+    await target.fill(
+      "input[placeholder='NGUYEN VAN A']:visible",
+      bank.accountName,
+    );
+  }
+  await target.click("button[type='submit']:visible");
+  await target.waitForFunction(
+    ({ id, personName }) =>
+      fetch(`/api/games/${id}`, { credentials: "include" })
+        .then((response) => response.json())
+        .then((game) =>
+          game.participants.some((item) => item.name === personName),
+        ),
+    { id: gameId, personName: name },
+    WAIT,
+  );
+  await target.keyboard.press("Escape");
+  await target
+    .locator("input[placeholder='Huy']:visible")
+    .waitFor({ state: "hidden", ...WAIT });
+}
+
+/** Mo Sheet them khoan chi o tab Chi, dien ten va so tien. */
+async function openExpenseSheet(target, title, amount) {
+  await goTab(target, "Chi");
+  await target.getByRole("button", { name: "Thêm khoản chi" }).first().click();
+  await target.fill("input[placeholder='Ăn tối']:visible", title);
+  await target.fill("input[placeholder='500.000']:visible", amount);
+}
+
+/** Gui form khoan chi dang mo va doi Sheet dong lai. */
+async function submitExpenseSheet(target) {
+  await target.click("button[type='submit']:visible");
+  await target
+    .locator("input[placeholder='Ăn tối']:visible")
+    .waitFor({ state: "hidden", ...WAIT });
+}
+
+/** Mo Sheet chi tiet cua mot dong chuyen khoan (tab Tong ket > Chuyen khoan). */
+async function openTransferSheet(target, fromTo) {
+  await goTab(target, "Tổng kết");
+  await target
+    .getByRole("button", { name: "Chuyển khoản", exact: true })
+    .click();
+  await target
+    .getByRole("button", { name: `Chi tiết ${fromTo}` })
+    .first()
+    .click();
 }
 
 /**
@@ -106,15 +149,6 @@ async function acceptConfirm(target = page) {
 }
 
 /** O anh thu `index` trong album (khung co huy hieu so luong dang "n/60"). */
-function albumTile(index) {
-  // Layout boc ngoai cung cung la <section>, lay khung trong cung bang .last().
-  return page
-    .locator('section:has(span:text("/60"))')
-    .last()
-    .locator("button")
-    .nth(index);
-}
-
 const browser = await chromium.launch({
   executablePath: findChromium(),
 });
@@ -153,29 +187,35 @@ try {
   const gameId = new URL(page.url()).pathname.split("/").pop();
   ok("create game navigates to game page");
 
-  // 4. Them 2 nguoi (1 nguoi co thong tin ngan hang)
-  await page.fill('input[placeholder="Huy"]', "An");
-  await page.click('button:has-text("Tài khoản nhận tiền")');
-  await page.click('button:has-text("Chọn ngân hàng")');
-  await page.click('[role="option"]:has-text("Vietcombank (VCB)")');
-  await page.fill('input[placeholder="0123456789"]', "111222333");
-  await page.fill('input[placeholder="NGUYEN VAN A"]', "LE AN");
-  await page.click('button[type="submit"]:has-text("Thêm người")');
-  await page.waitForSelector("text=Vietcombank · 111222333", WAIT);
-  await page.fill('input[placeholder="Huy"]', "Binh");
-  await page.click('button[type="submit"]:has-text("Thêm người")');
-  await page.waitForSelector("text=Chưa có thông tin QR", WAIT);
+  // 4. Them 2 nguoi (1 nguoi co thong tin ngan hang) bang Sheet cua tab Nguoi
+  await addPerson(page, gameId, "An", {
+    accountNo: "111222333",
+    accountName: "LE AN",
+  });
+  await addPerson(page, gameId, "Binh");
+  const withBank = await getGameDetail(page, gameId);
+  const anWithBank = withBank.participants.find(
+    (person) => person.name === "An",
+  );
+  assert.equal(anWithBank.bankId, "VCB");
+  assert.equal(anWithBank.accountNo, "111222333");
   ok("add 2 participants");
 
   // 5. Them khoan chi chia doi
-  await page.fill('input[placeholder="Ăn tối"]', "An trua");
-  await page.fill('input[placeholder="500.000"]', "100000");
-  await page.click('button[type="submit"]:has-text("Thêm khoản chi")');
-  await page.waitForSelector("text=An trua", WAIT);
+  await openExpenseSheet(page, "An trua", "100000");
+  await submitExpenseSheet(page);
+  await page.waitForFunction(
+    (id) =>
+      fetch(`/api/games/${id}`, { credentials: "include" })
+        .then((response) => response.json())
+        .then((game) => game.expenses.some((item) => item.title === "An trua")),
+    gameId,
+    WAIT,
+  );
   ok("add expense");
 
   // 6. Dashboard tinh dung: Binh tra An 50.000 + co QR
-  await page.waitForSelector("text=Binh → An", WAIT);
+  await openTransferSheet(page, "Binh trả An");
   const qrCount = await page.locator('img[alt*="QR nhận tiền"]').count();
   if (qrCount !== 1) throw new Error(`expected 1 QR image, got ${qrCount}`);
   ok("settlement + VietQR shown");
@@ -189,23 +229,24 @@ try {
     await page.evaluate(() => navigator.clipboard.readText()),
     'Binh ơi, bạn chuyển 50.000 ₫ cho An cho kèo "E2E Trip" nhé.',
   );
+  await page.keyboard.press("Escape");
   ok("copy payment reminder for current settlement");
 
   // 6.5 Khoan chi chia theo so tien cu the (mode "amount")
-  await page.click('button:has-text("Số tiền")');
-  await page.fill('input[placeholder="Ăn tối"]', "Karaoke");
-  await page.fill('input[placeholder="500.000"]', "90000");
+  await openExpenseSheet(page, "Karaoke", "90000");
+  await page.click('button:has-text("Số tiền"):visible');
   await page.fill('input[aria-label="Phần tiền của An"]', "30000");
   await page.fill('input[aria-label="Phần tiền của Binh"]', "60000");
-  await page.click('button[type="submit"]:has-text("Thêm khoản chi")');
-  await page.waitForSelector("text=số tiền riêng", WAIT);
+  await submitExpenseSheet(page);
   // Balance moi: An +110.000, Binh -110.000
+  await openTransferSheet(page, "Binh trả An");
   await page.waitForSelector("text=110.000", WAIT);
   await page.getByRole("button", { name: "Copy lời nhắc cho Binh" }).click();
   assert.equal(
     await page.evaluate(() => navigator.clipboard.readText()),
     'Binh ơi, bạn chuyển 110.000 ₫ cho An cho kèo "E2E Trip" nhé.',
   );
+  await page.keyboard.press("Escape");
   await page.click('button:has-text("Nhiều chiều")');
   await page.waitForSelector(
     'button[aria-pressed="true"]:has-text("Nhiều chiều")',
@@ -221,11 +262,13 @@ try {
     gameId,
     WAIT,
   );
+  await openTransferSheet(page, "Binh trả An");
   await page.getByRole("button", { name: "Copy lời nhắc cho Binh" }).click();
   assert.equal(
     await page.evaluate(() => navigator.clipboard.readText()),
     'Binh ơi, bạn chuyển 110.000 ₫ cho An cho kèo "E2E Trip" nhé.',
   );
+  await page.keyboard.press("Escape");
   await page.click('button:has-text("Gom 1 người")');
   await page.waitForSelector(
     'button[aria-pressed="true"]:has-text("Gom 1 người")',
@@ -294,34 +337,17 @@ try {
     },
   ]);
   await page.reload();
+  await openTransferSheet(page, "Binh trả An");
   await page.waitForSelector("text=110.000", WAIT);
+  await page.keyboard.press("Escape");
   const reloaded = await getGameDetail(page, gameId);
   assert.deepEqual(reloaded.summary, beforeInvalid.summary);
   assert.deepEqual(reloaded.expenses, beforeInvalid.expenses);
   ok("add expense with custom amounts");
 
-  // 5.5 Keo tha doi thu tu khoan chi bang chuot that (dnd-kit)
+  // 5.5 Doi thu tu khoan chi bang menu "Đưa xuống" / "Đưa lên"
   const expenseIds = async () =>
     (await getGameDetail(page, gameId)).expenses.map((item) => item.id);
-  const dragFirstExpenseBelowSecond = async () => {
-    const handles = page.locator('button[aria-label^="Kéo để đổi thứ tự"]');
-    assert.ok((await handles.count()) >= 2);
-    const touchAction = await handles
-      .nth(0)
-      .evaluate((element) => getComputedStyle(element).touchAction);
-    assert.equal(touchAction, "none");
-    await handles
-      .nth(0)
-      .evaluate((element) => element.scrollIntoView({ block: "center" }));
-    const first = await handles.nth(0).boundingBox();
-    const second = await handles.nth(1).boundingBox();
-    const x = first.x + first.width / 2;
-    await page.mouse.move(x, first.y + first.height / 2);
-    await page.mouse.down();
-    await page.mouse.move(x, first.y + first.height / 2 + 8, { steps: 4 });
-    await page.mouse.move(x, second.y + second.height / 2 + 24, { steps: 12 });
-    await page.mouse.up();
-  };
   const waitForOrder = async (expected) => {
     for (let attempt = 0; attempt < 25; attempt += 1) {
       if (JSON.stringify(await expenseIds()) === JSON.stringify(expected))
@@ -330,13 +356,25 @@ try {
     }
     assert.deepEqual(await expenseIds(), expected);
   };
+  await goTab(page, "Chi");
   const orderBefore = await expenseIds();
+  assert.ok(orderBefore.length >= 2);
   const [first, second, ...rest] = orderBefore;
-  await dragFirstExpenseBelowSecond();
+  const expenseRows = page.locator("main div[style*='height: 68px']");
+  await expenseRows.first().waitFor({ state: "visible", ...WAIT });
+  await expenseRows
+    .first()
+    .getByRole("button", { name: /^Tùy chọn / })
+    .click();
+  await page.getByRole("button", { name: "Đưa xuống", exact: true }).click();
   await waitForOrder([second, first, ...rest]);
-  await dragFirstExpenseBelowSecond();
+  await expenseRows
+    .nth(1)
+    .getByRole("button", { name: /^Tùy chọn / })
+    .click();
+  await page.getByRole("button", { name: "Đưa lên", exact: true }).click();
   await waitForOrder(orderBefore);
-  ok("drag expenses to reorder and drag back");
+  ok("reorder expenses from the row menu and back");
 
   const invalidSplit = await page.evaluate(
     async ({ id, payerId, anId, binhId }) => {
@@ -390,36 +428,61 @@ try {
   await outsiderPage.close();
   ok("another account cannot read or write the game");
 
-  // 6.8 Anh: them vao album, sua chu thich, dinh kem vao khoan chi
-  const jpegPath = await createJpegFixture();
-  await page.setInputFiles(
-    'label[aria-label="Thêm ảnh vào album"] input[type="file"]',
-    jpegPath,
-  );
-  await page.waitForSelector('span:text-is("1/60")', WAIT);
-  await albumTile(0).click();
-  await page.click('button[aria-label="Sửa chú thích"]');
-  await page.fill('input[placeholder="Chú thích ảnh"]', "Hoa don san");
-  await page.click('button[aria-label="Lưu chú thích"]');
-  await page.waitForSelector("text=Hoa don san", WAIT);
-  await page.click('[role="dialog"] button[aria-label="Đóng"]');
+  // 6.8 Anh: tao anh bang API (khung gon chi xem anh), mot anh gan vao khoan chi
+  const uploadPhoto = (caption, expenseId) =>
+    page.evaluate(
+      async ({ id, photoCaption, photoExpenseId }) => {
+        const jpeg = (width, height) => {
+          const canvas = document.createElement("canvas");
+          canvas.width = width;
+          canvas.height = height;
+          const context = canvas.getContext("2d");
+          context.fillStyle = "#7c3aed";
+          context.fillRect(0, 0, width, height);
+          return canvas.toDataURL("image/jpeg", 0.8).split(",")[1];
+        };
+        const response = await fetch(`/api/games/${id}/photos`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            mimeType: "image/jpeg",
+            data: jpeg(800, 500),
+            thumbData: jpeg(160, 100),
+            width: 800,
+            height: 500,
+            caption: photoCaption,
+            expenseId: photoExpenseId,
+          }),
+        });
+        return response.status;
+      },
+      { id: gameId, photoCaption: caption, photoExpenseId: expenseId },
+    );
+  assert.equal(await uploadPhoto("Hoa don san", null), 201);
   ok("add photo to album + caption");
 
-  await page.click('button:has-text("Chia đều")');
-  await page.fill('input[placeholder="Ăn tối"]', "Nuoc suoi");
-  await page.fill('input[placeholder="500.000"]', "20000");
-  // Khoi "Ảnh hóa đơn" dong san, phai mo ra moi thay o chon file.
-  await page.click('button:has-text("Ảnh hóa đơn")');
-  await page.setInputFiles(
-    'label[aria-label="Đính kèm ảnh hóa đơn"] input[type="file"]',
-    jpegPath,
+  await openExpenseSheet(page, "Nuoc suoi", "20000");
+  await submitExpenseSheet(page);
+  const waterExpense = await page.waitForFunction(
+    (id) =>
+      fetch(`/api/games/${id}`, { credentials: "include" })
+        .then((response) => response.json())
+        .then(
+          (game) =>
+            game.expenses.find((item) => item.title === "Nuoc suoi")?.id ||
+            false,
+        ),
+    gameId,
+    WAIT,
   );
-  await page.click('button[type="submit"]:has-text("Thêm khoản chi")');
+  assert.equal(await uploadPhoto("", await waterExpense.jsonValue()), 201);
+  // Anh tao bang API nen cache cua trang chua biet: tai lai de thay nut anh.
+  await page.reload();
   await page.waitForSelector(
     'button[aria-label="Xem ảnh của Nuoc suoi"]',
     WAIT,
   );
-  await page.waitForSelector('span:text-is("2/60")', WAIT);
   ok("attach photo to expense");
 
   // 7. Share link read-only mo duoc khong can dang nhap
@@ -519,15 +582,16 @@ try {
   ok("phone: public share page fits one screen on every tab");
 
   // 7.5 Ghi nhan tra no: bam "Đã trả" -> transfer duoc luu, het cong no
-  await page.click('button:has-text("Đã trả")');
+  await openTransferSheet(page, "Binh trả An");
+  await page
+    .getByRole("dialog")
+    .getByRole("button", { name: "Đã trả", exact: true })
+    .click();
   await acceptConfirm();
-  await page.waitForSelector("text=Đã trả nợ", WAIT);
+  await page.getByRole("button", { name: /^Đã trả \(1\)$/ }).click();
   await page.waitForSelector("text=Binh đã trả An", WAIT);
+  await page.getByRole("button", { name: "Chuyển khoản", exact: true }).click();
   await page.waitForSelector("text=Mọi người đã cân bằng", WAIT);
-  assert.equal(
-    await page.locator('button[aria-label^="Copy lời nhắc cho"]').count(),
-    0,
-  );
   const settled = await getGameDetail(page, gameId);
   const transfers = settled.expenses.filter(
     (expense) => expense.kind === "transfer",
@@ -552,6 +616,8 @@ try {
   assert.ok(settled.summary.balances.every((row) => row.balance === 0));
   assert.deepEqual(settled.summary.settlements, []);
   await page.reload();
+  await goTab(page, "Tổng kết");
+  await page.getByRole("button", { name: "Chuyển khoản", exact: true }).click();
   await page.waitForSelector("text=Mọi người đã cân bằng", WAIT);
   const persisted = await getGameDetail(page, gameId);
   assert.deepEqual(persisted.summary, settled.summary);
@@ -562,12 +628,24 @@ try {
   ok("record settlement as transfer");
 
   // 7.8 Xoa anh khoi album
-  await albumTile(0).click();
-  await page.click('button[aria-label="Xóa ảnh"]');
-  await acceptConfirm();
-  await page.waitForSelector('span:text-is("1/60")', WAIT);
-  // Xoa xong van con anh khac nen khung xem mo tiep, dong lai truoc khi thoat.
-  await page.click('[role="dialog"] button[aria-label="Đóng"]');
+  const deletedPhoto = await page.evaluate(async (id) => {
+    const list = await fetch(`/api/games/${id}/photos`, {
+      credentials: "include",
+    }).then((response) => response.json());
+    const target = list.find((item) => item.caption === "Hoa don san");
+    const status = (
+      await fetch(`/api/photos/${target.id}`, {
+        method: "DELETE",
+        credentials: "include",
+      })
+    ).status;
+    const after = await fetch(`/api/games/${id}/photos`, {
+      credentials: "include",
+    }).then((response) => response.json());
+    return { status, remaining: after.length };
+  }, gameId);
+  assert.ok(deletedPhoto.status < 300);
+  assert.equal(deletedPhoto.remaining, 1);
   ok("delete photo");
 
   // 7.9 Token MCP: tao tu trang cai dat, dung that, roi thu hoi
@@ -659,26 +737,19 @@ try {
   const weightedGameId = new URL(page.url()).pathname.split("/").pop();
 
   for (const name of ["An", "Binh", "Cuong"]) {
-    await page.fill('input[placeholder="Huy"]', name);
-    await page.click('button[type="submit"]:has-text("Thêm người")');
-    await page.locator(`button[aria-label="Đưa ${name} xuống"]`).waitFor(WAIT);
-    await page.waitForFunction(
-      () => document.querySelector('input[placeholder="Huy"]')?.value === "",
-    );
+    await addPerson(page, weightedGameId, name);
   }
 
-  await page.click('button:has-text("Theo phần")');
-  await page.fill('input[placeholder="Ăn tối"]', "Bua toi theo phan");
-  await page.fill('input[placeholder="500.000"]', "120000");
+  await openExpenseSheet(page, "Bua toi theo phan", "120000");
+  await page.click('button:has-text("Theo phần"):visible');
   await page.fill('input[aria-label="Số phần của An"]', "1");
   await page.fill('input[aria-label="Số phần của Binh"]', "2");
   await page.fill('input[aria-label="Số phần của Cuong"]', "3");
   await page.waitForSelector("text=≈ 20.000", WAIT);
   await page.waitForSelector("text=≈ 40.000", WAIT);
   await page.waitForSelector("text=≈ 60.000", WAIT);
-  await page.click('button[type="submit"]:has-text("Thêm khoản chi")');
-  await page.waitForSelector("text=theo phần", WAIT);
-  await page.waitForSelector("text=100.000", WAIT);
+  await submitExpenseSheet(page);
+  await page.waitForSelector("text=Bua toi theo phan", WAIT);
 
   const weighted = await getGameDetail(page, weightedGameId);
   const weightedIds = Object.fromEntries(
@@ -732,8 +803,7 @@ try {
   ok("weighted split shows 1:2:3 shares and correct settlements");
 
   await page.reload();
-  await page.waitForSelector("text=theo phần", WAIT);
-  await page.waitForSelector("text=100.000", WAIT);
+  await page.waitForSelector("text=Bua toi theo phan", WAIT);
   const weightedReloaded = await getGameDetail(page, weightedGameId);
   assert.deepEqual(weightedReloaded.expenses, weighted.expenses);
   assert.deepEqual(weightedReloaded.summary, weighted.summary);
@@ -947,6 +1017,33 @@ try {
   ok("phone: shuttles and fun stats fit one screen");
   await page.setViewportSize({ width: 1280, height: 720 });
   ok("phone: Chi tab fits one screen, pages the list and adds from a Sheet");
+
+  // 7c. May tinh: cac trang chinh cung vua mot man hinh, khong cuon ca trang
+  // (cot trai va danh sach ben trong tu cuon trong khung cua minh).
+  const pageScrolls = () =>
+    page.evaluate(
+      () =>
+        document.documentElement.scrollHeight >
+        document.documentElement.clientHeight + 1,
+    );
+  for (const path of ["/", "/shuttles", "/fun", `/games/${gameId}`]) {
+    await page.goto(`${BASE}${path}`);
+    await page.waitForLoadState("networkidle");
+    assert.equal(
+      await pageScrolls(),
+      false,
+      `${path} cuon ca trang tren may tinh`,
+    );
+  }
+  for (const tab of ["Người", "Tổng kết", "Khác", "Chi"]) {
+    await page.getByRole("button", { name: tab, exact: true }).click();
+    assert.equal(
+      await pageScrolls(),
+      false,
+      `tab ${tab} cuon ca trang tren may tinh`,
+    );
+  }
+  ok("desktop: home, shuttles, fun stats and every game tab fit one screen");
 
   // 8. Logout
   await page.click("text=Thoát");

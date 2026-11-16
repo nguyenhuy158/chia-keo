@@ -33,31 +33,6 @@ type StatEntry = {
   detail?: string;
 };
 
-function StatCard({
-  icon,
-  label,
-  value,
-  detail,
-}: {
-  icon: ReactNode;
-  label: string;
-  value: string;
-  detail?: string;
-}) {
-  return (
-    <div className="rounded-lg border border-border bg-surface p-4 shadow-sm">
-      <div className="flex items-center gap-2 text-violet-600 dark:text-violet-400">
-        {icon}
-        <span className="text-sm font-medium text-fg-muted">{label}</span>
-      </div>
-      <p className="mt-2 truncate text-2xl font-bold text-stone-950 dark:text-stone-50">
-        {value}
-      </p>
-      {detail && <p className="mt-1 text-sm text-fg-muted">{detail}</p>}
-    </div>
-  );
-}
-
 /**
  * Menu rieng biet: thong ke vui gop tat ca cuoc chia, khong dinh gi den logic
  * dang chay (settlement, split, hoan tac...). Chi doc, khong sua duoc gi o
@@ -154,100 +129,51 @@ export function FunStatsPage() {
   ];
 
   return (
-    <>
-      <div
-        data-one-screen
-        className="flex h-full min-h-0 flex-col gap-2 lg:hidden"
-      >
-        <div className="flex shrink-0 items-center gap-2">
-          <PartyPopper
-            className="text-violet-600 dark:text-violet-400"
-            size={20}
-          />
-          <h1 className="text-lg font-bold text-stone-950 dark:text-stone-50">
-            Thống kê vui
-          </h1>
-        </div>
-        <p className="shrink-0 text-xs text-fg-muted">
-          Gộp {stats.gameCount} cuộc chơi gần nhất. Chỉ để xem cho vui, không
-          dùng để tất toán.
-          {stats.omittedGameCount > 0 &&
-            ` Đã bỏ bớt ${stats.omittedGameCount} cuộc chơi cũ hơn.`}
-        </p>
-        <div className="min-h-0 flex-1">
-          <PagedList
-            items={entries}
-            getKey={(entry) => entry.key}
-            rowHeight={COMPACT_ROW_HEIGHT_PX}
-            renderItem={(entry) => (
-              <div className="flex h-full flex-col justify-center rounded-lg border border-border bg-surface px-3">
-                <div className="flex items-center gap-2 text-violet-600 dark:text-violet-400">
-                  {entry.icon}
-                  <span className="truncate text-xs font-medium text-fg-muted">
-                    {entry.label}
-                  </span>
-                </div>
-                <p className="truncate text-lg font-bold text-stone-950 dark:text-stone-50">
-                  {entry.value}
-                </p>
-                {entry.detail && (
-                  <p className="truncate text-xs text-fg-muted">
-                    {entry.detail}
-                  </p>
-                )}
+    <div data-one-screen className="flex h-full min-h-0 flex-col gap-2">
+      <div className="flex shrink-0 items-center gap-2">
+        <PartyPopper
+          className="text-violet-600 dark:text-violet-400"
+          size={20}
+        />
+        <h1 className="text-lg font-bold text-stone-950 dark:text-stone-50">
+          Thống kê vui
+        </h1>
+      </div>
+      <p className="shrink-0 text-xs text-fg-muted">
+        Gộp {stats.gameCount} cuộc chơi gần nhất. Chỉ để xem cho vui, không dùng
+        để tất toán.
+        {stats.omittedGameCount > 0 &&
+          ` Đã bỏ bớt ${stats.omittedGameCount} cuộc chơi cũ hơn.`}
+      </p>
+      <div className="min-h-0 flex-1">
+        <PagedList
+          items={entries}
+          getKey={(entry) => entry.key}
+          rowHeight={COMPACT_ROW_HEIGHT_PX}
+          renderItem={(entry) => (
+            <div className="flex h-full flex-col justify-center rounded-lg border border-border bg-surface px-3">
+              <div className="flex items-center gap-2 text-violet-600 dark:text-violet-400">
+                {entry.icon}
+                <span className="truncate text-xs font-medium text-fg-muted">
+                  {entry.label}
+                </span>
               </div>
-            )}
-          />
-        </div>
-        <Link
-          to="/"
-          className="inline-flex h-11 shrink-0 items-center justify-center text-sm font-medium text-violet-700 hover:underline dark:text-violet-300"
-        >
-          ← Về danh sách cuộc chơi
-        </Link>
-      </div>
-      <div className="hidden lg:block">
-        <div className="space-y-5">
-          <div className="flex items-center gap-2">
-            <PartyPopper
-              className="text-violet-600 dark:text-violet-400"
-              size={22}
-            />
-            <h1 className="text-xl font-bold text-stone-950 dark:text-stone-50">
-              Thống kê vui
-            </h1>
-          </div>
-          <p className="-mt-3 text-sm text-fg-muted">
-            Gộp {stats.gameCount} cuộc chơi gần nhất. Chỉ để xem cho vui, không
-            dùng để tất toán.
-          </p>
-
-          <div className="grid gap-3 sm:grid-cols-2">
-            {entries.map((entry) => (
-              <StatCard
-                key={entry.key}
-                icon={entry.icon}
-                label={entry.label}
-                value={entry.value}
-                detail={entry.detail}
-              />
-            ))}
-          </div>
-
-          {stats.omittedGameCount > 0 && (
-            <p className="text-xs text-stone-400 dark:text-stone-500">
-              Đã bỏ bớt {stats.omittedGameCount} cuộc chơi cũ hơn để tính nhanh.
-            </p>
+              <p className="truncate text-lg font-bold text-stone-950 dark:text-stone-50">
+                {entry.value}
+              </p>
+              {entry.detail && (
+                <p className="truncate text-xs text-fg-muted">{entry.detail}</p>
+              )}
+            </div>
           )}
-
-          <Link
-            to="/"
-            className="inline-block text-sm font-medium text-violet-700 hover:underline dark:text-violet-300"
-          >
-            ← Về danh sách cuộc chơi
-          </Link>
-        </div>
+        />
       </div>
-    </>
+      <Link
+        to="/"
+        className="inline-flex h-11 shrink-0 items-center justify-center text-sm font-medium text-violet-700 hover:underline dark:text-violet-300"
+      >
+        ← Về danh sách cuộc chơi
+      </Link>
+    </div>
   );
 }

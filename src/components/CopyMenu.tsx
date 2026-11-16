@@ -7,11 +7,11 @@ import {
   Image as ImageIcon,
   Images,
   Link as LinkIcon,
+  ListChecks,
+  type LucideIcon,
   QrCode,
   Rows3,
   Sigma,
-  ListChecks,
-  type LucideIcon,
   Table2,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";

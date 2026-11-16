@@ -15,10 +15,10 @@ type MobileGameNavProps = {
   onChange: (section: GameSection) => void;
 };
 
-/** Thanh dieu huong duoi man hinh cho mot cuoc choi, chi hien tren mobile. */
+/** Thanh dieu huong duoi man hinh cho mot cuoc choi (mobile va may tinh). */
 export function MobileGameNav({ active, onChange }: MobileGameNavProps) {
   return (
-    <nav className="safe-bottom shrink-0 border-t border-border bg-surface/95 backdrop-blur lg:hidden">
+    <nav className="safe-bottom shrink-0 border-t border-border bg-surface/95 backdrop-blur">
       <div className="mx-auto grid max-w-md grid-cols-4">
         {SECTIONS.map((section) => {
           const Icon = section.icon;

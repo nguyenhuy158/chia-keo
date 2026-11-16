@@ -407,6 +407,15 @@ describe("GameDashboard compact", () => {
     expect(host.textContent).toContain("Chưa có người tham gia.");
   });
 
+  it("tab Thống kê gom bảng tổng hợp, ai đã trả và chi theo danh mục", () => {
+    render({ compact: true });
+    expect(host.textContent).not.toContain("table card");
+    show("Thống kê");
+    expect(host.textContent).toContain("table card");
+    expect(host.textContent).toContain("payer card");
+    expect(host.textContent).toContain("category card");
+  });
+
   it("chia sẻ chuyển khoản nhiều chiều qua Sheet có QR, nhắc và đã trả", () => {
     render({ compact: true });
     show("Chuyển khoản");

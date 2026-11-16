@@ -329,29 +329,30 @@ describe("GamePage", () => {
   it("renders panels and switches mobile sections", async () => {
     render();
     expect(host.textContent).toContain("Cầu tối");
-    expect(mocks.props.GameDashboard.expenseCount).toBe(1);
+    expect(host.textContent).toContain("ExpensePanel");
     await click("people");
-    expect(host.textContent?.match(/ParticipantPanel/g)).toHaveLength(2);
+    expect(host.textContent?.match(/ParticipantPanel/g)).toHaveLength(1);
     await click("summary");
-    expect(host.textContent?.match(/GameDashboard/g)).toHaveLength(2);
+    expect(host.textContent?.match(/GameDashboard/g)).toHaveLength(1);
+    expect(mocks.props.GameDashboard.expenseCount).toBe(1);
     await click("more");
     expect(host.textContent).toContain("Ảnh");
     await click("Lịch sử");
-    expect(host.textContent?.match(/HistoryPanel/g)).toHaveLength(2);
+    expect(host.textContent?.match(/HistoryPanel/g)).toHaveLength(1);
     await click("Chia sẻ");
-    expect(host.textContent?.match(/SummaryImageCard/g)).toHaveLength(1);
+    expect(host.textContent).not.toContain("SummaryImageCard");
     await click("Ảnh tổng kết");
-    expect(host.textContent?.match(/SummaryImageCard/g)).toHaveLength(2);
-    await click("close sheet");
     expect(host.textContent?.match(/SummaryImageCard/g)).toHaveLength(1);
-    await click("Chia sẻ cuộc chơi với người khác");
-    expect(host.textContent?.match(/CollaboratorsPanel/g)).toHaveLength(2);
     await click("close sheet");
+    expect(host.textContent).not.toContain("SummaryImageCard");
+    await click("Chia sẻ cuộc chơi với người khác");
     expect(host.textContent?.match(/CollaboratorsPanel/g)).toHaveLength(1);
+    await click("close sheet");
+    expect(host.textContent).not.toContain("CollaboratorsPanel");
     await click("Ảnh");
-    expect(host.textContent?.match(/PhotoPanel/g)).toHaveLength(2);
+    expect(host.textContent?.match(/PhotoPanel/g)).toHaveLength(1);
     await click("expenses");
-    expect(host.textContent?.match(/ExpensePanel/g)).toHaveLength(2);
+    expect(host.textContent?.match(/ExpensePanel/g)).toHaveLength(1);
   });
 
   it("renames, closes, reopens and deletes with confirmation", async () => {
@@ -407,6 +408,9 @@ describe("GamePage", () => {
     expect(mocks.mutation.SaveSharePreview.mutateAsync).toHaveBeenCalledWith(
       "jpeg-base64",
     );
+    await click("more");
+    await click("Chia sẻ");
+    await click("Ảnh tổng kết");
     expect(mocks.props.SummaryImageCard.onShare).toBe(
       mocks.props.CopyMenu.onShare,
     );
@@ -457,6 +461,9 @@ describe("GamePage", () => {
 
   it("connects participant, expense and settlement actions", async () => {
     render();
+    await click("people");
+    await click("summary");
+    await click("expenses");
     const participants = mocks.props.ParticipantPanel as Record<
       string,
       (...args: unknown[]) => unknown
@@ -642,6 +649,7 @@ describe("GamePage", () => {
       true,
       expect.anything(),
     );
+    await click("summary");
     const dashboard = mocks.props.GameDashboard as {
       onSettle: (value: unknown) => Promise<void>;
     };
@@ -656,9 +664,10 @@ describe("GamePage", () => {
     expect(mocks.mutation.AddTransfer.mutateAsync).not.toHaveBeenCalled();
   });
 
-  it("handles photos still loading", () => {
+  it("handles photos still loading", async () => {
     mocks.photos = undefined;
     render();
+    await click("more");
     expect(mocks.props.PhotoPanel.photos).toEqual([]);
   });
 });

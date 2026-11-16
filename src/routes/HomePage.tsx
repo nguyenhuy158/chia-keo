@@ -1,16 +1,7 @@
 import { Link } from "@tanstack/react-router";
-import {
-  ArrowRight,
-  Crown,
-  Flame,
-  ListChecks,
-  Receipt,
-  Sparkles,
-  TrendingDown,
-  TrendingUp,
-  Users,
-} from "lucide-react";
-import { type ReactNode, useState } from "react";
+import { Crown, Flame, ListChecks, Receipt } from "lucide-react";
+import type { ReactNode } from "react";
+import { useState } from "react";
 import { useCrossBalances } from "../adapters/react-query/cross-balances-query";
 import { useFunStats } from "../adapters/react-query/fun-stats-query";
 import { useGames } from "../adapters/react-query/queries";
@@ -39,31 +30,14 @@ function greet(hour: number) {
   return "Chào buổi tối";
 }
 
-function Section({
-  title,
-  icon,
-  action,
-  children,
-}: {
-  title: string;
-  icon: ReactNode;
-  action?: ReactNode;
-  children: ReactNode;
-}) {
-  return (
-    <section className="rounded-xl border border-border bg-surface p-4 shadow-sm">
-      <div className="mb-3 flex items-center justify-between gap-2">
-        <h2 className="flex items-center gap-2 text-sm font-semibold text-stone-950 dark:text-stone-50">
-          <span className="text-violet-600 dark:text-violet-400">{icon}</span>
-          {title}
-        </h2>
-        {action}
-      </div>
-      {children}
-    </section>
-  );
-}
-
+/**
+ * Trang chu: truoc day chi co mot khung rong "Bat dau mot cuoc choi", nen mo
+ * app xong khong biet di dau. Gio tra loi ba cau hoi theo thu tu nguoi dung
+ * thuc su hoi: dang do o dau, con no ai, va vai con so cho vui.
+ *
+ * Moi phan tu an khi khong co du lieu — nguoi moi van thay dung mot khung
+ * huong dan nhu cu chu khong phai mot dong khung rong.
+ */
 function StatTile({
   icon,
   label,
@@ -88,14 +62,6 @@ function StatTile({
   );
 }
 
-/**
- * Trang chu: truoc day chi co mot khung rong "Bat dau mot cuoc choi", nen mo
- * app xong khong biet di dau. Gio tra loi ba cau hoi theo thu tu nguoi dung
- * thuc su hoi: dang do o dau, con no ai, va vai con so cho vui.
- *
- * Moi phan tu an khi khong co du lieu — nguoi moi van thay dung mot khung
- * huong dan nhu cu chu khong phai mot dong khung rong.
- */
 export function HomePage() {
   const shell = useMobileShell();
   const [view, setView] = useState<HomeView>("recent");
@@ -107,7 +73,7 @@ export function HomePage() {
   // Chua co cuoc nao thi khong goi API cong no: chac chan rong, goi chi ton mot round-trip.
   const balancesQuery = useCrossBalances(hasGames);
 
-  const recent = games.slice(0, RECENT_LIMIT);
+  const _recent = games.slice(0, RECENT_LIMIT);
   const stats = funStatsQuery.data;
   const people = balancesQuery.data?.people || [];
   const owedToMe = people
@@ -156,10 +122,7 @@ export function HomePage() {
   const debtRows: DebtRow[] = [...owedToMe, ...owedByMe];
 
   const compact = (
-    <div
-      data-one-screen
-      className="flex h-full min-h-0 flex-col gap-2 lg:hidden"
-    >
+    <div data-one-screen className="flex h-full min-h-0 flex-col gap-2">
       <div className="shrink-0">
         <h1 className="text-lg font-bold text-stone-950 dark:text-stone-50">
           {greet(new Date().getHours())} 👋
@@ -269,7 +232,7 @@ export function HomePage() {
       <button
         type="button"
         onClick={() => shell?.openGames()}
-        className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-semibold text-white transition hover:bg-primary-hover active:scale-[0.99]"
+        className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-semibold text-white transition hover:bg-primary-hover active:scale-[0.99] lg:hidden"
       >
         <ListChecks size={18} />
         Mở danh sách cuộc chơi
@@ -277,133 +240,5 @@ export function HomePage() {
     </div>
   );
 
-  return (
-    <>
-      {compact}
-      <div className="hidden lg:block">
-        <div className="space-y-4">
-          <div>
-            <h1 className="text-xl font-bold text-stone-950 dark:text-stone-50">
-              {greet(new Date().getHours())} 👋
-            </h1>
-            <p className="mt-0.5 text-sm text-fg-muted">
-              {games.length} cuộc chơi · nhấn để tiếp tục chỗ đang dở.
-            </p>
-          </div>
-
-          <Section title="Tiếp tục" icon={<ArrowRight size={16} />}>
-            <div className="grid gap-2 sm:grid-cols-2">
-              {recent.map((game) => (
-                <Link
-                  key={game.id}
-                  to="/games/$gameId"
-                  params={{ gameId: game.id }}
-                  className="group rounded-lg border border-stone-200 bg-white p-3 transition hover:border-violet-600 hover:bg-violet-50 dark:border-stone-800 dark:bg-stone-950 dark:hover:border-violet-500 dark:hover:bg-violet-500/10"
-                >
-                  <p className="truncate text-sm font-semibold text-stone-950 dark:text-stone-50">
-                    {game.name}
-                  </p>
-                  <p className="mt-1 text-xs text-fg-muted">
-                    {game.participantCount} người · {game.expenseCount} khoản
-                  </p>
-                </Link>
-              ))}
-            </div>
-          </Section>
-
-          {hasDebts && (
-            <Section title="Cần tất toán" icon={<Users size={16} />}>
-              <div className="grid gap-4 sm:grid-cols-2">
-                {owedToMe.length > 0 && (
-                  <div>
-                    <p className="mb-2 flex items-center gap-1.5 text-xs font-medium text-success">
-                      <TrendingUp size={14} />
-                      Được nhận lại
-                    </p>
-                    <ul className="space-y-1.5">
-                      {owedToMe.map((person) => (
-                        <li
-                          key={person.name}
-                          className="flex items-center gap-2"
-                        >
-                          <Avatar name={person.name} size={26} />
-                          <span className="min-w-0 flex-1 truncate text-sm text-stone-900 dark:text-stone-100">
-                            {person.name}
-                          </span>
-                          <span className="shrink-0 text-sm font-semibold text-success">
-                            {formatMoney(person.net)}
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-                {owedByMe.length > 0 && (
-                  <div>
-                    <p className="mb-2 flex items-center gap-1.5 text-xs font-medium text-danger">
-                      <TrendingDown size={14} />
-                      Còn phải trả
-                    </p>
-                    <ul className="space-y-1.5">
-                      {owedByMe.map((person) => (
-                        <li
-                          key={person.name}
-                          className="flex items-center gap-2"
-                        >
-                          <Avatar name={person.name} size={26} />
-                          <span className="min-w-0 flex-1 truncate text-sm text-stone-900 dark:text-stone-100">
-                            {person.name}
-                          </span>
-                          <span className="shrink-0 text-sm font-semibold text-danger">
-                            {formatMoney(Math.abs(person.net))}
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </div>
-            </Section>
-          )}
-
-          {stats && stats.totalExpense > 0 && (
-            <Section
-              title="Vài con số"
-              icon={<Sparkles size={16} />}
-              action={
-                <Link
-                  to="/fun"
-                  className="text-xs font-medium text-violet-600 hover:underline dark:text-violet-400"
-                >
-                  Xem hết
-                </Link>
-              }
-            >
-              <div className="grid gap-2 sm:grid-cols-3">
-                <StatTile
-                  icon={<Receipt size={14} />}
-                  label="Tổng chi"
-                  value={formatMoney(stats.totalExpense)}
-                />
-                {stats.topPayer && (
-                  <StatTile
-                    icon={<Crown size={14} />}
-                    label="Ứng tiền nhiều nhất"
-                    value={stats.topPayer.name}
-                  />
-                )}
-                {stats.biggestExpense && (
-                  <StatTile
-                    icon={<Flame size={14} />}
-                    label="Khoản khủng nhất"
-                    value={formatMoney(stats.biggestExpense.amount)}
-                  />
-                )}
-              </div>
-            </Section>
-          )}
-        </div>
-      </div>
-    </>
-  );
+  return compact;
 }

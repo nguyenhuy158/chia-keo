@@ -485,7 +485,7 @@ export function GameDashboard(props: GameDashboardProps) {
   );
 }
 
-type DashboardView = "balances" | "transfers" | "paid";
+type DashboardView = "balances" | "transfers" | "paid" | "stats";
 
 type TransferRow = {
   key: string;
@@ -597,6 +597,7 @@ function GameDashboardCompact({
       id: "paid",
       label: transfers.length > 0 ? `Đã trả (${transfers.length})` : "Đã trả",
     },
+    { id: "stats", label: "Thống kê" },
   ];
 
   return (
@@ -724,6 +725,22 @@ function GameDashboardCompact({
               </button>
             )}
           />
+        )}
+        {view === "stats" && (
+          <div className="h-full space-y-3 overflow-y-auto overscroll-contain">
+            <SettlementTableCard
+              participants={participants}
+              summary={summary}
+              settlementMode={settlementMode}
+              settlementHostId={settlementHostId}
+              roundDownRefunds={roundDownRefunds}
+            />
+            <PayerBreakdownCard
+              expenses={expenses}
+              participants={participants}
+            />
+            <CategoryBreakdownCard expenses={expenses} />
+          </div>
         )}
         {view === "paid" && (
           <PagedList
