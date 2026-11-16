@@ -12,6 +12,7 @@ import {
   Power,
   RefreshCw,
   RotateCcw,
+  Settings,
   Trash2,
   X,
 } from "lucide-react";
@@ -51,6 +52,7 @@ import { useConfirm } from "../components/ConfirmDialog";
 import { CopyMenu } from "../components/CopyMenu";
 import { ExpensePanel } from "../components/ExpensePanel";
 import { GameDashboard } from "../components/GameDashboard";
+import { GameSettingsPanel } from "../components/GameSettingsPanel";
 import { HistoryPanel } from "../components/HistoryPanel";
 import { type GameSection, MobileGameNav } from "../components/MobileGameNav";
 import { useMobileShell } from "../components/mobile-shell";
@@ -99,6 +101,7 @@ export function GamePage() {
   );
   const shell = useMobileShell();
   const [actionsOpen, setActionsOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [shareSheet, setShareSheet] = useState<
     "image" | "collaborators" | null
   >(null);
@@ -490,6 +493,11 @@ export function GamePage() {
 
   const moreItems: MenuItem[] = [
     {
+      label: "Cài đặt",
+      icon: <Settings size={15} />,
+      onSelect: () => setSettingsOpen(true),
+    },
+    {
       label: emailPending ? "Đang gửi..." : "Email cho tôi",
       icon: <Mail size={15} />,
       disabled: emailPending,
@@ -765,6 +773,17 @@ export function GamePage() {
           {closeAction}
           {deleteAction}
         </div>
+        <div className="mt-3 border-t border-border pt-3">
+          <GameSettingsPanel />
+        </div>
+      </Sheet>
+
+      <Sheet
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        title="Cài đặt"
+      >
+        <GameSettingsPanel />
       </Sheet>
     </div>
   );

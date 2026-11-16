@@ -98,6 +98,9 @@ vi.mock("../components/ExpensePanel", () => ({
     return "ExpensePanel";
   },
 }));
+vi.mock("../components/GameSettingsPanel", () => ({
+  GameSettingsPanel: () => "settings panel",
+}));
 vi.mock("../components/GameDashboard", () => ({
   GameDashboard: (props: Record<string, unknown>) => {
     mocks.props.GameDashboard = props;
@@ -605,6 +608,16 @@ describe("GamePage", () => {
       "Xóa cuộc chơi",
     );
     expect(host.textContent).not.toContain("Đóng");
+  });
+
+  it("opens the settings sheet from the more menu and shows settings in the mobile sheet", async () => {
+    render();
+    await menuAction("Cài đặt");
+    expect(host.textContent).toContain("settings panel");
+    await click("close sheet");
+    expect(host.textContent).not.toContain("settings panel");
+    await click("Tùy chọn cuộc chơi");
+    expect(host.textContent).toContain("settings panel");
   });
 
   it("toggles the share link from the mobile options sheet", async () => {

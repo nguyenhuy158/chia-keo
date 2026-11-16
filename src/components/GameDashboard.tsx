@@ -14,10 +14,7 @@ import {
   type SettlementRow,
 } from "../../shared/split";
 import { copyText } from "../adapters/browser/clipboard";
-import {
-  usePreferences,
-  useUpdatePreferences,
-} from "../adapters/react-query/queries";
+import { usePreferences } from "../adapters/react-query/queries";
 import { getQrProvider } from "../core/container";
 import { formatMoney } from "../core/domain/money";
 import { PagedList } from "../ui/PagedList";
@@ -26,7 +23,7 @@ import { Avatar } from "./Avatar";
 import { CategoryBreakdownCard } from "./CategoryBreakdownCard";
 import { PayerBreakdownCard } from "./PayerBreakdownCard";
 import { SettlementTableCard } from "./SettlementTableCard";
-import { BalancePill, Metric, Switch } from "./ui";
+import { BalancePill, Metric } from "./ui";
 
 /** QR chung cua host khong gan san so tien vi moi nguoi chuyen mot muc khac. */
 export const QR_AMOUNT_FREE = 0;
@@ -136,7 +133,6 @@ function GameDashboardFull({
   const transfers = expenses.filter((expense) => expense.kind === "transfer");
   const qr = getQrProvider();
   const { roundDownRefunds } = usePreferences();
-  const updatePreferences = useUpdatePreferences();
 
   const canEditMode = Boolean(onSettlementModeChange);
   const isHostMode = settlementMode === "host" || settlementMode === "pick";
@@ -261,18 +257,6 @@ function GameDashboardFull({
                 </span>
               )}
             </label>
-          )}
-
-          {isHostMode && (
-            <div className="mt-3">
-              <Switch
-                checked={roundDownRefunds}
-                onChange={(next) =>
-                  updatePreferences.mutate({ roundDownRefunds: next })
-                }
-                label="Không hoàn tiền lẻ (làm tròn xuống 1.000đ)"
-              />
-            </div>
           )}
 
           <div className="mt-4 space-y-3">
