@@ -4,6 +4,7 @@ import {
   buildExpenseSheetFileName,
   buildExpenseSheetModel,
   buildExpenseSheetTsv,
+  buildTransactionRowsTsv,
 } from "./expense-sheet";
 
 const people: ApiParticipant[] = ["a", "b", "c"].map((id) => ({
@@ -126,5 +127,29 @@ describe("buildExpenseSheetTsv", () => {
       expenses: [expense("1", 90, ["b"])],
     });
     expect(tsv.split("\n")[3]).toBe("e1\t90\t1\t90\tFALSE\tTRUE\tFALSE");
+  });
+});
+
+describe("buildTransactionRowsTsv", () => {
+  it("keeps only the transaction rows, without the paid/header/total rows", () => {
+    const tsv = buildTransactionRowsTsv({
+      participants: people,
+      summary,
+      expenses: [
+        expense("2", 90, ["b"]),
+        expense("1", 100, ["a", "b", "c"]),
+        expense("3", 10, ["a"], { kind: "transfer" }),
+      ],
+    });
+    expect(tsv.split("\n")).toEqual([
+      "e1\t100\t3\t33\tTRUE\tTRUE\tTRUE",
+      "e2\t90\t1\t90\tFALSE\tTRUE\tFALSE",
+    ]);
+  });
+
+  it("is empty when there are no transactions", () => {
+    expect(
+      buildTransactionRowsTsv({ participants: people, summary, expenses: [] }),
+    ).toBe("");
   });
 });

@@ -15,6 +15,7 @@ const {
   message,
   preferences,
   updatePreferences,
+  rowsTsv,
 } = vi.hoisted(() => ({
   copyImage: vi.fn(),
   copyText: vi.fn(),
@@ -31,6 +32,7 @@ const {
     summaryShowAvatar: true,
   },
   updatePreferences: vi.fn(),
+  rowsTsv: { value: "rows tsv" },
 }));
 
 vi.mock("../../shared/summary-text", () => ({
@@ -69,6 +71,7 @@ vi.mock("./SummaryBackgroundPicker", async () => {
 vi.mock("../../shared/expense-sheet", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../../shared/expense-sheet")>()),
   buildExpenseSheetTsv: () => "sheet tsv",
+  buildTransactionRowsTsv: () => rowsTsv.value,
 }));
 vi.mock("../adapters/react-query/queries", () => ({
   usePreferences: () => preferences,
@@ -123,6 +126,7 @@ beforeEach(() => {
   preferences.summaryShowQr = true;
   preferences.summaryShowAvatar = true;
   updatePreferences.mockReset();
+  rowsTsv.value = "rows tsv";
   chooseBackground.mockReset();
   success.mockReset();
   error.mockReset();
@@ -353,6 +357,26 @@ describe("CopyMenu", () => {
     open();
     await act(async () => item("Copy bảng tính").click());
     expect(error).toHaveBeenCalledWith("Không sao chép được bảng tính");
+  });
+
+  it("copies only the transaction rows and handles empty or refused copies", async () => {
+    render();
+    open();
+    await act(async () => item("Copy dòng chi thu").click());
+    expect(copyText).toHaveBeenCalledWith("rows tsv");
+    expect(success).toHaveBeenCalledWith(
+      "Đã sao chép các dòng chi thu, dán vào Google Sheets",
+    );
+    copyText.mockResolvedValue(false);
+    open();
+    await act(async () => item("Copy dòng chi thu").click());
+    expect(error).toHaveBeenCalledWith("Không sao chép được các dòng chi thu");
+    rowsTsv.value = "";
+    copyText.mockClear();
+    open();
+    await act(async () => item("Copy dòng chi thu").click());
+    expect(copyText).not.toHaveBeenCalled();
+    expect(error).toHaveBeenCalledWith("Chưa có dòng chi thu nào để sao chép");
   });
 
   it("downloads the Excel file and reports a failure", async () => {

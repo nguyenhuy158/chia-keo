@@ -86,6 +86,16 @@ function leadingBlanks(count: number): SheetCell[] {
   return Array.from({ length: count }, () => SHEET_EMPTY_CELL);
 }
 
+function buildTransactionRows(model: ExpenseSheetModel): SheetCell[][] {
+  return model.rows.map((row) => [
+    row.title,
+    row.amount,
+    row.count,
+    Math.round(row.perPerson),
+    ...row.included,
+  ]);
+}
+
 export function buildExpenseSheetGrid(input: ExpenseSheetInput): SheetCell[][] {
   const model = buildExpenseSheetModel(input);
   const gap = SHEET_FIRST_PERSON_COLUMN - 1;
@@ -103,15 +113,8 @@ export function buildExpenseSheetGrid(input: ExpenseSheetInput): SheetCell[][] {
     ...leadingBlanks(gap - 1),
     ...model.owed,
   ];
-  const expenseRows = model.rows.map((row) => [
-    row.title,
-    row.amount,
-    row.count,
-    Math.round(row.perPerson),
-    ...row.included,
-  ]);
 
-  return [paidRow, headerRow, totalRow, ...expenseRows];
+  return [paidRow, headerRow, totalRow, ...buildTransactionRows(model)];
 }
 
 function formatSheetCell(cell: SheetCell): string {
@@ -119,8 +122,16 @@ function formatSheetCell(cell: SheetCell): string {
   return String(cell).replace(TSV_UNSAFE_CHARACTERS, " ");
 }
 
-export function buildExpenseSheetTsv(input: ExpenseSheetInput): string {
-  return buildExpenseSheetGrid(input)
+function toTsv(grid: SheetCell[][]): string {
+  return grid
     .map((row) => row.map(formatSheetCell).join(TSV_CELL_SEPARATOR))
     .join(TSV_ROW_SEPARATOR);
+}
+
+export function buildExpenseSheetTsv(input: ExpenseSheetInput): string {
+  return toTsv(buildExpenseSheetGrid(input));
+}
+
+export function buildTransactionRowsTsv(input: ExpenseSheetInput): string {
+  return toTsv(buildTransactionRows(buildExpenseSheetModel(input)));
 }
