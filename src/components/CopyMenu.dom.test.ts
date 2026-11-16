@@ -77,6 +77,9 @@ vi.mock("../adapters/react-query/queries", () => ({
   usePreferences: () => preferences,
   useUpdatePreferences: () => ({ mutate: updatePreferences }),
 }));
+vi.mock("../../shared/settlement-table", () => ({
+  buildSettlementTableTsv: () => "table tsv",
+}));
 vi.mock("sonner", () => ({
   toast: Object.assign(message, { success, error }),
 }));
@@ -357,6 +360,20 @@ describe("CopyMenu", () => {
     open();
     await act(async () => item("Copy bảng tính").click());
     expect(error).toHaveBeenCalledWith("Không sao chép được bảng tính");
+  });
+
+  it("copies the settlement table and reports clipboard refusal", async () => {
+    render();
+    open();
+    await act(async () => item("Copy bảng tổng hợp").click());
+    expect(copyText).toHaveBeenCalledWith("table tsv");
+    expect(success).toHaveBeenCalledWith(
+      "Đã sao chép bảng tổng hợp, dán vào Google Sheets",
+    );
+    copyText.mockResolvedValue(false);
+    open();
+    await act(async () => item("Copy bảng tổng hợp").click());
+    expect(error).toHaveBeenCalledWith("Không sao chép được bảng tổng hợp");
   });
 
   it("copies only the transaction rows and handles empty or refused copies", async () => {

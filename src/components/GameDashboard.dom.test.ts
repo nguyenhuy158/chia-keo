@@ -40,6 +40,9 @@ vi.mock("sonner", () => ({
 vi.mock("./CategoryBreakdownCard", () => ({
   CategoryBreakdownCard: () => "category card",
 }));
+vi.mock("./SettlementTableCard", () => ({
+  SettlementTableCard: () => "table card",
+}));
 vi.mock("./PayerBreakdownCard", () => ({
   PayerBreakdownCard: () => "payer card",
 }));
