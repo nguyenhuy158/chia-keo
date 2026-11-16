@@ -9,6 +9,7 @@ import {
   Link as LinkIcon,
   QrCode,
   Rows3,
+  Sigma,
   ListChecks,
   type LucideIcon,
   Table2,
@@ -21,6 +22,7 @@ import {
   buildExpenseSheetTsv,
   buildTransactionRowsTsv,
 } from "../../shared/expense-sheet";
+import { buildSettlementTableTsv } from "../../shared/settlement-table";
 import {
   buildSummaryText,
   type SummaryTextInput,
@@ -241,6 +243,12 @@ export function CopyMenu({
     else toast.error("Không sao chép được bảng tính");
   }
 
+  async function copySettlementTable() {
+    const ok = await copyText(buildSettlementTableTsv(input));
+    if (ok) toast.success("Đã sao chép bảng tổng hợp, dán vào Google Sheets");
+    else toast.error("Không sao chép được bảng tổng hợp");
+  }
+
   async function copyTransactionRows() {
     const tsv = buildTransactionRowsTsv(input);
     if (!tsv) {
@@ -316,6 +324,13 @@ export function CopyMenu({
       hint: "Dán thẳng vào Google Sheets/Excel",
       icon: Table2,
       run: copySheet,
+    },
+    {
+      id: "settlement-table",
+      label: "Copy bảng tổng hợp",
+      hint: "Mỗi người: phải chịu, đã trả, còn chuyển",
+      icon: Sigma,
+      run: copySettlementTable,
     },
     {
       id: "sheet-rows",
