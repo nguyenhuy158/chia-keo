@@ -55,6 +55,16 @@ function button(label: string) {
   ) as HTMLButtonElement;
 }
 
+function openCreateForm() {
+  act(() =>
+    (
+      [...host.querySelectorAll("button")].find((item) =>
+        item.textContent?.includes("Thêm cuộc chơi mới"),
+      ) as HTMLButtonElement
+    ).click(),
+  );
+}
+
 function typeName(value: string) {
   const input = host.querySelector("#game-name") as HTMLInputElement;
   act(() => {
@@ -86,6 +96,7 @@ function game(): ApiGame {
 
 beforeEach(() => {
   Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
+  window.localStorage.clear();
   state.games = undefined;
   state.loading = false;
   state.creating = false;
@@ -119,6 +130,8 @@ describe("GamesSidebar", () => {
   it("validates a new game and creates it with the chosen participant count", async () => {
     const onNavigate = vi.fn();
     render(onNavigate);
+    expect(host.querySelector("#game-name")).toBeNull();
+    openCreateForm();
     await submit();
     expect(host.textContent).toContain("Nhập tên cuộc chơi");
     expect(createGame).not.toHaveBeenCalled();
@@ -137,6 +150,8 @@ describe("GamesSidebar", () => {
       params: { gameId: "new-game" },
     });
     expect(onNavigate).toHaveBeenCalledOnce();
+    expect(host.querySelector("#game-name")).toBeNull();
+    openCreateForm();
     expect((host.querySelector("#game-name") as HTMLInputElement).value).toBe(
       "",
     );
@@ -174,6 +189,7 @@ describe("GamesSidebar", () => {
     state.duplicating = true;
     state.creating = true;
     render(onNavigate);
+    openCreateForm();
     expect(button("Nhân bản cuộc chơi").disabled).toBe(true);
     expect(button("Tạo cuộc chơi").disabled).toBe(true);
   });

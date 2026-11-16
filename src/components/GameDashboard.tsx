@@ -160,7 +160,7 @@ function GameDashboardFull({
         </section>
       )}
 
-      <section className="grid grid-cols-3 gap-3">
+      <section className="grid grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)_minmax(0,1fr)] gap-3">
         <Metric label="Tổng chi" value={formatMoney(summary.totalExpense)} />
         <Metric label="Số người" value={String(participants.length)} />
         <Metric label="Khoản chi" value={String(expenseCount)} />

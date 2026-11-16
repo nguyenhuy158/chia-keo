@@ -164,9 +164,11 @@ export function Field({
 
 export function Metric({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg border border-border bg-surface p-3 shadow-sm">
-      <p className="text-xs font-medium uppercase text-fg-muted">{label}</p>
-      <p className="mt-2 text-base font-semibold leading-tight text-stone-950 tabular dark:text-stone-50 sm:text-lg">
+    <div className="min-w-0 rounded-lg border border-border bg-surface p-3 shadow-sm">
+      <p className="truncate text-xs font-medium uppercase text-fg-muted">
+        {label}
+      </p>
+      <p className="mt-2 text-base font-semibold leading-tight text-stone-950 tabular [overflow-wrap:anywhere] dark:text-stone-50 sm:text-lg">
         {value}
       </p>
     </div>
