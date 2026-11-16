@@ -1,6 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Copy, Minus, Plus, ReceiptText } from "lucide-react";
+import { ChevronDown, Copy, Minus, Plus, ReceiptText } from "lucide-react";
 import type { MouseEvent } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -14,6 +14,7 @@ import { ClosedGamesCard } from "./ClosedGamesCard";
 import { ContactBookCard } from "./ContactBookCard";
 import { TrashCard } from "./TrashCard";
 import { SkeletonCard } from "./ui";
+import { usePersistentOpen } from "./use-persistent-open";
 
 const gameFormSchema = z.object({
   name: z.string().trim().min(1, "Nhập tên cuộc chơi"),
@@ -36,6 +37,8 @@ export function GamesSidebar({ onNavigate }: { onNavigate?: () => void }) {
     onNavigate?.();
   }
 
+  const [formOpen, setFormOpen] = usePersistentOpen("create-game", false);
+
   const form = useForm<GameFormValues>({
     resolver: zodResolver(gameFormSchema),
     defaultValues: { name: "", participantCount: 0 },
@@ -52,78 +55,93 @@ export function GamesSidebar({ onNavigate }: { onNavigate?: () => void }) {
   const handleCreate = form.handleSubmit(async (values) => {
     const detail = await createGame.mutateAsync(values);
     form.reset({ name: "", participantCount: 0 });
+    setFormOpen(false);
     navigate({ to: "/games/$gameId", params: { gameId: detail.id } });
     onNavigate?.();
   });
 
   return (
     <aside className="space-y-4">
-      <form
-        onSubmit={handleCreate}
-        className="rounded-lg border border-border bg-surface p-4 shadow-sm"
-      >
-        <label
-          className="text-sm font-medium text-stone-700 dark:text-stone-300"
-          htmlFor="game-name"
+      <div className="rounded-lg border border-border bg-surface p-3 shadow-sm">
+        <button
+          type="button"
+          aria-expanded={formOpen}
+          onClick={() => setFormOpen((current) => !current)}
+          className="flex h-10 w-full items-center justify-between gap-2 rounded-md px-1 text-sm font-semibold text-stone-800 transition hover:bg-stone-50 dark:text-stone-200 dark:hover:bg-stone-800"
         >
-          Tạo cuộc chơi
-        </label>
-        <div className="mt-2 flex gap-2">
-          <input
-            id="game-name"
-            {...form.register("name")}
-            className="h-11 min-w-0 flex-1 rounded-md border border-stone-300 bg-white px-3 text-base text-stone-950 sm:text-sm outline-none transition placeholder:text-stone-400 focus:border-primary focus:ring-2 focus:ring-violet-100 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-100 dark:placeholder:text-stone-500 dark:focus:ring-violet-900/40 sm:h-10"
-            placeholder="Đà Nẵng 2026"
+          <span className="flex items-center gap-2">
+            <Plus size={17} />
+            Thêm cuộc chơi mới
+          </span>
+          <ChevronDown
+            size={16}
+            aria-hidden="true"
+            className={formOpen ? "rotate-180 transition" : "transition"}
           />
-          <button
-            type="submit"
-            disabled={createGame.isPending}
-            className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-primary text-white transition hover:bg-primary-hover active:scale-95 disabled:cursor-not-allowed disabled:bg-stone-300 dark:disabled:bg-stone-700 sm:h-10 sm:w-10"
-            aria-label="Tạo cuộc chơi"
-          >
-            <Plus size={18} />
-          </button>
-        </div>
+        </button>
+        {formOpen && (
+          <form onSubmit={handleCreate} className="mt-3">
+            <label className="sr-only" htmlFor="game-name">
+              Tạo cuộc chơi
+            </label>
+            <div className="flex gap-2">
+              <input
+                id="game-name"
+                {...form.register("name")}
+                className="h-11 min-w-0 flex-1 rounded-md border border-stone-300 bg-white px-3 text-base text-stone-950 sm:text-sm outline-none transition placeholder:text-stone-400 focus:border-primary focus:ring-2 focus:ring-violet-100 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-100 dark:placeholder:text-stone-500 dark:focus:ring-violet-900/40 sm:h-10"
+                placeholder="Đà Nẵng 2026"
+              />
+              <button
+                type="submit"
+                disabled={createGame.isPending}
+                className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-primary text-white transition hover:bg-primary-hover active:scale-95 disabled:cursor-not-allowed disabled:bg-stone-300 dark:disabled:bg-stone-700 sm:h-10 sm:w-10"
+                aria-label="Tạo cuộc chơi"
+              >
+                <Plus size={18} />
+              </button>
+            </div>
 
-        {/* Tao san N nguoi "Người 1", "Người 2"... de vao viec ngay, sua ten
+            {/* Tao san N nguoi "Người 1", "Người 2"... de vao viec ngay, sua ten
             sau. 0 nguoi thi khong tao ai (hanh vi cu, tu them tay). */}
-        <div className="mt-2 flex items-center gap-2">
-          <span className="text-xs text-fg-muted">Tạo sẵn số người</span>
-          <div className="flex h-9 items-center overflow-hidden rounded-lg border border-stone-300 dark:border-stone-700">
-            <button
-              type="button"
-              onClick={() => stepParticipantCount(-1)}
-              disabled={participantCount <= 0}
-              aria-label="Giảm số người tạo sẵn"
-              className="flex h-full w-9 items-center justify-center text-stone-600 transition hover:bg-stone-100 active:bg-stone-200 disabled:opacity-30 disabled:hover:bg-transparent dark:text-stone-300 dark:hover:bg-stone-700 dark:active:bg-stone-600"
-            >
-              <Minus size={14} />
-            </button>
-            <span className="tabular w-8 text-center text-sm font-medium text-stone-900 dark:text-stone-100">
-              {participantCount}
-            </span>
-            <button
-              type="button"
-              onClick={() => stepParticipantCount(1)}
-              disabled={participantCount >= MAX_QUICK_PARTICIPANTS}
-              aria-label="Tăng số người tạo sẵn"
-              className="flex h-full w-9 items-center justify-center text-stone-600 transition hover:bg-stone-100 active:bg-stone-200 disabled:opacity-30 disabled:hover:bg-transparent dark:text-stone-300 dark:hover:bg-stone-700 dark:active:bg-stone-600"
-            >
-              <Plus size={14} />
-            </button>
-          </div>
-          {participantCount > 0 && (
-            <span className="text-xs text-stone-400">
-              “Người 1”…“Người {participantCount}”
-            </span>
-          )}
-        </div>
-        {form.formState.errors.name && (
-          <p className="mt-1 text-xs text-danger">
-            {form.formState.errors.name.message}
-          </p>
+            <div className="mt-2 flex items-center gap-2">
+              <span className="text-xs text-fg-muted">Tạo sẵn số người</span>
+              <div className="flex h-9 items-center overflow-hidden rounded-lg border border-stone-300 dark:border-stone-700">
+                <button
+                  type="button"
+                  onClick={() => stepParticipantCount(-1)}
+                  disabled={participantCount <= 0}
+                  aria-label="Giảm số người tạo sẵn"
+                  className="flex h-full w-9 items-center justify-center text-stone-600 transition hover:bg-stone-100 active:bg-stone-200 disabled:opacity-30 disabled:hover:bg-transparent dark:text-stone-300 dark:hover:bg-stone-700 dark:active:bg-stone-600"
+                >
+                  <Minus size={14} />
+                </button>
+                <span className="tabular w-8 text-center text-sm font-medium text-stone-900 dark:text-stone-100">
+                  {participantCount}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => stepParticipantCount(1)}
+                  disabled={participantCount >= MAX_QUICK_PARTICIPANTS}
+                  aria-label="Tăng số người tạo sẵn"
+                  className="flex h-full w-9 items-center justify-center text-stone-600 transition hover:bg-stone-100 active:bg-stone-200 disabled:opacity-30 disabled:hover:bg-transparent dark:text-stone-300 dark:hover:bg-stone-700 dark:active:bg-stone-600"
+                >
+                  <Plus size={14} />
+                </button>
+              </div>
+              {participantCount > 0 && (
+                <span className="text-xs text-stone-400">
+                  “Người 1”…“Người {participantCount}”
+                </span>
+              )}
+            </div>
+            {form.formState.errors.name && (
+              <p className="mt-1 text-xs text-danger">
+                {form.formState.errors.name.message}
+              </p>
+            )}
+          </form>
         )}
-      </form>
+      </div>
 
       <ContactBookCard />
 
