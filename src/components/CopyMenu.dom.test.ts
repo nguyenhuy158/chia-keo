@@ -13,6 +13,8 @@ const {
   success,
   error,
   message,
+  preferences,
+  updatePreferences,
 } = vi.hoisted(() => ({
   copyImage: vi.fn(),
   copyText: vi.fn(),
@@ -23,6 +25,12 @@ const {
   success: vi.fn(),
   error: vi.fn(),
   message: vi.fn(),
+  preferences: {
+    roundDownRefunds: false,
+    summaryShowQr: true,
+    summaryShowAvatar: true,
+  },
+  updatePreferences: vi.fn(),
 }));
 
 vi.mock("../../shared/summary-text", () => ({
@@ -63,7 +71,8 @@ vi.mock("../../shared/expense-sheet", async (importOriginal) => ({
   buildExpenseSheetTsv: () => "sheet tsv",
 }));
 vi.mock("../adapters/react-query/queries", () => ({
-  usePreferences: () => ({ roundDownRefunds: false }),
+  usePreferences: () => preferences,
+  useUpdatePreferences: () => ({ mutate: updatePreferences }),
 }));
 vi.mock("sonner", () => ({
   toast: Object.assign(message, { success, error }),
@@ -111,6 +120,9 @@ beforeEach(() => {
   downloadBlob.mockReset();
   renderSummaryImage.mockReset().mockResolvedValue(new Blob(["png"]));
   renderExpenseXlsx.mockReset().mockResolvedValue(new Blob(["xlsx"]));
+  preferences.summaryShowQr = true;
+  preferences.summaryShowAvatar = true;
+  updatePreferences.mockReset();
   chooseBackground.mockReset();
   success.mockReset();
   error.mockReset();
@@ -227,6 +239,8 @@ describe("CopyMenu", () => {
       expect.anything(),
       "detailed",
       "plain",
+      true,
+      true,
     );
     expect(success).toHaveBeenCalledWith("Đã sao chép ảnh tổng kết");
     copyImage.mockResolvedValue(false);
@@ -239,6 +253,38 @@ describe("CopyMenu", () => {
     open();
     await act(async () => item("Lưu ảnh về máy").click());
     expect(success).toHaveBeenCalledWith("Đã tải ảnh tổng kết");
+  });
+
+  it("toggles the QR on copied images and passes the preference to the renderer", async () => {
+    render();
+    open();
+    await act(async () => item("Ẩn QR trên ảnh").click());
+    expect(updatePreferences).toHaveBeenCalledWith({ summaryShowQr: false });
+
+    preferences.summaryShowQr = false;
+    preferences.summaryShowAvatar = false;
+    open();
+    expect(item("Hiện QR trên ảnh")).toBeDefined();
+    await act(async () => item("Copy ảnh").click());
+    expect(renderSummaryImage).toHaveBeenLastCalledWith(
+      expect.anything(),
+      "compact",
+      "plain",
+      false,
+      false,
+    );
+    open();
+    await act(async () => item("Lưu ảnh về máy").click());
+    expect(renderSummaryImage).toHaveBeenLastCalledWith(
+      expect.anything(),
+      "compact",
+      "plain",
+      false,
+      false,
+    );
+    open();
+    await act(async () => item("Hiện QR trên ảnh").click());
+    expect(updatePreferences).toHaveBeenLastCalledWith({ summaryShowQr: true });
   });
 
   it("reports image rendering and download failures", async () => {
