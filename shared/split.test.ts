@@ -7,6 +7,7 @@ import {
   calculateHostTransfers,
   calculateSettlements,
   computeSplitRows,
+  displayBalance,
   type ExpenseInput,
   MAX_SPLIT_WEIGHT,
   resolveHostParticipantId,
@@ -533,5 +534,25 @@ describe("calculateHostTransfers", () => {
       { participantId: "duc", amount: 999, toHost: false },
       { participantId: "tan", amount: 62000, toHost: true },
     ]);
+  });
+});
+
+describe("displayBalance", () => {
+  const creditor = { participantId: "a", paid: 0, owed: 0, balance: 857 };
+
+  it("floors what other people receive when the option is on", () => {
+    expect(displayBalance(creditor, "host", true)).toBe(0);
+    expect(displayBalance({ ...creditor, balance: 294857 }, "host", true)).toBe(
+      294000,
+    );
+  });
+
+  it("keeps the real balance when off, without a host, for the host and for debts", () => {
+    expect(displayBalance(creditor, "host", false)).toBe(857);
+    expect(displayBalance(creditor, "", true)).toBe(857);
+    expect(displayBalance(creditor, "a", true)).toBe(857);
+    expect(displayBalance({ ...creditor, balance: -857 }, "host", true)).toBe(
+      -857,
+    );
   });
 });

@@ -274,6 +274,28 @@ export function resolveHostParticipantId(
 }
 
 /**
+ * So du hien thi cho mot nguoi. O che do gom ve dau moi, khi bat "khong hoan
+ * tien le" thi so nguoi khac se nhan lai duoc lam tron xuong (khop voi so host
+ * thuc tra o `calculateHostTransfers`); so cua chinh dau moi va so am giu
+ * nguyen.
+ */
+export function displayBalance(
+  row: BalanceRow,
+  hostParticipantId: string,
+  roundDownRefunds: boolean,
+): number {
+  if (
+    !roundDownRefunds ||
+    !hostParticipantId ||
+    row.participantId === hostParticipantId ||
+    row.balance <= 0
+  ) {
+    return row.balance;
+  }
+  return roundDownToUnit(row.balance);
+}
+
+/**
  * Kieu gom mot dau moi: ai con thieu thi chuyen thang cho host, ai ung du thi
  * host tra lai. Doi lai nhieu luot chuyen hon P2P nhung chi can mot QR.
  */
