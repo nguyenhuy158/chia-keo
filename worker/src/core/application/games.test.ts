@@ -8,11 +8,15 @@ import {
   participantRow,
 } from "./fake-game-repository";
 import {
+  archiveGame,
   createGame,
   duplicateGame,
   findGameByRef,
+  GAME_ALREADY_ARCHIVED,
   getGameDetailForOwner,
+  listArchivedGames,
   listClosedGames,
+  listGames,
   reopenGame,
   restoreGame,
   updateGame,
@@ -203,6 +207,55 @@ describe("game use cases", () => {
     expect(
       (await listClosedGames(fake.repo, FAKE_OWNER)).map((game) => game.id),
     ).toEqual(["new", "old"]);
+  });
+
+  it("lưu trữ cuộc chơi: ẩn khỏi danh sách đang chơi và đã đóng, khôi phục được", async () => {
+    const fake = createFakeRepo({
+      games: [
+        gameRow({ id: "play" }),
+        gameRow({
+          id: "closed",
+          closedAt: "2026-08-02T00:00:00.000Z",
+          closeMode: "manual",
+        }),
+      ],
+    });
+    const archived = await archiveGame(fake.repo, FAKE_OWNER, "play");
+    expect(archived.closedAt).not.toBeNull();
+    expect(archived.closeMode).toBe("archived");
+    expect(JSON.parse(fake.state.events[0].payload)).toMatchObject({
+      kind: "game_closed",
+      mode: "archived",
+    });
+    expect(
+      (await listGames(fake.repo, FAKE_OWNER)).map((game) => game.id),
+    ).toEqual([]);
+    expect(
+      (await listClosedGames(fake.repo, FAKE_OWNER)).map((game) => game.id),
+    ).toEqual(["closed"]);
+    expect(
+      (await listArchivedGames(fake.repo, FAKE_OWNER)).map((game) => game.id),
+    ).toEqual(["play"]);
+
+    await archiveGame(fake.repo, FAKE_OWNER, "closed");
+    expect(
+      (await listArchivedGames(fake.repo, FAKE_OWNER))
+        .map((game) => game.id)
+        .sort(),
+    ).toEqual(["closed", "play"]);
+
+    await expect(
+      archiveGame(fake.repo, FAKE_OWNER, "play"),
+    ).rejects.toMatchObject({ message: GAME_ALREADY_ARCHIVED });
+    await expect(
+      archiveGame(fake.repo, FAKE_OWNER, "missing"),
+    ).rejects.toBeInstanceOf(NotFoundError);
+
+    const restored = await reopenGame(fake.repo, FAKE_OWNER, "play");
+    expect(restored.closedAt).toBeNull();
+    expect(
+      (await listArchivedGames(fake.repo, FAKE_OWNER)).map((game) => game.id),
+    ).toEqual(["closed"]);
   });
 
   it("mở lại cuộc đã tự đóng và ghi rõ nguyên nhân", async () => {

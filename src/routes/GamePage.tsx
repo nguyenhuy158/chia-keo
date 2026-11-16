@@ -1,5 +1,6 @@
 import { useNavigate, useParams } from "@tanstack/react-router";
 import {
+  Archive,
   Check,
   ChevronRight,
   CircleCheckBig,
@@ -18,7 +19,11 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { describeCloseMode, isClosed } from "../../shared/game-closing";
+import {
+  ARCHIVED_CLOSE_MODE,
+  describeCloseMode,
+  isClosed,
+} from "../../shared/game-closing";
 import { API_BASE } from "../adapters/browser/http-game-api";
 import { renderSharePreviewImage } from "../adapters/browser/share-preview-image";
 import {
@@ -27,6 +32,7 @@ import {
   useAddParticipant,
   useAddParticipants,
   useAddTransfer,
+  useArchiveGame,
   useCloseGame,
   useDeleteGame,
   useGame,
@@ -93,6 +99,7 @@ export function GamePage() {
   const deleteGame = useDeleteGame();
   const closeGame = useCloseGame();
   const reopenGame = useReopenGame();
+  const archiveGame = useArchiveGame();
 
   const [nameDraft, setNameDraft] = useState<string | null>(null);
   const [activeSection, setActiveSection] = useState<GameSection>("expenses");
@@ -155,6 +162,24 @@ export function GamePage() {
       toast.success("Đã đóng cuộc chơi");
     } catch {
       toast.error("Không đóng được");
+    }
+  }
+
+  async function handleArchiveGame() {
+    const ok = await confirm({
+      title: `Lưu trữ "${game.name}"?`,
+      description:
+        "Cuộc chơi ẩn khỏi danh sách đang chơi, “Đã đóng” và thống kê. Không xóa gì, khôi phục được ở mục “Đã lưu trữ”.",
+      confirmLabel: "Lưu trữ",
+    });
+    if (!ok) return;
+
+    try {
+      await archiveGame.mutateAsync(game.id);
+      toast.success("Đã lưu trữ cuộc chơi");
+      navigate({ to: "/" });
+    } catch {
+      toast.error("Không lưu trữ được");
     }
   }
 
@@ -474,6 +499,20 @@ export function GamePage() {
     )
   ) : null;
 
+  const canArchive = game.isOwner && game.closeMode !== ARCHIVED_CLOSE_MODE;
+
+  const archiveAction = canArchive ? (
+    <button
+      type="button"
+      onClick={handleArchiveGame}
+      disabled={archiveGame.isPending}
+      className="inline-flex h-11 items-center justify-center gap-2 rounded-md border border-stone-300 bg-surface px-3 text-sm font-medium text-stone-700 transition hover:bg-surface-muted disabled:opacity-50 dark:border-stone-700 dark:text-stone-200"
+    >
+      <Archive size={16} />
+      Lưu trữ
+    </button>
+  ) : null;
+
   const deleteAction = game.isOwner ? (
     <button
       type="button"
@@ -521,6 +560,16 @@ export function GamePage() {
             onSelect: handleCreateShareLink,
           },
         ]),
+    ...(canArchive
+      ? [
+          {
+            label: "Lưu trữ",
+            icon: <Archive size={15} />,
+            disabled: archiveGame.isPending,
+            onSelect: handleArchiveGame,
+          },
+        ]
+      : []),
     ...(game.isOwner
       ? [
           {
@@ -748,6 +797,7 @@ export function GamePage() {
           {emailAction}
           {shareActions}
           {closeAction}
+          {archiveAction}
           {deleteAction}
         </div>
         <div className="mt-3 border-t border-border pt-3">

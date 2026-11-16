@@ -146,6 +146,9 @@ describe("describeGameEvent", () => {
     expect(
       describeGameEvent({ kind: "game_closed", mode: "manual" }).detail,
     ).toBe("đóng thủ công");
+    expect(
+      describeGameEvent({ kind: "game_closed", mode: "archived" }).detail,
+    ).toBe("lưu trữ");
     expect(describeGameEvent({ kind: "game_reopened", mode: "auto" })).toEqual({
       title: "Mở lại cuộc chơi",
       detail: "số dư lệch trở lại",

@@ -60,6 +60,7 @@ export const trashKeys = { all: ["games-trash"] as const };
  * qua/tro lai day.
  */
 export const closedGameKeys = { all: ["games-closed"] as const };
+export const archivedGameKeys = { all: ["games-archived"] as const };
 
 /**
  * Lich su co khoa rieng ngoai ["games"]: moi mutation deu sinh them dong lich
@@ -317,6 +318,21 @@ export function useCloseGame() {
   );
 }
 
+export function useArchivedGames(enabled: boolean) {
+  return useQuery({
+    queryKey: archivedGameKeys.all,
+    queryFn: () => getGameApi().games.listArchived(),
+    enabled,
+  });
+}
+
+/** Luu tru cuoc choi: an khoi danh sach dang choi va "Da dong", khong xoa. */
+export function useArchiveGame() {
+  return useGameDetailMutation((gameId: string) =>
+    getGameApi().games.archive(gameId),
+  );
+}
+
 export function useReopenGame() {
   return useGameDetailMutation((gameId: string) =>
     getGameApi().games.reopen(gameId),
@@ -426,6 +442,7 @@ function useGameDetailMutation<TVariables>(
       queryClient.invalidateQueries({ queryKey: gameKeys.all });
       // Thao tac nao cung co the lam cuoc tu dong dong (hoac tu mo lai).
       queryClient.invalidateQueries({ queryKey: closedGameKeys.all });
+      queryClient.invalidateQueries({ queryKey: archivedGameKeys.all });
       if (options.refreshPhotos) {
         queryClient.invalidateQueries({ queryKey: photoKeys.list(detail.id) });
       }

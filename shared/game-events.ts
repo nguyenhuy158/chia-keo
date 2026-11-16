@@ -176,7 +176,11 @@ export function describeGameEvent(payload: GameEventPayload): {
       return {
         title: "Đóng cuộc chơi",
         detail:
-          payload.mode === "auto" ? "mọi người đã trả xong" : "đóng thủ công",
+          payload.mode === "auto"
+            ? "mọi người đã trả xong"
+            : payload.mode === "archived"
+              ? "lưu trữ"
+              : "đóng thủ công",
       };
 
     case "game_reopened":

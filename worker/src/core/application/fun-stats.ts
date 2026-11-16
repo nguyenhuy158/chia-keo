@@ -3,6 +3,7 @@ import {
   buildFunStats,
   type FunStatsGameInput,
 } from "../../../../shared/fun-stats";
+import { ARCHIVED_CLOSE_MODE } from "../../../../shared/game-closing";
 import type { GameRepository } from "../ports/game-repository";
 
 /**
@@ -20,7 +21,9 @@ export async function getFunStats(
   repo: GameRepository,
   userId: string,
 ): Promise<ApiFunStats> {
-  const allGames = await repo.games.listByOwner(userId);
+  const allGames = (await repo.games.listByOwner(userId)).filter(
+    (game) => game.closeMode !== ARCHIVED_CLOSE_MODE,
+  );
   const selected = allGames.slice(0, MAX_FUN_STATS_GAMES);
   const omittedGameCount = allGames.length - selected.length;
 

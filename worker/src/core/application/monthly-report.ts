@@ -1,3 +1,4 @@
+import { ARCHIVED_CLOSE_MODE } from "../../../../shared/game-closing";
 import {
   buildMonthlyCsv,
   MONTH_KEY_PATTERN,
@@ -23,7 +24,10 @@ export async function getClosedMonthCsv(
   const ownedGames = await repo.games.listByOwner(userId);
   const gameIds = ownedGames
     .filter(
-      (row) => row.closedAt !== null && monthKeyOf(row.closedAt) === month,
+      (row) =>
+        row.closedAt !== null &&
+        row.closeMode !== ARCHIVED_CLOSE_MODE &&
+        monthKeyOf(row.closedAt) === month,
     )
     .sort((left, right) =>
       (right.closedAt as string).localeCompare(left.closedAt as string),

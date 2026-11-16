@@ -26,6 +26,8 @@ import {
   useAddTransfer,
   useAiScanReceipt,
   useAiSuggestExpense,
+  useArchivedGames,
+  useArchiveGame,
   useClosedGames,
   useCloseGame,
   useContacts,
@@ -324,6 +326,7 @@ describe("React Query game mutations", () => {
     const games = {
       close: vi.fn().mockResolvedValue(response),
       reopen: vi.fn().mockResolvedValue(response),
+      archive: vi.fn().mockResolvedValue(response),
       update: vi.fn().mockResolvedValue(response),
     };
     const participants = {
@@ -347,6 +350,7 @@ describe("React Query game mutations", () => {
     } as unknown as GameApiPort);
     await execute(useCloseGame, "game");
     await execute(useReopenGame, "game");
+    await execute(useArchiveGame, "game");
     await execute(() => useAddParticipants("game"), {} as never);
     await execute(useRemoveParticipant, "person-a");
     await execute(useUpdateParticipant, {
@@ -588,6 +592,7 @@ describe("React Query reads", () => {
         detail: vi.fn().mockResolvedValue({ id: "game" }),
         trash: vi.fn().mockResolvedValue([{ id: "deleted" }]),
         listClosed: vi.fn().mockResolvedValue([{ id: "closed" }]),
+        listArchived: vi.fn().mockResolvedValue([{ id: "archived" }]),
       },
       share: {
         view: vi.fn().mockResolvedValue({ id: "share" }),
@@ -618,6 +623,7 @@ describe("React Query reads", () => {
       events: useGameEvents("game", true),
       trash: useTrashedGames(true),
       closed: useClosedGames(true),
+      archived: useArchivedGames(true),
       photos: usePhotos("game"),
       photo: usePhoto("owned"),
       sharedPhotos: useSharePhotos("share-token"),
@@ -635,6 +641,7 @@ describe("React Query reads", () => {
     expect(current().events.data).toEqual([{ id: "event" }]);
     expect(current().trash.data).toEqual([{ id: "deleted" }]);
     expect(current().closed.data).toEqual([{ id: "closed" }]);
+    expect(current().archived.data).toEqual([{ id: "archived" }]);
     expect(current().photos.data).toEqual([photo("owned")]);
     expect(current().photo.data?.data).toBe("full");
     expect(current().sharedPhotos.data).toEqual([photo("shared")]);

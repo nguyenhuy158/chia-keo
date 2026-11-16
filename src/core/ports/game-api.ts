@@ -51,6 +51,10 @@ export type GameApiPort = {
     close(gameId: string): Promise<ApiGameDetail>;
     /** Mo lai cuoc da dong, ke ca cuoc tu dong dong. */
     reopen(gameId: string): Promise<ApiGameDetail>;
+    /** Cuoc choi da luu tru, moi luu truoc. */
+    listArchived(): Promise<ApiGame[]>;
+    /** Luu tru cuoc choi (an khoi moi danh sach); chi chu cuoc choi goi duoc. */
+    archive(gameId: string): Promise<ApiGameDetail>;
     /** Cuoc chia trong thung rac; goi day cung don luon cac cuoc qua han giu. */
     trash(): Promise<ApiTrashGame[]>;
     restore(gameId: string): Promise<ApiGameDetail>;

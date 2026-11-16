@@ -5,6 +5,7 @@ import type {
   ApiTrashGame,
 } from "../../../../shared/api-types";
 import {
+  ARCHIVED_CLOSE_MODE,
   CLOSE_MODE_NONE,
   isClosed,
   toCloseMode,
@@ -34,6 +35,7 @@ import { loadPaidProgress } from "./game-paid-progress";
 /** Ma loi tra ve khi trang thai dong khong khop voi thao tac. */
 export const GAME_ALREADY_CLOSED = "game_already_closed";
 export const GAME_NOT_CLOSED = "game_not_closed";
+export const GAME_ALREADY_ARCHIVED = "game_already_archived";
 
 /**
  * Cuoc choi cua user (tu tao + duoc chia se), da gan san so nguoi/so khoan.
@@ -89,7 +91,7 @@ export async function listGames(
   return listGamesWhere(repo, userId, (row) => row.closedAt === null, true);
 }
 
-/** Cuoc choi da dong, moi dong truoc. */
+/** Cuoc choi da dong (khong tinh cuoc da luu tru), moi dong truoc. */
 export async function listClosedGames(
   repo: GameRepository,
   userId: string,
@@ -97,7 +99,22 @@ export async function listClosedGames(
   const games = await listGamesWhere(
     repo,
     userId,
-    (row) => row.closedAt !== null,
+    (row) => row.closedAt !== null && row.closeMode !== ARCHIVED_CLOSE_MODE,
+  );
+  return games.sort((left, right) =>
+    (right.closedAt as string).localeCompare(left.closedAt as string),
+  );
+}
+
+/** Cuoc choi da luu tru, moi luu truoc. */
+export async function listArchivedGames(
+  repo: GameRepository,
+  userId: string,
+): Promise<ApiGame[]> {
+  const games = await listGamesWhere(
+    repo,
+    userId,
+    (row) => row.closedAt !== null && row.closeMode === ARCHIVED_CLOSE_MODE,
   );
   return games.sort((left, right) =>
     (right.closedAt as string).localeCompare(left.closedAt as string),
@@ -331,6 +348,35 @@ export async function closeGame(
   return loadGameDetail(
     repo,
     { ...game, closedAt, closeMode: "manual" },
+    userId,
+  );
+}
+
+/**
+ * Luu tru cuoc choi (chi chu cuoc): an khoi danh sach dang choi lan "Da dong",
+ * khong xoa gi. Dung cho cuoc thu nghiem/da xong han. Khoi phuc bang `reopenGame`.
+ */
+export async function archiveGame(
+  repo: GameRepository,
+  userId: string,
+  gameId: string,
+): Promise<ApiGameDetail> {
+  const game = await getOwnedGame(repo, gameId, userId);
+  if (!game) throw new NotFoundError();
+  if (game.closeMode === ARCHIVED_CLOSE_MODE && game.closedAt !== null) {
+    throw new BadRequestError(GAME_ALREADY_ARCHIVED);
+  }
+
+  const closedAt = nowIso();
+  await repo.games.setClosed(game.id, closedAt, ARCHIVED_CLOSE_MODE);
+  await recordEvent(repo, game.id, {
+    kind: "game_closed",
+    mode: ARCHIVED_CLOSE_MODE,
+  });
+
+  return loadGameDetail(
+    repo,
+    { ...game, closedAt, closeMode: ARCHIVED_CLOSE_MODE },
     userId,
   );
 }

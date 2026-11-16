@@ -9,6 +9,7 @@ import {
   createFakeRepo,
   FAKE_GAME_ID,
   FAKE_OWNER,
+  gameRow,
   participantRow,
 } from "./fake-game-repository";
 
@@ -27,6 +28,22 @@ describe("getBalancesAcrossGames — chan dau vao", () => {
     });
     expect(result.people).toEqual([]);
   });
+  it("bo cuoc da luu tru khi tu chon cac cuoc gan nhat", async () => {
+    const { repo } = createFakeRepo({
+      games: [
+        gameRow({ id: "play", code: "PLAY01" }),
+        gameRow({
+          id: "old",
+          code: "OLD001",
+          closedAt: "2026-08-02T00:00:00.000Z",
+          closeMode: "archived",
+        }),
+      ],
+    });
+    const result = await getBalancesAcrossGames(repo, FAKE_OWNER);
+    expect(result.games.map((game) => game.code)).toEqual(["PLAY01"]);
+  });
+
   it("chan khi gop qua nhieu cuoc: moi cuoc ton 3 truy van D1", async () => {
     const gameIds = Array.from(
       { length: MAX_CROSS_GAME_GAMES + 1 },

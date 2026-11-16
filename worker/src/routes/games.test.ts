@@ -102,6 +102,19 @@ describe("gamesRouter", () => {
     const reopened = await request("POST", `/games/${FAKE_GAME_ID}/reopen`);
     expect(reopened.status).toBe(200);
     expect((await json<ApiGameDetail>(reopened)).closedAt).toBeNull();
+
+    const archived = await request("POST", `/games/${FAKE_GAME_ID}/archive`);
+    expect(archived.status).toBe(200);
+    expect((await json<ApiGameDetail>(archived)).closeMode).toBe("archived");
+    expect(
+      (await json<ApiGame[]>(await request("GET", "/games/archived"))).length,
+    ).toBeGreaterThan(0);
+    expect(
+      (await request("POST", `/games/${FAKE_GAME_ID}/archive`)).status,
+    ).toBe(400);
+    expect(
+      (await request("POST", `/games/${FAKE_GAME_ID}/reopen`)).status,
+    ).toBe(200);
     expect(
       (
         await json<{ events: unknown[] }>(

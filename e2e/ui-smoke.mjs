@@ -840,6 +840,36 @@ try {
   assert.deepEqual(afterInvalidWeight.summary, weightedReloaded.summary);
   ok("invalid weighted split leaves stored game unchanged");
 
+  // 7.10 Luu tru: an khoi danh sach dang choi, hien o "Da luu tru", khoi phuc duoc
+  await page.click('button[aria-label="Thêm tùy chọn cuộc chơi"]');
+  await page.click('[role="menuitem"]:has-text("Lưu trữ")');
+  await acceptConfirm();
+  await page.waitForURL(`${BASE}/`, WAIT);
+  const listIds = (path) =>
+    page.evaluate(
+      (url) =>
+        fetch(url, { credentials: "include" })
+          .then((response) => response.json())
+          .then((games) => games.map((game) => game.id)),
+      path,
+    );
+  assert.ok((await listIds("/api/games/archived")).includes(weightedGameId));
+  assert.ok(!(await listIds("/api/games")).includes(weightedGameId));
+  assert.ok(!(await listIds("/api/games/closed")).includes(weightedGameId));
+  await page.getByRole("button", { name: "Đã lưu trữ", exact: true }).click();
+  await page.getByText("E2E Weighted Split").last().waitFor(WAIT);
+  await page.getByRole("button", { name: "Khôi phục" }).click();
+  await page.waitForFunction(
+    async (id) => {
+      const response = await fetch("/api/games", { credentials: "include" });
+      return (await response.json()).some((game) => game.id === id);
+    },
+    weightedGameId,
+    WAIT,
+  );
+  assert.deepEqual(await listIds("/api/games/archived"), []);
+  ok("archive hides a game from every list and restore brings it back");
+
   // 7b. Dien thoai: tab Chi vua mot man hinh, chia trang, them bang Sheet
   await page.setViewportSize({ width: 390, height: 844 });
   await page.evaluate(

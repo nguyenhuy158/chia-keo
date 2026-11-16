@@ -41,11 +41,17 @@ describe("getClosedMonthCsv", () => {
         gameRow({ id: "aug", closedAt: AUGUST_CLOSED, closeMode: "auto" }),
         gameRow({ id: "sep", closedAt: SEPTEMBER_CLOSED, closeMode: "auto" }),
         gameRow({ id: "open", closedAt: null }),
+        gameRow({
+          id: "archived",
+          closedAt: AUGUST_CLOSED,
+          closeMode: "archived",
+        }),
       ],
       expenses: [
         expenseRow("e1", "aug", 90_000),
         expenseRow("e2", "sep", 10_000),
         expenseRow("e3", "open", 5_000),
+        expenseRow("e4", "archived", 777_000),
       ],
       splits: [
         { expenseId: "e1", participantId: "p1", amount: 90_000, weight: null },
