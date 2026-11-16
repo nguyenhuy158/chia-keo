@@ -186,6 +186,7 @@ describe("CopyMenu", () => {
       }) as DOMRect;
     open();
     expect(menu().style.bottom).toBe("174px");
+    expect(menu().style.maxHeight).toBe("586px");
     expect(item("Copy link")).toBeDefined();
     act(() =>
       menu().dispatchEvent(new Event("pointerdown", { bubbles: true })),
@@ -197,6 +198,21 @@ describe("CopyMenu", () => {
     expect(menu()).not.toBeNull();
     act(() => (menu().querySelector("button") as HTMLButtonElement).click());
     expect(chooseBackground).toHaveBeenCalledWith("new-bg");
+  });
+
+  it("caps the menu height to the space left so it scrolls on short screens", () => {
+    const originalHeight = window.innerHeight;
+    window.innerHeight = 500;
+    try {
+      render();
+      trigger().getBoundingClientRect = () =>
+        ({ left: 100, right: 300, top: 100, bottom: 140 }) as DOMRect;
+      open();
+      expect(menu().style.top).toBe("146px");
+      expect(menu().style.maxHeight).toBe("346px");
+    } finally {
+      window.innerHeight = originalHeight;
+    }
   });
 
   it("copies compact and detailed text and reports clipboard failure", async () => {
