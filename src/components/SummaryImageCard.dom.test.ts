@@ -48,6 +48,7 @@ vi.mock("../adapters/react-query/queries", () => ({
   usePreferences: () => ({
     summaryShowQr: state.showQr,
     summaryShowAvatar: state.showAvatar,
+    roundDownRefunds: false,
   }),
   useUpdatePreferences: () => ({ mutate }),
 }));
@@ -209,7 +210,7 @@ describe("SummaryImageCard", () => {
     expect(button("Lưu về máy").disabled).toBe(true);
     await vi.waitFor(() => expect(button("Copy ảnh").disabled).toBe(false));
     expect(renderSummaryImage).toHaveBeenCalledWith(
-      input,
+      { ...input, roundDownRefunds: false },
       "compact",
       "plain",
       true,

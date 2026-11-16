@@ -14,13 +14,17 @@ import {
   type SettlementRow,
 } from "../../shared/split";
 import { copyText } from "../adapters/browser/clipboard";
+import {
+  usePreferences,
+  useUpdatePreferences,
+} from "../adapters/react-query/queries";
 import { getQrProvider } from "../core/container";
 import { formatMoney } from "../core/domain/money";
 import { PagedList } from "../ui/PagedList";
 import { Sheet } from "../ui/Sheet";
 import { Avatar } from "./Avatar";
 import { CategoryBreakdownCard } from "./CategoryBreakdownCard";
-import { BalancePill, Metric } from "./ui";
+import { BalancePill, Metric, Switch } from "./ui";
 
 /** QR chung cua host khong gan san so tien vi moi nguoi chuyen mot muc khac. */
 export const QR_AMOUNT_FREE = 0;
@@ -129,6 +133,8 @@ function GameDashboardFull({
   );
   const transfers = expenses.filter((expense) => expense.kind === "transfer");
   const qr = getQrProvider();
+  const { roundDownRefunds } = usePreferences();
+  const updatePreferences = useUpdatePreferences();
 
   const canEditMode = Boolean(onSettlementModeChange);
   const isHostMode = settlementMode === "host" || settlementMode === "pick";
@@ -139,7 +145,7 @@ function GameDashboardFull({
   );
   const host = hostId ? participantById.get(hostId) : undefined;
   const hostTransfers = host
-    ? calculateHostTransfers(summary.balances, hostId)
+    ? calculateHostTransfers(summary.balances, hostId, roundDownRefunds)
     : [];
 
   return (
@@ -245,6 +251,18 @@ function GameDashboardFull({
                 </span>
               )}
             </label>
+          )}
+
+          {isHostMode && (
+            <div className="mt-3">
+              <Switch
+                checked={roundDownRefunds}
+                onChange={(next) =>
+                  updatePreferences.mutate({ roundDownRefunds: next })
+                }
+                label="Không hoàn tiền lẻ (làm tròn xuống 1.000đ)"
+              />
+            </div>
           )}
 
           <div className="mt-4 space-y-3">
@@ -504,6 +522,7 @@ function GameDashboardCompact({
   const [activeRow, setActiveRow] = useState<TransferRow | null>(null);
   const [rowOpen, setRowOpen] = useState(false);
   const qr = getQrProvider();
+  const { roundDownRefunds } = usePreferences();
   const participantById = new Map(
     participants.map((participant) => [participant.id, participant]),
   );
@@ -518,7 +537,11 @@ function GameDashboardCompact({
 
   const transferRows: TransferRow[] = [];
   if (isHostMode && host) {
-    for (const transfer of calculateHostTransfers(summary.balances, hostId)) {
+    for (const transfer of calculateHostTransfers(
+      summary.balances,
+      hostId,
+      roundDownRefunds,
+    )) {
       const participant = participantById.get(transfer.participantId);
       if (!participant) continue;
       const from = transfer.toHost ? participant : host;

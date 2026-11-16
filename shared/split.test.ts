@@ -10,8 +10,17 @@ import {
   type ExpenseInput,
   MAX_SPLIT_WEIGHT,
   resolveHostParticipantId,
+  roundDownToUnit,
   roundUpToUnit,
 } from "./split";
+
+describe("roundDownToUnit", () => {
+  it("lam tron xuong boi so cua don vi", () => {
+    expect(roundDownToUnit(7999)).toBe(7000);
+    expect(roundDownToUnit(8000)).toBe(8000);
+    expect(roundDownToUnit(999)).toBe(0);
+  });
+});
 
 describe("allocateAmount", () => {
   it("chia deu khi so tien chia het", () => {
@@ -505,5 +514,24 @@ describe("calculateHostTransfers", () => {
       amount: 20000,
       toHost: false,
     });
+  });
+
+  it("lam tron xuong so host tra lai va bo dong duoi 1.000d khi bat", () => {
+    const rows = [
+      { participantId: "huy", paid: 0, owed: 0, balance: -8000 },
+      { participantId: "kiet", paid: 0, owed: 0, balance: 7999 },
+      { participantId: "duc", paid: 0, owed: 0, balance: 999 },
+      { participantId: "tan", paid: 0, owed: 0, balance: -61700 },
+    ];
+
+    expect(calculateHostTransfers(rows, "huy", true)).toEqual([
+      { participantId: "kiet", amount: 7000, toHost: false },
+      { participantId: "tan", amount: 62000, toHost: true },
+    ]);
+    expect(calculateHostTransfers(rows, "huy")).toEqual([
+      { participantId: "kiet", amount: 7999, toHost: false },
+      { participantId: "duc", amount: 999, toHost: false },
+      { participantId: "tan", amount: 62000, toHost: true },
+    ]);
   });
 });

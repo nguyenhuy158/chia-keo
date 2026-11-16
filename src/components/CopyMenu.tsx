@@ -11,7 +11,7 @@ import {
   ListChecks,
   type LucideIcon,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { toast } from "sonner";
 import {
@@ -28,6 +28,7 @@ import {
   copyText,
   downloadBlob,
 } from "../adapters/browser/clipboard";
+import { usePreferences } from "../adapters/react-query/queries";
 import { renderExpenseXlsx } from "../adapters/browser/expense-xlsx";
 import {
   buildSummaryImageFileName,
@@ -79,7 +80,16 @@ function computePosition(trigger: HTMLElement): MenuPosition {
     : { left, top: rect.bottom + MENU_GAP };
 }
 
-export function CopyMenu({ input, className, onShare }: CopyMenuProps) {
+export function CopyMenu({
+  input: baseInput,
+  className,
+  onShare,
+}: CopyMenuProps) {
+  const { roundDownRefunds } = usePreferences();
+  const input = useMemo(
+    () => ({ ...baseInput, roundDownRefunds }),
+    [baseInput, roundDownRefunds],
+  );
   const triggerRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState<MenuPosition | null>(null);

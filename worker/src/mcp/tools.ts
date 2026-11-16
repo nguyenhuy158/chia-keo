@@ -16,6 +16,7 @@ import {
   listAllGames,
 } from "../core/application/games";
 import { getShareViewByToken } from "../core/application/share-links";
+import { getUserPreferences } from "../core/application/user-preferences";
 import type { GameRepository } from "../core/ports/game-repository";
 import type { McpTool } from "./protocol";
 
@@ -205,8 +206,15 @@ export const mcpTools: McpTool<McpContext, McpScope>[] = [
     },
     run: async (args, context) => {
       const game = await loadGame(context, readString(args, "game"));
+      const { preferences } = await getUserPreferences(
+        context.repo,
+        context.userId,
+      );
       return buildSummaryText(
-        toSummaryInput(game, context.appOrigin),
+        {
+          ...toSummaryInput(game, context.appOrigin),
+          roundDownRefunds: preferences.roundDownRefunds,
+        },
         readVariant(args),
       );
     },

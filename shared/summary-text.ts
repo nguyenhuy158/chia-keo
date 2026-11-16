@@ -37,6 +37,8 @@ export type SummaryTextInput = {
   settlementMode?: SettlementMode;
   /** Dau moi da chon; chi dung khi settlementMode la "pick". */
   settlementHostId?: string;
+  /** Host khong hoan phan le (xem calculateHostTransfers). */
+  roundDownRefunds?: boolean;
 };
 
 export type SummarySectionId = "expenses" | "people" | "settlements";
@@ -278,8 +280,13 @@ function buildHostSection(
   nameById: Map<string, string>,
   variant: SummaryVariant,
   hostParticipantId: string,
+  roundDownRefunds: boolean,
 ): { section: SummarySection; hostParticipantId: string } | null {
-  const transfers = calculateHostTransfers(summary.balances, hostParticipantId);
+  const transfers = calculateHostTransfers(
+    summary.balances,
+    hostParticipantId,
+    roundDownRefunds,
+  );
   if (!hostParticipantId || transfers.length === 0) return null;
 
   const hostName = nameById.get(hostParticipantId) || UNKNOWN_NAME;
@@ -355,6 +362,7 @@ export function buildSummaryDocument(
         input.settlementMode,
         input.settlementHostId,
       ),
+      Boolean(input.roundDownRefunds),
     );
     if (host) {
       sections.push(host.section);

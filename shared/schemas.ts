@@ -271,11 +271,14 @@ export const userPreferencesSchema = z.object({
   summaryShowQr: z.boolean(),
   /** Hien avatar truoc ten tung nguoi tren anh tong ket. */
   summaryShowAvatar: z.boolean(),
+  /** Host khong hoan phan le: so host tra lai duoc lam tron xuong 1.000d. */
+  roundDownRefunds: z.boolean(),
 });
 
 export const DEFAULT_USER_PREFERENCES: UserPreferences = {
   summaryShowQr: true,
   summaryShowAvatar: true,
+  roundDownRefunds: false,
 };
 
 export const USER_PREFERENCE_KEYS = Object.keys(

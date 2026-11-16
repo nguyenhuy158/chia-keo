@@ -8,18 +8,32 @@ import type {
 } from "../../shared/api-types";
 import type { SettlementMode } from "../../shared/schemas";
 
-const { qr, canBuild, buildUrl, copyText, toastSuccess, toastError } =
-  vi.hoisted(() => ({
-    qr: { canBuild: vi.fn(), buildUrl: vi.fn() },
-    canBuild: vi.fn(),
-    buildUrl: vi.fn(),
-    copyText: vi.fn(),
-    toastSuccess: vi.fn(),
-    toastError: vi.fn(),
-  }));
+const {
+  qr,
+  canBuild,
+  buildUrl,
+  copyText,
+  toastSuccess,
+  toastError,
+  preferences,
+  updatePreferences,
+} = vi.hoisted(() => ({
+  qr: { canBuild: vi.fn(), buildUrl: vi.fn() },
+  canBuild: vi.fn(),
+  buildUrl: vi.fn(),
+  copyText: vi.fn(),
+  toastSuccess: vi.fn(),
+  toastError: vi.fn(),
+  preferences: { roundDownRefunds: false },
+  updatePreferences: vi.fn(),
+}));
 
 vi.mock("../core/container", () => ({ getQrProvider: () => qr }));
 vi.mock("../adapters/browser/clipboard", () => ({ copyText }));
+vi.mock("../adapters/react-query/queries", () => ({
+  usePreferences: () => preferences,
+  useUpdatePreferences: () => ({ mutate: updatePreferences }),
+}));
 vi.mock("sonner", () => ({
   toast: { success: toastSuccess, error: toastError },
 }));
@@ -110,6 +124,8 @@ function button(label: string) {
 
 beforeEach(() => {
   Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
+  preferences.roundDownRefunds = false;
+  updatePreferences.mockReset();
   canBuild.mockReset().mockReturnValue(true);
   buildUrl.mockReset().mockReturnValue("https://qr.example/image");
   qr.canBuild = canBuild;
@@ -185,6 +201,39 @@ describe("GameDashboard", () => {
       expenses: [transfer()],
     });
     expect(host.textContent).toContain("Mọi người đã cân bằng");
+  });
+
+  it("toggles refund rounding in host mode and floors the refund", () => {
+    const refundSummary = {
+      ...summary,
+      balances: [
+        { participantId: "an", paid: 0, owed: 0, balance: -7999 },
+        { participantId: "binh", paid: 0, owed: 0, balance: 7999 },
+      ],
+    };
+    const amounts = () =>
+      [...host.querySelectorAll("span.mr-auto")].map((el) => el.textContent);
+    render({
+      settlementMode: "pick",
+      settlementHostId: "an",
+      summary: refundSummary,
+    });
+    expect(amounts().some((text) => text?.includes("7.999"))).toBe(true);
+    const toggle = host.querySelector("[role='switch']") as HTMLButtonElement;
+    act(() => toggle.click());
+    expect(updatePreferences).toHaveBeenCalledWith({ roundDownRefunds: true });
+
+    preferences.roundDownRefunds = true;
+    render({
+      settlementMode: "pick",
+      settlementHostId: "an",
+      summary: refundSummary,
+    });
+    expect(amounts().some((text) => text?.includes("7.999"))).toBe(false);
+    expect(amounts().some((text) => text?.includes("7.000"))).toBe(true);
+
+    render({ settlementMode: "p2p", summary: refundSummary });
+    expect(host.querySelector("[role='switch']")).toBeNull();
   });
 
   it("shows host transfers in both directions and the shared QR", () => {
