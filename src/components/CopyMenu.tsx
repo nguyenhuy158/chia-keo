@@ -7,6 +7,7 @@ import {
   Image as ImageIcon,
   Images,
   Link as LinkIcon,
+  QrCode,
   ListChecks,
   type LucideIcon,
   Table2,
@@ -33,7 +34,10 @@ import {
   buildSummaryImageFileName,
   renderSummaryImage,
 } from "../adapters/browser/summary-image";
-import { usePreferences } from "../adapters/react-query/queries";
+import {
+  usePreferences,
+  useUpdatePreferences,
+} from "../adapters/react-query/queries";
 import { SummaryBackgroundPicker } from "./SummaryBackgroundPicker";
 import { useSummaryImageBackground } from "./use-summary-image-background";
 
@@ -85,7 +89,12 @@ export function CopyMenu({
   className,
   onShare,
 }: CopyMenuProps) {
-  const { roundDownRefunds } = usePreferences();
+  const {
+    roundDownRefunds,
+    summaryShowQr: showQr,
+    summaryShowAvatar: showAvatar,
+  } = usePreferences();
+  const updatePreferences = useUpdatePreferences();
   const input = useMemo(
     () => ({ ...baseInput, roundDownRefunds }),
     [baseInput, roundDownRefunds],
@@ -151,7 +160,13 @@ export function CopyMenu({
   }
 
   async function copySummaryImage(variant: SummaryVariant = "compact") {
-    const blob = renderSummaryImage(input, variant, backgroundId);
+    const blob = renderSummaryImage(
+      input,
+      variant,
+      backgroundId,
+      showQr,
+      showAvatar,
+    );
     if (await copyImage(blob)) {
       toast.success("Đã sao chép ảnh tổng kết");
       return;
@@ -169,7 +184,13 @@ export function CopyMenu({
   async function saveSummaryImage() {
     try {
       downloadBlob(
-        await renderSummaryImage(input, "compact", backgroundId),
+        await renderSummaryImage(
+          input,
+          "compact",
+          backgroundId,
+          showQr,
+          showAvatar,
+        ),
         buildSummaryImageFileName(input),
       );
       toast.success("Đã tải ảnh tổng kết");
@@ -224,6 +245,15 @@ export function CopyMenu({
       hint: "Ảnh PNG, ghi rõ ai đã ứng",
       icon: Images,
       run: () => copySummaryImage("detailed"),
+    },
+    {
+      id: "toggle-qr",
+      label: showQr ? "Ẩn QR trên ảnh" : "Hiện QR trên ảnh",
+      hint: showQr
+        ? "Ảnh chỉ còn chữ, không lộ tài khoản"
+        : "Ảnh có QR chuyển khoản",
+      icon: QrCode,
+      run: async () => updatePreferences.mutate({ summaryShowQr: !showQr }),
     },
     {
       id: "download",
