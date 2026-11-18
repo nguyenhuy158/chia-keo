@@ -207,6 +207,8 @@ export function ParticipantPanel({
               <input
                 {...form.register("accountNo")}
                 className="field"
+                inputMode="numeric"
+                autoComplete="off"
                 placeholder="0123456789"
               />
             </Field>
@@ -214,6 +216,9 @@ export function ParticipantPanel({
               <input
                 {...form.register("accountName")}
                 className="field"
+                autoCapitalize="characters"
+                autoComplete="off"
+                spellCheck={false}
                 placeholder="NGUYEN VAN A"
               />
             </Field>

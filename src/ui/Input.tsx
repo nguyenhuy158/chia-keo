@@ -1,4 +1,5 @@
 import type {
+  HTMLInputTypeAttribute,
   InputHTMLAttributes,
   ReactNode,
   SelectHTMLAttributes,
@@ -21,6 +22,30 @@ const CONTROL = cn(
 
 const HEIGHT = "h-11 px-3 sm:h-10";
 
+type KeyboardHints = Pick<
+  InputHTMLAttributes<HTMLInputElement>,
+  | "inputMode"
+  | "autoComplete"
+  | "autoCapitalize"
+  | "spellCheck"
+  | "enterKeyHint"
+>;
+
+const NO_AUTOCORRECT: KeyboardHints = {
+  autoCapitalize: "none",
+  spellCheck: false,
+};
+
+const KEYBOARD_BY_TYPE: Partial<Record<HTMLInputTypeAttribute, KeyboardHints>> =
+  {
+    email: { ...NO_AUTOCORRECT, inputMode: "email", autoComplete: "email" },
+    tel: { inputMode: "tel", autoComplete: "tel" },
+    url: { ...NO_AUTOCORRECT, inputMode: "url", autoComplete: "url" },
+    search: { inputMode: "search", enterKeyHint: "search" },
+    number: { inputMode: "decimal" },
+    password: NO_AUTOCORRECT,
+  };
+
 export type InputProps = InputHTMLAttributes<HTMLInputElement> & {
   // Ten `leading`/`trailing` chu khong phai `prefix`/`suffix`: hai cai sau la
   // thuoc tinh HTML that va da co kieu string, dat de len se sai kieu.
@@ -40,12 +65,13 @@ export function Input({
 }: InputProps) {
   const input = (
     <input
+      {...(rest.type && KEYBOARD_BY_TYPE[rest.type])}
       aria-invalid={invalid || undefined}
       className={cn(
         CONTROL,
         HEIGHT,
-        leading && "pl-10",
-        trailing && "pr-10",
+        leading && "ps-10",
+        trailing && "pe-10",
         className,
       )}
       {...rest}
@@ -57,13 +83,13 @@ export function Input({
   return (
     <div className="relative">
       {leading && (
-        <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-fg-muted">
+        <span className="pointer-events-none absolute inset-y-0 start-3 flex items-center text-fg-muted">
           {leading}
         </span>
       )}
       {input}
       {trailing && (
-        <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-fg-muted">
+        <span className="pointer-events-none absolute inset-y-0 end-3 flex items-center text-fg-muted">
           {trailing}
         </span>
       )}
@@ -118,7 +144,7 @@ export function Select({ invalid, className, children, ...rest }: SelectProps) {
     <div className="relative">
       <select
         aria-invalid={invalid || undefined}
-        className={cn(CONTROL, HEIGHT, "appearance-none pr-9", className)}
+        className={cn(CONTROL, HEIGHT, "appearance-none pe-9", className)}
         {...rest}
       >
         {children}
@@ -126,7 +152,7 @@ export function Select({ invalid, className, children, ...rest }: SelectProps) {
       <svg
         aria-hidden="true"
         viewBox="0 0 20 20"
-        className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-fg-muted"
+        className="pointer-events-none absolute end-3 top-1/2 h-4 w-4 -translate-y-1/2 text-fg-muted"
         fill="none"
         stroke="currentColor"
         strokeWidth="1.75"

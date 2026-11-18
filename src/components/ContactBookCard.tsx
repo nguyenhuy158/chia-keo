@@ -71,6 +71,8 @@ function DraftForm({
         className="field"
         placeholder="Số tài khoản"
         aria-label="Số tài khoản"
+        inputMode="numeric"
+        autoComplete="off"
       />
       <input
         value={draft.accountName}
@@ -80,6 +82,9 @@ function DraftForm({
         className="field"
         placeholder="Tên chủ tài khoản (NGUYEN VAN A)"
         aria-label="Tên chủ tài khoản"
+        autoCapitalize="characters"
+        autoComplete="off"
+        spellCheck={false}
       />
       <div className="flex gap-2">
         <button
