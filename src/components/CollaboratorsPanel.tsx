@@ -125,6 +125,11 @@ export function CollaboratorsPanel({
               <div className="relative flex items-center gap-2">
                 <input
                   type="email"
+                  inputMode="email"
+                  autoComplete="email"
+                  autoCapitalize="none"
+                  spellCheck={false}
+                  enterKeyHint="send"
                   value={email}
                   onChange={(event) => setEmail(event.target.value)}
                   onFocus={() => setDropdownOpen(true)}

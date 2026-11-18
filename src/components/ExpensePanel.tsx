@@ -766,6 +766,7 @@ export function ExpensePanel({
       >
         <div className="flex flex-wrap gap-2">
           <input
+            enterKeyHint="send"
             value={aiText}
             onChange={(event) => setAiText(event.target.value)}
             onKeyDown={(event) => {

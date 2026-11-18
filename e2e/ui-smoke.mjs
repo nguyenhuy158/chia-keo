@@ -45,6 +45,22 @@ async function addPerson(target, gameId, name, bank) {
     await target.click('button:has-text("Tài khoản nhận tiền"):visible');
     await target.click('button:has-text("Chọn ngân hàng"):visible');
     await target.click('[role="option"]:has-text("Vietcombank (VCB)")');
+    const accountKeyboard = await target
+      .locator("input[placeholder='0123456789']:visible")
+      .evaluate((el) => [el.inputMode, el.autocapitalize].join("|"));
+    const accountNameKeyboard = await target
+      .locator("input[placeholder='NGUYEN VAN A']:visible")
+      .evaluate((el) => el.autocapitalize);
+    assert.equal(
+      accountKeyboard,
+      "numeric|",
+      "so tai khoan khong mo ban phim so",
+    );
+    assert.equal(
+      accountNameKeyboard,
+      "characters",
+      "ten chu TK khong viet hoa",
+    );
     await target.fill(
       "input[placeholder='0123456789']:visible",
       bank.accountNo,

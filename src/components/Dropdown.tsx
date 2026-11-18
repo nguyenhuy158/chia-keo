@@ -176,6 +176,7 @@ export function Dropdown({
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder="Tìm..."
                 aria-label="Tìm trong danh sách"
+                enterKeyHint="search"
                 className="w-full min-w-0 bg-transparent text-sm text-stone-900 outline-none placeholder:text-stone-400 dark:text-stone-100"
               />
             </div>
