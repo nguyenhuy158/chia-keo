@@ -179,7 +179,7 @@ describe("shared display widgets", () => {
     expect(onOpen).toHaveBeenCalledWith(2);
   });
 
-  it("keeps gradient ids separate for two marks and accepts size and class", () => {
+  it("renders the brand image with size and class", () => {
     act(() =>
       root.render(
         createElement(
@@ -190,14 +190,12 @@ describe("shared display widgets", () => {
         ),
       ),
     );
-    const marks = host.querySelectorAll("svg[aria-label='Chia kèo']");
+    const marks = host.querySelectorAll("img[alt='Chia kèo']");
     expect(marks).toHaveLength(2);
+    expect(marks[0].getAttribute("src")).toBe("/pwa-192.png");
     expect(marks[0].getAttribute("width")).toBe("44");
     expect(marks[1].getAttribute("width")).toBe("32");
     expect(marks[1].getAttribute("class")).toBe("small");
-    expect(marks[0].querySelector("linearGradient")?.id).not.toBe(
-      marks[1].querySelector("linearGradient")?.id,
-    );
   });
 
   it("provides the mobile game drawer action through context", () => {

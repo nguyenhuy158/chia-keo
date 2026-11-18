@@ -82,8 +82,8 @@ worker/src/                    # Backend hexagon (Hono on Cloudflare Worker)
   sso.ts  sso-user.ts          #   SSO cookie (RS256, JWKS) -> app user
 
 drizzle/                       # Generated D1 migrations (wrangler migrations_dir)
-scripts/                       # build-info.mjs (commit stamp), render-brand.mjs
-docs/                          # architecture.md, brand/, screenshots/
+scripts/                       # build-info.mjs (commit stamp)
+docs/                          # architecture.md, screenshots/
 e2e/                           # E2E (Playwright + wrangler dev), plumbing from @huyab/e2e
   run.mjs                      #   `pnpm e2e`: build -> migrate D1 local -> serve -> both smokes
   readonly-smoke.mjs           #   GET-only smoke, safe on prod (`pnpm e2e:prod`)
@@ -309,8 +309,8 @@ things reading the code does not show right away.
   dung + đúng số TK nhận. Mỗi giao dịch lưu 1 dòng `payment_transactions`
   (khóa = id SePay) và cộng dồn: chuyển thiếu vẫn `pending`, đủ mới `markPaid`
   (chỉ đổi request còn pending) rồi ghi trả nợ — không ghi hai lần.
-- **Brand: SVG là bản gốc**, PNG sinh ra bằng `node scripts/render-brand.mjs`
-  (playwright-core Chromium). Đừng sửa tay PNG, lần render sau ghi đè hết.
+- **Brand: capybara v2**, PNG/ICO/SVG trong `public/` do bộ sinh icon của
+  `nguyenhuy158/kit` (`docs/BRAND.md`) tạo ra; `BrandMark` dùng `/pwa-192.png`.
 - **Test dùng `fake-game-repository.ts`** (in-memory double) đặt cạnh use
   case, không mock từng hàm — port đã tách nên có sẵn chỗ cắm.
 
