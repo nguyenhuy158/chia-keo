@@ -1,6 +1,8 @@
+import { sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { BUILD_INFO } from "../../shared/build-info";
+import { createDb } from "./adapters/d1/game-repository";
 import { AUTH_BASE_PATH, createAuth, getTrustedOrigins } from "./auth";
 import type { Env } from "./env";
 import {
@@ -58,17 +60,16 @@ app.use("/api/*", (c, next) => {
 app.get("/api/version", (c) => c.json(BUILD_INFO));
 
 app.get("/api/health", async (c) => {
-  // Kiem tra D1 da chay migration chua de chan doan nhanh loi 500 khi login.
   try {
-    await c.env.DB.prepare("SELECT 1 FROM chiakeo_user LIMIT 1").first();
+    await createDb(c.env).run(sql`SELECT 1 FROM chiakeo_user LIMIT 1`);
     return c.json({ ok: true, db: "ok" });
   } catch (error) {
-    console.error("D1 health check failed:", error);
+    console.error("Database health check failed:", error);
     return c.json(
       {
         ok: false,
         db: "error",
-        hint: "Chay: npx wrangler d1 migrations apply DB --remote",
+        hint: "Chay: pnpm db:migrate:remote",
       },
       500,
     );

@@ -14,7 +14,8 @@ let env: Env;
 
 beforeEach(() => {
   first = vi.fn().mockResolvedValue({ one: 1 });
-  const statement = { first };
+  const statement: Record<string, unknown> = { run: first };
+  statement.bind = vi.fn(() => statement);
   env = { DB: { prepare: vi.fn(() => statement) } } as unknown as Env;
   authHandler.mockReset().mockResolvedValue(new Response("auth ok"));
 });

@@ -2,7 +2,8 @@ import { describe, expect, it, vi } from "vitest";
 import type { Env } from "../env";
 
 vi.mock("../adapters/d1/game-repository", () => ({
-  createD1GameRepository: () => "d1-repo",
+  createGameRepository: () => "d1-repo",
+  createDb: () => "db",
 }));
 vi.mock("../adapters/sepay/sepay-bank-feed", () => ({
   createSepayBankFeed: (token: string, base?: string) => ({ token, base }),

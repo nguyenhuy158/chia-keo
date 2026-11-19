@@ -7,7 +7,7 @@ Ung dung chia tien nhom cho cac buoi an, di choi, du lich hoac nhom chi tieu nho
 ## Hien trang
 
 - Frontend: React, Vite, TypeScript, Tailwind CSS.
-- Luu tru: Cloudflare D1 cho users, session, game, share link, profile va mau chi tieu.
+- Luu tru: Turso (libSQL) tren production, D1 local cho dev/test, cho users, session, game, share link, profile va mau chi tieu.
 - Dang nhap: Better Auth username/password qua HttpOnly cookie; SSO `huyab_sso`
   qua cookie tren web hoac `Authorization: Bearer` tren app native. Worker xac
   minh chu ky JWT cua SSO truoc khi cap quyen.
@@ -78,7 +78,7 @@ Xem thêm: `docs/architecture.md`.
 
 - FE: React + Vite + TypeScript + Tailwind + shadcn/ui.
 - Backend: Hono chay tren Cloudflare Worker.
-- DB: Cloudflare D1.
+- DB: Turso (libSQL) production; D1 local cho dev, test, E2E.
 - ORM/migration: Drizzle ORM + drizzle-kit.
 - Auth: Better Auth + username plugin + password.
 - Deploy: mot Cloudflare Worker duy nhat (API + static assets), CI bang
@@ -367,7 +367,7 @@ Config nam trong `wrangler.toml`:
   `run_worker_first = ["/api/*"]` va SPA fallback
 - Compatibility flag: `nodejs_compat` (Better Auth can node builtins)
 - `workers_dev = false`, chi phuc vu qua `chiakeo.huyab.cfd`
-- D1 binding: `DB` -> `chiakeo-db`; service binding: `MAILER` -> Worker `mailer`
+- DB: secret `TURSO_DATABASE_URL` + `TURSO_AUTH_TOKEN` (co thi dung Turso); thieu thi roi ve D1 binding `DB`; service binding: `MAILER` -> Worker `mailer`
 - Secret: `BETTER_AUTH_SECRET` (bat buoc); `MAILER_KEY` (khop
   `INTERNAL_API_KEY` cua `mailer`); `GEMINI_API_KEY` (tuy chon, bat AI);
   `GEMINI_MODEL` (tuy chon, mac dinh `gemini-2.0-flash`); `SEPAY_API`
@@ -375,10 +375,10 @@ Config nam trong `wrangler.toml`:
 
 [docs/cloudflare-v1.md]: docs/cloudflare-v1.md
 
-Migration D1:
+Migration production (Turso):
 
 ```bash
-pnpm db:migrate:remote   # wrangler d1 migrations apply DB --remote
+TURSO_DATABASE_URL=... TURSO_AUTH_TOKEN=... pnpm db:migrate:remote   # drizzle-kit migrate
 ```
 
 ## Bien moi truong de xuat
@@ -396,7 +396,7 @@ Worker:
 - `GEMINI_API_KEY`
 - `GEMINI_MODEL`
 - `SEPAY_API`, `SEPAY_API_BASE` (local: `https://userapi-sandbox.sepay.vn`)
-- D1 binding: `DB`
+- `TURSO_DATABASE_URL`, `TURSO_AUTH_TOKEN` (production); D1 binding `DB` (local)
 
 ## Bao mat
 
@@ -428,9 +428,11 @@ npm run dev
 npm run build
 ```
 
-## Shared D1 storage
+## Storage
 
-Chia Kèo uses the shared D1 database `db` with `chiakeo_` table and index names. `drizzle-shared/` contains the active schema migrations; Wrangler tracks them in `chiakeo_migrations`. The historical `drizzle/` and `migrations/` directories must not be applied to the shared database.
+Production runs on the Turso database `chiakeo` (org `ntqhuy2k2`, `aws-ap-southeast-1`); D1 shares one free write quota per account with every other app. Removing the Turso secrets falls back to the shared D1 database `db`, kept untouched as rollback.
+
+Chia Kèo previously used the shared D1 database `db` with `chiakeo_` table and index names. `drizzle-shared/` contains the active schema migrations; Wrangler tracks them in `chiakeo_migrations`. The historical `drizzle/` and `migrations/` directories must not be applied to the shared database.
 
 Legacy tables and their data are preserved under the same prefix. The old migration ledger is retained as `chiakeo_legacy_migrations`, separate from the active ledger. Better Auth logical schema keys remain unchanged.
 

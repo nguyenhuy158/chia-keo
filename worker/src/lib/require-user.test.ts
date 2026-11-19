@@ -22,7 +22,8 @@ vi.mock("../auth", () => ({ createAuth }));
 vi.mock("../sso", () => ({ readSsoToken, verifySsoToken }));
 vi.mock("../sso-user", () => ({ resolveSsoUserId }));
 vi.mock("../adapters/d1/game-repository", () => ({
-  createD1GameRepository: createRepo,
+  createGameRepository: createRepo,
+  createDb: (env: { DB: unknown }) => env.DB,
 }));
 
 import { type AuthedEnv, protectPaths, resolveUserId } from "./require-user";

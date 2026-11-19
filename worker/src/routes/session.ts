@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
-import { drizzle } from "drizzle-orm/d1";
 import { Hono } from "hono";
+import { createDb } from "../adapters/d1/game-repository";
 import * as schema from "../adapters/d1/schema";
 import type { Env } from "../env";
 import { resolveUserId } from "../lib/require-user";
@@ -21,7 +21,7 @@ sessionRouter.get("/session", async (c) => {
   const userId = await resolveUserId(c.env, c.req.raw);
   if (!userId) return c.json({ user: null });
 
-  const orm = drizzle(c.env.DB, { schema });
+  const orm = createDb(c.env);
   const rows = await orm
     .select({
       id: schema.user.id,

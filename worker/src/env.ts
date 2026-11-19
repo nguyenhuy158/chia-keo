@@ -1,5 +1,7 @@
 export type Env = {
   DB: D1Database;
+  TURSO_DATABASE_URL?: string;
+  TURSO_AUTH_TOKEN?: string;
   ASSETS: Fetcher;
   BETTER_AUTH_SECRET: string;
   BETTER_AUTH_URL?: string;

@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { SHARE_PREVIEW_MIME_TYPE } from "../../../shared/schemas";
-import { createD1GameRepository } from "../adapters/d1/game-repository";
+import { createDb, createGameRepository } from "../adapters/d1/game-repository";
 import { NotFoundError } from "../core/application/errors";
 import { reconcileSharedPayments } from "../core/application/payments";
 import { getSharedPhoto, listSharedPhotos } from "../core/application/photos";
@@ -27,7 +27,7 @@ shareRouter.get("/share/:token", (c) =>
 shareRouter.get("/share/:token/preview.jpg", async (c) => {
   try {
     const data = await getSharePreviewData(
-      createD1GameRepository(c.env.DB),
+      createGameRepository(createDb(c.env)),
       c.req.param("token"),
     );
     return new Response(
@@ -47,14 +47,17 @@ shareRouter.get("/share/:token/preview.jpg", async (c) => {
 
 shareRouter.get("/share/:token/photos", (c) =>
   respond(c, () =>
-    listSharedPhotos(createD1GameRepository(c.env.DB), c.req.param("token")),
+    listSharedPhotos(
+      createGameRepository(createDb(c.env)),
+      c.req.param("token"),
+    ),
   ),
 );
 
 shareRouter.get("/share/:token/photos/:photoId", (c) =>
   respond(c, () =>
     getSharedPhoto(
-      createD1GameRepository(c.env.DB),
+      createGameRepository(createDb(c.env)),
       c.req.param("token"),
       c.req.param("photoId"),
     ),

@@ -4,7 +4,7 @@
 
 Chia Kèo splits group expenses after each play session and serves payment
 QR codes; production is `chiakeo.huyab.cfd`. It is a React 19 + Vite +
-Tailwind v4 frontend plus a Hono Cloudflare Worker backend on D1 (Drizzle),
+Tailwind v4 frontend plus a Hono Cloudflare Worker backend on Turso/libSQL in production and D1 locally (Drizzle),
 both structured as hexagons (ports & adapters) around a shared pure
 domain kernel in `shared/` (split math, zod schemas, AI normalization, DTOs).
 

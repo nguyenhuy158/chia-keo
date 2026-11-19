@@ -29,6 +29,9 @@ importers:
       '@hookform/resolvers':
         specifier: ^5.4.0
         version: 5.4.0(react-hook-form@7.80.0(react@19.2.7))
+      '@libsql/client':
+        specifier: ^0.18.0
+        version: 0.18.0
       '@tailwindcss/vite':
         specifier: ^4.0.0
         version: 4.3.2(vite@7.3.6(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.49.1)(tsx@4.22.4))
@@ -43,10 +46,10 @@ importers:
         version: 5.2.0(vite@7.3.6(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.49.1)(tsx@4.22.4))
       better-auth:
         specifier: ^1.6.23
-        version: 1.6.23(@cloudflare/workers-types@5.20260703.1)(drizzle-kit@0.31.10)(drizzle-orm@0.45.2(@cloudflare/workers-types@5.20260703.1)(kysely@0.29.2))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(vitest@4.1.9)
+        version: 1.6.23(@cloudflare/workers-types@5.20260703.1)(drizzle-kit@0.31.10)(drizzle-orm@0.45.2(@cloudflare/workers-types@5.20260703.1)(@libsql/client@0.18.0)(kysely@0.29.2))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(vitest@4.1.9)
       drizzle-orm:
         specifier: ^0.45.2
-        version: 0.45.2(@cloudflare/workers-types@5.20260703.1)(kysely@0.29.2)
+        version: 0.45.2(@cloudflare/workers-types@5.20260703.1)(@libsql/client@0.18.0)(kysely@0.29.2)
       exceljs:
         specifier: ^4.4.0
         version: 4.4.0
@@ -1786,6 +1789,66 @@ packages:
   '@jridgewell/trace-mapping@0.3.9':
     resolution: {integrity: sha512-3Belt6tdc8bPgAtbcmdtNJlirVoTmEb5e2gC94PnkwEW9jI6CAHUeoG85tjWP5WquqfavoMtMwiG4P926ZKKuQ==}
 
+  '@libsql/client@0.18.0':
+    resolution: {integrity: sha512-zMCCo58vv7w27j7+cnt/GW+X6/Rih6cHZ86PKi0AxCMOqMfrVgG9OZ5lW2bDMJhSeOjsv2szH2nJF3A9l36UmA==}
+
+  '@libsql/core@0.18.0':
+    resolution: {integrity: sha512-N8RR2CIpcgtbKZnXs2KVpw2lJQfinUj3I56e7qRDRpK18Hty0Rr8nr00VmFb4R/DsqOanPB/TaP3+QAQLZeXMg==}
+
+  '@libsql/darwin-arm64@0.5.29':
+    resolution: {integrity: sha512-K+2RIB1OGFPYQbfay48GakLhqf3ArcbHqPFu7EZiaUcRgFcdw8RoltsMyvbj5ix2fY0HV3Q3Ioa/ByvQdaSM0A==}
+    cpu: [arm64]
+    os: [darwin]
+
+  '@libsql/darwin-x64@0.5.29':
+    resolution: {integrity: sha512-OtT+KFHsKFy1R5FVadr8FJ2Bb1mghtXTyJkxv0trocq7NuHntSki1eUbxpO5ezJesDvBlqFjnWaYYY516QNLhQ==}
+    cpu: [x64]
+    os: [darwin]
+
+  '@libsql/hrana-client@0.10.0':
+    resolution: {integrity: sha512-OoA4EMqRAC7kn7V2P6EQqRcpZf2W+AjsNIyCizBg339Tq/aMC7sRnzs3SklderhmQWAqEzvv8A2vhxVmWpkVvw==}
+
+  '@libsql/isomorphic-ws@0.1.5':
+    resolution: {integrity: sha512-DtLWIH29onUYR00i0GlQ3UdcTRC6EP4u9w/h9LxpUZJWRMARk6dQwZ6Jkd+QdwVpuAOrdxt18v0K2uIYR3fwFg==}
+
+  '@libsql/linux-arm-gnueabihf@0.5.29':
+    resolution: {integrity: sha512-CD4n4zj7SJTHso4nf5cuMoWoMSS7asn5hHygsDuhRl8jjjCTT3yE+xdUvI4J7zsyb53VO5ISh4cwwOtf6k2UhQ==}
+    cpu: [arm]
+    os: [linux]
+
+  '@libsql/linux-arm-musleabihf@0.5.29':
+    resolution: {integrity: sha512-2Z9qBVpEJV7OeflzIR3+l5yAd4uTOLxklScYTwpZnkm2vDSGlC1PRlueLaufc4EFITkLKXK2MWBpexuNJfMVcg==}
+    cpu: [arm]
+    os: [linux]
+
+  '@libsql/linux-arm64-gnu@0.5.29':
+    resolution: {integrity: sha512-gURBqaiXIGGwFNEaUj8Ldk7Hps4STtG+31aEidCk5evMMdtsdfL3HPCpvys+ZF/tkOs2MWlRWoSq7SOuCE9k3w==}
+    cpu: [arm64]
+    os: [linux]
+
+  '@libsql/linux-arm64-musl@0.5.29':
+    resolution: {integrity: sha512-fwgYZ0H8mUkyVqXZHF3mT/92iIh1N94Owi/f66cPVNsk9BdGKq5gVpoKO+7UxaNzuEH1roJp2QEwsCZMvBLpqg==}
+    cpu: [arm64]
+    os: [linux]
+
+  '@libsql/linux-x64-gnu@0.5.29':
+    resolution: {integrity: sha512-y14V0vY0nmMC6G0pHeJcEarcnGU2H6cm21ZceRkacWHvQAEhAG0latQkCtoS2njFOXiYIg+JYPfAoWKbi82rkg==}
+    cpu: [x64]
+    os: [linux]
+
+  '@libsql/linux-x64-musl@0.5.29':
+    resolution: {integrity: sha512-gquqwA/39tH4pFl+J9n3SOMSymjX+6kZ3kWgY3b94nXFTwac9bnFNMffIomgvlFaC4ArVqMnOZD3nuJ3H3VO1w==}
+    cpu: [x64]
+    os: [linux]
+
+  '@libsql/win32-x64-msvc@0.5.29':
+    resolution: {integrity: sha512-4/0CvEdhi6+KjMxMaVbFM2n2Z44escBRoEYpR+gZg64DdetzGnYm8mcNLcoySaDJZNaBd6wz5DNdgRmcI4hXcg==}
+    cpu: [x64]
+    os: [win32]
+
+  '@neon-rs/load@0.0.4':
+    resolution: {integrity: sha512-kTPhdZyTQxB+2wpiRcFWrDcejc4JI6tkPuS7UZCG4l6Zvc5kU/gGQ/ozvHTh1XR5tS+UlfAfGuPajjzQjCiHCw==}
+
   '@noble/ciphers@2.2.0':
     resolution: {integrity: sha512-Z6pjIZ/8IJcCGzb2S/0Px5J81yij85xASuk1teLNeg75bfT07MV3a/O2Mtn1I2se43k3lkVEcFaR10N4cgQcZA==}
     engines: {node: '>= 20.19.0'}
@@ -2190,6 +2253,9 @@ packages:
   '@types/trusted-types@2.0.7':
     resolution: {integrity: sha512-ScaPdn1dQczgbl0QFTeTOmVHFULt394XJgOQNoyVhZ6r2vLnMLJfBPd53SB52T/3G36VI1/g2MZaX0cwDuXsfw==}
 
+  '@types/ws@8.18.2':
+    resolution: {integrity: sha512-67MQl+fpWKVTT1NYdnmo3U4sc/xPo/zQBncVnI74qmQa0z/b+1g6iYqNmGCPbxO+zz2aklb08a0oHfegiVd0/w==}
+
   '@vitejs/plugin-react@5.2.0':
     resolution: {integrity: sha512-YmKkfhOAi3wsB1PhJq5Scj3GXMn3WvtQ/JC0xoopuHoXSdmtdStOpFrYaT1kie2YgFBcIe64ROzMYRjCrYOdYw==}
     engines: {node: ^20.19.0 || >=22.12.0}
@@ -2559,6 +2625,10 @@ packages:
 
   defu@6.1.7:
     resolution: {integrity: sha512-7z22QmUWiQ/2d0KkdYmANbRUVABpZ9SNYyH5vx6PZ+nE5bcC0l7uFvEfHlyld/HcGBFTL536ClDt3DEcSlEJAQ==}
+
+  detect-libc@2.0.2:
+    resolution: {integrity: sha512-UX6sGumvvqSaXgdKGUsgZWqcUyIXZ/vZTrlRT/iobiKhGL0zL4d3osHj3uqllWJK+i+sixDS/3COVEOFbupFyw==}
+    engines: {node: '>=8'}
 
   detect-libc@2.1.2:
     resolution: {integrity: sha512-Btj2BOOO83o3WyH59e8MgXsxEQVcarkUOpEYrubB0urwnN10yQ364rsiByU11nZlqWYZm05i/of7io4mzihBtQ==}
@@ -3086,6 +3156,9 @@ packages:
   jose@6.2.3:
     resolution: {integrity: sha512-YYVDInQKFJfR/xa3ojUTl8c2KoTwiL1R5Wg9YCydwH0x0B9grbzlg5HC7mMjCtUJjbQ/YnGEZIhI5tCgfTb4Hw==}
 
+  js-base64@3.9.7:
+    resolution: {integrity: sha512-UT2XYOCbXOXYoymbytretRDFnb6E6vYPqC1blehA/alnG6vRC0mNTQ6ijXYAPtiCG9o1FDNJXJvQtCwbChFDRQ==}
+
   js-tokens@10.0.0:
     resolution: {integrity: sha512-lM/UBzQmfJRo9ABXbPWemivdCW8V2G8FHaHdypQaIy523snUjog0W71ayWXTjiR+ixeMyVHN2XcpnTd/liPg/Q==}
 
@@ -3139,6 +3212,11 @@ packages:
   leven@3.1.0:
     resolution: {integrity: sha512-qsda+H8jTaUaN/x5vzW2rzc+8Rw4TAQ/4KjB46IwK5VH+IlVeeeje/EoZRpiXvIqjFgK84QffqPztGI3VBLG1A==}
     engines: {node: '>=6'}
+
+  libsql@0.5.29:
+    resolution: {integrity: sha512-8lMP8iMgiBzzoNbAPQ59qdVcj6UaE/Vnm+fiwX4doX4Narook0a4GPKWBEv+CR8a1OwbfkgL18uBfBjWdF0Fzg==}
+    cpu: [x64, arm64, wasm32, arm]
+    os: [darwin, linux, win32]
 
   lie@3.3.0:
     resolution: {integrity: sha512-UaiMJzeWRlEujzAuw5LokY1L5ecNQYZKfmyZ9L7wDHb/p5etKaxXhohBcrw0EYby+G/NA52vRSN4N39dxHAIwQ==}
@@ -3441,6 +3519,9 @@ packages:
 
   process-nextick-args@2.0.1:
     resolution: {integrity: sha512-3ouUOpQhtgrbOa17J7+uxOTpITYWaGP7/AhoR3+A+/1e9skrzelGi/dXzEYyvbxubEF6Wn2ypscTKiKJFFn1ag==}
+
+  promise-limit@2.7.0:
+    resolution: {integrity: sha512-7nJ6v5lnJsXwGprnGXga4wx6d1POjvi5Qmf1ivTRxTjH4Z/9Czja/UCMLVmB9N93GeWOU93XaFaEt6jbuoagNw==}
 
   punycode@2.3.1:
     resolution: {integrity: sha512-vYt7UD1U9Wg6138shLtLOvdAu+8DsC/ilFtEVHcH+wydcSpNE20AfSOduf6MkRFahL5FY7X1oU7nKVZFtfq8Fg==}
@@ -4838,12 +4919,12 @@ snapshots:
     optionalDependencies:
       '@cloudflare/workers-types': 5.20260703.1
 
-  '@better-auth/drizzle-adapter@1.6.23(@better-auth/core@1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@5.20260703.1)(better-call@1.3.7(zod@4.4.3))(jose@6.2.3)(kysely@0.29.2)(nanostores@1.4.0))(@better-auth/utils@0.4.2)(drizzle-orm@0.45.2(@cloudflare/workers-types@5.20260703.1)(kysely@0.29.2))':
+  '@better-auth/drizzle-adapter@1.6.23(@better-auth/core@1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@5.20260703.1)(better-call@1.3.7(zod@4.4.3))(jose@6.2.3)(kysely@0.29.2)(nanostores@1.4.0))(@better-auth/utils@0.4.2)(drizzle-orm@0.45.2(@cloudflare/workers-types@5.20260703.1)(@libsql/client@0.18.0)(kysely@0.29.2))':
     dependencies:
       '@better-auth/core': 1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@5.20260703.1)(better-call@1.3.7(zod@4.4.3))(jose@6.2.3)(kysely@0.29.2)(nanostores@1.4.0)
       '@better-auth/utils': 0.4.2
     optionalDependencies:
-      drizzle-orm: 0.45.2(@cloudflare/workers-types@5.20260703.1)(kysely@0.29.2)
+      drizzle-orm: 0.45.2(@cloudflare/workers-types@5.20260703.1)(@libsql/client@0.18.0)(kysely@0.29.2)
 
   '@better-auth/kysely-adapter@1.6.23(@better-auth/core@1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@5.20260703.1)(better-call@1.3.7(zod@4.4.3))(jose@6.2.3)(kysely@0.29.2)(nanostores@1.4.0))(@better-auth/utils@0.4.2)(kysely@0.29.2)':
     dependencies:
@@ -5564,6 +5645,66 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
 
+  '@libsql/client@0.18.0':
+    dependencies:
+      '@libsql/core': 0.18.0
+      '@libsql/hrana-client': 0.10.0
+      js-base64: 3.9.7
+      libsql: 0.5.29
+      promise-limit: 2.7.0
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
+
+  '@libsql/core@0.18.0':
+    dependencies:
+      js-base64: 3.9.7
+
+  '@libsql/darwin-arm64@0.5.29':
+    optional: true
+
+  '@libsql/darwin-x64@0.5.29':
+    optional: true
+
+  '@libsql/hrana-client@0.10.0':
+    dependencies:
+      '@libsql/isomorphic-ws': 0.1.5
+      js-base64: 3.9.7
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
+
+  '@libsql/isomorphic-ws@0.1.5':
+    dependencies:
+      '@types/ws': 8.18.2
+      ws: 8.21.0
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
+
+  '@libsql/linux-arm-gnueabihf@0.5.29':
+    optional: true
+
+  '@libsql/linux-arm-musleabihf@0.5.29':
+    optional: true
+
+  '@libsql/linux-arm64-gnu@0.5.29':
+    optional: true
+
+  '@libsql/linux-arm64-musl@0.5.29':
+    optional: true
+
+  '@libsql/linux-x64-gnu@0.5.29':
+    optional: true
+
+  '@libsql/linux-x64-musl@0.5.29':
+    optional: true
+
+  '@libsql/win32-x64-msvc@0.5.29':
+    optional: true
+
+  '@neon-rs/load@0.0.4': {}
+
   '@noble/ciphers@2.2.0': {}
 
   '@noble/hashes@2.2.0': {}
@@ -5881,6 +6022,10 @@ snapshots:
 
   '@types/trusted-types@2.0.7': {}
 
+  '@types/ws@8.18.2':
+    dependencies:
+      '@types/node': 14.18.63
+
   '@vitejs/plugin-react@5.2.0(vite@7.3.6(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.49.1)(tsx@4.22.4))':
     dependencies:
       '@babel/core': 7.29.7
@@ -6058,10 +6203,10 @@ snapshots:
 
   baseline-browser-mapping@2.10.40: {}
 
-  better-auth@1.6.23(@cloudflare/workers-types@5.20260703.1)(drizzle-kit@0.31.10)(drizzle-orm@0.45.2(@cloudflare/workers-types@5.20260703.1)(kysely@0.29.2))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(vitest@4.1.9):
+  better-auth@1.6.23(@cloudflare/workers-types@5.20260703.1)(drizzle-kit@0.31.10)(drizzle-orm@0.45.2(@cloudflare/workers-types@5.20260703.1)(@libsql/client@0.18.0)(kysely@0.29.2))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(vitest@4.1.9):
     dependencies:
       '@better-auth/core': 1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@5.20260703.1)(better-call@1.3.7(zod@4.4.3))(jose@6.2.3)(kysely@0.29.2)(nanostores@1.4.0)
-      '@better-auth/drizzle-adapter': 1.6.23(@better-auth/core@1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@5.20260703.1)(better-call@1.3.7(zod@4.4.3))(jose@6.2.3)(kysely@0.29.2)(nanostores@1.4.0))(@better-auth/utils@0.4.2)(drizzle-orm@0.45.2(@cloudflare/workers-types@5.20260703.1)(kysely@0.29.2))
+      '@better-auth/drizzle-adapter': 1.6.23(@better-auth/core@1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@5.20260703.1)(better-call@1.3.7(zod@4.4.3))(jose@6.2.3)(kysely@0.29.2)(nanostores@1.4.0))(@better-auth/utils@0.4.2)(drizzle-orm@0.45.2(@cloudflare/workers-types@5.20260703.1)(@libsql/client@0.18.0)(kysely@0.29.2))
       '@better-auth/kysely-adapter': 1.6.23(@better-auth/core@1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@5.20260703.1)(better-call@1.3.7(zod@4.4.3))(jose@6.2.3)(kysely@0.29.2)(nanostores@1.4.0))(@better-auth/utils@0.4.2)(kysely@0.29.2)
       '@better-auth/memory-adapter': 1.6.23(@better-auth/core@1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@5.20260703.1)(better-call@1.3.7(zod@4.4.3))(jose@6.2.3)(kysely@0.29.2)(nanostores@1.4.0))(@better-auth/utils@0.4.2)
       '@better-auth/mongo-adapter': 1.6.23(@better-auth/core@1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@5.20260703.1)(better-call@1.3.7(zod@4.4.3))(jose@6.2.3)(kysely@0.29.2)(nanostores@1.4.0))(@better-auth/utils@0.4.2)
@@ -6079,7 +6224,7 @@ snapshots:
       zod: 4.4.3
     optionalDependencies:
       drizzle-kit: 0.31.10
-      drizzle-orm: 0.45.2(@cloudflare/workers-types@5.20260703.1)(kysely@0.29.2)
+      drizzle-orm: 0.45.2(@cloudflare/workers-types@5.20260703.1)(@libsql/client@0.18.0)(kysely@0.29.2)
       react: 19.2.7
       react-dom: 19.2.7(react@19.2.7)
       vitest: 4.1.9(@vitest/coverage-v8@4.1.9)(jsdom@29.1.1(@noble/hashes@2.2.0))(vite@7.3.6(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.49.1)(tsx@4.22.4))
@@ -6274,6 +6419,8 @@ snapshots:
 
   defu@6.1.7: {}
 
+  detect-libc@2.0.2: {}
+
   detect-libc@2.1.2: {}
 
   dompurify@3.4.18:
@@ -6287,9 +6434,10 @@ snapshots:
       esbuild: 0.25.12
       tsx: 4.22.4
 
-  drizzle-orm@0.45.2(@cloudflare/workers-types@5.20260703.1)(kysely@0.29.2):
+  drizzle-orm@0.45.2(@cloudflare/workers-types@5.20260703.1)(@libsql/client@0.18.0)(kysely@0.29.2):
     optionalDependencies:
       '@cloudflare/workers-types': 5.20260703.1
+      '@libsql/client': 0.18.0
       kysely: 0.29.2
 
   dunder-proto@1.0.1:
@@ -6848,6 +6996,8 @@ snapshots:
 
   jose@6.2.3: {}
 
+  js-base64@3.9.7: {}
+
   js-tokens@10.0.0: {}
 
   js-tokens@4.0.0: {}
@@ -6908,6 +7058,21 @@ snapshots:
       readable-stream: 2.3.8
 
   leven@3.1.0: {}
+
+  libsql@0.5.29:
+    dependencies:
+      '@neon-rs/load': 0.0.4
+      detect-libc: 2.0.2
+    optionalDependencies:
+      '@libsql/darwin-arm64': 0.5.29
+      '@libsql/darwin-x64': 0.5.29
+      '@libsql/linux-arm-gnueabihf': 0.5.29
+      '@libsql/linux-arm-musleabihf': 0.5.29
+      '@libsql/linux-arm64-gnu': 0.5.29
+      '@libsql/linux-arm64-musl': 0.5.29
+      '@libsql/linux-x64-gnu': 0.5.29
+      '@libsql/linux-x64-musl': 0.5.29
+      '@libsql/win32-x64-msvc': 0.5.29
 
   lie@3.3.0:
     dependencies:
@@ -7150,6 +7315,8 @@ snapshots:
   pretty-bytes@6.1.1: {}
 
   process-nextick-args@2.0.1: {}
+
+  promise-limit@2.7.0: {}
 
   punycode@2.3.1: {}
 

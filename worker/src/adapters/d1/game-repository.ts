@@ -8,7 +8,9 @@ import {
   isNull,
   sql,
 } from "drizzle-orm";
-import { drizzle } from "drizzle-orm/d1";
+import { drizzle as drizzleD1 } from "drizzle-orm/d1";
+import { drizzle as drizzleTurso } from "drizzle-orm/libsql/web";
+import type { BaseSQLiteDatabase } from "drizzle-orm/sqlite-core";
 import type {
   CollaboratorRow,
   ExpenseRow,
@@ -26,13 +28,23 @@ import type {
   PhotoRow,
   ShareLinkRow,
 } from "../../core/ports/game-repository";
+import type { Env } from "../../env";
 import { createId } from "../../lib/ids";
 import * as schema from "./schema";
 
-export type Db = ReturnType<typeof drizzle<typeof schema>>;
+export type Db = BaseSQLiteDatabase<"async", unknown, typeof schema>;
 
-export function createDb(d1: D1Database): Db {
-  return drizzle(d1, { schema });
+export type DbEnv = Pick<Env, "DB" | "TURSO_DATABASE_URL" | "TURSO_AUTH_TOKEN">;
+
+export function createDb(env: DbEnv): Db {
+  if (!env.TURSO_DATABASE_URL) return drizzleD1(env.DB, { schema });
+  return drizzleTurso({
+    connection: {
+      url: env.TURSO_DATABASE_URL,
+      authToken: env.TURSO_AUTH_TOKEN,
+    },
+    schema,
+  });
 }
 
 async function countBy(
@@ -73,9 +85,7 @@ const PHOTO_COLUMNS = {
   createdAt: schema.gamePhotos.createdAt,
 };
 
-export function createD1GameRepository(d1: D1Database): GameRepository {
-  const db = createDb(d1);
-
+export function createGameRepository(db: Db): GameRepository {
   const selectPhotos = () => db.select(PHOTO_COLUMNS).from(schema.gamePhotos);
 
   return {

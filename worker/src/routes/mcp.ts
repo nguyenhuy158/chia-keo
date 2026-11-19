@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { createD1GameRepository } from "../adapters/d1/game-repository";
+import { createDb, createGameRepository } from "../adapters/d1/game-repository";
 import type { Env } from "../env";
 import { handleMcpHttpRequest } from "../mcp/http";
 
@@ -9,7 +9,7 @@ export const mcpRouter = new Hono<{ Bindings: Env }>();
 mcpRouter.all("/mcp", (c) =>
   handleMcpHttpRequest({
     request: c.req.raw,
-    repo: createD1GameRepository(c.env.DB),
+    repo: createGameRepository(createDb(c.env)),
     waitUntil: (promise) => c.executionCtx.waitUntil(promise),
   }),
 );

@@ -1,7 +1,7 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { username } from "better-auth/plugins";
-import { drizzle } from "drizzle-orm/d1";
+import { createDb } from "./adapters/d1/game-repository";
 import * as schema from "./adapters/d1/schema";
 import type { Env } from "./env";
 
@@ -43,7 +43,7 @@ export function getTrustedOrigins(env: Env, requestUrl?: string) {
  * auth.huyab.cfd (xem sso.ts), nen app nay khong giu OAuth client rieng.
  */
 export function createAuth(env: Env, requestUrl?: string) {
-  const db = drizzle(env.DB, { schema });
+  const db = createDb(env);
 
   return betterAuth({
     database: drizzleAdapter(db, { provider: "sqlite", schema }),

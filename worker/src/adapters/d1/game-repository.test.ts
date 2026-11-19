@@ -25,7 +25,7 @@ import {
   removePhoto,
   updatePhoto,
 } from "../../core/application/photos";
-import { createD1GameRepository } from "./game-repository";
+import { createDb, createGameRepository } from "./game-repository";
 import * as schema from "./schema";
 
 let miniflare: Miniflare;
@@ -67,12 +67,12 @@ afterAll(async () => {
 
 describe("D1 game repository", () => {
   it("khởi tạo schema và trả danh sách rỗng khi chưa có game", async () => {
-    const repo = createD1GameRepository(database);
+    const repo = createGameRepository(createDb({ DB: database }));
     expect(await repo.games.listByOwner("user-empty")).toEqual([]);
   });
 
   it("tạo cuộc chia và đọc lại từ D1 qua use case", async () => {
-    const repo = createD1GameRepository(database);
+    const repo = createGameRepository(createDb({ DB: database }));
     const detail = await createGame(repo, "owner", {
       name: "Kèo D1",
       participantCount: 2,
@@ -88,7 +88,7 @@ describe("D1 game repository", () => {
   });
 
   it("lưu khoản chi, giao dịch và chuyển trạng thái cuộc chia", async () => {
-    const repo = createD1GameRepository(database);
+    const repo = createGameRepository(createDb({ DB: database }));
     const created = await createGame(repo, "owner", {
       name: "Kèo thanh toán",
       participantCount: 2,
@@ -134,7 +134,7 @@ describe("D1 game repository", () => {
   });
 
   it("xóa mềm, khôi phục, nhân bản và chia sẻ game qua D1", async () => {
-    const repo = createD1GameRepository(database);
+    const repo = createGameRepository(createDb({ DB: database }));
     const created = await createGame(repo, "owner", { name: "Kèo lưu trữ" });
     await shareGame(repo, "owner", created.id, "friend@example.test");
     expect(
@@ -154,7 +154,7 @@ describe("D1 game repository", () => {
   });
 
   it("lưu tùy chọn và lịch sử cầu theo từng chủ sở hữu", async () => {
-    const repo = createD1GameRepository(database);
+    const repo = createGameRepository(createDb({ DB: database }));
     const now = "2026-07-01T00:00:00.000Z";
     expect(await repo.userPreferences.listByUser("owner")).toEqual([]);
     await repo.userPreferences.upsert("owner", "theme", '"light"', now);
@@ -185,7 +185,7 @@ describe("D1 game repository", () => {
   });
 
   it("upsert danh bạ theo tên chuẩn hóa và cách ly theo chủ sở hữu", async () => {
-    const repo = createD1GameRepository(database);
+    const repo = createGameRepository(createDb({ DB: database }));
     const now = "2026-07-01T00:00:00.000Z";
     const contact = {
       id: "contact-d1",
@@ -222,7 +222,7 @@ describe("D1 game repository", () => {
   });
 
   it("giới hạn và thu hồi MCP token theo tài khoản", async () => {
-    const repo = createD1GameRepository(database);
+    const repo = createGameRepository(createDb({ DB: database }));
     const now = "2026-07-01T00:00:00.000Z";
     const token = {
       id: "token-d1",
@@ -252,7 +252,7 @@ describe("D1 game repository", () => {
   });
 
   it("lưu ảnh, link chia sẻ và lịch sử trên D1", async () => {
-    const repo = createD1GameRepository(database);
+    const repo = createGameRepository(createDb({ DB: database }));
     const game = await createGame(repo, "owner", { name: "Kèo media" });
     const now = "2026-07-01T00:00:00.000Z";
     expect(await repo.photos.countByGame(game.id)).toBe(0);
@@ -338,7 +338,7 @@ describe("D1 game repository", () => {
   });
 
   it("đọc, cập nhật và sắp xếp người cùng khoản chi trong D1", async () => {
-    const repo = createD1GameRepository(database);
+    const repo = createGameRepository(createDb({ DB: database }));
     const game = await createGame(repo, "owner", {
       name: "Kèo sắp xếp",
       participantCount: 2,
@@ -461,7 +461,7 @@ describe("D1 game repository", () => {
   });
 
   it("xử lý lời mời chờ và quyền cộng tác theo email", async () => {
-    const repo = createD1GameRepository(database);
+    const repo = createGameRepository(createDb({ DB: database }));
     const game = await createGame(repo, "owner", { name: "Kèo mời" });
     const now = "2026-07-01T00:00:00.000Z";
     expect(await repo.users.findIdByEmail("missing@example.test")).toBeNull();
@@ -518,7 +518,7 @@ describe("D1 game repository", () => {
   });
 
   it("quản lý ảnh qua use case và D1 với phân quyền chủ cuộc", async () => {
-    const repo = createD1GameRepository(database);
+    const repo = createGameRepository(createDb({ DB: database }));
     const game = await createGame(repo, "owner", {
       name: "Kèo ảnh",
       participantCount: 2,
@@ -617,7 +617,7 @@ describe("D1 game repository", () => {
   });
 
   it("chỉ cho xem ảnh qua link chia sẻ của đúng cuộc", async () => {
-    const repo = createD1GameRepository(database);
+    const repo = createGameRepository(createDb({ DB: database }));
     const game = await createGame(repo, "owner", { name: "Kèo xem ảnh" });
     const photo = await addGamePhoto(repo, "owner", game.id, {
       mimeType: "image/png",
@@ -651,7 +651,7 @@ describe("D1 game repository", () => {
 
 describe("D1 payment requests", () => {
   it("luu, tim, doi soat va chi settle request con pending", async () => {
-    const repo = createD1GameRepository(database);
+    const repo = createGameRepository(createDb({ DB: database }));
     const game = await createGame(repo, "owner", {
       name: "Kèo SePay",
       participantCount: 2,
