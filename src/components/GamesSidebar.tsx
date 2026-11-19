@@ -5,7 +5,6 @@ import type { MouseEvent } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { isCollectionDone } from "../../shared/game-closing";
-import { formatPlayedRange } from "../../shared/played-dates";
 import { MAX_QUICK_PARTICIPANTS } from "../../shared/schemas";
 import {
   useCreateGame,
@@ -16,7 +15,6 @@ import {
 import { ArchivedGamesCard } from "./ArchivedGamesCard";
 import { ClosedGamesCard } from "./ClosedGamesCard";
 import { ContactBookCard } from "./ContactBookCard";
-import { PlayedDatePicker } from "./PlayedDatePicker";
 import { TrashCard } from "./TrashCard";
 import { SkeletonCard } from "./ui";
 import { usePersistentOpen } from "./use-persistent-open";
@@ -24,8 +22,6 @@ import { usePersistentOpen } from "./use-persistent-open";
 const gameFormSchema = z.object({
   name: z.string().trim().min(1, "Nhập tên cuộc chơi"),
   participantCount: z.number().int().min(0).max(MAX_QUICK_PARTICIPANTS),
-  playedFrom: z.string(),
-  playedTo: z.string(),
 });
 
 type GameFormValues = z.infer<typeof gameFormSchema>;
@@ -54,16 +50,9 @@ export function GamesSidebar({ onNavigate }: { onNavigate?: () => void }) {
 
   const form = useForm<GameFormValues>({
     resolver: zodResolver(gameFormSchema),
-    defaultValues: {
-      name: "",
-      participantCount: 0,
-      playedFrom: "",
-      playedTo: "",
-    },
+    defaultValues: { name: "", participantCount: 0 },
   });
   const participantCount = form.watch("participantCount");
-  const playedFrom = form.watch("playedFrom");
-  const playedTo = form.watch("playedTo");
 
   function stepParticipantCount(delta: number) {
     form.setValue(
@@ -74,7 +63,7 @@ export function GamesSidebar({ onNavigate }: { onNavigate?: () => void }) {
 
   const handleCreate = form.handleSubmit(async (values) => {
     const detail = await createGame.mutateAsync(values);
-    form.reset();
+    form.reset({ name: "", participantCount: 0 });
     setFormOpen(false);
     navigate({ to: "/games/$gameId", params: { gameId: detail.id } });
     onNavigate?.();
@@ -120,16 +109,6 @@ export function GamesSidebar({ onNavigate }: { onNavigate?: () => void }) {
                 <Plus size={18} />
               </button>
             </div>
-
-            <PlayedDatePicker
-              className="mt-2"
-              playedFrom={playedFrom}
-              playedTo={playedTo}
-              onChange={(from, to) => {
-                form.setValue("playedFrom", from);
-                form.setValue("playedTo", to);
-              }}
-            />
 
             {/* Tao san N nguoi "Người 1", "Người 2"... de vao viec ngay, sua ten
             sau. 0 nguoi thi khong tao ai (hanh vi cu, tu them tay). */}
@@ -205,8 +184,6 @@ export function GamesSidebar({ onNavigate }: { onNavigate?: () => void }) {
                 </span>
                 <span className="mt-1 block text-xs text-fg-muted">
                   {game.participantCount} người, {game.expenseCount} khoản
-                  {game.playedFrom &&
-                    ` · ${formatPlayedRange(game.playedFrom, game.playedTo)}`}
                 </span>
                 {game.paidProgress && (
                   <span className="mt-2 flex items-center gap-2">
