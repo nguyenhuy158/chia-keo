@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
   provideGameApi: vi.fn(),
   provideQrProvider: vi.fn(),
   createHttpGameApi: vi.fn(),
+  initAnalytics: vi.fn(),
 }));
 
 vi.mock("react-dom/client", () => ({
@@ -17,6 +18,9 @@ vi.mock("./core/container", () => ({
 }));
 vi.mock("./adapters/browser/http-game-api", () => ({
   createHttpGameApi: mocks.createHttpGameApi,
+}));
+vi.mock("./adapters/browser/analytics", () => ({
+  initAnalytics: mocks.initAnalytics,
 }));
 vi.mock("./adapters/browser/vietqr", () => ({
   vietQrProvider: { name: "vietqr" },
@@ -38,6 +42,7 @@ describe("main", () => {
     await import("./main");
     expect(mocks.provideGameApi).toHaveBeenCalledWith({ name: "api" });
     expect(mocks.provideQrProvider).toHaveBeenCalledWith({ name: "vietqr" });
+    expect(mocks.initAnalytics).toHaveBeenCalledOnce();
     expect(mocks.createRoot).toHaveBeenCalledWith(
       document.getElementById("root"),
     );

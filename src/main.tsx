@@ -4,6 +4,7 @@ import { RouterProvider } from "@tanstack/react-router";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { Toaster } from "sonner";
+import { initAnalytics } from "./adapters/browser/analytics";
 import { createHttpGameApi } from "./adapters/browser/http-game-api";
 import { vietQrProvider } from "./adapters/browser/vietqr";
 import { ConfirmProvider } from "./components/ConfirmDialog";
@@ -16,6 +17,10 @@ import "./styles.css";
 // Doi backend/QR provider (hoac mock de test) chi can doi 2 dong nay.
 provideGameApi(createHttpGameApi());
 provideQrProvider(vietQrProvider);
+initAnalytics({
+  key: import.meta.env.VITE_POSTHOG_KEY,
+  host: import.meta.env.VITE_POSTHOG_HOST,
+});
 
 // Chi ton tai trong ban build (devOptions tat o vite.config.ts) — registerSW
 // la no-op an toan luc dev vi module ao "virtual:pwa-register" tra ve ham

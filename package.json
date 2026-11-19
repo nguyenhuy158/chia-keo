@@ -42,6 +42,7 @@
     "exceljs": "^4.4.0",
     "hono": "^4.12.27",
     "lucide-react": "^0.468.0",
+    "posthog-js": "^1.450.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-hook-form": "^7.80.0",
