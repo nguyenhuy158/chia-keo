@@ -30,6 +30,9 @@ export type ApiGame = {
   id: string;
   code: string;
   name: string;
+  /** Ngay choi "YYYY-MM-DD"; "" la chua dat. Khoang ngay thi co them playedTo. */
+  playedFrom: string;
+  playedTo: string;
   createdAt: string;
   participantCount: number;
   expenseCount: number;
@@ -127,6 +130,8 @@ export type ApiGameDetail = {
   id: string;
   code: string;
   name: string;
+  playedFrom: string;
+  playedTo: string;
   settlementMode: SettlementMode;
   /** Dau moi da chon cho che do "pick"; rong la chua chon. */
   settlementHostId: string;

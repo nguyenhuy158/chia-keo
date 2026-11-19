@@ -213,6 +213,8 @@ export async function loadGameDetail(
     id: game.id,
     code: game.code,
     name: game.name,
+    playedFrom: game.playedFrom,
+    playedTo: game.playedTo,
     settlementMode: toSettlementMode(game.settlementMode),
     settlementHostId: game.settlementHostId || "",
     createdAt: game.createdAt,
