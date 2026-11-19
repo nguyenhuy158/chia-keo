@@ -62,6 +62,7 @@ import {
   useRotateShareLink,
   useSaveSharePreview,
   useSetExpenseExcluded,
+  useSetPlayedDates,
   useSetSettlementHost,
   useSetSettlementMode,
   useSetShareLinkEnabled,
@@ -180,6 +181,16 @@ describe("React Query game mutations", () => {
     expect(
       (client.getQueryData(gameKeys.detail("game")) as ApiGameDetail).name,
     ).toBe("Server");
+  });
+
+  it("lưu ngày chơi vào cache ngay khi chọn", async () => {
+    client.setQueryData(gameKeys.detail("game"), detail("Kèo"));
+    const dates = { playedFrom: "2026-11-16", playedTo: "2026-11-18" };
+    const update = vi.fn().mockResolvedValue({ ...detail("Kèo"), ...dates });
+    provideGameApi({ games: { update } } as unknown as GameApiPort);
+    await execute(() => useSetPlayedDates("game"), dates);
+    expect(update).toHaveBeenCalledWith("game", dates);
+    expect(client.getQueryData(gameKeys.detail("game"))).toMatchObject(dates);
   });
 
   it("phục hồi tên cũ khi đổi tên thất bại", async () => {

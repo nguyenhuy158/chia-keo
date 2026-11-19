@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { isIsoDate } from "./played-dates";
 import {
   MAX_SHUTTLE_QUANTITY,
   SHUTTLE_ENTRY_KINDS,
@@ -65,8 +66,15 @@ const gameNameSchema = z.string().trim().min(1).max(GAME_NAME_MAX_LENGTH);
  */
 const settlementHostIdSchema = z.string().trim().max(ID_MAX_LENGTH);
 
+const playedDateSchema = z
+  .string()
+  .trim()
+  .refine((value) => value === "" || isIsoDate(value));
+
 export const gameInputSchema = z.object({
   name: gameNameSchema,
+  playedFrom: playedDateSchema.default(""),
+  playedTo: playedDateSchema.default(""),
   settlementMode: settlementModeSchema.default(DEFAULT_SETTLEMENT_MODE),
   settlementHostId: settlementHostIdSchema.default(""),
   /**
@@ -90,6 +98,8 @@ export const gameInputSchema = z.object({
 export const gameUpdateSchema = z
   .object({
     name: gameNameSchema,
+    playedFrom: playedDateSchema,
+    playedTo: playedDateSchema,
     settlementMode: settlementModeSchema,
     settlementHostId: settlementHostIdSchema,
   })
