@@ -60,6 +60,7 @@ vi.mock("../adapters/react-query/queries", () => {
     "ReopenGame",
     "RotateShareLink",
     "SaveSharePreview",
+    "SetPlayedDates",
     "SetSettlementHost",
     "SetSettlementMode",
     "SetShareLinkEnabled",
@@ -85,6 +86,12 @@ vi.mock("../components/CollaboratorsPanel", () => ({
   CollaboratorsPanel: (props: Record<string, unknown>) => {
     mocks.props.CollaboratorsPanel = props;
     return "CollaboratorsPanel";
+  },
+}));
+vi.mock("../components/PlayedDatePicker", () => ({
+  PlayedDatePicker: (props: Record<string, unknown>) => {
+    mocks.props.PlayedDatePicker = props;
+    return "PlayedDatePicker";
   },
 }));
 vi.mock("../components/CopyMenu", () => ({
@@ -188,6 +195,8 @@ function game(overrides: Partial<ApiGameDetail> = {}): ApiGameDetail {
     id: "game-1",
     code: "CK01",
     name: "Cầu tối",
+    playedFrom: "",
+    playedTo: "",
     settlementMode: "p2p",
     settlementHostId: "",
     createdAt: "2026-01-01T00:00:00Z",
@@ -287,6 +296,7 @@ beforeEach(() => {
     "ReopenGame",
     "RotateShareLink",
     "SaveSharePreview",
+    "SetPlayedDates",
     "SetSettlementHost",
     "SetSettlementMode",
     "SetShareLinkEnabled",
@@ -355,6 +365,26 @@ describe("GamePage", () => {
     expect(host.textContent?.match(/PhotoPanel/g)).toHaveLength(1);
     await click("expenses");
     expect(host.textContent?.match(/ExpensePanel/g)).toHaveLength(1);
+  });
+
+  it("saves the played dates picked in the header", async () => {
+    render();
+    expect(mocks.props.PlayedDatePicker).toMatchObject({
+      playedFrom: "",
+      playedTo: "",
+    });
+    act(() =>
+      (
+        mocks.props.PlayedDatePicker.onChange as (
+          from: string,
+          to: string,
+        ) => void
+      )("2026-11-16", "2026-11-18"),
+    );
+    expect(mocks.mutation.SetPlayedDates.mutate).toHaveBeenCalledWith({
+      playedFrom: "2026-11-16",
+      playedTo: "2026-11-18",
+    });
   });
 
   it("renames, closes, reopens and deletes with confirmation", async () => {

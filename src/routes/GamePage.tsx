@@ -46,6 +46,7 @@ import {
   useRotateShareLink,
   useSaveSharePreview,
   useSetExpenseExcluded,
+  useSetPlayedDates,
   useSetSettlementHost,
   useSetSettlementMode,
   useSetShareLinkEnabled,
@@ -66,6 +67,7 @@ import { useMobileShell } from "../components/mobile-shell";
 import { OnboardingBanner } from "../components/OnboardingBanner";
 import { ParticipantPanel } from "../components/ParticipantPanel";
 import { PhotoPanel } from "../components/PhotoPanel";
+import { PlayedDatePicker } from "../components/PlayedDatePicker";
 import { SummaryImageCard } from "../components/SummaryImageCard";
 import { EmptyState, GamePageSkeleton } from "../components/ui";
 import { formatMoney } from "../core/domain/money";
@@ -91,6 +93,7 @@ export function GamePage() {
   const reorderExpenses = useReorderExpenses(gameId);
   const addTransfer = useAddTransfer(gameId);
   const renameGame = useRenameGame(gameId);
+  const setPlayedDates = useSetPlayedDates(gameId);
   const rotateShareLink = useRotateShareLink(gameId);
   const setShareLinkEnabled = useSetShareLinkEnabled(gameId);
   const saveSharePreview = useSaveSharePreview(gameId);
@@ -651,6 +654,14 @@ export function GamePage() {
               </button>
             </div>
           )}
+          <PlayedDatePicker
+            className="mt-1 max-w-xs"
+            playedFrom={game.playedFrom}
+            playedTo={game.playedTo}
+            onChange={(playedFrom, playedTo) =>
+              setPlayedDates.mutate({ playedFrom, playedTo })
+            }
+          />
         </div>
         {/* Desktop: hai nut chinh, phan con lai nam trong menu. */}
         <div className="hidden items-center justify-end gap-2 lg:flex">

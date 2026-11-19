@@ -12,6 +12,8 @@ export type GameRow = {
   ownerUserId: string;
   code: string;
   name: string;
+  playedFrom: string;
+  playedTo: string;
   /** Text tu do trong DB; application chuan hoa ve SettlementMode. */
   settlementMode: string;
   settlementHostId: string;
@@ -28,6 +30,8 @@ export type GameRow = {
 /** Cac field cua game duoc phep sua; bo trong field nao thi giu nguyen. */
 export type GameChanges = {
   name?: string;
+  playedFrom?: string;
+  playedTo?: string;
   settlementMode?: SettlementMode;
   settlementHostId?: string;
 };

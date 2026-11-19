@@ -576,6 +576,19 @@ export function useRenameGame(gameId: string) {
   );
 }
 
+export function useSetPlayedDates(gameId: string) {
+  return useGameDetailMutation(
+    (dates: { playedFrom: string; playedTo: string }) =>
+      getGameApi().games.update(gameId, dates),
+    {
+      optimistic: {
+        gameId,
+        apply: (detail, dates) => ({ ...detail, ...dates }),
+      },
+    },
+  );
+}
+
 export function useSetSettlementMode(gameId: string) {
   return useGameDetailMutation((settlementMode: SettlementMode) =>
     getGameApi().games.update(gameId, { settlementMode }),
