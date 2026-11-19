@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
-import { drizzle } from "drizzle-orm/d1";
 import { Hono } from "hono";
 import { buildSummaryText } from "../../../shared/summary-text";
+import { createDb } from "../adapters/d1/game-repository";
 import * as schema from "../adapters/d1/schema";
 import { NotFoundError } from "../core/application/errors";
 import { getGameDetailForOwner } from "../core/application/games";
@@ -31,7 +31,7 @@ emailSummaryRouter.post("/games/:gameId/email-summary", async (c) => {
     throw error;
   }
 
-  const orm = drizzle(c.env.DB, { schema });
+  const orm = createDb(c.env);
   const rows = await orm
     .select({ email: schema.user.email })
     .from(schema.user)

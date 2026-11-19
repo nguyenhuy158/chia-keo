@@ -21,7 +21,8 @@ const {
 }));
 
 vi.mock("../adapters/d1/game-repository", () => ({
-  createD1GameRepository: createRepo,
+  createGameRepository: createRepo,
+  createDb: (env: { DB: unknown }) => env.DB,
 }));
 vi.mock("../core/application/share-links", () => ({
   getShareViewByToken: shareView,

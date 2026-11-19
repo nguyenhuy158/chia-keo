@@ -46,7 +46,7 @@ describe("resolveSsoUserId", () => {
     });
     expect(
       await resolveSsoUserId(
-        DB,
+        orm,
         claims("existing@example.test", { name: "Changed" }),
       ),
     ).toBe("existing");
@@ -83,7 +83,7 @@ describe("resolveSsoUserId", () => {
       },
     ]);
     const id = await resolveSsoUserId(
-      DB,
+      orm,
       claims("new@example.test", { name: "New User", picture: "avatar.png" }),
     );
     const users = await orm
@@ -110,7 +110,7 @@ describe("resolveSsoUserId", () => {
 
   it("falls back to email for a missing name and keeps an empty picture null", async () => {
     const orm = drizzle(DB, { schema });
-    const id = await resolveSsoUserId(DB, claims("fallback@example.test"));
+    const id = await resolveSsoUserId(orm, claims("fallback@example.test"));
     const rows = await orm
       .select()
       .from(schema.user)

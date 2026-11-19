@@ -1,5 +1,5 @@
 import type { Hono, MiddlewareHandler } from "hono";
-import { createD1GameRepository } from "../adapters/d1/game-repository";
+import { createDb, createGameRepository } from "../adapters/d1/game-repository";
 import { createAuth } from "../auth";
 import type { GameRepository } from "../core/ports/game-repository";
 import type { Env } from "../env";
@@ -53,7 +53,7 @@ export async function resolveUserId(
   const claims = await verifySsoToken(token);
   if (!claims) return null;
 
-  return resolveSsoUserId(env.DB, claims);
+  return resolveSsoUserId(createDb(env), claims);
 }
 
 export const requireUser: MiddlewareHandler<AuthedEnv> = async (c, next) => {
@@ -63,6 +63,6 @@ export const requireUser: MiddlewareHandler<AuthedEnv> = async (c, next) => {
   }
 
   c.set("userId", userId);
-  c.set("repo", createD1GameRepository(c.env.DB));
+  c.set("repo", createGameRepository(createDb(c.env)));
   await next();
 };

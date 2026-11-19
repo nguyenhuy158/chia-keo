@@ -11,7 +11,8 @@ const { createAuth, resolveSsoUserId, createRepo } = vi.hoisted(() => ({
 vi.mock("../auth", () => ({ createAuth }));
 vi.mock("../sso-user", () => ({ resolveSsoUserId }));
 vi.mock("../adapters/d1/game-repository", () => ({
-  createD1GameRepository: createRepo,
+  createGameRepository: createRepo,
+  createDb: (env: { DB: unknown }) => env.DB,
 }));
 
 import { type AuthedEnv, protectPaths } from "./require-user";

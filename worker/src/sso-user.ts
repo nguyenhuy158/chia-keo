@@ -1,5 +1,5 @@
 import { and, eq, isNull, sql } from "drizzle-orm";
-import { drizzle } from "drizzle-orm/d1";
+import type { Db } from "./adapters/d1/game-repository";
 import * as schema from "./adapters/d1/schema";
 import type { SsoClaims } from "./sso";
 
@@ -16,11 +16,9 @@ import type { SsoClaims } from "./sso";
  * nao.
  */
 export async function resolveSsoUserId(
-  db: D1Database,
+  orm: Db,
   claims: SsoClaims,
 ): Promise<string> {
-  const orm = drizzle(db, { schema });
-
   const existing = await orm
     .select({ id: schema.user.id })
     .from(schema.user)
