@@ -42,21 +42,6 @@ vi.mock("./ClosedGamesCard", () => ({ ClosedGamesCard: () => null }));
 vi.mock("./ArchivedGamesCard", () => ({ ArchivedGamesCard: () => null }));
 vi.mock("./ContactBookCard", () => ({ ContactBookCard: () => null }));
 vi.mock("./TrashCard", () => ({ TrashCard: () => null }));
-vi.mock("./PlayedDatePicker", async () => {
-  const { createElement } = await import("react");
-  return {
-    PlayedDatePicker: ({
-      onChange,
-    }: {
-      onChange: (from: string, to: string) => void;
-    }) =>
-      createElement("button", {
-        type: "button",
-        "aria-label": "Chọn ngày chơi",
-        onClick: () => onChange("2026-11-16", "2026-11-18"),
-      }),
-  };
-});
 
 import { GamesSidebar } from "./GamesSidebar";
 
@@ -163,8 +148,6 @@ describe("GamesSidebar", () => {
     expect(createGame).toHaveBeenCalledWith({
       name: "Cầu sáng",
       participantCount: 1,
-      playedFrom: "",
-      playedTo: "",
     });
     expect(navigate).toHaveBeenCalledWith({
       to: "/games/$gameId",
@@ -176,25 +159,6 @@ describe("GamesSidebar", () => {
     expect((host.querySelector("#game-name") as HTMLInputElement).value).toBe(
       "",
     );
-  });
-
-  it("creates a game with the picked played dates and shows them on the card", async () => {
-    render();
-    openCreateForm();
-    typeName("Cầu lông 16.11");
-    act(() => button("Chọn ngày chơi").click());
-    await submit();
-    expect(createGame).toHaveBeenCalledWith({
-      name: "Cầu lông 16.11",
-      participantCount: 0,
-      playedFrom: "2026-11-16",
-      playedTo: "2026-11-18",
-    });
-    state.games = [
-      { ...game(), playedFrom: "2026-11-16", playedTo: "2026-11-18" },
-    ];
-    render();
-    expect(host.textContent).toContain("16/11 - 18/11/2026");
   });
 
   it("shows a paid progress bar only for games that have debtors", () => {

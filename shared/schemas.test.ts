@@ -6,18 +6,6 @@ import {
   transferInputSchema,
 } from "./schemas";
 
-describe("ngày chơi trong schema", () => {
-  it("nhận ngày thật hoặc rỗng và từ chối ngày sai", () => {
-    expect(gameUpdateSchema.parse({ playedFrom: "2026-11-16" })).toEqual({
-      playedFrom: "2026-11-16",
-    });
-    expect(gameUpdateSchema.parse({ playedTo: "" })).toEqual({ playedTo: "" });
-    expect(() =>
-      gameUpdateSchema.parse({ playedFrom: "2026-02-30" }),
-    ).toThrow();
-  });
-});
-
 describe("gameUpdateSchema", () => {
   it("khong tu bồi thêm field nao ngoai field duoc gui", () => {
     // Bug that: khi schema sua duoc dung tu `gameInputSchema.partial()`, mot
@@ -49,8 +37,6 @@ describe("gameInputSchema", () => {
   it("luc tao van dien san mac dinh", () => {
     expect(gameInputSchema.parse({ name: "Cầu lông" })).toEqual({
       name: "Cầu lông",
-      playedFrom: "",
-      playedTo: "",
       settlementMode: "host",
       settlementHostId: "",
       participantCount: 0,

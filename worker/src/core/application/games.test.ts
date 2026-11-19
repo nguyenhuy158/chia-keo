@@ -73,54 +73,6 @@ describe("game use cases", () => {
     });
   });
 
-  it("lưu ngày chơi một ngày hoặc khoảng ngày và từ chối khoảng sai", async () => {
-    const fake = createFakeRepo();
-    const single = await updateGame(fake.repo, FAKE_OWNER, FAKE_GAME_ID, {
-      playedFrom: "2026-11-16",
-    });
-    expect([single.playedFrom, single.playedTo]).toEqual(["2026-11-16", ""]);
-
-    const range = await updateGame(fake.repo, FAKE_OWNER, FAKE_GAME_ID, {
-      playedTo: "2026-11-18",
-    });
-    expect([range.playedFrom, range.playedTo]).toEqual([
-      "2026-11-16",
-      "2026-11-18",
-    ]);
-
-    await expect(
-      updateGame(fake.repo, FAKE_OWNER, FAKE_GAME_ID, {
-        playedTo: "2026-11-15",
-      }),
-    ).rejects.toThrow(InvalidInputError);
-    expect(fake.state.games[0].playedTo).toBe("2026-11-18");
-
-    const cleared = await updateGame(fake.repo, FAKE_OWNER, FAKE_GAME_ID, {
-      playedFrom: "",
-      playedTo: "",
-    });
-    expect([cleared.playedFrom, cleared.playedTo]).toEqual(["", ""]);
-  });
-
-  it("tạo cuộc chơi với ngày chơi và từ chối ngày kết thúc thiếu ngày bắt đầu", async () => {
-    const fake = createFakeRepo({ games: [] });
-    const detail = await createGame(fake.repo, FAKE_OWNER, {
-      name: "Cầu 16.11",
-      playedFrom: "2026-11-16",
-      playedTo: "",
-      participantCount: 0,
-    });
-    expect(detail.playedFrom).toBe("2026-11-16");
-    await expect(
-      createGame(fake.repo, FAKE_OWNER, {
-        name: "Sai",
-        playedFrom: "",
-        playedTo: "2026-11-16",
-        participantCount: 0,
-      }),
-    ).rejects.toThrow(InvalidInputError);
-  });
-
   it("không ghi sự kiện đổi tên nếu tên giữ nguyên", async () => {
     const fake = createFakeRepo();
     await updateGame(fake.repo, FAKE_OWNER, FAKE_GAME_ID, { name: "Cầu lông" });
