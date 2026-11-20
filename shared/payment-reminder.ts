@@ -7,6 +7,8 @@ export function buildPaymentReminder(
   fromName: string,
   toName: string,
   amount: number,
+  shareUrl?: string,
 ): string {
-  return `${fromName} ơi, bạn chuyển ${moneyFormat.format(amount)} ₫ cho ${toName} cho kèo "${gameName}" nhé.`;
+  const message = `${fromName} ơi, bạn chuyển ${moneyFormat.format(amount)} ₫ cho ${toName} cho kèo "${gameName}" nhé.`;
+  return shareUrl ? `${message}\nXem chi tiết và QR: ${shareUrl}` : message;
 }

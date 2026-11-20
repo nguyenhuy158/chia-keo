@@ -306,8 +306,13 @@ export function GamePage() {
     game.participants.map((participant) => [participant.id, participant.name]),
   );
 
+  const shareUrl = shareLink?.enabled
+    ? `${window.location.origin}/share/${shareLink.token}`
+    : undefined;
+
   const renderDashboard = (compact: boolean) => (
     <GameDashboard
+      shareUrl={shareUrl}
       compact={compact}
       code={game.code}
       name={game.name}
@@ -364,9 +369,7 @@ export function GamePage() {
     summary: game.summary,
     settlementMode: game.settlementMode,
     settlementHostId: game.settlementHostId,
-    shareUrl: shareLink?.enabled
-      ? `${window.location.origin}/share/${shareLink.token}`
-      : undefined,
+    shareUrl,
   };
 
   function publishSharePreview(backgroundId: string) {
