@@ -15,8 +15,9 @@ describe("initAnalytics", () => {
     expect(posthog.init).not.toHaveBeenCalled();
   });
 
-  it("starts PostHog on the default host without recording sessions", () => {
+  it("starts PostHog on the default host without recording sessions", async () => {
     expect(initAnalytics({ key: "phc_test" })).toBe(true);
+    await vi.waitFor(() => expect(posthog.init).toHaveBeenCalled());
     expect(posthog.init).toHaveBeenCalledWith("phc_test", {
       api_host: "https://us.i.posthog.com",
       person_profiles: "identified_only",
@@ -25,8 +26,9 @@ describe("initAnalytics", () => {
     });
   });
 
-  it("uses the configured host", () => {
+  it("uses the configured host", async () => {
     initAnalytics({ key: "phc_test", host: "https://eu.i.posthog.com" });
+    await vi.waitFor(() => expect(posthog.init).toHaveBeenCalled());
     expect(posthog.init).toHaveBeenCalledWith(
       "phc_test",
       expect.objectContaining({ api_host: "https://eu.i.posthog.com" }),
