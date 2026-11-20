@@ -1,7 +1,4 @@
-import { funEmoji } from "@dicebear/collection";
-import { createAvatar } from "@dicebear/core";
 import type { ApiParticipant } from "../../../../shared/api-types";
-import { normalizeContactName } from "../../../../shared/contacts";
 import {
   buildSummaryDocument,
   formatThousands,
@@ -14,6 +11,7 @@ import {
   canBuildVietQr,
   getVietQrBankLabel,
 } from "../../../../shared/vietqr";
+import { loadAvatarUri } from "./avatar-uri";
 import { API_BASE } from "./http-game-api";
 import {
   getSummaryImageBackground,
@@ -188,11 +186,7 @@ async function loadQrImage(
  * trong app), khong phai anh tai qua mang nen khong can crossOrigin thuc su.
  */
 async function loadAvatarImage(name: string) {
-  const seed = normalizeContactName(name) || "?";
-  const dataUri = createAvatar(funEmoji, {
-    seed,
-    size: AVATAR_SIZE * PIXEL_SCALE,
-  }).toDataUri();
+  const dataUri = await loadAvatarUri(name, AVATAR_SIZE * PIXEL_SCALE);
   return loadImage(dataUri);
 }
 

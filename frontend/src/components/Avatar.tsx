@@ -1,7 +1,8 @@
-import { funEmoji } from "@dicebear/collection";
-import { createAvatar } from "@dicebear/core";
-import { useMemo } from "react";
-import { normalizeContactName } from "../../../shared/contacts";
+import { useEffect, useState } from "react";
+import {
+  getCachedAvatarUri,
+  loadAvatarUri,
+} from "../adapters/browser/avatar-uri";
 
 /**
  * Diem chan duy nhat cho avatar theo ten trong ca app (ParticipantPanel,
@@ -15,18 +16,31 @@ type AvatarProps = {
   className?: string;
 };
 
-/**
- * Seed bang ten da chuan hoa (khong phan biet hoa/thuong, khoang trang) de
- * cung mot nguoi luon ra cung mot avatar du go hoa/thuong khac nhau —
- * `normalizeContactName` co san, dung lai chu khong tu viet ham thu hai.
- */
-function buildAvatarDataUri(name: string, size: number): string {
-  const seed = normalizeContactName(name) || "?";
-  return createAvatar(funEmoji, { seed, size }).toDataUri();
-}
-
 export function Avatar({ name, size = 28, className = "" }: AvatarProps) {
-  const src = useMemo(() => buildAvatarDataUri(name, size), [name, size]);
+  const [src, setSrc] = useState(() => getCachedAvatarUri(name, size));
+
+  useEffect(() => {
+    let active = true;
+    setSrc(getCachedAvatarUri(name, size));
+    loadAvatarUri(name, size).then((uri) => {
+      if (active) setSrc(uri);
+    });
+    return () => {
+      active = false;
+    };
+  }, [name, size]);
+
+  const frameClassName = `shrink-0 rounded-full bg-stone-100 dark:bg-stone-800 ${className}`;
+
+  if (!src) {
+    return (
+      <span
+        aria-hidden="true"
+        style={{ width: size, height: size }}
+        className={`inline-block ${frameClassName}`}
+      />
+    );
+  }
 
   return (
     <img
@@ -37,7 +51,7 @@ export function Avatar({ name, size = 28, className = "" }: AvatarProps) {
       aria-hidden="true"
       width={size}
       height={size}
-      className={`shrink-0 rounded-full bg-stone-100 dark:bg-stone-800 ${className}`}
+      className={frameClassName}
     />
   );
 }
