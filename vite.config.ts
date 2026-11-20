@@ -82,9 +82,9 @@ export default defineConfig({
         test: {
           name: "node",
           include: [
-            "src/**/*.test.ts",
+            "frontend/src/**/*.test.ts",
             "shared/**/*.test.ts",
-            "worker/**/*.test.ts",
+            "backend/**/*.test.ts",
           ],
           exclude: ["**/*.dom.test.ts"],
           environment: "node",
@@ -92,28 +92,34 @@ export default defineConfig({
       },
       {
         resolve: {
-          alias: { "virtual:pwa-register": "/src/test/pwa-register.ts" },
+          alias: {
+            "virtual:pwa-register": "/frontend/src/test/pwa-register.ts",
+          },
         },
         test: {
           name: "dom",
-          include: ["src/**/*.dom.test.ts"],
+          include: ["frontend/src/**/*.dom.test.ts"],
           environment: "jsdom",
         },
       },
     ],
     coverage: {
       provider: "v8",
-      include: ["src/**/*.{ts,tsx}", "shared/**/*.ts", "worker/src/**/*.ts"],
+      include: [
+        "frontend/src/**/*.{ts,tsx}",
+        "shared/**/*.ts",
+        "backend/src/**/*.ts",
+      ],
       exclude: [
         "**/*.test.ts",
         "**/*.test.tsx",
         "**/*.d.ts",
-        "src/test/**",
+        "frontend/src/test/**",
         "shared/build-info.ts",
-        "worker/src/core/application/fake-game-repository.ts",
-        "worker/src/mcp/fixtures.ts",
-        "src/ui/**",
-        "src/dom/**",
+        "backend/src/core/application/fake-game-repository.ts",
+        "backend/src/mcp/fixtures.ts",
+        "frontend/src/ui/**",
+        "frontend/src/dom/**",
       ],
       reporter: ["text", "json-summary"],
       thresholds: {

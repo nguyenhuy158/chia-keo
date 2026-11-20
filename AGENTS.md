@@ -8,22 +8,22 @@ Tailwind v4 frontend plus a Hono Cloudflare Worker backend on Turso/libSQL in pr
 both structured as hexagons (ports & adapters) around a shared pure
 domain kernel in `shared/` (split math, zod schemas, AI normalization, DTOs).
 
-Frontend: entry point `src/main.tsx` is the composition root that plugs
-adapters into ports via `src/core/container.ts`. Pure FE-only rules live in
-`src/core/domain/`, port interfaces in `src/core/ports/` (GameApiPort,
-QrProviderPort). Implementations live in `src/adapters/browser/` (fetch API,
-VietQR, Better Auth client, theme) and `src/adapters/react-query/` (React
-Query hooks over GameApiPort). UI lives in `src/components/` and
-`src/routes/`. Global styles live in `src/styles.css`, which imports the
-design tokens in `src/styles/tokens.css` (a copy of ui-kit's tokens with
+Frontend: entry point `frontend/src/main.tsx` is the composition root that plugs
+adapters into ports via `frontend/src/core/container.ts`. Pure FE-only rules live in
+`frontend/src/core/domain/`, port interfaces in `frontend/src/core/ports/` (GameApiPort,
+QrProviderPort). Implementations live in `frontend/src/adapters/browser/` (fetch API,
+VietQR, Better Auth client, theme) and `frontend/src/adapters/react-query/` (React
+Query hooks over GameApiPort). UI lives in `frontend/src/components/` and
+`frontend/src/routes/`. Global styles live in `frontend/src/styles.css`, which imports the
+design tokens in `frontend/src/styles/tokens.css` (a copy of ui-kit's tokens with
 chia-keo's own violet/stone values); the HTML shell is `index.html`.
 
-Worker: port interfaces in `worker/src/core/ports/` (GameRepository,
-AiProvider), use cases and policies in `worker/src/core/application/`,
-implementations in `worker/src/adapters/d1/` (drizzle schema + repository)
-and `worker/src/adapters/gemini/`. Hono routes in `worker/src/routes/` are
-thin driving adapters. `worker/src/mcp/` serves the stateless MCP endpoint
-and `worker/src/sso.ts` verifies the `auth.huyab.cfd` SSO cookie. See
+Worker: port interfaces in `backend/src/core/ports/` (GameRepository,
+AiProvider), use cases and policies in `backend/src/core/application/`,
+implementations in `backend/src/adapters/d1/` (drizzle schema + repository)
+and `backend/src/adapters/gemini/`. Hono routes in `backend/src/routes/` are
+thin driving adapters. `backend/src/mcp/` serves the stateless MCP endpoint
+and `backend/src/sso.ts` verifies the `auth.huyab.cfd` SSO cookie. See
 `docs/architecture.md` for dependency rules.
 
 Folder structure:
@@ -47,7 +47,7 @@ shared/                        # Pure domain kernel shared by FE + worker (no IO
   text.ts                      #   Vietnamese accent folding for fuzzy name/label match
   build-info.ts                #   Deployed commit (generated at build; GET /api/version)
 
-src/                           # Frontend hexagon
+frontend/src/                           # Frontend hexagon
   core/
     domain/money.ts            #   VND format/parse (FE-only pure rules)
     ports/game-api.ts          #   Backend API port
@@ -66,7 +66,7 @@ src/                           # Frontend hexagon
   components/  routes/         #   Presentation (React)
   main.tsx                     #   Composition root: plugs adapters into ports
 
-worker/src/                    # Backend hexagon (Hono on Cloudflare Worker)
+backend/src/                    # Backend hexagon (Hono on Cloudflare Worker)
   core/
     ports/game-repository.ts   #   Storage port (row types + interface)
     ports/ai-provider.ts       #   AI JSON-generation port
@@ -99,7 +99,7 @@ How this repo fits with the other `*.huyab.cfd` apps:
   (`biome.json`, `tsconfig.*.json` extend it), `@huyab/e2e` (`e2e/run.mjs`
   server lifecycle, `findChromium`), and the reusable
   `.github/workflows/check.yml` (CI). `@huyab/sso` is not adopted yet:
-  `worker/src/sso.ts` is still the local verifier.
+  `backend/src/sso.ts` is still the local verifier.
 - Talks to: `sso` (auth.huyab.cfd: `huyab_sso` JWT verified against its
   JWKS) and `mailer` (`MAILER` service binding, `POST /send`).
 - Called by: `chia-keo-ios` (same API with the SSO JWT), Claude MCP clients
@@ -157,33 +157,33 @@ names in sync with `ui-kit/src/styles/tokens.css`; change only values here.
 Palette classes remain only where no token exists yet.
 
 UI primitives come only from ui-kit (`github.com/nguyenhuy158/ui-kit`,
-`src/ui/`), copied into `src/ui/` here and kept in sync; do not hand-roll a
+`frontend/src/ui/`), copied into `frontend/src/ui/` here and kept in sync; do not hand-roll a
 button, input, select, sheet, modal, menu, tabs, badge, toast or similar in
 this repo. If ui-kit lacks a primitive, add it to ui-kit first (with a
 Gallery demo), then copy it here. Screens and feature panels in
-`src/components/` and `src/routes/` stay here but compose ui-kit primitives
+`frontend/src/components/` and `frontend/src/routes/` stay here but compose ui-kit primitives
 only. Do not fork a copied ui-kit file to restyle it; change it in ui-kit.
 
 Hexagonal boundaries:
 
 - Put pure rules, calculations, parsing, and schema validation shared by FE
-  and worker in `shared/`; FE-only pure rules in `src/core/domain/`.
-- Put backend business logic in `worker/src/core/application/`; data access
+  and worker in `shared/`; FE-only pure rules in `frontend/src/core/domain/`.
+- Put backend business logic in `backend/src/core/application/`; data access
   goes through the `GameRepository` port, never inline SQL in routes.
-- Put browser/service implementations in `src/adapters/*`; put DB/AI
-  implementations in `worker/src/adapters/*`.
+- Put browser/service implementations in `frontend/src/adapters/*`; put DB/AI
+  implementations in `backend/src/adapters/*`.
 - Keep `fetch`, `window`, `document`, drizzle, VietQR, and UI libraries out
   of every `core/` and out of `shared/`.
 - New swappable dependencies get a port in `core/ports/` plus an adapter,
-  wired at the composition root (`src/main.tsx` or
-  `worker/src/lib/require-user.ts`).
+  wired at the composition root (`frontend/src/main.tsx` or
+  `backend/src/lib/require-user.ts`).
 
 ## Testing Guidelines
 
 Tests use Vitest. Prefer colocated test files beside the related module, for
 example `shared/split.test.ts` for shared domain math,
-`src/core/domain/money.test.ts` for FE domain rules, or
-`src/adapters/browser/vietqr.test.ts` for adapter logic. Prioritize coverage
+`frontend/src/core/domain/money.test.ts` for FE domain rules, or
+`frontend/src/adapters/browser/vietqr.test.ts` for adapter logic. Prioritize coverage
 for settlement math, split policies, and QR payload generation.
 
 End-to-end coverage lives in `e2e/ui-smoke.mjs` and runs against the real
@@ -248,7 +248,7 @@ things reading the code does not show right away.
   Thêm route server mới PHẢI nằm dưới `/api/*`, nếu không asset handler nuốt
   trước và trả về `index.html`.
 - **Hai đường đăng nhập chạy SONG SONG**: better-auth (username/mật khẩu) và
-  SSO cookie RS256 từ `auth.huyab.cfd` (`worker/src/sso.ts`, JWKS cache ở
+  SSO cookie RS256 từ `auth.huyab.cfd` (`backend/src/sso.ts`, JWKS cache ở
   module scope). Không cái nào thay cái nào — sửa auth phải kiểm cả 2 nhánh.
   App native gửi cùng JWT SSO qua `Authorization: Bearer`.
 - **CORS chỉ áp cho `/api/*`**, có `credentials: true` và cho phép header
@@ -257,7 +257,7 @@ things reading the code does not show right away.
   không SSE, không Durable Object — worker stateless thì rẻ và không phải
   trả tiền DO. Token `ck_...` chỉ lưu SHA-256, mất là cấp lại chứ không xem
   lại được. Thêm tool ghi phải sửa **2 chỗ**: `MCP_SCOPES` trong
-  `shared/schemas.ts` và tool trong `worker/src/mcp/tools.ts`.
+  `shared/schemas.ts` và tool trong `backend/src/mcp/tools.ts`.
 - **Ảnh lưu base64 THẲNG trong D1** (`data` + `thumb_data`), không R2 — nén
   bằng canvas ở browser trước khi gửi, trần 60 ảnh/cuộc
   (`MAX_PHOTOS_PER_GAME`). API list chỉ trả `thumb_data`, ảnh gốc phải xin
@@ -296,7 +296,7 @@ things reading the code does not show right away.
 - **`user_preferences` là key/value tự do** nên lúc đọc phải lọc: key lạ hoặc
   JSON hỏng thì bỏ qua và rơi về mặc định, không để một dòng rác làm vỡ cả
   màn hình.
-- **QR VietQR proxy qua origin mình** (`worker/src/routes/qr.ts`): chỉ nhận
+- **QR VietQR proxy qua origin mình** (`backend/src/routes/qr.ts`): chỉ nhận
   tham số đã validate rồi TỰ dựng URL upstream, KHÔNG BAO GIỜ nhận URL từ
   client — nếu không endpoint này thành open proxy.
 - **Thanh toán SePay là POLL, không webhook** (`core/application/payments.ts`):

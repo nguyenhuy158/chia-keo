@@ -11,7 +11,7 @@ theo dõi riêng.
 
 ## Nên làm ngay — rẻ, rủi ro thấp
 
-- [ ] **CORS thiếu `MCP-Protocol-Version`** — `worker/src/index.ts:34`
+- [ ] **CORS thiếu `MCP-Protocol-Version`** — `backend/src/index.ts:34`
 
   Prod hiện trả `access-control-allow-headers: Content-Type,Authorization`.
   Spec 2025-06-18 buộc client gửi header `MCP-Protocol-Version` ở mọi request
@@ -23,12 +23,12 @@ theo dõi riêng.
   header có mà không nằm trong `SUPPORTED_PROTOCOL_VERSIONS` thì nên trả 400
   thay vì lặng lẽ xử lý.
 
-- [ ] **`annotations` cho mỗi tool** — `worker/src/mcp/protocol.ts` (`describeTool`)
+- [ ] **`annotations` cho mỗi tool** — `backend/src/mcp/protocol.ts` (`describeTool`)
 
   Thêm `readOnlyHint: true` và `idempotentHint: true`. Client biết tool không
   sửa dữ liệu thì bớt chặn lại hỏi người dùng mỗi lần gọi.
 
-- [ ] **`list_games` cần `limit` + `search`** — `worker/src/mcp/tools.ts`
+- [ ] **`list_games` cần `limit` + `search`** — `backend/src/mcp/tools.ts`
 
   Đang trả về mọi cuộc chia. Hai cuộc thì không sao, năm mươi cuộc thì đổ hết
   vào context. Mặc định `limit: 20`, `search` khớp theo tên hoặc mã.
@@ -36,7 +36,7 @@ theo dõi riêng.
   Lưu ý `loadGame()` cũng đang `listGames()` toàn bộ rồi mới dò mã — nếu thêm
   phân trang thì đừng để nó dò trong trang đầu tiên là hết.
 
-- [ ] **Validate args theo `inputSchema`** — `worker/src/mcp/tools.ts`
+- [ ] **Validate args theo `inputSchema`** — `backend/src/mcp/tools.ts`
 
   `additionalProperties: false` đang được khai nhưng không ai enforce. Client
   gửi `{ gme: "DSKVUF" }` thì chỉ nhận được "Thiếu tham số game", không biết sai
@@ -53,7 +53,7 @@ theo dõi riêng.
 
   Vẫn phải giữ `content` text song song cho client cũ.
 
-- [ ] **Rate limit theo token id, không chỉ IP** — `worker/src/index.ts:61`
+- [ ] **Rate limit theo token id, không chỉ IP** — `backend/src/index.ts:61`
 
   `rateLimitPost("mcp", ...)` đang key theo IP: cùng mạng công ty thì hai người
   chia nhau hạn mức, mà token bị lộ cũng không chặn riêng được. Key theo
@@ -90,7 +90,7 @@ theo dõi riêng.
 
 - **Tool trả ảnh tổng kết** — MCP cho phép trả `{ type: "image", ... }`, nhưng
   không có gì tạo được PNG trên server: `renderSummaryImage()`
-  (`src/adapters/browser/summary-image.ts:313`) dùng `document.createElement`
+  (`frontend/src/adapters/browser/summary-image.ts:313`) dùng `document.createElement`
   và `document.fonts`, tức API trình duyệt, mà Workers runtime không có canvas
   2d. Binding Browser Rendering thì không dùng được trên Pages Functions —
   app đang deploy bằng Pages. Các đường còn lại: Worker riêng có browser binding

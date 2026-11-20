@@ -1,5 +1,5 @@
 name = "chiakeo"
-main = "worker/src/index.ts"
+main = "backend/src/index.ts"
 compatibility_date = "2026-07-03"
 # nodejs_compat can vi API dung better-auth + drizzle (can Node built-ins).
 compatibility_flags = ["nodejs_compat"]

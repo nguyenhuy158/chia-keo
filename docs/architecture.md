@@ -13,7 +13,7 @@ shared/                      # Domain kernel dùng chung FE + worker (thuần, k
   api-types.ts               #   DTO trao đổi giữa FE và worker
   rate-limit.ts              #   Logic rate limit thuần
 
-src/                         # Hexagon frontend
+frontend/src/                         # Hexagon frontend
   core/
     domain/money.ts          #   Format/parse VND
     ports/game-api.ts        #   Port gọi backend
@@ -28,7 +28,7 @@ src/                         # Hexagon frontend
   components/, routes/       #   Presentation
   main.tsx                   #   Composition root: cắm adapter vào port
 
-worker/src/                  # Hexagon backend
+backend/src/                  # Hexagon backend
   core/
     ports/game-repository.ts #   Port lưu trữ (row types + interface)
     ports/ai-provider.ts     #   Port model AI sinh JSON
@@ -62,9 +62,9 @@ Không làm:
 
 ## Composition root — nơi cắm adapter
 
-- Frontend: `src/main.tsx` gọi `provideGameApi(createHttpGameApi())` và
+- Frontend: `frontend/src/main.tsx` gọi `provideGameApi(createHttpGameApi())` và
   `provideQrProvider(vietQrProvider)`. Test/offline chỉ cần provide adapter khác.
-- Worker: middleware `requireUser` (worker/src/lib/require-user.ts) tạo
+- Worker: middleware `requireUser` (backend/src/lib/require-user.ts) tạo
   `createD1GameRepository(c.env.DB)` gắn vào context; route AI tạo
   `createGeminiAiProvider(c.env)`.
 
@@ -72,20 +72,20 @@ Không làm:
 
 | Muốn thay | Viết adapter mới implement | Cắm ở |
 | --- | --- | --- |
-| D1 -> DB khác | `GameRepository` (worker/src/core/ports/game-repository.ts) | `require-user.ts` + `routes/share.ts` |
-| Gemini -> AI khác | `AiProvider` (worker/src/core/ports/ai-provider.ts) | `routes/ai.ts` |
-| VietQR -> QR khác | `QrProviderPort` (src/core/ports/qr-provider.ts) | `src/main.tsx` |
-| fetch -> mock/offline | `GameApiPort` (src/core/ports/game-api.ts) | `src/main.tsx` |
+| D1 -> DB khác | `GameRepository` (backend/src/core/ports/game-repository.ts) | `require-user.ts` + `routes/share.ts` |
+| Gemini -> AI khác | `AiProvider` (backend/src/core/ports/ai-provider.ts) | `routes/ai.ts` |
+| VietQR -> QR khác | `QrProviderPort` (frontend/src/core/ports/qr-provider.ts) | `frontend/src/main.tsx` |
+| fetch -> mock/offline | `GameApiPort` (frontend/src/core/ports/game-api.ts) | `frontend/src/main.tsx` |
 
 ## Checklist thêm tính năng
 
 1. Rule tính toán/validate thuần: thêm vào `shared/` (dùng chung) hoặc
-   `src/core/domain` (chỉ FE) và viết test thuần.
-2. Nghiệp vụ phía backend: thêm use case trong `worker/src/core/application`,
+   `frontend/src/core/domain` (chỉ FE) và viết test thuần.
+2. Nghiệp vụ phía backend: thêm use case trong `backend/src/core/application`,
    khai báo thao tác dữ liệu cần thiết vào port `GameRepository`, implement
    trong `adapters/d1`.
 3. Route Hono chỉ parse input (zod qua `readJson`), gọi use case qua
    `respond()` để map lỗi nghiệp vụ sang HTTP status.
-4. Phía FE: gọi API qua hook trong `src/adapters/react-query/queries.ts`
+4. Phía FE: gọi API qua hook trong `frontend/src/adapters/react-query/queries.ts`
    (hook lấy `GameApiPort` từ container).
 5. Chạy `pnpm check`, `pnpm test`, `pnpm build`; flow chính chạy `pnpm e2e`.
