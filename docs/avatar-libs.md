@@ -1,7 +1,7 @@
 # Thư viện tạo avatar theo tên
 
 Ghi lại lúc: 2026-08-05. Đã chọn **DiceBear** (kiểu `fun-emoji`), dùng trong
-`src/components/Avatar.tsx`. File này ghi lại 2 lựa chọn còn lại để sau này
+`frontend/src/components/Avatar.tsx`. File này ghi lại 2 lựa chọn còn lại để sau này
 đổi ý thì không phải tra cứu lại từ đầu.
 
 Cả 3 đều sinh SVG ngay trên máy từ một chuỗi seed (không gọi API ngoài), và

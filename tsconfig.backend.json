@@ -1,0 +1,8 @@
+{
+  "extends": "@huyab/config/tsconfig.base.json",
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.backend.tsbuildinfo",
+    "types": ["@cloudflare/workers-types"]
+  },
+  "include": ["backend", "shared"]
+}

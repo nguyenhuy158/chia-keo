@@ -10,7 +10,7 @@ Truoc day project deploy bang Cloudflare Pages (Pages Functions shim
 
 Toan bo config nam trong `wrangler.toml`:
 
-- `main = "worker/src/index.ts"` — entry Worker.
+- `main = "backend/src/index.ts"` — entry Worker.
 - `[assets]` `directory = "./dist"`, `not_found_handling =
   "single-page-application"` (SPA fallback cho `/share/:token`),
   `run_worker_first = ["/api/*"]` — chi `/api/*` vao Worker, con lai tra file
@@ -52,7 +52,7 @@ npx wrangler secret put GEMINI_API_KEY       # tuy chon, bat AI nhap nhanh + OCR
 khong phai secret, dat trong `[vars]` cua `wrangler.toml`.
 
 > Dang nhap: email/password + username qua Better Auth, hoac SSO chung
-> `auth.huyab.cfd` (xem `worker/src/sso.ts`). Google di qua SSO nen app
+> `auth.huyab.cfd` (xem `backend/src/sso.ts`). Google di qua SSO nen app
 > **khong** can `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` rieng.
 
 ## Migration D1
@@ -63,5 +63,5 @@ pnpm db:migrate:remote   # = wrangler d1 migrations apply DB --remote
 
 ## Luu tru
 
-- Session/user cua Better Auth: bang trong D1, xem `worker/src/adapters/d1/schema.ts`.
+- Session/user cua Better Auth: bang trong D1, xem `backend/src/adapters/d1/schema.ts`.
 - Anh hoa don: R2 chua dung, hien luu inline trong D1.

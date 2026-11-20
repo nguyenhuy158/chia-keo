@@ -42,7 +42,7 @@ worker, domain kernel dùng chung nằm ở `shared/`.
 
 ```text
 shared/              # Domain thuần dùng chung: split, schema, ai, DTO
-src/
+frontend/src/
   core/
     domain/          # Rule thuần chỉ FE dùng (money)
     ports/           # GameApiPort (backend), QrProviderPort (QR)
@@ -51,7 +51,7 @@ src/
     browser/         # fetch API, VietQR, Better Auth client, theme, nén ảnh
     react-query/     # Hook React Query bọc GameApiPort, upload ảnh
   components/ routes/  # Presentation
-worker/src/
+backend/src/
   core/
     ports/           # GameRepository (DB), AiProvider (AI)
     application/     # Use case: games, participants, expenses, share, ai
@@ -65,10 +65,10 @@ Quy tắc chính:
 
 - `core` không import adapter, không gọi `fetch`/driver DB/SDK ngoài.
 - Business rule thuần ở `shared/` (dùng chung) hoặc `core/domain`.
-- Nghiệp vụ backend ở `worker/src/core/application`, thao tác dữ liệu đi qua
+- Nghiệp vụ backend ở `backend/src/core/application`, thao tác dữ liệu đi qua
   port `GameRepository`; route Hono chỉ parse input và map lỗi sang HTTP.
 - Muốn thay DB/AI/QR/HTTP client: viết adapter mới implement port tương ứng,
-  cắm ở composition root (`src/main.tsx`, `worker/src/lib/require-user.ts`).
+  cắm ở composition root (`frontend/src/main.tsx`, `backend/src/lib/require-user.ts`).
 
 Xem thêm: `docs/architecture.md`.
 
@@ -301,7 +301,7 @@ Tool nao hien ra phu thuoc quyen cua token dang dung:
 | `get_shared_game` | `share:read` | Cuoc chia bat ky qua token trong link share |
 
 Tat ca deu chi doc. Muon them tool ghi thi khai bao scope moi o `MCP_SCOPES`
-(`shared/schemas.ts`) va them tool voi `scope` do trong `worker/src/mcp/tools.ts`.
+(`shared/schemas.ts`) va them tool voi `scope` do trong `backend/src/mcp/tools.ts`.
 
 ### Tao token
 
@@ -354,7 +354,7 @@ curl -s https://chiakeo.huyab.cfd/api/mcp \
 
 Chi con **mot backend duy nhat**: Hono Worker trong `worker/`. Toan bo `/api/*`
 (auth Better Auth, games/participants/expenses, summary, share, AI) do Worker xu
-ly. Schema D1 quan ly bang Drizzle (`worker/src/db/schema.ts`, migration o
+ly. Schema D1 quan ly bang Drizzle (`backend/src/db/schema.ts`, migration o
 `drizzle/`).
 
 Deploy qua **Workers Builds** (khong dung GitHub Actions): Worker `chiakeo`
@@ -363,7 +363,7 @@ connect GitHub, tu build + deploy khi push `main`. Cung mot Worker vua chay
 
 Config nam trong `wrangler.toml`:
 
-- `main = worker/src/index.ts`, `[assets]` `directory = ./dist` voi
+- `main = backend/src/index.ts`, `[assets]` `directory = ./dist` voi
   `run_worker_first = ["/api/*"]` va SPA fallback
 - Compatibility flag: `nodejs_compat` (Better Auth can node builtins)
 - `workers_dev = false`, chi phuc vu qua `chiakeo.huyab.cfd`

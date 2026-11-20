@@ -190,7 +190,7 @@ try {
 
   // 2. Dang ky tai khoan moi. Trang /login chi con nut SSO Google (di ra
   // auth.huyab.cfd, khong chay duoc trong test), nen tao session bang API
-  // username/mat khau cua Better Auth - van bat trong worker/src/auth.ts.
+  // username/mat khau cua Better Auth - van bat trong backend/src/auth.ts.
   await signUp(page, username);
   await page.goto(BASE + "/");
   await openCreateGameForm(page);

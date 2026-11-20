@@ -8,5 +8,5 @@
     "allowSyntheticDefaultImports": true,
     "jsx": "react-jsx"
   },
-  "include": ["src", "shared"]
+  "include": ["frontend/src", "shared"]
 }

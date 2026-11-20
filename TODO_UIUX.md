@@ -4,14 +4,14 @@ Ghi lại lúc: 2026-08-05.
 
 ## 1. ~~Skeleton loader thay chữ "Đang tải..."~~ — Đã làm (2026-08-05)
 `Skeleton`/`SkeletonCard`/`SkeletonListRow`/`SkeletonPhotoGrid` trong
-`src/components/ui.tsx`, dùng ở GamesSidebar, TrashCard, ContactBookCard,
+`frontend/src/components/ui.tsx`, dùng ở GamesSidebar, TrashCard, ContactBookCard,
 HistoryPanel, McpTokenPanel, PhotoPanel, SharePhotoGallery. Còn giữ nguyên
 `LoadingState` chữ cho các trang full-page (GamePage, SharePage) và cho label
 tiến trình upload ảnh thật ("Đang tải 2/5") — hai chỗ đó không phải khung chờ
 ban đầu nên không cần mô phỏng hình dạng.
 
 ## 2. ~~Sidebar nhớ trạng thái gấp/mở~~ — Đã làm (2026-08-05)
-`src/components/use-persistent-open.ts`: `useState` có nhớ qua localStorage,
+`frontend/src/components/use-persistent-open.ts`: `useState` có nhớ qua localStorage,
 thay `useState` thường ở `TrashCard` (key `trash`) và `HistoryPanel` khi
 `collapsible` (key `history`, chỉ áp khi có nút gấp/mở — mobile luôn mở nên
 không đụng tới).
@@ -22,7 +22,7 @@ cần nhớ trạng thái như mô tả ban đầu.
 
 ## 3. ~~Avatar theo tên~~ — Đã làm (2026-08-05), một phần
 Dùng DiceBear (kiểu fun-emoji) thay vì chữ cái đầu — xem `docs/avatar-libs.md`
-để biết lý do chọn và cách đổi lib khác. `src/components/Avatar.tsx` là điểm
+để biết lý do chọn và cách đổi lib khác. `frontend/src/components/Avatar.tsx` là điểm
 chặn duy nhất, đã áp cho danh sách người tham gia và dòng chuyển tiền.
 
 **Cố tình bỏ qua dòng lịch sử**: icon loại thao tác (thêm/xóa/sửa) ở đó đang
@@ -30,7 +30,7 @@ mang nhiều thông tin hơn mặt người, và nhiều dòng (đổi tên cu�
 chuyển tiền...) không gắn với đúng một người để gắn avatar.
 
 ## 4. ~~Vuốt để xoá trên mobile~~ — Đã làm (2026-08-05), một phần
-`src/components/SwipeToDelete.tsx`: vuốt trái lộ nút xoá đỏ, bấm nút mới xoá
+`frontend/src/components/SwipeToDelete.tsx`: vuốt trái lộ nút xoá đỏ, bấm nút mới xoá
 (2 bước liên tiếp, giống Mail — đủ để tránh vuốt nhầm mất dữ liệu). Chỉ bắt
 cử chỉ chạm/bút cảm ứng (`pointerType`), chuột không kích hoạt gì — nút xoá có
 sẵn cạnh mỗi dòng vẫn là đường duy nhất trên desktop, không đổi hành vi.
@@ -44,7 +44,7 @@ không xoá được nên không vuốt được).
 sách để vuốt.
 
 ## 5. ~~Onboarding cho cuộc chơi mới toanh~~ — Đã làm (2026-08-05)
-`src/components/OnboardingBanner.tsx`: 3 bước "Thêm người → Thêm khoản chi →
+`frontend/src/components/OnboardingBanner.tsx`: 3 bước "Thêm người → Thêm khoản chi →
 Xem tổng kết", bước nào xong tô xanh có dấu tick. Tự ẩn khi đã có ít nhất 1
 người **và** 1 khoản chi. Hiện phía trên cả layout desktop lẫn mobile trong
 `GamePage`, không phụ thuộc tab đang mở.
@@ -210,7 +210,7 @@ Toàn bộ route (`AppLayout.tsx` và các trang con) static-import — build ra
 (`FunStatsPage`, `McpTokenPanel`, `SharePage`) vẫn tải cùng bundle chính dù
 người dùng không vào. ~~Fix: `React.lazy()` + `Suspense` cho từng route,
 tách riêng chunk.~~ Đã dùng `lazyRouteComponent` của TanStack Router cho
-`GamePage`/`SettingsPage`/`FunStatsPage`/`SharePage` (`src/router.tsx`),
+`GamePage`/`SettingsPage`/`FunStatsPage`/`SharePage` (`frontend/src/router.tsx`),
 kèm `defaultPendingComponent: LoadingState`. Main chunk 718KB → 587KB, thêm
 4 chunk riêng (GamePage 71KB, SettingsPage 14KB, SharePage 12KB, FunStatsPage
 3KB). Rủi ro kèm theo: sau deploy, client cũ giữ `index.html` cũ có thể gọi
@@ -221,7 +221,7 @@ curl lại): request rơi vào SPA fallback trả `index.html` (200, không ph�
 bằng mắt trên trình duyệt thật (không có công cụ browser trong phiên này).
 
 ## D2. Chỉ 1/20+ mutation có optimistic update — làm phần an toàn, phần còn lại hoãn có lý do
-`src/adapters/react-query/queries.ts`: chỉ `useUpdatePreferences` có
+`frontend/src/adapters/react-query/queries.ts`: chỉ `useUpdatePreferences` có
 `onMutate` cập nhật UI ngay rồi rollback nếu lỗi. Đã thêm `onMutate`/rollback
 (qua option `optimistic` mới trong `useGameDetailMutation`) cho 4 mutation
 KHÔNG đụng vào `summary` (balances/settlements do server tính bằng
@@ -229,7 +229,7 @@ KHÔNG đụng vào `summary` (balances/settlements do server tính bằng
 `useReorderParticipants`, `useRenameGame`, `useSetShareLinkEnabled`.
 
 Còn lại — thêm/xoá khoản chi, thêm/xoá người tham gia — CHỦ ĐỘNG CHƯA LÀM:
-`worker/src/core/application/game-detail.ts` gọi `calculateBalances`/
+`backend/src/core/application/game-detail.ts` gọi `calculateBalances`/
 `calculateSettlements` từ `shared/split` để tính `summary`, nên về lý thuyết
 FE có thể tái dùng đúng hàm đó để tự tính optimistic summary khớp server —
 nhưng ghép đúng input (`ExpenseInput` → `ApiExpense` đầy đủ splits, id tạm
@@ -241,7 +241,7 @@ giữ nguyên) thay vì optimistic giả — an toàn hơn cho app tiền bạc.
 `GamePage.tsx`/`SharePage.tsx` còn "Đang tải..." (cố tình bỏ ở Đợt 1 mục 1
 vì lúc đó các list-level skeleton chưa xong hết). ~~Giờ phần lớn skeleton đã
 có, có thể nâng cấp 2 trang full-page này luôn cho nhất quán.~~ Thêm
-`GamePageSkeleton` (`src/components/ui.tsx`) tái dùng `Skeleton`/
+`GamePageSkeleton` (`frontend/src/components/ui.tsx`) tái dùng `Skeleton`/
 `SkeletonCard`/`SkeletonListRow` có sẵn, giữ đúng bố cục header + danh sách +
 thẻ tổng kết (`split` prop: `true` = 2 cột như GamePage, `false` = 1 cột như
 SharePage) để không giật layout khi dữ liệu thật về.
