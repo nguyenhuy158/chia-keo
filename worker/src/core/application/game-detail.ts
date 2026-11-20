@@ -98,18 +98,18 @@ async function loadGameData(
   repo: GameRepository,
   gameId: string,
 ): Promise<GameData> {
-  const participantRows = await repo.participants.listByGame(gameId);
+  const [participantRows, expenseRows] = await Promise.all([
+    repo.participants.listByGame(gameId),
+    repo.expenses.listByGame(gameId),
+  ]);
   const participantIds = participantRows.map((row) => row.id);
 
-  const paymentRows =
-    await repo.paymentProfiles.listByParticipantIds(participantIds);
+  const [paymentRows, splitRows] = await Promise.all([
+    repo.paymentProfiles.listByParticipantIds(participantIds),
+    repo.splits.listByExpenseIds(expenseRows.map((row) => row.id)),
+  ]);
   const paymentByParticipantId = new Map(
     paymentRows.map((row) => [row.participantId, row]),
-  );
-
-  const expenseRows = await repo.expenses.listByGame(gameId);
-  const splitRows = await repo.splits.listByExpenseIds(
-    expenseRows.map((row) => row.id),
   );
 
   const splitsByExpenseId = groupSplitsByExpenseId(splitRows);
