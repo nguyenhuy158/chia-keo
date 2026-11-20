@@ -35,17 +35,19 @@ export function ReminderButton({
   fromName,
   toName,
   amount,
+  shareUrl,
   disabled = false,
 }: {
   gameName: string;
   fromName: string;
   toName: string;
   amount: number;
+  shareUrl?: string;
   disabled?: boolean;
 }) {
   async function handleCopy() {
     const copied = await copyText(
-      buildPaymentReminder(gameName, fromName, toName, amount),
+      buildPaymentReminder(gameName, fromName, toName, amount, shareUrl),
     );
     (copied ? toast.success : toast.error)(
       copied ? "Đã sao chép lời nhắc" : "Không sao chép được lời nhắc",
@@ -110,6 +112,7 @@ export type GameDashboardProps = {
   onSettle?: (settlement: SettlementRow) => void;
   onRemoveTransfer?: (expenseId: string) => void;
   settlePending?: boolean;
+  shareUrl?: string;
   compact?: boolean;
 };
 
@@ -128,6 +131,7 @@ function GameDashboardFull({
   onSettle,
   onRemoveTransfer,
   settlePending = false,
+  shareUrl,
 }: GameDashboardProps) {
   const participantById = new Map(
     participants.map((participant) => [participant.id, participant]),
@@ -311,6 +315,7 @@ function GameDashboardFull({
                           {onSettle && (
                             <ReminderButton
                               gameName={name}
+                              shareUrl={shareUrl}
                               fromName={
                                 transfer.toHost ? participant.name : host.name
                               }
@@ -387,6 +392,7 @@ function GameDashboardFull({
                         <div className="flex shrink-0 flex-wrap justify-end gap-2">
                           <ReminderButton
                             gameName={name}
+                            shareUrl={shareUrl}
                             fromName={from.name}
                             toName={to.name}
                             amount={settlement.amount}
@@ -515,6 +521,7 @@ function GameDashboardCompact({
   onSettle,
   onRemoveTransfer,
   settlePending = false,
+  shareUrl,
 }: GameDashboardProps) {
   const [view, setView] = useState<DashboardView>("balances");
   const [activeRow, setActiveRow] = useState<TransferRow | null>(null);
@@ -812,6 +819,7 @@ function GameDashboardCompact({
               <div className="flex flex-wrap items-center gap-2">
                 <ReminderButton
                   gameName={name}
+                  shareUrl={shareUrl}
                   fromName={activeRow.fromName}
                   toName={activeRow.toName}
                   amount={activeRow.amount}
