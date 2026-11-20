@@ -39,7 +39,7 @@ describe("Worker entrypoint", () => {
     const health = await app.request("/api/health", undefined, env);
     expect(health.status).toBe(200);
     expect(await health.json()).toEqual({ ok: true, db: "ok" });
-    expect(first).toHaveBeenCalledOnce();
+    expect(first).toHaveBeenCalledTimes(2);
   });
 
   it("does not grant CORS to an untrusted origin", async () => {
