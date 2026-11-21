@@ -1,0 +1,1 @@
+ALTER TABLE `chiakeo_contacts` ADD `bank_accounts` text;

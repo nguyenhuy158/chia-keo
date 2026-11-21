@@ -122,3 +122,26 @@ describe("ContactPicker", () => {
     expect(button("Châu").disabled).toBe(true);
   });
 });
+
+it("preselects default and allows a different account for this game", async () => {
+  const accounts = [
+    { bankId: "MB", accountNo: "111", accountName: "AN" },
+    { bankId: "VCB", accountNo: "222", accountName: "AN" },
+  ];
+  state.contacts = [{ ...contact("An", "111"), accounts }];
+  render();
+  act(() => button("An").click());
+  let select = host.querySelector("select") as HTMLSelectElement;
+  expect(select.value).toBe("0");
+  await act(async () => button("Thêm 1 người").click());
+  expect(onAddMany).toHaveBeenLastCalledWith([{ name: "An", ...accounts[0] }]);
+  act(() => button("An").click());
+  select = host.querySelector("select") as HTMLSelectElement;
+  act(() => {
+    select.value = "1";
+    select.dispatchEvent(new Event("change", { bubbles: true }));
+  });
+  await act(async () => button("Thêm 1 người").click());
+  expect(onAddMany).toHaveBeenLastCalledWith([{ name: "An", ...accounts[1] }]);
+  expect(state.contacts[0].accounts).toEqual(accounts);
+});

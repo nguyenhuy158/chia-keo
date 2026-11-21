@@ -1,10 +1,15 @@
 import { BookUser, Check, Plus, UserPlus } from "lucide-react";
 import { useMemo, useState } from "react";
 import type { ApiParticipant } from "../../../shared/api-types";
-import { type Contact, normalizeContactName } from "../../../shared/contacts";
+import {
+  type Contact,
+  getContactAccounts,
+  normalizeContactName,
+} from "../../../shared/contacts";
 import type { ParticipantInput } from "../../../shared/schemas";
 import { getVietQrBankLabel } from "../adapters/browser/vietqr";
 import { useContacts } from "../adapters/react-query/queries";
+import { Select } from "../ui/Input";
 import { Avatar } from "./Avatar";
 
 type ContactPickerProps = {
@@ -34,6 +39,9 @@ export function ContactPicker({
 }: ContactPickerProps) {
   const contactsQuery = useContacts();
   const [chosen, setChosen] = useState<string[]>([]);
+  const [accountChoices, setAccountChoices] = useState<Record<string, number>>(
+    {},
+  );
 
   const alreadyIn = useMemo(
     () =>
@@ -64,9 +72,13 @@ export function ContactPicker({
   async function handleAdd() {
     const people = selectable
       .filter((contact) => activeChosen.includes(contact.key))
-      .map(toInput);
+      .map((contact) => ({
+        ...toInput(contact),
+        ...getContactAccounts(contact)[accountChoices[contact.key] ?? 0],
+      }));
     await onAddMany(people);
     setChosen([]);
+    setAccountChoices({});
   }
 
   function toggle(key: string) {
@@ -126,6 +138,44 @@ export function ContactPicker({
           );
         })}
       </div>
+
+      {selectable
+        .filter(
+          (contact) =>
+            activeChosen.includes(contact.key) &&
+            getContactAccounts(contact).length > 1,
+        )
+        .map((contact) => (
+          <label
+            key={contact.key}
+            htmlFor={encodeURIComponent(contact.key)}
+            className="mt-3 block text-sm text-fg"
+          >
+            Tài khoản của {contact.name}
+            <Select
+              id={encodeURIComponent(contact.key)}
+              aria-label={`Tài khoản của ${contact.name}`}
+              value={accountChoices[contact.key] ?? 0}
+              disabled={pending}
+              onChange={(event) =>
+                setAccountChoices((current) => ({
+                  ...current,
+                  [contact.key]: Number(event.target.value),
+                }))
+              }
+            >
+              {getContactAccounts(contact).map((account, index) => (
+                <option
+                  key={JSON.stringify([account.bankId, account.accountNo])}
+                  value={index}
+                >
+                  {getVietQrBankLabel(account.bankId)} · {account.accountNo}
+                  {index === 0 ? " · Mặc định" : ""}
+                </option>
+              ))}
+            </Select>
+          </label>
+        ))}
 
       {activeChosen.length > 0 && (
         <button

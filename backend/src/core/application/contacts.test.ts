@@ -83,3 +83,76 @@ describe("contact application", () => {
     ).rejects.toBeInstanceOf(NotFoundError);
   });
 });
+
+it("persists the selected default and keeps additional accounts for legacy edits", async () => {
+  const { repo } = createFakeRepo();
+  const accounts = [
+    { bankId: "MB", accountNo: "111", accountName: "AN" },
+    { bankId: "VCB", accountNo: "222", accountName: "AN" },
+  ];
+  const upsert = vi.spyOn(repo.contacts, "upsert");
+  const update = vi.spyOn(repo.contacts, "update");
+  const get = vi
+    .spyOn(repo.contacts, "getOwned")
+    .mockResolvedValue({ ...contact, ...accounts[0], accounts });
+  await createContact(repo, "owner", {
+    name: "An",
+    bankId: "",
+    accountNo: "",
+    accountName: "",
+    accounts,
+  });
+  expect(upsert).toHaveBeenLastCalledWith(
+    expect.objectContaining({ ...accounts[0], accounts }),
+  );
+  await updateContact(repo, "owner", contact.id, {
+    accounts: [accounts[1], accounts[0]],
+  });
+  expect(update).toHaveBeenLastCalledWith(
+    contact.id,
+    { ...accounts[1], accounts: [accounts[1], accounts[0]] },
+    expect.any(String),
+  );
+  await updateContact(repo, "owner", contact.id, { name: "New" });
+  expect(update).toHaveBeenLastCalledWith(
+    contact.id,
+    { name: "New", nameKey: "new" },
+    expect.any(String),
+  );
+  for (const input of [
+    { bankId: "ACB" },
+    { accountNo: "333" },
+    { accountName: "NEW" },
+    { ...accounts[1] },
+  ]) {
+    await updateContact(repo, "owner", contact.id, input);
+    expect(update).toHaveBeenLastCalledWith(
+      contact.id,
+      expect.objectContaining({ ...accounts[0], ...input }),
+      expect.any(String),
+    );
+  }
+  await updateContact(repo, "owner", contact.id, { accountNo: "" });
+  expect(update).toHaveBeenLastCalledWith(
+    contact.id,
+    { ...accounts[1], accounts: [accounts[1]] },
+    expect.any(String),
+  );
+  get.mockResolvedValue({
+    ...contact,
+    ...accounts[0],
+    accounts: [accounts[0]],
+  });
+  await updateContact(repo, "owner", contact.id, { accountNo: "" });
+  expect(update).toHaveBeenLastCalledWith(
+    contact.id,
+    { bankId: "", accountNo: "", accountName: "", accounts: [] },
+    expect.any(String),
+  );
+  await updateContact(repo, "owner", contact.id, { accounts: [] });
+  expect(update).toHaveBeenLastCalledWith(
+    contact.id,
+    { bankId: "", accountNo: "", accountName: "", accounts: [] },
+    expect.any(String),
+  );
+});

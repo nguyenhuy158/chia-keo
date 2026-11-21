@@ -225,6 +225,9 @@ export const contacts = sqliteTable(
     bankId: text("bank_id").notNull().default(""),
     accountNo: text("account_no").notNull().default(""),
     accountName: text("account_name").notNull().default(""),
+    accounts: text("bank_accounts", { mode: "json" }).$type<
+      import("../../../../shared/schemas").ContactAccount[] | null
+    >(),
     createdAt: text("created_at").notNull(),
     updatedAt: text("updated_at").notNull(),
   },

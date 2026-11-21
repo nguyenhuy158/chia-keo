@@ -1,6 +1,7 @@
 import {
   buildContacts,
   type Contact,
+  getContactAccounts,
   mergeContacts,
   normalizeContactName,
 } from "../../../../shared/contacts";
@@ -48,6 +49,7 @@ export async function createContact(
     bankId: input.bankId,
     accountNo: input.accountNo,
     accountName: input.accountName,
+    ...accountFields(input),
     createdAt: now,
     updatedAt: now,
   });
@@ -75,6 +77,7 @@ export async function updateContact(
       ...(input.accountName === undefined
         ? {}
         : { accountName: input.accountName }),
+      ...accountFields(input, existing),
     },
     nowIso(),
   );
@@ -96,4 +99,50 @@ export async function deleteContact(
 
   await repo.contacts.delete(contactId);
   return listContacts(repo, userId);
+}
+
+function accountFields(
+  input: ContactUpdateInput,
+  existing?: Pick<Contact, "accounts" | "bankId" | "accountNo" | "accountName">,
+) {
+  if (input.accounts !== undefined) {
+    const first = input.accounts[0];
+    return {
+      accounts: input.accounts,
+      bankId: first?.bankId ?? "",
+      accountNo: first?.accountNo ?? "",
+      accountName: first?.accountName ?? "",
+    };
+  }
+  if (
+    !existing?.accounts ||
+    (input.bankId === undefined &&
+      input.accountNo === undefined &&
+      input.accountName === undefined)
+  )
+    return {};
+  const updated = { ...existing, ...input };
+  const rest = getContactAccounts(existing)
+    .slice(1)
+    .filter(
+      (account) =>
+        account.bankId !== updated.bankId ||
+        account.accountNo !== updated.accountNo,
+    );
+  const accounts = updated.accountNo
+    ? [
+        {
+          bankId: updated.bankId,
+          accountNo: updated.accountNo,
+          accountName: updated.accountName,
+        },
+        ...rest,
+      ]
+    : rest;
+  return {
+    accounts,
+    bankId: accounts[0]?.bankId ?? "",
+    accountNo: accounts[0]?.accountNo ?? "",
+    accountName: accounts[0]?.accountName ?? "",
+  };
 }

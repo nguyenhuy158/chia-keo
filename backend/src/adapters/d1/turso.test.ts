@@ -2,6 +2,12 @@ import { createClient } from "@libsql/client";
 import { drizzle } from "drizzle-orm/libsql";
 import { migrate } from "drizzle-orm/libsql/migrator";
 import { beforeAll, describe, expect, it } from "vitest";
+import { contactInputSchema } from "../../../../shared/schemas";
+import {
+  createContact,
+  listContacts,
+  updateContact,
+} from "../../core/application/contacts";
 import { addExpense, recordTransfer } from "../../core/application/expenses";
 import { createGame, listGames } from "../../core/application/games";
 import { createDb, createGameRepository, type Db } from "./game-repository";
@@ -68,4 +74,51 @@ describe("game repository on libsql (Turso)", () => {
 
     expect(turso).toHaveProperty("$client.protocol", "http");
   });
+});
+
+it("round-trips multiple accounts and protects other owners on Turso", async () => {
+  const repo = createGameRepository(db);
+  const accounts = [
+    { bankId: "MB", accountNo: "111", accountName: "AN" },
+    { bankId: "VCB", accountNo: "222", accountName: "AN" },
+  ];
+  const first = await createContact(
+    repo,
+    OWNER,
+    contactInputSchema.parse({ name: "An", accounts }),
+  );
+  const person = first.contacts.find((item) => item.name === "An")!;
+  expect(person.accounts).toEqual(accounts);
+  expect(person.accountNo).toBe("111");
+  await expect(
+    updateContact(repo, "other", person.id!, { accounts: [] }),
+  ).rejects.toThrow();
+  await updateContact(repo, OWNER, person.id!, {
+    accounts: [accounts[1], accounts[0]],
+  });
+  expect(
+    (await listContacts(repo, OWNER)).contacts.find(
+      (item) => item.id === person.id,
+    )?.accountNo,
+  ).toBe("222");
+  await createContact(
+    repo,
+    OWNER,
+    contactInputSchema.parse({ name: "An", bankId: "ACB", accountNo: "999" }),
+  );
+  const preserved = (await listContacts(repo, OWNER)).contacts.find(
+    (item) => item.id === person.id,
+  )!;
+  expect(preserved.accountNo).toBe("222");
+  expect(preserved.accounts).toEqual([accounts[1], accounts[0]]);
+  await createContact(
+    repo,
+    OWNER,
+    contactInputSchema.parse({ name: "An", accounts }),
+  );
+  expect(
+    (await listContacts(repo, OWNER)).contacts.find(
+      (item) => item.id === person.id,
+    )?.accounts,
+  ).toEqual(accounts);
 });
