@@ -32,6 +32,7 @@
     "@dnd-kit/modifiers": "9.0.0",
     "@dnd-kit/sortable": "10.0.0",
     "@dnd-kit/utilities": "3.2.2",
+    "@formkit/auto-animate": "^0.10.2",
     "@hookform/resolvers": "^5.4.0",
     "@libsql/client": "^0.18.0",
     "@tailwindcss/vite": "^4.0.0",
