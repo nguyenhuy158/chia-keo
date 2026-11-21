@@ -390,15 +390,14 @@ describe("ExpensePanel", () => {
       "input[aria-label='Phần tiền của Bình']",
     ) as HTMLInputElement;
     type(binhAmount, "10000");
-    expect(host.textContent).toContain("còn thiếu");
-    await act(async () => {
-      host
-        .querySelector("form")
-        ?.dispatchEvent(
-          new Event("submit", { bubbles: true, cancelable: true }),
-        );
-    });
-    expect(onAdd).not.toHaveBeenCalled();
+    expect(
+      (
+        host.querySelector(
+          "input[aria-label='Phần tiền của An']",
+        ) as HTMLInputElement
+      ).value,
+    ).toBe("90000");
+    expect(host.textContent).toContain("vừa đủ");
     type(binhAmount, "50000");
     await act(async () => {
       host
@@ -1070,8 +1069,45 @@ describe("ExpensePanel", () => {
     expect(handle.className).toContain("touch-none");
   });
 
-  it("hiển thị số tiền còn thiếu hoặc vượt khi chia tiền riêng", () => {
+  it("xóa ô đã gõ thì ô đó tự chia lại phần còn lại", () => {
     panel();
+    type(input("500.000"), "100000");
+    act(() => button("Số tiền").click());
+    const field = (name: string) =>
+      host.querySelector(
+        `input[aria-label='Phần tiền của ${name}']`,
+      ) as HTMLInputElement;
+    type(field("Bình"), "10000");
+    expect(field("An").value).toBe("90000");
+    type(field("Bình"), "");
+    expect(field("An").value).toBe("50000");
+    expect(field("Bình").value).toBe("50000");
+  });
+
+  it("sửa khoản chi chia theo số tiền thì giữ nguyên các phần đã lưu", () => {
+    panel({
+      expenses: [
+        expense({
+          splitMode: "amount",
+          splits: [
+            { participantId: "an", amount: 70_000, weight: null },
+            { participantId: "binh", amount: 30_000, weight: null },
+          ],
+        }),
+      ],
+    });
+    rowAction("Sửa", "Tiền sân");
+    expect(
+      (
+        host.querySelector(
+          "input[aria-label='Phần tiền của An']",
+        ) as HTMLInputElement
+      ).value,
+    ).toBe("70000");
+  });
+
+  it("hiển thị số tiền còn thiếu hoặc vượt khi chia tiền riêng", async () => {
+    const { onAdd } = panel();
     act(() => button("Số tiền").click());
     expect(host.textContent).toContain("nhập số tiền ở trên trước");
     type(input("500.000"), "100000");
@@ -1079,7 +1115,23 @@ describe("ExpensePanel", () => {
       "input[aria-label='Phần tiền của Bình']",
     ) as HTMLInputElement;
     type(binhAmount, "70000");
+    expect(host.textContent).toContain("vừa đủ");
+    type(
+      host.querySelector(
+        "input[aria-label='Phần tiền của An']",
+      ) as HTMLInputElement,
+      "50000",
+    );
     expect(host.textContent).toContain("vượt 20.000");
+    await act(async () => {
+      host
+        .querySelector("form")
+        ?.dispatchEvent(
+          new Event("submit", { bubbles: true, cancelable: true }),
+        );
+    });
+    expect(onAdd).not.toHaveBeenCalled();
+    expect(host.textContent).toContain("phải bằng số tiền");
   });
 
   it("hiển thị tiến độ và lỗi tải ảnh trong form", () => {
@@ -1136,9 +1188,11 @@ describe("ExpensePanel", () => {
       accountName: "",
     };
     panel({ onAdd, participants: [...participants, chi] });
-    expect(
-      host.querySelector("input[aria-label='Phần tiền của Chi']"),
-    ).not.toBeNull();
+    const chiAmount = host.querySelector(
+      "input[aria-label='Phần tiền của Chi']",
+    ) as HTMLInputElement;
+    expect(chiAmount).not.toBeNull();
+    type(chiAmount, "0");
     await act(async () => {
       host
         .querySelector("form")

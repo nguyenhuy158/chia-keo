@@ -400,6 +400,7 @@ export function ExpensePanel({
   const category = form.watch("category");
   const selectedCategoryMeta = categoryMeta(category);
   const splitValues = form.watch("splitValues");
+  const [manualIds, setManualIds] = useState<string[]>([]);
   const amountValue = form.watch("amount");
 
   // Dong bo form khi danh sach nguoi tham gia thay doi: nguoi moi duoc tu dong
@@ -476,28 +477,48 @@ export function ExpensePanel({
   }
 
   /**
-   * Mode "Số tiền": tu dien chia deu lam moc khoi diem khi chua ai go gi (tong
-   * dang nhap = 0), thay vi bat nguoi dung tu go tung phan tu 0. Chi ap dung
-   * luc con trong de khong ghi de gia tri nguoi dung da sua.
+   * Mode "Số tiền": o nguoi dung da go la co dinh, cac o con trong tu chia deu
+   * phan con lai (tong tien tru cac o da go) nen khong phai ngoi tru tay.
    */
-  // biome-ignore lint/correctness/useExhaustiveDependencies: seed the split once when the user has typed nothing yet
   useEffect(() => {
-    if (splitMode !== "amount" || splitParticipantIds.length === 0) return;
-    const total = parseMoney(amountValue);
-    if (total <= 0) return;
-    const assigned = splitParticipantIds.reduce(
-      (sum, id) => sum + parseMoney(splitValues[id] || ""),
-      0,
-    );
-    if (assigned !== 0) return;
+    if (splitMode !== "amount") return;
+    const autoIds = splitParticipantIds.filter((id) => !manualIds.includes(id));
+    if (autoIds.length === 0) return;
+    const manualSum = splitParticipantIds
+      .filter((id) => manualIds.includes(id))
+      .reduce((sum, id) => sum + parseMoney(splitValues[id]), 0);
+    const remaining = Math.max(0, parseMoney(amountValue) - manualSum);
 
-    const shares = allocateAmount(total, splitParticipantIds);
     const nextValues = { ...splitValues };
-    for (const share of shares) {
-      nextValues[share.participantId] = String(share.amount);
+    let changed = false;
+    for (const share of allocateAmount(remaining, autoIds)) {
+      const next = share.amount > 0 ? String(share.amount) : "";
+      if ((nextValues[share.participantId] ?? "") !== next) {
+        nextValues[share.participantId] = next;
+        changed = true;
+      }
     }
-    form.setValue("splitValues", nextValues);
-  }, [splitMode, amountValue, splitParticipantIds]);
+    if (changed) form.setValue("splitValues", nextValues);
+  }, [
+    form,
+    splitMode,
+    amountValue,
+    splitParticipantIds,
+    splitValues,
+    manualIds,
+  ]);
+
+  function setAmountSplitValue(participantId: string, value: string) {
+    setManualIds((current) => {
+      const without = current.filter((id) => id !== participantId);
+      return value.trim() ? [...without, participantId] : without;
+    });
+    form.setValue(
+      "splitValues",
+      { ...splitValues, [participantId]: value },
+      { shouldValidate: form.formState.isSubmitted },
+    );
+  }
 
   const aiSuggest = useAiSuggestExpense(gameId);
   const aiReceipt = useAiScanReceipt(gameId);
@@ -614,6 +635,9 @@ export function ExpensePanel({
   function startEditExpense(expense: ApiExpense) {
     setFormOpen(true);
     setEditingExpenseId(expense.id);
+    setManualIds(
+      expense.splitMode === "amount" ? expense.splitParticipantIds : [],
+    );
     const values: Record<string, string> = {};
     for (const split of expense.splits) {
       values[split.participantId] =
@@ -638,6 +662,7 @@ export function ExpensePanel({
     setFormOpen(false);
     setEditingExpenseId("");
     setStagedFiles([]);
+    setManualIds([]);
     form.reset({
       kind: "expense",
       category: "",
@@ -727,6 +752,7 @@ export function ExpensePanel({
     }
 
     setStagedFiles([]);
+    setManualIds([]);
     form.reset({
       kind: values.kind,
       // Giu lai danh muc vua chon: cac khoan lien tiep thuong cung mot loai.
@@ -1054,11 +1080,7 @@ export function ExpensePanel({
                         <MoneyInput
                           value={splitValues[participant.id] ?? ""}
                           onChange={(value) =>
-                            form.setValue(
-                              "splitValues",
-                              { ...splitValues, [participant.id]: value },
-                              { shouldValidate: form.formState.isSubmitted },
-                            )
+                            setAmountSplitValue(participant.id, value)
                           }
                           placeholder="0"
                           className="w-full text-right sm:w-32 sm:shrink-0"
