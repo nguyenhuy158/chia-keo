@@ -1,3 +1,4 @@
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 import {
   type ReactNode,
   useEffect,
@@ -9,6 +10,8 @@ import { cn } from "./cn";
 
 const PAGER_BUTTON =
   "inline-flex h-11 w-11 items-center justify-center rounded-ui text-lg text-fg-muted outline-none transition hover:bg-surface-muted focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-40";
+
+const ANIMATION_DURATION_MS = 200;
 
 export type PagedListProps<T> = {
   items: T[];
@@ -30,6 +33,9 @@ export function PagedList<T>({
   className,
 }: PagedListProps<T>) {
   const bodyRef = useRef<HTMLDivElement>(null);
+  const [listRef] = useAutoAnimate<HTMLDivElement>({
+    duration: ANIMATION_DURATION_MS,
+  });
   const [bodyHeight, setBodyHeight] = useState(0);
   const [page, setPage] = useState(1);
 
@@ -59,21 +65,19 @@ export function PagedList<T>({
   return (
     <div className={cn("flex h-full min-h-0 flex-col", className)}>
       <div ref={bodyRef} className="min-h-0 flex-1 overflow-hidden">
-        {items.length === 0 ? (
-          empty
-        ) : (
-          <div className="flex flex-col" style={{ gap }}>
-            {visible.map((item, index) => (
-              <div
-                key={getKey(item)}
-                className="overflow-hidden"
-                style={{ height: rowHeight }}
-              >
-                {renderItem(item, (currentPage - 1) * pageSize + index)}
-              </div>
-            ))}
-          </div>
-        )}
+        <div ref={listRef} className="flex flex-col" style={{ gap }}>
+          {items.length === 0
+            ? empty
+            : visible.map((item, index) => (
+                <div
+                  key={getKey(item)}
+                  className="overflow-hidden"
+                  style={{ height: rowHeight }}
+                >
+                  {renderItem(item, (currentPage - 1) * pageSize + index)}
+                </div>
+              ))}
+        </div>
       </div>
       <div className="flex h-12 shrink-0 items-center justify-center">
         {pageCount > 1 && (
