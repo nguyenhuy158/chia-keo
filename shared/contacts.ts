@@ -12,7 +12,11 @@
  * so tien da chia roi thi khong duoc doi vi mot lan sua so tai khoan.
  */
 
-import { capitalizeName, QUICK_PARTICIPANT_PREFIX } from "./schemas";
+import {
+  type ContactAccount,
+  capitalizeName,
+  QUICK_PARTICIPANT_PREFIX,
+} from "./schemas";
 
 /** Mot participant da tung ton tai, kem tai khoan nhan tien (neu co). */
 export type ContactSourceRow = {
@@ -32,6 +36,7 @@ export type Contact = {
   bankId: string;
   accountNo: string;
   accountName: string;
+  accounts?: ContactAccount[];
   /** So cuoc chia da co nguoi nay — nguoi hay di cung se len dau danh sach. */
   gameCount: number;
   lastUsedAt: string;
@@ -52,6 +57,7 @@ export type ContactBookRow = {
   bankId: string;
   accountNo: string;
   accountName: string;
+  accounts?: ContactAccount[];
   updatedAt: string;
 };
 
@@ -171,6 +177,7 @@ export function mergeContacts(
       bankId: row.bankId,
       accountNo: row.accountNo,
       accountName: row.accountName,
+      accounts: row.accounts,
       gameCount: fromHistory?.gameCount ?? 0,
       // Nguoi moi nhap chua di cuoc nao: lay luc sua de no khong tut cuoi cung.
       lastUsedAt: fromHistory?.lastUsedAt || row.updatedAt,
@@ -180,4 +187,18 @@ export function mergeContacts(
   }
 
   return sortContacts([...byKey.values()]);
+}
+
+export function getContactAccounts(
+  contact: Pick<Contact, "bankId" | "accountNo" | "accountName" | "accounts">,
+): ContactAccount[] {
+  if (contact.accounts !== undefined) return contact.accounts;
+  if (!contact.accountNo) return [];
+  return [
+    {
+      bankId: contact.bankId,
+      accountNo: contact.accountNo,
+      accountName: contact.accountName,
+    },
+  ];
 }

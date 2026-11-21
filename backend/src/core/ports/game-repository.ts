@@ -369,7 +369,10 @@ export type GameRepository = {
     update(
       contactId: string,
       fields: Partial<
-        Pick<ContactBookRow, "name" | "bankId" | "accountNo" | "accountName">
+        Pick<
+          ContactBookRow,
+          "name" | "bankId" | "accountNo" | "accountName" | "accounts"
+        >
       > & {
         nameKey?: string;
       },

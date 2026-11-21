@@ -66,3 +66,33 @@ describe("transferInputSchema", () => {
     ).toBe(true);
   });
 });
+
+it("validates account lists before saving", async () => {
+  const { contactInputSchema, contactUpdateSchema, MAX_CONTACT_ACCOUNTS } =
+    await import("./schemas");
+  const account = { bankId: "MB", accountNo: "123", accountName: "AN" };
+  expect(
+    contactInputSchema.safeParse({ name: "An", accounts: [account] }).success,
+  ).toBe(true);
+  expect(
+    contactInputSchema.safeParse({ name: "An", accounts: [account, account] })
+      .success,
+  ).toBe(false);
+  expect(
+    contactUpdateSchema.safeParse({ accounts: [{ ...account, bankId: "" }] })
+      .success,
+  ).toBe(false);
+  expect(
+    contactUpdateSchema.safeParse({ accounts: [{ ...account, accountNo: "" }] })
+      .success,
+  ).toBe(false);
+  expect(
+    contactInputSchema.safeParse({
+      name: "An",
+      accounts: Array.from({ length: MAX_CONTACT_ACCOUNTS + 1 }, (_, i) => ({
+        ...account,
+        accountNo: String(i),
+      })),
+    }).success,
+  ).toBe(false);
+});

@@ -117,6 +117,32 @@ export const participantInputSchema = z.object({
  * participant thuoc mot cuoc chia, danh ba thuoc tai khoan — hai thu doi doc
  * lap nhau nen gop schema se rang buoc sai cho.
  */
+export const MAX_CONTACT_ACCOUNTS = 20;
+const BANK_ID_MAX_LENGTH = 20;
+const ACCOUNT_NO_MAX_LENGTH = 30;
+const ACCOUNT_NAME_MAX_LENGTH = 50;
+export const contactAccountSchema = z.object({
+  bankId: z.string().trim().min(1).max(BANK_ID_MAX_LENGTH),
+  accountNo: z.string().trim().min(1).max(ACCOUNT_NO_MAX_LENGTH),
+  accountName: z.string().trim().max(ACCOUNT_NAME_MAX_LENGTH),
+});
+export type ContactAccount = z.infer<typeof contactAccountSchema>;
+export const contactAccountsSchema = z
+  .array(contactAccountSchema)
+  .max(MAX_CONTACT_ACCOUNTS)
+  .refine(
+    (accounts) =>
+      accounts.every(
+        (account, index) =>
+          accounts.findIndex(
+            (other) =>
+              other.bankId === account.bankId &&
+              other.accountNo === account.accountNo,
+          ) === index,
+      ),
+    "Tài khoản ngân hàng bị trùng",
+  );
+
 export const contactInputSchema = z.object({
   name: z
     .string()
@@ -124,6 +150,7 @@ export const contactInputSchema = z.object({
     .min(1)
     .max(PARTICIPANT_NAME_MAX_LENGTH)
     .transform(capitalizeName),
+  accounts: contactAccountsSchema.optional(),
   bankId: z.string().trim().max(20).default(""),
   accountNo: z.string().trim().max(30).default(""),
   accountName: z.string().trim().max(50).default(""),
@@ -138,6 +165,7 @@ export const contactUpdateSchema = z
       .min(1)
       .max(PARTICIPANT_NAME_MAX_LENGTH)
       .transform(capitalizeName),
+    accounts: contactAccountsSchema.optional(),
     bankId: z.string().trim().max(20),
     accountNo: z.string().trim().max(30),
     accountName: z.string().trim().max(50),

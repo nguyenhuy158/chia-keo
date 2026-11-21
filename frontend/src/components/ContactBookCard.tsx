@@ -1,7 +1,11 @@
 import { BookUser, Check, Pencil, Plus, Trash2, X } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import type { Contact } from "../../../shared/contacts";
+import { type Contact, getContactAccounts } from "../../../shared/contacts";
+import {
+  type ContactAccount,
+  MAX_CONTACT_ACCOUNTS,
+} from "../../../shared/schemas";
 import { getVietQrBankLabel } from "../adapters/browser/vietqr";
 import {
   useContacts,
@@ -9,6 +13,8 @@ import {
   useDeleteContact,
   useUpdateContact,
 } from "../adapters/react-query/queries";
+import { Button } from "../ui/Button";
+import { Input } from "../ui/Input";
 import { SwipeAction } from "../ui/SwipeAction";
 import { Avatar } from "./Avatar";
 import { BankSelect } from "./BankSelect";
@@ -18,12 +24,17 @@ import { usePersistentOpen } from "./use-persistent-open";
 
 type Draft = {
   name: string;
-  bankId: string;
-  accountNo: string;
-  accountName: string;
+  accounts: (ContactAccount & { draftId: string })[];
 };
-
-const EMPTY: Draft = { name: "", bankId: "", accountNo: "", accountName: "" };
+const EMPTY_ACCOUNT: ContactAccount = {
+  bankId: "",
+  accountNo: "",
+  accountName: "",
+};
+const EMPTY: Draft = {
+  name: "",
+  accounts: [{ ...EMPTY_ACCOUNT, draftId: crypto.randomUUID() }],
+};
 
 /** So dong hien mac dinh; bam "Xem thêm" moi lo them tung nhom nay. */
 const PAGE_SIZE = 8;
@@ -58,34 +69,114 @@ function DraftForm({
         placeholder="Tên · Huy"
         aria-label="Tên"
       />
-      <BankSelect
-        value={draft.bankId}
-        onChange={(bankId) => onChange({ ...draft, bankId })}
-        ariaLabel="Ngân hàng"
-      />
-      <input
-        value={draft.accountNo}
-        onChange={(event) =>
-          onChange({ ...draft, accountNo: event.target.value })
+      <div className="max-h-72 space-y-3 overflow-y-auto">
+        {draft.accounts.map((account, index) => (
+          <div
+            key={account.draftId}
+            className="space-y-2 rounded-md border border-border p-2"
+          >
+            <div className="flex items-center justify-between gap-2">
+              <Button
+                size="sm"
+                variant={index === 0 ? "secondary" : "ghost"}
+                disabled={pending || index === 0}
+                onClick={() =>
+                  onChange({
+                    ...draft,
+                    accounts: [
+                      account,
+                      ...draft.accounts.filter(
+                        (_, position) => position !== index,
+                      ),
+                    ],
+                  })
+                }
+              >
+                {index === 0 ? "Mặc định" : "Đặt mặc định"}
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                aria-label={`Xóa tài khoản ${index + 1}`}
+                disabled={pending}
+                onClick={() =>
+                  onChange({
+                    ...draft,
+                    accounts: draft.accounts.filter(
+                      (_, position) => position !== index,
+                    ),
+                  })
+                }
+              >
+                Xóa
+              </Button>
+            </div>
+            <BankSelect
+              value={account.bankId}
+              ariaLabel="Ngân hàng"
+              onChange={(bankId) =>
+                onChange({
+                  ...draft,
+                  accounts: draft.accounts.map((item, position) =>
+                    position === index ? { ...item, bankId } : item,
+                  ),
+                })
+              }
+            />
+            <Input
+              value={account.accountNo}
+              placeholder="Số tài khoản"
+              aria-label="Số tài khoản"
+              inputMode="numeric"
+              autoComplete="off"
+              onChange={(event) =>
+                onChange({
+                  ...draft,
+                  accounts: draft.accounts.map((item, position) =>
+                    position === index
+                      ? { ...item, accountNo: event.target.value }
+                      : item,
+                  ),
+                })
+              }
+            />
+            <Input
+              value={account.accountName}
+              placeholder="Tên chủ tài khoản (NGUYEN VAN A)"
+              aria-label="Tên chủ tài khoản"
+              autoCapitalize="characters"
+              autoComplete="off"
+              spellCheck={false}
+              onChange={(event) =>
+                onChange({
+                  ...draft,
+                  accounts: draft.accounts.map((item, position) =>
+                    position === index
+                      ? { ...item, accountName: event.target.value }
+                      : item,
+                  ),
+                })
+              }
+            />
+          </div>
+        ))}
+      </div>
+      <Button
+        variant="outline"
+        size="sm"
+        disabled={pending || draft.accounts.length >= MAX_CONTACT_ACCOUNTS}
+        onClick={() =>
+          onChange({
+            ...draft,
+            accounts: [
+              ...draft.accounts,
+              { ...EMPTY_ACCOUNT, draftId: crypto.randomUUID() },
+            ],
+          })
         }
-        className="field"
-        placeholder="Số tài khoản"
-        aria-label="Số tài khoản"
-        inputMode="numeric"
-        autoComplete="off"
-      />
-      <input
-        value={draft.accountName}
-        onChange={(event) =>
-          onChange({ ...draft, accountName: event.target.value })
-        }
-        className="field"
-        placeholder="Tên chủ tài khoản (NGUYEN VAN A)"
-        aria-label="Tên chủ tài khoản"
-        autoCapitalize="characters"
-        autoComplete="off"
-        spellCheck={false}
-      />
+      >
+        Thêm tài khoản
+      </Button>
       <div className="flex gap-2">
         <button
           type="submit"
@@ -139,6 +230,8 @@ function ContactRow({
                   .filter(Boolean)
                   .join(" · ")
               : "chưa có số tài khoản"}
+            {getContactAccounts(contact).length > 1 &&
+              ` · ${getContactAccounts(contact).length} STK · mặc định`}
             {contact.gameCount > 0 && ` · ${contact.gameCount} cuộc`}
           </p>
         </div>
@@ -201,9 +294,12 @@ export function ContactBookCard() {
     setAdding(false);
     setDraft({
       name: contact.name,
-      bankId: contact.bankId,
-      accountNo: contact.accountNo,
-      accountName: contact.accountName,
+      accounts: getContactAccounts(contact).length
+        ? getContactAccounts(contact).map((account) => ({
+            ...account,
+            draftId: crypto.randomUUID(),
+          }))
+        : [{ ...EMPTY_ACCOUNT, draftId: crypto.randomUUID() }],
     });
   }
 
@@ -215,15 +311,34 @@ export function ContactBookCard() {
 
   async function handleSave(contact: Contact | null) {
     try {
+      const accounts = draft.accounts.filter(
+        (account) =>
+          account.bankId.trim() ||
+          account.accountNo.trim() ||
+          account.accountName.trim(),
+      );
+      const savedAccounts = accounts.map(
+        ({ bankId, accountNo, accountName }) => ({
+          bankId,
+          accountNo,
+          accountName,
+        }),
+      );
+      const input = {
+        name: draft.name,
+        ...EMPTY_ACCOUNT,
+        ...savedAccounts[0],
+        accounts: savedAccounts,
+      };
       // Nguoi suy ra tu lich su chua co dong trong danh ba: luu la tao moi.
       // POST tu ghi de theo ten nen khong so tao trung.
       if (contact?.id) {
         await updateContact.mutateAsync({
           contactId: contact.id,
-          input: draft,
+          input,
         });
       } else {
-        await createContact.mutateAsync(draft);
+        await createContact.mutateAsync(input);
       }
 
       toast.success(contact ? "Đã lưu vào danh bạ" : "Đã thêm vào danh bạ");

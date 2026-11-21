@@ -198,3 +198,11 @@ describe("mergeContacts", () => {
     expect(mergeContacts([{ ...book[0], name: "  " }], [])).toEqual([]);
   });
 });
+
+it("reads legacy or explicitly saved accounts", async () => {
+  const { getContactAccounts } = await import("./contacts");
+  const legacy = { bankId: "MB", accountNo: "123", accountName: "AN" };
+  expect(getContactAccounts(legacy)).toEqual([legacy]);
+  expect(getContactAccounts({ ...legacy, accountNo: "" })).toEqual([]);
+  expect(getContactAccounts({ ...legacy, accounts: [] })).toEqual([]);
+});

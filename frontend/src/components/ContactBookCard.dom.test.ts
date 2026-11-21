@@ -185,6 +185,9 @@ describe("ContactBookCard", () => {
       bankId: "MB",
       accountNo: "12345678",
       accountName: "Nguyen Van An",
+      accounts: [
+        { bankId: "MB", accountNo: "12345678", accountName: "Nguyen Van An" },
+      ],
     });
     expect(success).toHaveBeenCalledWith("Đã thêm vào danh bạ");
     expect(host.querySelector("form")).toBeNull();
@@ -255,5 +258,38 @@ describe("ContactBookCard", () => {
     await act(async () => button("Xóa An")?.click());
     expect(confirm).not.toHaveBeenCalled();
     expect(remove).not.toHaveBeenCalled();
+  });
+});
+
+it("edits multiple accounts, changes default and removes an account", async () => {
+  const accounts = [
+    { bankId: "MB", accountNo: "111", accountName: "AN" },
+    { bankId: "VCB", accountNo: "222", accountName: "AN" },
+  ];
+  state.contacts = [{ ...contact("An", "book", "111"), accounts }];
+  render();
+  expect(host.textContent).toContain("2 STK · mặc định");
+  act(() => button("Sửa An")?.click());
+  act(() => button("Đặt mặc định")?.click());
+  expect(field("Số tài khoản").value).toBe("222");
+  fill("Số tài khoản", "333");
+  fill("Tên chủ tài khoản", "AN MOI");
+  act(() => button("Ngân hàng")?.click());
+  act(() => button("ACB")?.click());
+  act(() => button("Thêm tài khoản")?.click());
+  expect(host.querySelectorAll('[aria-label="Số tài khoản"]')).toHaveLength(3);
+  act(() => button("Xóa tài khoản 3")?.click());
+  await act(async () => button("Lưu")?.click());
+  expect(update).toHaveBeenLastCalledWith({
+    contactId: "an",
+    input: expect.objectContaining({
+      bankId: "ACB",
+      accountNo: "333",
+      accountName: "AN MOI",
+      accounts: [
+        { bankId: "ACB", accountNo: "333", accountName: "AN MOI" },
+        accounts[0],
+      ],
+    }),
   });
 });
