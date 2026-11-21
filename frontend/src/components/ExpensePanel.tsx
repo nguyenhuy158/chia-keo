@@ -486,7 +486,7 @@ export function ExpensePanel({
     if (autoIds.length === 0) return;
     const manualSum = splitParticipantIds
       .filter((id) => manualIds.includes(id))
-      .reduce((sum, id) => sum + parseMoney(splitValues[id] || ""), 0);
+      .reduce((sum, id) => sum + parseMoney(splitValues[id]), 0);
     const remaining = Math.max(0, parseMoney(amountValue) - manualSum);
 
     const nextValues = { ...splitValues };
